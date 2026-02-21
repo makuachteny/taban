@@ -85,6 +85,7 @@ export default function BomaDashboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<PatientDoc[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [isNewPatient, setIsNewPatient] = useState(false);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Debounced patient search
@@ -114,6 +115,7 @@ export default function BomaDashboardPage() {
     }));
     setSearchQuery('');
     setSearchResults([]);
+    setIsNewPatient(false);
     setFormStep('symptoms');
   }, []);
 
@@ -128,6 +130,30 @@ export default function BomaDashboardPage() {
     if (!currentUser || submitting) return;
     setSubmitting(true);
     try {
+      // If this is a manually entered new patient, create a patient record first
+      if (isNewPatient && visitForm.patientName) {
+        try {
+          const { createPatient } = await import('@/lib/services/patient-service');
+          const nameParts = visitForm.patientName.trim().split(/\s+/);
+          const firstName = nameParts[0] || '';
+          const surname = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
+          const middleName = nameParts.length > 2 ? nameParts.slice(1, -1).join(' ') : '';
+          await createPatient({
+            firstName,
+            middleName: middleName || undefined,
+            surname,
+            gender: 'Unknown' as PatientDoc['gender'],
+            geocodeId: visitForm.geocodeId || undefined,
+            boma: 'Kajo-keji',
+            county: 'Kajo-keji',
+            state: 'Central Equatoria',
+            payam: 'Kajo-keji',
+            registrationHospital: currentUser.hospitalId || 'phcu-001',
+          } as Omit<PatientDoc, '_id' | '_rev' | 'type' | 'createdAt' | 'updatedAt'>);
+        } catch (err) {
+          console.error('Failed to create patient record (visit will still be saved):', err);
+        }
+      }
       const conditionLabel = CONDITIONS.find(c => c.id === visitForm.condition)?.label || visitForm.condition;
       await createVisit({
         workerId: currentUser._id,
@@ -156,13 +182,14 @@ export default function BomaDashboardPage() {
         setVisitForm({ patientName: '', geocodeId: '', condition: '', action: '', referredTo: '', treatmentGiven: '' });
         setSelectedSymptoms([]);
         setAiEvaluation(null);
+        setIsNewPatient(false);
       }, 2000);
     } catch (err) {
       console.error('Failed to save visit:', err);
     } finally {
       setSubmitting(false);
     }
-  }, [currentUser, visitForm, submitting, createVisit]);
+  }, [currentUser, visitForm, submitting, createVisit, isNewPatient]);
 
   const toggleSymptom = (id: string) => {
     setSelectedSymptoms(prev =>
@@ -374,7 +401,7 @@ export default function BomaDashboardPage() {
                   {formStep === 'search' ? 'Find Patient' : formStep === 'patient' ? 'New Patient Details' : formStep === 'symptoms' ? 'Signs & Symptoms' : formStep === 'evaluation' ? 'AI Diagnosis' : 'Take Action'}
                 </span>
               </div>
-              <button onClick={() => { setFormStep('closed'); setVisitForm({ patientName: '', geocodeId: '', condition: '', action: '', referredTo: '', treatmentGiven: '' }); setSelectedSymptoms([]); setAiEvaluation(null); setSearchQuery(''); setSearchResults([]); }}>
+              <button onClick={() => { setFormStep('closed'); setVisitForm({ patientName: '', geocodeId: '', condition: '', action: '', referredTo: '', treatmentGiven: '' }); setSelectedSymptoms([]); setAiEvaluation(null); setSearchQuery(''); setSearchResults([]); setIsNewPatient(false); }}>
                 <X className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
               </button>
             </div>
@@ -465,7 +492,7 @@ export default function BomaDashboardPage() {
                   {/* New patient option */}
                   <div className="pt-2" style={{ borderTop: '1px solid var(--border-light)' }}>
                     <button
-                      onClick={() => setFormStep('patient')}
+                      onClick={() => { setIsNewPatient(true); setFormStep('patient'); }}
                       className="w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
                       style={{ background: 'var(--overlay-subtle)', border: '2px dashed var(--border-medium)', color: 'var(--text-secondary)' }}
                     >

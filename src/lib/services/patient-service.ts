@@ -46,6 +46,22 @@ export async function searchPatients(query: string): Promise<PatientDoc[]> {
   );
 }
 
+// Map hospital IDs to short prefixes for hospital number generation
+const HOSPITAL_PREFIXES: Record<string, string> = {
+  'hosp-001': 'JTH', 'hosp-002': 'WSH', 'hosp-003': 'MTH', 'hosp-004': 'BSH',
+  'hosp-005': 'RSH', 'hosp-006': 'BOR', 'hosp-007': 'TSH', 'hosp-008': 'YSH',
+  'hosp-009': 'ASH', 'hosp-010': 'KSH',
+};
+
+function getHospitalPrefix(hospitalId?: string): string {
+  if (!hospitalId) return 'TAB';
+  if (HOSPITAL_PREFIXES[hospitalId]) return HOSPITAL_PREFIXES[hospitalId];
+  if (hospitalId.startsWith('phcc-')) return 'PHC';
+  if (hospitalId.startsWith('phcu-')) return 'BMU';
+  if (hospitalId.startsWith('county-')) return 'CTY';
+  return 'TAB';
+}
+
 export async function createPatient(data: Omit<PatientDoc, '_id' | '_rev' | 'type' | 'createdAt' | 'updatedAt'>): Promise<PatientDoc> {
   const errors = validatePatientData(data as unknown as Record<string, unknown>);
   if (Object.keys(errors).length > 0) {
@@ -55,11 +71,12 @@ export async function createPatient(data: Omit<PatientDoc, '_id' | '_rev' | 'typ
   const now = new Date().toISOString();
   const id = `pat-${uuidv4().slice(0, 8)}`;
   const count = (await db.allDocs()).total_rows;
+  const prefix = getHospitalPrefix(data.registrationHospital);
   const doc: PatientDoc = {
     _id: id,
     type: 'patient',
     ...data,
-    hospitalNumber: data.hospitalNumber || `JTH-${String(count + 1).padStart(6, '0')}`,
+    hospitalNumber: data.hospitalNumber || `${prefix}-${String(count + 1).padStart(6, '0')}`,
     createdAt: now,
     updatedAt: now,
   } as PatientDoc;

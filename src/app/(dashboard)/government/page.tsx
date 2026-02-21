@@ -14,6 +14,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import { useHospitals } from '@/lib/hooks/useHospitals';
+import { usePatients } from '@/lib/hooks/usePatients';
 import { useSurveillance } from '@/lib/hooks/useSurveillance';
 import { useReferrals } from '@/lib/hooks/useReferrals';
 import { weeklyDiseaseData, casesByState } from '@/data/mock';
@@ -72,6 +73,7 @@ export default function GovernmentDashboardPage() {
   const router = useRouter();
   const { currentUser } = useApp();
   const { hospitals } = useHospitals();
+  const { patients: allPatients } = usePatients();
   const { alerts: diseaseAlerts } = useSurveillance();
   const { referrals } = useReferrals();
 
@@ -83,7 +85,7 @@ export default function GovernmentDashboardPage() {
 
   // National aggregates
   const totalHospitals = hospitals.length;
-  const totalPatients = hospitals.reduce((sum, h) => sum + h.patientCount, 0);
+  const totalPatients = allPatients.length;
   const totalBeds = hospitals.reduce((sum, h) => sum + h.totalBeds, 0);
   const totalDoctors = hospitals.reduce((sum, h) => sum + h.doctors, 0);
   const totalNurses = hospitals.reduce((sum, h) => sum + h.nurses, 0);

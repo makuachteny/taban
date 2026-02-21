@@ -15,7 +15,7 @@ export function usePermissions() {
 
   const canEditClinical = role === 'doctor' || role === 'clinical_officer' || isSuperAdmin;
   const canViewClinical = role === 'doctor' || role === 'clinical_officer' || role === 'nurse' || isSuperAdmin;
-  const canRegisterPatients = role === 'doctor' || role === 'clinical_officer' || role === 'nurse' || role === 'front_desk' || isSuperAdmin;
+  const canRegisterPatients = role === 'doctor' || role === 'clinical_officer' || role === 'nurse' || role === 'front_desk' || role === 'boma_health_worker' || isSuperAdmin;
   const canDispense = role === 'pharmacist' || isSuperAdmin;
   const canEnterLabResults = role === 'lab_tech' || isSuperAdmin;
   const canManageUsers = role === 'government' || isSuperAdmin || isOrgAdmin;
