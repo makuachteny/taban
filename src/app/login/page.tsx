@@ -80,10 +80,17 @@ export default function LoginPage() {
   const demoAccounts = [
     { role: 'Super Admin', user: 'superadmin', pass: 'Super@Taban2026!', desc: 'Platform-wide access', color: '#DC2626' },
     { role: 'Org Admin', user: 'org.admin', pass: 'OrgAdmin@Mercy2026', desc: 'Mercy Hospital Group', color: '#7C3AED' },
-    { role: 'Doctor', user: 'dr.wani', pass: 'Dr.Wani@JTH2026', desc: 'Clinical access', color: BLUE },
-    { role: 'Government', user: 'admin', pass: 'TabanGov#2026!Ss', desc: 'Government oversight', color: '#2B6FE0' },
-    { role: 'Boma Health Worker', user: 'bhw.akol', pass: 'BHW.Akol@KJ2026', desc: 'Kajo-keji Boma PHCU', color: '#059669' },
+    { role: 'Government', user: 'admin', pass: 'TabanGov#2026!Ss', desc: 'National MoH oversight', color: '#078930' },
+    { role: 'Doctor', user: 'dr.wani', pass: 'Dr.Wani@JTH2026', desc: 'Juba Teaching Hospital', color: BLUE },
+    { role: 'Doctor (2)', user: 'dr.achol', pass: 'Dr.Achol@JTH2026', desc: 'Juba Teaching Hospital', color: '#1d5bc4' },
+    { role: 'Clinical Officer', user: 'co.deng', pass: 'CO.Deng@WTH2026', desc: 'Wau State Hospital', color: '#0891B2' },
+    { role: 'Nurse', user: 'nurse.stella', pass: 'Nurse.Stella@MTH2026', desc: 'Malakal Teaching Hospital', color: '#EC4899' },
+    { role: 'Lab Tech', user: 'lab.gatluak', pass: 'Lab.Gat@BSH2026', desc: 'Bentiu State Hospital', color: '#8B5CF6' },
+    { role: 'Pharmacist', user: 'pharma.rose', pass: 'Pharma.Rose@JTH2026', desc: 'Juba Teaching Hospital', color: '#F59E0B' },
+    { role: 'Front Desk', user: 'desk.amira', pass: 'Desk.Amira@JTH2026', desc: 'Juba Teaching Hospital', color: '#6366F1' },
+    { role: 'Doctor (Private)', user: 'dr.mercy', pass: 'Dr.Mercy@2026!', desc: 'Mercy General Hospital', color: '#4F46E5' },
     { role: 'Payam Supervisor', user: 'sup.mary', pass: 'Sup.Mary@KJ2026', desc: 'Kajo-keji PHCC', color: '#D97706' },
+    { role: 'Boma Health Worker', user: 'bhw.akol', pass: 'BHW.Akol@KJ2026', desc: 'Kajo-keji Boma PHCU', color: '#059669' },
   ];
 
   const inputLabelStyle: React.CSSProperties = {
