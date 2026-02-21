@@ -1,0 +1,95 @@
+import { patientsDB } from '../db';
+import type { PatientDoc } from '../db-types';
+import type { DataScope } from './data-scope';
+import { filterByScope } from './data-scope';
+import { v4 as uuidv4 } from 'uuid';
+import { validatePatientData, ValidationError } from '../validation';
+import { logAudit } from './audit-service';
+
+/**
+ * Generate a geocode ID from boma code and household number.
+ * Format: BOMA-{bomaCode}-HH{householdNumber}
+ * Expert recommendation: Use household geocoding instead of national IDs.
+ */
+export function generateGeocodeId(bomaCode: string, householdNumber: number): string {
+  const code = bomaCode.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return `BOMA-${code}-HH${householdNumber}`;
+}
+
+export async function getAllPatients(scope?: DataScope): Promise<PatientDoc[]> {
+  const db = patientsDB();
+  const result = await db.allDocs({ include_docs: true });
+  const all = result.rows
+    .map(r => r.doc as PatientDoc)
+    .filter(d => d && d.type === 'patient');
+  return scope ? filterByScope(all, scope) : all;
+}
+
+export async function getPatientById(id: string): Promise<PatientDoc | null> {
+  try {
+    const db = patientsDB();
+    return await db.get(id) as PatientDoc;
+  } catch {
+    return null;
+  }
+}
+
+export async function searchPatients(query: string): Promise<PatientDoc[]> {
+  const all = await getAllPatients();
+  const q = query.toLowerCase();
+  return all.filter(p =>
+    `${p.firstName} ${p.middleName || ''} ${p.surname}`.toLowerCase().includes(q) ||
+    (p.hospitalNumber || '').toLowerCase().includes(q) ||
+    (p.phone || '').includes(q) ||
+    (p.geocodeId || '').toLowerCase().includes(q) ||
+    (p.boma || '').toLowerCase().includes(q)
+  );
+}
+
+export async function createPatient(data: Omit<PatientDoc, '_id' | '_rev' | 'type' | 'createdAt' | 'updatedAt'>): Promise<PatientDoc> {
+  const errors = validatePatientData(data as unknown as Record<string, unknown>);
+  if (Object.keys(errors).length > 0) {
+    throw new ValidationError(errors);
+  }
+  const db = patientsDB();
+  const now = new Date().toISOString();
+  const id = `pat-${uuidv4().slice(0, 8)}`;
+  const count = (await db.allDocs()).total_rows;
+  const doc: PatientDoc = {
+    _id: id,
+    type: 'patient',
+    ...data,
+    hospitalNumber: data.hospitalNumber || `JTH-${String(count + 1).padStart(6, '0')}`,
+    createdAt: now,
+    updatedAt: now,
+  } as PatientDoc;
+  const resp = await db.put(doc);
+  doc._rev = resp.rev;
+  logAudit('CREATE_PATIENT', undefined, undefined, `Created patient ${doc._id}: ${data.firstName} ${data.surname}`).catch(() => {});
+  return doc;
+}
+
+export async function updatePatient(id: string, data: Partial<PatientDoc>): Promise<PatientDoc | null> {
+  const db = patientsDB();
+  const existing = await db.get(id) as PatientDoc;
+  const updated = {
+    ...existing,
+    ...data,
+    _id: existing._id,
+    _rev: existing._rev,
+    updatedAt: new Date().toISOString(),
+  };
+  const errors = validatePatientData(updated as unknown as Record<string, unknown>);
+  if (Object.keys(errors).length > 0) {
+    throw new ValidationError(errors);
+  }
+  const resp = await db.put(updated);
+  updated._rev = resp.rev;
+  logAudit('UPDATE_PATIENT', undefined, undefined, `Updated patient ${id}`).catch(() => {});
+  return updated;
+}
+
+export async function getPatientsByHospital(hospitalId: string): Promise<PatientDoc[]> {
+  const all = await getAllPatients();
+  return all.filter(p => p.registrationHospital === hospitalId);
+}

@@ -1,0 +1,105 @@
+import { deathsDB } from '../db';
+import type { DeathRegistrationDoc } from '../db-types';
+import { v4 as uuidv4 } from 'uuid';
+import { logAudit } from './audit-service';
+
+export async function getAllDeaths(): Promise<DeathRegistrationDoc[]> {
+  const db = deathsDB();
+  const result = await db.allDocs({ include_docs: true });
+  return result.rows
+    .map(r => r.doc as DeathRegistrationDoc)
+    .filter(d => d && d.type === 'death')
+    .sort((a, b) => new Date(b.dateOfDeath || '').getTime() - new Date(a.dateOfDeath || '').getTime());
+}
+
+export async function getDeathsByFacility(facilityId: string): Promise<DeathRegistrationDoc[]> {
+  const all = await getAllDeaths();
+  return all.filter(d => d.facilityId === facilityId);
+}
+
+export async function createDeath(data: Omit<DeathRegistrationDoc, '_id' | '_rev' | 'type' | 'createdAt' | 'updatedAt'>): Promise<DeathRegistrationDoc> {
+  const db = deathsDB();
+  const now = new Date().toISOString();
+  const id = `death-${uuidv4().slice(0, 8)}`;
+  const doc: DeathRegistrationDoc = {
+    _id: id,
+    type: 'death',
+    ...data,
+    createdAt: now,
+    updatedAt: now,
+  };
+  const resp = await db.put(doc);
+  doc._rev = resp.rev;
+  logAudit('REGISTER_DEATH', undefined, undefined, `Registered death ${doc._id}: ${data.deceasedFirstName} ${data.deceasedSurname}, cause: ${data.immediateCause || 'unspecified'}`).catch(() => {});
+  return doc;
+}
+
+export async function updateDeath(id: string, data: Partial<DeathRegistrationDoc>): Promise<DeathRegistrationDoc | null> {
+  const db = deathsDB();
+  try {
+    const existing = await db.get(id) as DeathRegistrationDoc;
+    const updated = {
+      ...existing,
+      ...data,
+      _id: existing._id,
+      _rev: existing._rev,
+      updatedAt: new Date().toISOString(),
+    };
+    const resp = await db.put(updated);
+    updated._rev = resp.rev;
+    return updated;
+  } catch {
+    return null;
+  }
+}
+
+export async function deleteDeath(id: string): Promise<boolean> {
+  const db = deathsDB();
+  try {
+    const doc = await db.get(id);
+    await db.remove(doc);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function getDeathStats() {
+  const all = await getAllDeaths();
+  const thisYear = new Date().getFullYear().toString();
+  const thisMonth = new Date().toISOString().slice(0, 7);
+  const maternalDeaths = all.filter(d => d.maternalDeath);
+  const under5 = all.filter(d => d.ageAtDeath != null && d.ageAtDeath < 5);
+  const neonatal = all.filter(d => d.ageAtDeath != null && d.ageAtDeath < 0.077); // < 28 days ≈ 0.077 years
+
+  // Top causes by ICD-11
+  const causeCounts: Record<string, { code: string; cause: string; count: number }> = {};
+  for (const d of all) {
+    const key = d.underlyingICD11 || d.immediateICD11 || 'unknown';
+    const cause = d.underlyingCause || d.immediateCause || 'Unknown';
+    if (!causeCounts[key]) causeCounts[key] = { code: key, cause, count: 0 };
+    causeCounts[key].count++;
+  }
+  const topCauses = Object.values(causeCounts).sort((a, b) => b.count - a.count).slice(0, 10);
+
+  return {
+    total: all.length,
+    thisMonth: all.filter(d => (d.dateOfDeath || '').startsWith(thisMonth)).length,
+    thisYear: all.filter(d => (d.dateOfDeath || '').startsWith(thisYear)).length,
+    maternalDeaths: maternalDeaths.length,
+    under5Deaths: under5.length,
+    neonatalDeaths: neonatal.length,
+    withICD11Code: all.filter(d => d.underlyingICD11 || d.immediateICD11).length,
+    registered: all.filter(d => d.deathRegistered).length,
+    notified: all.filter(d => d.deathNotified).length,
+    byGender: {
+      male: all.filter(d => d.deceasedGender === 'Male').length,
+      female: all.filter(d => d.deceasedGender === 'Female').length,
+    },
+    byMannerOfDeath: all.reduce((acc, d) => { const m = d.mannerOfDeath || 'Unknown'; acc[m] = (acc[m] || 0) + 1; return acc; }, {} as Record<string, number>),
+    topCauses,
+    byState: all.reduce((acc, d) => { const st = d.state || 'Unknown'; acc[st] = (acc[st] || 0) + 1; return acc; }, {} as Record<string, number>),
+  };
+}
+
+export { COMMON_ICD11_CODES } from '../icd11-codes';

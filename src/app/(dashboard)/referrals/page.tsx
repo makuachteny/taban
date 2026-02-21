@@ -1,0 +1,801 @@
+'use client';
+
+import { useState } from 'react';
+import TopBar from '@/components/TopBar';
+import {
+  ArrowRightLeft, Plus, Send, Eye, CheckCircle2, Clock,
+  AlertTriangle, ChevronDown, ChevronUp, X, Building2,
+  Stethoscope, Search, Package, FileText, Image as ImageIcon,
+  User, Activity, FlaskConical, Paperclip
+} from 'lucide-react';
+import { useReferrals } from '@/lib/hooks/useReferrals';
+import { useHospitals } from '@/lib/hooks/useHospitals';
+import { usePatients } from '@/lib/hooks/usePatients';
+import { useApp } from '@/lib/context';
+import { useToast } from '@/components/Toast';
+import FileUpload from '@/components/FileUpload';
+import type { Attachment, TransferPackage } from '@/data/mock';
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+const departments = [
+  'Internal Medicine', 'Pediatrics', 'Obstetrics & Gynecology', 'Surgery',
+  'Emergency', 'Cardiology', 'Orthopedics', 'Ophthalmology', 'Neurology',
+  'Dermatology', 'ENT', 'Outpatient'
+];
+
+export default function ReferralsPage() {
+  const { referrals, createWithTransfer, updateStatus } = useReferrals();
+  const { showToast } = useToast();
+  const { hospitals } = useHospitals();
+  const { patients } = usePatients();
+  const { currentUser, globalSearch } = useApp();
+  const OUR_HOSPITAL_ID = currentUser?.hospitalId || 'hosp-001';
+
+  const [activeTab, setActiveTab] = useState<'incoming' | 'outgoing'>('incoming');
+  const [showNewReferral, setShowNewReferral] = useState(false);
+  const [expandedReferral, setExpandedReferral] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+
+  // New referral form state
+  const [formPatient, setFormPatient] = useState('');
+  const [formHospital, setFormHospital] = useState('');
+  const [formDepartment, setFormDepartment] = useState('');
+  const [formUrgency, setFormUrgency] = useState<'routine' | 'urgent' | 'emergency'>('routine');
+  const [formReason, setFormReason] = useState('');
+  const [formNotes, setFormNotes] = useState('');
+  const [formAttachments, setFormAttachments] = useState<Attachment[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Transfer package viewer state
+  const [expandedRecords, setExpandedRecords] = useState<Set<string>>(new Set());
+  const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null);
+
+  // Filter referrals
+  const incomingReferrals = referrals.filter(r => r.toHospitalId === OUR_HOSPITAL_ID);
+  const outgoingReferrals = referrals.filter(r => r.fromHospitalId === OUR_HOSPITAL_ID);
+  const activeReferrals = activeTab === 'incoming' ? incomingReferrals : outgoingReferrals;
+
+  // Search filtering
+  const combinedSearch = `${search} ${globalSearch}`.toLowerCase().trim();
+  const filteredReferrals = combinedSearch
+    ? activeReferrals.filter(r => {
+        const haystack = `${r.patientName} ${r.fromHospital} ${r.toHospital} ${r.department} ${r.referringDoctor} ${r.notes} ${r.reason}`.toLowerCase();
+        return combinedSearch.split(/\s+/).every(term => haystack.includes(term));
+      })
+    : activeReferrals;
+
+  // Summary stats
+  const totalReferrals = referrals.filter(
+    r => r.toHospitalId === OUR_HOSPITAL_ID || r.fromHospitalId === OUR_HOSPITAL_ID
+  ).length;
+  const pendingCount = referrals.filter(
+    r => (r.toHospitalId === OUR_HOSPITAL_ID || r.fromHospitalId === OUR_HOSPITAL_ID) &&
+    (r.status === 'sent' || r.status === 'received')
+  ).length;
+  const inProgressCount = referrals.filter(
+    r => (r.toHospitalId === OUR_HOSPITAL_ID || r.fromHospitalId === OUR_HOSPITAL_ID) &&
+    r.status === 'seen'
+  ).length;
+  const completedCount = referrals.filter(
+    r => (r.toHospitalId === OUR_HOSPITAL_ID || r.fromHospitalId === OUR_HOSPITAL_ID) &&
+    r.status === 'completed'
+  ).length;
+
+  const stats = [
+    { label: 'Total Referrals', value: totalReferrals, icon: ArrowRightLeft, color: '#2B6FE0', bg: 'rgba(43,111,224,0.12)' },
+    { label: 'Pending', value: pendingCount, icon: Clock, color: '#FCD34D', bg: 'rgba(252,211,77,0.10)' },
+    { label: 'In Progress', value: inProgressCount, icon: Stethoscope, color: '#38BDF8', bg: 'rgba(43,111,224,0.10)' },
+    { label: 'Completed', value: completedCount, icon: CheckCircle2, color: '#2B6FE0', bg: 'rgba(43,111,224,0.12)' },
+  ];
+
+  const getStatusLabel = (status: string) => {
+    const map: Record<string, string> = {
+      sent: 'Sent',
+      received: 'Received',
+      seen: 'Being Seen',
+      completed: 'Completed',
+      cancelled: 'Cancelled',
+    };
+    return map[status] || status;
+  };
+
+  const getStatusClass = (status: string) => {
+    const map: Record<string, string> = {
+      sent: 'ref-sent',
+      received: 'ref-received',
+      seen: 'ref-seen',
+      completed: 'ref-completed',
+      cancelled: 'ref-cancelled',
+    };
+    return map[status] || '';
+  };
+
+  const handleSubmitReferral = async () => {
+    try {
+      setSubmitting(true);
+      const patient = patients.find(p => p._id === formPatient);
+      const toHospital = hospitals.find(h => h._id === formHospital);
+      const fromHospital = hospitals.find(h => h._id === OUR_HOSPITAL_ID);
+      await createWithTransfer(
+        {
+          patientId: formPatient,
+          patientName: patient ? `${patient.firstName} ${patient.middleName} ${patient.surname}` : '',
+          fromHospitalId: OUR_HOSPITAL_ID,
+          fromHospital: fromHospital?.name || '',
+          toHospitalId: formHospital,
+          toHospital: toHospital?.name || '',
+          department: formDepartment,
+          urgency: formUrgency,
+          reason: formReason,
+          notes: formNotes,
+          referringDoctor: currentUser?.name || '',
+          referralDate: new Date().toISOString().split('T')[0],
+          status: 'sent',
+        },
+        formAttachments,
+        currentUser?.name || 'Unknown'
+      );
+      showToast('Referral sent with patient data package', 'success');
+      setShowNewReferral(false);
+      setFormPatient('');
+      setFormHospital('');
+      setFormDepartment('');
+      setFormUrgency('routine');
+      setFormReason('');
+      setFormNotes('');
+      setFormAttachments([]);
+    } catch (err) {
+      console.error('Failed to submit referral:', err);
+      showToast('Failed to submit referral. Please try again.', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const otherHospitals = hospitals.filter(h => h._id !== OUR_HOSPITAL_ID);
+
+  const isImage = (mimeType: string) => mimeType.startsWith('image/');
+
+  const TransferPackageViewer = ({ pkg, refAttachments, reason, notes }: { pkg: TransferPackage; refAttachments?: Attachment[]; reason: string; notes: string }) => {
+    const demo = pkg.patientDemographics;
+    return (
+      <div className="space-y-4 mt-4">
+        {/* Reason & Notes */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="p-3 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+            <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Reason for Referral</p>
+            <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{reason}</p>
+          </div>
+          <div className="p-3 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+            <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Clinical Notes</p>
+            <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{notes || 'None'}</p>
+          </div>
+        </div>
+
+        {/* Referral Attachments */}
+        {refAttachments && refAttachments.length > 0 && (
+          <div className="p-4 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+            <div className="flex items-center gap-2 mb-3">
+              <Paperclip className="w-4 h-4" style={{ color: 'var(--taban-blue)' }} />
+              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Referral Attachments ({refAttachments.length})</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {refAttachments.map(att => (
+                <button key={att.id} onClick={() => setPreviewAttachment(att)} className="flex items-center gap-2 p-2 rounded-lg text-left transition-colors" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+                  {isImage(att.mimeType) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={`data:${att.mimeType};base64,${att.base64Data}`} alt={att.name} className="w-8 h-8 rounded object-cover flex-shrink-0" />
+                  ) : (
+                    <FileText className="w-5 h-5 flex-shrink-0" style={{ color: '#EF4444' }} />
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium truncate">{att.name}</p>
+                    <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{formatFileSize(att.sizeBytes)}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Patient Demographics */}
+        <div className="p-4 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+          <div className="flex items-center gap-2 mb-3">
+            <User className="w-4 h-4" style={{ color: 'var(--taban-blue)' }} />
+            <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Patient Demographics</span>
+          </div>
+          <div className="grid grid-cols-4 gap-3">
+            {[
+              { l: 'Name', v: `${demo.firstName} ${demo.middleName} ${demo.surname}` },
+              { l: 'Hospital #', v: demo.hospitalNumber },
+              { l: 'DOB', v: demo.dateOfBirth },
+              { l: 'Gender', v: demo.gender },
+              { l: 'Phone', v: demo.phone },
+              { l: 'Location', v: `${demo.county}, ${demo.state}` },
+              { l: 'Tribe', v: demo.tribe },
+              { l: 'Blood Type', v: demo.bloodType },
+            ].map(item => (
+              <div key={item.l}>
+                <p className="text-[10px] font-medium uppercase" style={{ color: 'var(--text-muted)' }}>{item.l}</p>
+                <p className="text-sm font-medium">{item.v}</p>
+              </div>
+            ))}
+          </div>
+          {demo.allergies?.length > 0 && demo.allergies[0] !== 'None known' && (
+            <div className="mt-3 flex items-center gap-2">
+              <AlertTriangle className="w-3.5 h-3.5" style={{ color: '#F87171' }} />
+              <span className="text-xs font-medium" style={{ color: '#F87171' }}>
+                Allergies: {demo.allergies.join(', ')}
+              </span>
+            </div>
+          )}
+          {demo.chronicConditions?.length > 0 && demo.chronicConditions[0] !== 'None' && (
+            <div className="mt-1 flex items-center gap-2">
+              <Activity className="w-3.5 h-3.5" style={{ color: '#FCD34D' }} />
+              <span className="text-xs font-medium" style={{ color: '#FCD34D' }}>
+                Chronic: {demo.chronicConditions.join(', ')}
+              </span>
+            </div>
+          )}
+          <div className="mt-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+            NOK: {demo.nokName} ({demo.nokRelationship}) — {demo.nokPhone}
+          </div>
+        </div>
+
+        {/* Medical Records Timeline */}
+        {pkg.medicalRecords.length > 0 && (
+          <div className="p-4 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+            <div className="flex items-center gap-2 mb-3">
+              <Stethoscope className="w-4 h-4" style={{ color: 'var(--taban-blue)' }} />
+              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Medical Records ({pkg.medicalRecords.length})</span>
+            </div>
+            <div className="space-y-2">
+              {pkg.medicalRecords.map(rec => {
+                const isExpanded = expandedRecords.has(rec.id);
+                return (
+                  <div key={rec.id} className="rounded-lg" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+                    <button
+                      onClick={() => setExpandedRecords(prev => {
+                        const next = new Set(prev);
+                        if (next.has(rec.id)) next.delete(rec.id); else next.add(rec.id);
+                        return next;
+                      })}
+                      className="w-full flex items-center justify-between p-3 text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>{rec.visitDate}</span>
+                        <span className={`badge text-[10px] ${rec.visitType === 'emergency' ? 'badge-emergency' : rec.visitType === 'inpatient' ? 'badge-warning' : 'badge-normal'}`}>
+                          {rec.visitType}
+                        </span>
+                        <span className="text-sm font-medium">{rec.department}</span>
+                      </div>
+                      {isExpanded ? <ChevronUp className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} /> : <ChevronDown className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />}
+                    </button>
+                    {isExpanded && (
+                      <div className="px-3 pb-3 space-y-2">
+                        <p className="text-xs"><span className="font-medium">Complaint:</span> {rec.chiefComplaint}</p>
+                        <p className="text-xs"><span className="font-medium">Provider:</span> {rec.providerName} ({rec.providerRole}) at {rec.hospitalName}</p>
+                        {rec.diagnoses.length > 0 && (
+                          <div>
+                            <p className="text-[10px] font-semibold uppercase mb-1" style={{ color: 'var(--text-muted)' }}>Diagnoses</p>
+                            <div className="flex flex-wrap gap-1">
+                              {rec.diagnoses.map((d, i) => (
+                                <span key={i} className="text-[10px] px-2 py-0.5 rounded" style={{ background: 'rgba(43,111,224,0.12)', color: 'var(--taban-blue)' }}>
+                                  {d.icd10Code} {d.name}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {rec.vitalSigns && (
+                          <div className="grid grid-cols-4 gap-2 text-xs">
+                            <span>Temp: {rec.vitalSigns.temperature}°C</span>
+                            <span>BP: {rec.vitalSigns.systolic}/{rec.vitalSigns.diastolic}</span>
+                            <span>Pulse: {rec.vitalSigns.pulse}</span>
+                            <span>SpO2: {rec.vitalSigns.oxygenSaturation}%</span>
+                          </div>
+                        )}
+                        {rec.prescriptions.length > 0 && (
+                          <div>
+                            <p className="text-[10px] font-semibold uppercase mb-1" style={{ color: 'var(--text-muted)' }}>Prescriptions</p>
+                            {rec.prescriptions.map((rx, i) => (
+                              <p key={i} className="text-xs">{rx.drugName} — {rx.dose} {rx.route} {rx.frequency} x {rx.duration}</p>
+                            ))}
+                          </div>
+                        )}
+                        {rec.treatmentPlan && (
+                          <p className="text-xs"><span className="font-medium">Plan:</span> {rec.treatmentPlan}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Lab Results */}
+        {pkg.labResults.length > 0 && (
+          <div className="p-4 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+            <div className="flex items-center gap-2 mb-3">
+              <FlaskConical className="w-4 h-4" style={{ color: 'var(--taban-blue)' }} />
+              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Lab Results ({pkg.labResults.length})</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
+                    <th className="text-left py-1.5 pr-3 font-medium" style={{ color: 'var(--text-muted)' }}>Test</th>
+                    <th className="text-left py-1.5 pr-3 font-medium" style={{ color: 'var(--text-muted)' }}>Result</th>
+                    <th className="text-left py-1.5 pr-3 font-medium" style={{ color: 'var(--text-muted)' }}>Reference</th>
+                    <th className="text-left py-1.5 pr-3 font-medium" style={{ color: 'var(--text-muted)' }}>Date</th>
+                    <th className="text-left py-1.5 font-medium" style={{ color: 'var(--text-muted)' }}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pkg.labResults.map((lab, i) => (
+                    <tr key={i} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                      <td className="py-1.5 pr-3 font-medium">{lab.testName}</td>
+                      <td className="py-1.5 pr-3" style={{ color: lab.abnormal ? (lab.critical ? '#EF4444' : '#F59E0B') : 'inherit', fontWeight: lab.abnormal ? 600 : 400 }}>
+                        {lab.result} {lab.unit}
+                      </td>
+                      <td className="py-1.5 pr-3" style={{ color: 'var(--text-muted)' }}>{lab.referenceRange}</td>
+                      <td className="py-1.5 pr-3 font-mono" style={{ color: 'var(--text-muted)' }}>{lab.date}</td>
+                      <td className="py-1.5">
+                        {lab.abnormal ? (
+                          <span className={`badge text-[10px] ${lab.critical ? 'badge-emergency' : 'badge-warning'}`}>
+                            {lab.critical ? 'Critical' : 'Abnormal'}
+                          </span>
+                        ) : (
+                          <span className="badge badge-normal text-[10px]">Normal</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* All Patient Attachments */}
+        {pkg.attachments.length > 0 && (
+          <div className="p-4 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+            <div className="flex items-center gap-2 mb-3">
+              <ImageIcon className="w-4 h-4" style={{ color: 'var(--taban-blue)' }} />
+              <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Patient Attachments ({pkg.attachments.length})</span>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {pkg.attachments.map(att => (
+                <button key={att.id} onClick={() => setPreviewAttachment(att)} className="flex flex-col items-center gap-1 p-3 rounded-lg text-center transition-colors" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+                  {isImage(att.mimeType) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={`data:${att.mimeType};base64,${att.base64Data}`} alt={att.name} className="w-12 h-12 rounded object-cover" />
+                  ) : (
+                    <FileText className="w-8 h-8" style={{ color: '#EF4444' }} />
+                  )}
+                  <p className="text-[10px] font-medium truncate w-full">{att.name}</p>
+                  <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{formatFileSize(att.sizeBytes)}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Package Metadata */}
+        <div className="flex items-center gap-3 p-3 rounded-lg text-xs" style={{ background: 'rgba(43,111,224,0.06)', border: '1px solid rgba(43,111,224,0.15)' }}>
+          <Package className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--taban-blue)' }} />
+          <span style={{ color: 'var(--text-muted)' }}>
+            Packaged by <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{pkg.packagedBy}</span> on {new Date(pkg.packagedAt).toLocaleDateString()} at {new Date(pkg.packagedAt).toLocaleTimeString()}
+          </span>
+          <span style={{ color: 'var(--text-muted)' }}>
+            Total size: <span className="font-medium">{formatFileSize(pkg.packageSizeBytes)}</span>
+          </span>
+          <span style={{ color: 'var(--text-muted)' }}>
+            {pkg.medicalRecords.length} records &middot; {pkg.labResults.length} labs &middot; {pkg.attachments.length} files
+          </span>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <>
+      <TopBar title="Referrals" />
+      <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
+                Referral Management
+              </h1>
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                Manage incoming and outgoing patient referrals
+              </p>
+            </div>
+            <button
+              onClick={() => setShowNewReferral(!showNewReferral)}
+              className="btn btn-primary"
+            >
+              {showNewReferral ? (
+                <><X className="w-4 h-4" /> Cancel</>
+              ) : (
+                <><Plus className="w-4 h-4" /> New Referral</>
+              )}
+            </button>
+          </div>
+
+          {/* Summary Stats */}
+          <div className="grid grid-cols-4 gap-3 mb-6">
+            {stats.map(stat => (
+              <div key={stat.label} className="card-elevated p-5 cursor-pointer" onClick={() => {
+                const tabMap: Record<string, 'incoming' | 'outgoing'> = { 'Pending': 'incoming', 'In Progress': 'incoming', 'Completed': 'outgoing' };
+                if (tabMap[stat.label]) setActiveTab(tabMap[stat.label]);
+              }}>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>
+                      {stat.label}
+                    </p>
+                    <p className="text-3xl font-bold" style={{ color: stat.color }}>
+                      {stat.value}
+                    </p>
+                  </div>
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: stat.bg }}>
+                    <stat.icon className="w-5 h-5" style={{ color: stat.color }} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* New Referral Form */}
+          {showNewReferral && (
+            <div className="card-elevated p-6 mb-6">
+              <div className="flex items-center gap-2 mb-3">
+                <Send className="w-5 h-5" style={{ color: 'var(--taban-blue)' }} />
+                <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  Create New Referral
+                </h2>
+                <span className="text-xs px-2 py-1 rounded-full" style={{ background: 'rgba(43,111,224,0.12)', color: 'var(--taban-blue)' }}>
+                  Auto-packages patient data
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                {/* Patient */}
+                <div>
+                  <label>Patient</label>
+                  <select value={formPatient} onChange={(e) => setFormPatient(e.target.value)}>
+                    <option value="">Select a patient...</option>
+                    {patients.slice(0, 20).map(p => (
+                      <option key={p._id} value={p._id}>
+                        {p.firstName} {p.middleName} {p.surname} ({p.hospitalNumber})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Destination Hospital */}
+                <div>
+                  <label>Destination Hospital</label>
+                  <select value={formHospital} onChange={(e) => setFormHospital(e.target.value)}>
+                    <option value="">Select hospital...</option>
+                    {otherHospitals.map(h => (
+                      <option key={h._id} value={h._id}>
+                        {h.name} ({h.state})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Department */}
+                <div>
+                  <label>Department</label>
+                  <select value={formDepartment} onChange={(e) => setFormDepartment(e.target.value)}>
+                    <option value="">Select department...</option>
+                    {departments.map(d => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Urgency */}
+                <div>
+                  <label>Urgency</label>
+                  <div className="flex gap-3 mt-1">
+                    {(['routine', 'urgent', 'emergency'] as const).map(level => (
+                      <button
+                        key={level}
+                        type="button"
+                        onClick={() => setFormUrgency(level)}
+                        className={`badge urgency-${level} cursor-pointer px-4 py-2 text-sm transition-all`}
+                        style={{
+                          opacity: formUrgency === level ? 1 : 0.45,
+                          transform: formUrgency === level ? 'scale(1.05)' : 'scale(1)',
+                          border: formUrgency === level ? '2px solid currentColor' : '2px solid transparent',
+                          borderRadius: '8px',
+                        }}
+                      >
+                        {level === 'emergency' && <AlertTriangle className="w-3.5 h-3.5 inline mr-1" />}
+                        {level.charAt(0).toUpperCase() + level.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Reason */}
+                <div className="col-span-2">
+                  <label>Reason for Referral</label>
+                  <textarea
+                    value={formReason}
+                    onChange={(e) => setFormReason(e.target.value)}
+                    rows={2}
+                    placeholder="Describe the reason for this referral..."
+                  />
+                </div>
+
+                {/* Clinical Notes */}
+                <div className="col-span-2">
+                  <label>Clinical Notes</label>
+                  <textarea
+                    value={formNotes}
+                    onChange={(e) => setFormNotes(e.target.value)}
+                    rows={3}
+                    placeholder="Include relevant clinical history, examination findings, and investigation results..."
+                  />
+                </div>
+
+                {/* Referral Attachments */}
+                <div className="col-span-2">
+                  <label>Attachments (optional)</label>
+                  <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>
+                    Attach additional scans, reports, or documents specific to this referral.
+                  </p>
+                  <FileUpload
+                    attachments={formAttachments}
+                    onAdd={(att) => setFormAttachments(prev => [...prev, att])}
+                    onRemove={(id) => setFormAttachments(prev => prev.filter(a => a.id !== id))}
+                    uploaderName={currentUser?.name || 'Unknown'}
+                    maxFiles={5}
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-5 pt-4 border-t" style={{ borderColor: 'var(--border-light)' }}>
+                <button
+                  onClick={() => setShowNewReferral(false)}
+                  className="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSubmitReferral}
+                  className="btn btn-primary"
+                  disabled={!formPatient || !formHospital || !formDepartment || !formReason || submitting}
+                  style={{
+                    opacity: (!formPatient || !formHospital || !formDepartment || !formReason || submitting) ? 0.5 : 1,
+                    cursor: (!formPatient || !formHospital || !formDepartment || !formReason || submitting) ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  <Package className="w-4 h-4" />
+                  {submitting ? 'Packaging & Sending...' : 'Send Referral with Data Package'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Tabs */}
+          <div className="flex items-center gap-0 mb-4 border-b" style={{ borderColor: 'var(--border-light)' }}>
+            <button
+              onClick={() => setActiveTab('incoming')}
+              className={`px-5 py-3 text-sm font-medium transition-colors relative ${activeTab === 'incoming' ? 'tab-active' : ''}`}
+              style={{ color: activeTab === 'incoming' ? 'var(--taban-blue)' : 'var(--text-muted)' }}
+            >
+              <span className="flex items-center gap-2">
+                Incoming Referrals
+                <span
+                  className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  style={{
+                    background: activeTab === 'incoming' ? 'rgba(43,111,224,0.12)' : 'rgba(100,116,139,0.12)',
+                    color: activeTab === 'incoming' ? 'var(--taban-blue)' : 'var(--text-muted)',
+                  }}
+                >
+                  {incomingReferrals.length}
+                </span>
+              </span>
+            </button>
+            <button
+              onClick={() => setActiveTab('outgoing')}
+              className={`px-5 py-3 text-sm font-medium transition-colors relative ${activeTab === 'outgoing' ? 'tab-active' : ''}`}
+              style={{ color: activeTab === 'outgoing' ? 'var(--taban-blue)' : 'var(--text-muted)' }}
+            >
+              <span className="flex items-center gap-2">
+                Outgoing Referrals
+                <span
+                  className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  style={{
+                    background: activeTab === 'outgoing' ? 'rgba(43,111,224,0.12)' : 'rgba(100,116,139,0.12)',
+                    color: activeTab === 'outgoing' ? 'var(--taban-blue)' : 'var(--text-muted)',
+                  }}
+                >
+                  {outgoingReferrals.length}
+                </span>
+              </span>
+            </button>
+          </div>
+
+          {/* Search */}
+          <div className="card-elevated p-4 mb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+              <input type="search" placeholder="Search referrals by patient, hospital, or department..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 search-icon-input" style={{ background: 'var(--overlay-subtle)' }} />
+            </div>
+          </div>
+
+          {/* Referrals List */}
+          <div className="space-y-3">
+            {filteredReferrals.length === 0 ? (
+              <div className="card-elevated flex flex-col items-center justify-center py-16">
+                <ArrowRightLeft className="w-12 h-12 mb-3" style={{ color: 'var(--border-medium)' }} />
+                <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                  No {activeTab} referrals found
+                </p>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                  {activeTab === 'outgoing' ? 'Create a new referral to get started' : 'Incoming referrals will appear here'}
+                </p>
+              </div>
+            ) : (
+              filteredReferrals.map(ref => {
+                const isExpanded = expandedReferral === ref._id;
+                const tp = ref.transferPackage as TransferPackage | undefined;
+                const refAtts = ref.referralAttachments as Attachment[] | undefined;
+                return (
+                  <div key={ref._id} className="card-elevated overflow-hidden">
+                    {/* Referral row */}
+                    <div className="flex items-center gap-3 p-4">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{ background: 'var(--taban-blue)' }}>
+                        {ref.patientName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-sm font-semibold">{ref.patientName}</span>
+                          <span className="font-mono text-[10px]" style={{ color: 'var(--text-muted)' }}>{ref.patientId}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                          <Building2 className="w-3 h-3" />
+                          {ref.fromHospital} → {ref.toHospital}
+                          <span>&middot;</span>
+                          <span>{ref.department}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className={`badge urgency-${ref.urgency} text-[11px]`}>
+                          {ref.urgency === 'emergency' && <AlertTriangle className="w-3 h-3" />}
+                          {ref.urgency.charAt(0).toUpperCase() + ref.urgency.slice(1)}
+                        </span>
+                        <span className={`badge ${getStatusClass(ref.status)} text-[11px]`}>
+                          {getStatusLabel(ref.status)}
+                        </span>
+                        {tp && (
+                          <span className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full font-medium" style={{ background: 'rgba(43,111,224,0.12)', color: 'var(--taban-blue)', border: '1px solid rgba(43,111,224,0.2)' }}>
+                            <Package className="w-3 h-3" /> Data Package
+                          </span>
+                        )}
+                        <span className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{ref.referralDate}</span>
+                        <button
+                          onClick={() => setExpandedReferral(isExpanded ? null : ref._id)}
+                          className="btn btn-secondary btn-sm"
+                          title="View details"
+                          style={{ padding: '5px 10px' }}
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                        </button>
+                        {activeTab === 'incoming' && (ref.status === 'sent' || ref.status === 'received') && (
+                          <button
+                            className="btn btn-success btn-sm"
+                            title="Accept referral"
+                            style={{ padding: '5px 10px' }}
+                            onClick={async () => {
+                              try {
+                                await updateStatus(ref._id, 'seen');
+                                showToast(`Referral for ${ref.patientName} accepted`, 'success');
+                              } catch {
+                                showToast('Failed to accept referral', 'error');
+                              }
+                            }}
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Accept
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Expanded View: Transfer Package */}
+                    {isExpanded && (
+                      <div className="px-4 pb-4 border-t" style={{ borderColor: 'var(--border-light)' }}>
+                        {tp ? (
+                          <TransferPackageViewer pkg={tp} refAttachments={refAtts} reason={ref.reason} notes={ref.notes} />
+                        ) : (
+                          <div className="mt-4 space-y-3">
+                            <div className="p-3 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+                              <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Reason</p>
+                              <p className="text-sm">{ref.reason}</p>
+                            </div>
+                            <div className="p-3 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+                              <p className="text-xs font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Clinical Notes</p>
+                              <p className="text-sm">{ref.notes || 'None'}</p>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                              <AlertTriangle className="w-3.5 h-3.5" />
+                              No data package available for this referral (created before data packaging was enabled)
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Preview Modal for attachments */}
+          {previewAttachment && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-8"
+              style={{ background: 'rgba(0,0,0,0.75)' }}
+              onClick={() => setPreviewAttachment(null)}
+            >
+              <div
+                className="relative max-w-4xl max-h-[90vh] rounded-xl overflow-hidden"
+                style={{ background: 'var(--bg-card)' }}
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: 'var(--border-light)' }}>
+                  <div className="flex items-center gap-2">
+                    {isImage(previewAttachment.mimeType) ? <ImageIcon className="w-4 h-4" style={{ color: 'var(--taban-blue)' }} /> : <FileText className="w-4 h-4" style={{ color: '#EF4444' }} />}
+                    <span className="text-sm font-medium">{previewAttachment.name}</span>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{formatFileSize(previewAttachment.sizeBytes)}</span>
+                  </div>
+                  <button onClick={() => setPreviewAttachment(null)} className="p-1 rounded" style={{ background: 'var(--overlay-subtle)' }}>
+                    <X className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+                  </button>
+                </div>
+                <div className="p-4 overflow-auto" style={{ maxHeight: 'calc(90vh - 60px)' }}>
+                  {isImage(previewAttachment.mimeType) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={`data:${previewAttachment.mimeType};base64,${previewAttachment.base64Data}`}
+                      alt={previewAttachment.name}
+                      className="max-w-full h-auto rounded"
+                    />
+                  ) : previewAttachment.mimeType === 'application/pdf' ? (
+                    <iframe
+                      src={`data:application/pdf;base64,${previewAttachment.base64Data}`}
+                      className="w-full rounded"
+                      style={{ height: '70vh' }}
+                      title={previewAttachment.name}
+                    />
+                  ) : (
+                    <div className="text-center py-12">
+                      <FileText className="w-16 h-16 mx-auto mb-3" style={{ color: 'var(--text-muted)' }} />
+                      <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Preview not available for this file type</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+      </main>
+    </>
+  );
+}

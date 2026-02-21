@@ -1,0 +1,411 @@
+'use client';
+
+import { useRef, useCallback } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Settings, LogOut, Shield, Globe, Building2, X, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { useApp } from '@/lib/context';
+import { getRoleConfig } from '@/lib/permissions';
+import type { NavItem } from '@/lib/permissions';
+
+function groupBySection(items: NavItem[]): { section: string | null; items: NavItem[] }[] {
+  const groups: { section: string | null; items: NavItem[] }[] = [];
+  let current: { section: string | null; items: NavItem[] } | null = null;
+
+  for (const item of items) {
+    const sec = item.section || null;
+    if (!current || current.section !== sec) {
+      current = { section: sec, items: [item] };
+      groups.push(current);
+    } else {
+      current.items.push(item);
+    }
+  }
+  return groups;
+}
+
+export default function Sidebar() {
+  const pathname = usePathname();
+  const { logout, currentUser, sidebarOpen, setSidebarOpen, sidebarCollapsed, setSidebarCollapsed } = useApp();
+
+  const isSuperAdmin = currentUser?.role === 'super_admin';
+  const isOrgAdmin = currentUser?.role === 'org_admin';
+  const isGovernment = currentUser?.role === 'government';
+  const roleConfig = currentUser ? getRoleConfig(currentUser.role) : null;
+  const navItems = roleConfig?.navItems || [];
+  const groups = groupBySection(navItems);
+  const hasSections = navItems.some(i => i.section);
+
+  const branding = currentUser?.branding;
+  const brandName = isSuperAdmin ? 'TABAN' : (branding?.name || 'TABAN');
+  const brandLogo = branding?.logoUrl;
+
+  const subtitle = isSuperAdmin
+    ? 'Platform Admin'
+    : isOrgAdmin
+    ? 'Organization Admin'
+    : isGovernment
+    ? 'Ministry of Health'
+    : 'Digital Health Records';
+
+  const handleNavClick = () => {
+    setSidebarOpen(false);
+  };
+
+  const collapsed = sidebarCollapsed;
+
+  // Drag-to-collapse/expand
+  const dragRef = useRef<{ startX: number; startWidth: number; dragging: boolean }>({ startX: 0, startWidth: 240, dragging: false });
+  const sidebarRef = useRef<HTMLElement>(null);
+
+  const handleDragStart = useCallback((clientX: number) => {
+    dragRef.current = {
+      startX: clientX,
+      startWidth: collapsed ? 72 : 240,
+      dragging: true,
+    };
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  }, [collapsed]);
+
+  const handleDragMove = useCallback((clientX: number) => {
+    if (!dragRef.current.dragging) return;
+    const delta = clientX - dragRef.current.startX;
+    const newWidth = dragRef.current.startWidth + delta;
+    // Threshold: if dragged below 140px, collapse; above 140px, expand
+    if (sidebarRef.current) {
+      sidebarRef.current.style.transition = 'none';
+      sidebarRef.current.style.width = `${Math.max(56, Math.min(260, newWidth))}px`;
+    }
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    if (!dragRef.current.dragging) return;
+    dragRef.current.dragging = false;
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+    if (sidebarRef.current) {
+      const currentWidth = sidebarRef.current.getBoundingClientRect().width;
+      sidebarRef.current.style.transition = '';
+      if (currentWidth < 140) {
+        setSidebarCollapsed(true);
+        sidebarRef.current.style.width = '';
+      } else {
+        setSidebarCollapsed(false);
+        sidebarRef.current.style.width = '';
+      }
+    }
+  }, [setSidebarCollapsed]);
+
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    handleDragStart(e.clientX);
+    const onMouseMove = (ev: MouseEvent) => handleDragMove(ev.clientX);
+    const onMouseUp = () => {
+      handleDragEnd();
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  }, [handleDragStart, handleDragMove, handleDragEnd]);
+
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    handleDragStart(e.touches[0].clientX);
+    const onTouchMove = (ev: TouchEvent) => handleDragMove(ev.touches[0].clientX);
+    const onTouchEnd = () => {
+      handleDragEnd();
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+    };
+    window.addEventListener('touchmove', onTouchMove);
+    window.addEventListener('touchend', onTouchEnd);
+  }, [handleDragStart, handleDragMove, handleDragEnd]);
+
+  const sidebarContent = (
+    <>
+      {/* Logo */}
+      <div className={`pt-5 pb-3 ${collapsed ? 'px-2' : 'px-5'}`}>
+        <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
+          {brandLogo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={brandLogo} alt={brandName} className="w-9 h-9 rounded-2xl flex-shrink-0 object-contain" />
+          ) : (
+            <div className="w-9 h-9 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-accent" style={{
+              background: 'linear-gradient(135deg, #2B6FE0 0%, #1D5BC2 100%)',
+            }}>
+              <Shield className="w-4.5 h-4.5 text-white" />
+            </div>
+          )}
+          {!collapsed && (
+            <div className="flex-1 min-w-0">
+              <h1 className="font-extrabold text-[15px] leading-tight tracking-wide" style={{ color: 'var(--text-primary)' }}>
+                {brandName.length > 12 ? brandName.slice(0, 12) : brandName}
+              </h1>
+              <p className="text-[9px] uppercase tracking-[0.18em] font-semibold" style={{ color: '#2B6FE0' }}>
+                {subtitle}
+              </p>
+            </div>
+          )}
+          {/* Close button - only on mobile/tablet */}
+          {!collapsed && (
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="lg:hidden p-2 rounded-xl transition-all hover:scale-105"
+              style={{ background: 'var(--overlay-subtle)' }}
+            >
+              <X className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Facility badge */}
+      {currentUser && !collapsed && (
+        <div className="mx-4 mb-3 p-3 rounded-2xl" style={{
+          background: 'var(--overlay-subtle)',
+          border: '1px solid var(--border-glass)',
+        }}>
+          <div className="flex items-center gap-2.5">
+            {(isSuperAdmin || isOrgAdmin || isGovernment) ? (
+              <div className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ background: 'var(--overlay-light)' }}>
+                <Globe className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
+              </div>
+            ) : null}
+            <div style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}>
+              {isSuperAdmin ? (
+                <>
+                  <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Super Admin</p>
+                  <p className="text-[12px] font-semibold" style={{ color: 'var(--text-primary)' }}>All Organizations</p>
+                </>
+              ) : isOrgAdmin ? (
+                <>
+                  <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Organization</p>
+                  <p className="text-[12px] font-semibold" style={{ color: 'var(--text-primary)' }}>{currentUser.organization?.name || 'My Organization'}</p>
+                </>
+              ) : isGovernment ? (
+                <>
+                  <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Government Admin</p>
+                  <p className="text-[12px] font-semibold" style={{ color: 'var(--text-primary)' }}>Republic of South Sudan</p>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Current Facility</p>
+                    <span className="text-[8px] font-bold px-2 py-0.5 rounded-full" style={{
+                      background: 'rgba(43, 111, 224, 0.12)',
+                      color: '#2B6FE0',
+                    }}>{roleConfig?.badgeLabel}</span>
+                  </div>
+                  <p className="text-[12px] font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{currentUser.hospital?.name || currentUser.hospitalName}</p>
+                  <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{currentUser.hospital?.state}</p>
+                </>
+              )}
+            </div>
+          </div>
+          {!isSuperAdmin && !isOrgAdmin && !isGovernment && currentUser.organization && (
+            <div className="flex items-center gap-1.5 mt-2 pt-2" style={{ borderTop: '1px solid var(--border-glass)' }}>
+              <Building2 className="w-3 h-3 flex-shrink-0" style={{ color: '#2B6FE0' }} />
+              <p className="text-[9px] font-medium truncate" style={{ color: 'var(--text-muted)' }}>{currentUser.organization.name}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Navigation */}
+      <nav className={`flex-1 mt-1 overflow-y-auto overflow-x-hidden no-scrollbar ${collapsed ? 'px-2' : 'px-3'}`}>
+        {hasSections ? (
+          groups.map((group, gi) => (
+            <div key={gi} className={gi > 0 ? 'mt-4' : ''}>
+              {group.section && !collapsed && (
+                <p className="px-3 pt-1 pb-2 text-[9px] font-bold uppercase tracking-[0.14em]" style={{ color: 'var(--text-muted)', opacity: 0.7 }}>
+                  {group.section}
+                </p>
+              )}
+              {group.section && collapsed && (
+                <div className="w-6 h-px mx-auto my-2" style={{ background: 'var(--border-glass)' }} />
+              )}
+              <div className="space-y-1">
+                {group.items.map(item => {
+                  const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={handleNavClick}
+                      title={collapsed ? item.label : undefined}
+                      className={`nav-item ${isActive ? 'nav-item-active' : ''} ${collapsed ? 'justify-center !px-0' : ''}`}
+                    >
+                      <item.icon className="w-[17px] h-[17px] flex-shrink-0" style={{ opacity: isActive ? 1 : 0.6 }} />
+                      {!collapsed && <span className="font-medium text-[13px]">{item.label}</span>}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="space-y-1">
+            {navItems.map(item => {
+              const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={handleNavClick}
+                  title={collapsed ? item.label : undefined}
+                  className={`nav-item ${isActive ? 'nav-item-active' : ''} ${collapsed ? 'justify-center !px-0' : ''}`}
+                >
+                  <item.icon className="w-[17px] h-[17px] flex-shrink-0" style={{ opacity: isActive ? 1 : 0.6 }} />
+                  {!collapsed && <span className="font-medium text-[13px]">{item.label}</span>}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </nav>
+
+      {/* Bottom section */}
+      <div className={`pb-2 space-y-1 ${collapsed ? 'px-2' : 'px-3'}`}>
+        {/* Collapse toggle - desktop only */}
+        <button
+          onClick={() => setSidebarCollapsed(!collapsed)}
+          className="hidden lg:flex nav-item w-full text-left items-center"
+          style={{ color: 'var(--nav-text)' }}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {collapsed ? (
+            <ChevronsRight className="w-[17px] h-[17px] mx-auto" />
+          ) : (
+            <>
+              <ChevronsLeft className="w-[17px] h-[17px]" />
+              <span className="text-[13px]">Collapse</span>
+            </>
+          )}
+        </button>
+
+        {roleConfig?.allowedRoutes?.includes('/settings') && (
+          <Link
+            href="/settings"
+            onClick={handleNavClick}
+            title={collapsed ? 'Settings' : undefined}
+            className={`nav-item ${pathname === '/settings' ? 'nav-item-active' : ''} ${collapsed ? 'justify-center !px-0' : ''}`}
+          >
+            <Settings className="w-[17px] h-[17px]" style={{ opacity: pathname === '/settings' ? 1 : 0.6 }} />
+            {!collapsed && <span className="font-medium text-[13px]">Settings</span>}
+          </Link>
+        )}
+
+        <button
+          onClick={() => { setSidebarOpen(false); logout(); }}
+          className={`nav-item w-full text-left ${collapsed ? 'justify-center !px-0' : ''}`}
+          style={{ color: 'var(--nav-text)' }}
+          title={collapsed ? 'Sign Out' : undefined}
+        >
+          <LogOut className="w-[17px] h-[17px]" />
+          {!collapsed && <span className="text-[13px]">Sign Out</span>}
+        </button>
+      </div>
+
+      {/* User profile card */}
+      {currentUser && !collapsed && (
+        <div className="mx-3 mb-3 p-3 rounded-2xl" style={{
+          background: 'var(--overlay-subtle)',
+          border: '1px solid var(--border-glass)',
+        }}>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0" style={{
+              background: 'linear-gradient(135deg, #2B6FE0 0%, #1D5BC2 100%)',
+              boxShadow: '0 2px 8px rgba(43, 111, 224, 0.3)',
+            }}>
+              {(currentUser.name || '').split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2) || '?'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{currentUser.name}</p>
+              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{roleConfig?.badgeLabel || currentUser.role}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Collapsed user avatar */}
+      {currentUser && collapsed && (
+        <div className="flex justify-center mb-3">
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0" style={{
+            background: 'linear-gradient(135deg, #2B6FE0 0%, #1D5BC2 100%)',
+            boxShadow: '0 2px 8px rgba(43, 111, 224, 0.3)',
+          }}
+          title={currentUser.name}
+          >
+            {(currentUser.name || '').split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2) || '?'}
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop sidebar — floating glass panel */}
+      <aside
+        ref={sidebarRef}
+        className="hidden lg:flex fixed left-0 top-0 bottom-0 flex-col z-40 overflow-hidden transition-all duration-300 ease-in-out"
+        style={{
+          width: collapsed ? '72px' : '240px',
+          margin: '12px',
+          marginRight: '0',
+          height: 'calc(100vh - 24px)',
+          background: 'var(--sidebar-bg)',
+          backdropFilter: `blur(var(--sidebar-blur))`,
+          WebkitBackdropFilter: `blur(var(--sidebar-blur))`,
+          borderRadius: '24px',
+          border: '1px solid var(--border-glass)',
+          boxShadow: 'var(--glass-shadow)',
+        }}
+      >
+        {sidebarContent}
+        {/* Drag handle on right edge */}
+        <div
+          onMouseDown={onMouseDown}
+          onTouchStart={onTouchStart}
+          className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize z-50 group"
+          style={{ borderRadius: '0 24px 24px 0' }}
+        >
+          <div
+            className="absolute right-0 top-1/2 -translate-y-1/2 w-[3px] h-10 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+            style={{ background: '#2B6FE0' }}
+          />
+        </div>
+      </aside>
+
+      {/* Mobile/Tablet drawer backdrop */}
+      {sidebarOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-40 backdrop-blur-sm"
+          style={{ background: 'rgba(0, 0, 0, 0.3)' }}
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Mobile/Tablet drawer — always expanded */}
+      <aside
+        className={`lg:hidden fixed left-0 top-0 bottom-0 flex flex-col z-50 overflow-hidden transition-transform duration-300 ease-in-out ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+        style={{
+          width: '280px',
+          margin: '8px',
+          height: 'calc(100vh - 16px)',
+          background: 'var(--sidebar-bg)',
+          backdropFilter: `blur(var(--sidebar-blur))`,
+          WebkitBackdropFilter: `blur(var(--sidebar-blur))`,
+          borderRadius: '24px',
+          border: '1px solid var(--border-glass)',
+          boxShadow: sidebarOpen ? 'var(--card-shadow-xl)' : 'none',
+        }}
+      >
+        {sidebarContent}
+      </aside>
+    </>
+  );
+}

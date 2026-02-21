@@ -1,0 +1,372 @@
+'use client';
+
+import { useState, useMemo } from 'react';
+import TopBar from '@/components/TopBar';
+import { useImmunizations } from '@/lib/hooks/useImmunizations';
+import { useApp } from '@/lib/context';
+import {
+  Syringe, Search, Plus, X, CheckCircle2, Clock, AlertTriangle,
+  XCircle, ChevronDown, ChevronUp, Users
+} from 'lucide-react';
+
+const VACCINES = ['BCG', 'OPV', 'Penta', 'PCV', 'Rota', 'Measles', 'Yellow Fever', 'Vitamin A'];
+const SITES: Array<'left arm' | 'right arm' | 'left thigh' | 'right thigh' | 'oral'> = ['left arm', 'right arm', 'left thigh', 'right thigh', 'oral'];
+
+const statusConfig = {
+  completed: { color: '#2B6FE0', bg: 'rgba(43,111,224,0.12)', icon: CheckCircle2, label: 'Completed' },
+  scheduled: { color: '#2B6FE0', bg: 'rgba(43,111,224,0.12)', icon: Clock, label: 'Scheduled' },
+  overdue: { color: '#E52E42', bg: 'rgba(229,46,66,0.12)', icon: AlertTriangle, label: 'Overdue' },
+  missed: { color: '#94A3B8', bg: 'rgba(100,116,139,0.12)', icon: XCircle, label: 'Missed' },
+};
+
+export default function ImmunizationsPage() {
+  const { currentUser } = useApp();
+  const { immunizations, stats, coverage, loading, register } = useImmunizations();
+  const [search, setSearch] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [expandedChild, setExpandedChild] = useState<string | null>(null);
+
+  // Form state
+  const [form, setForm] = useState({
+    patientId: '', patientName: '', gender: 'Male' as 'Male' | 'Female',
+    dateOfBirth: '', vaccine: 'BCG', doseNumber: 1, dateGiven: new Date().toISOString().slice(0, 10),
+    nextDueDate: '', batchNumber: '', site: 'left arm' as typeof SITES[number],
+    adverseReaction: false, adverseReactionDetails: '',
+  });
+
+  // Group immunizations by child
+  const childGroups = useMemo(() => {
+    const groups = new Map<string, typeof immunizations>();
+    for (const imm of immunizations) {
+      if (!groups.has(imm.patientId)) groups.set(imm.patientId, []);
+      groups.get(imm.patientId)!.push(imm);
+    }
+    return groups;
+  }, [immunizations]);
+
+  const filteredChildren = useMemo(() => {
+    const entries = Array.from(childGroups.entries());
+    if (!search) return entries;
+    const q = search.toLowerCase();
+    return entries.filter(([, records]) =>
+      records[0]?.patientName?.toLowerCase().includes(q)
+    );
+  }, [childGroups, search]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await register({
+      patientId: form.patientId || `child-new-${Date.now()}`,
+      patientName: form.patientName,
+      gender: form.gender,
+      dateOfBirth: form.dateOfBirth,
+      vaccine: form.vaccine,
+      doseNumber: form.doseNumber,
+      dateGiven: form.dateGiven,
+      nextDueDate: form.nextDueDate,
+      facilityId: currentUser?.hospitalId || 'hosp-001',
+      facilityName: currentUser?.hospitalName || 'Juba Teaching Hospital',
+      state: currentUser?.hospital?.state || 'Central Equatoria',
+      administeredBy: currentUser?.name || '',
+      batchNumber: form.batchNumber,
+      site: form.site,
+      adverseReaction: form.adverseReaction,
+      adverseReactionDetails: form.adverseReaction ? form.adverseReactionDetails : undefined,
+      status: 'completed',
+    });
+    setShowModal(false);
+    setForm({ patientId: '', patientName: '', gender: 'Male', dateOfBirth: '', vaccine: 'BCG', doseNumber: 1, dateGiven: new Date().toISOString().slice(0, 10), nextDueDate: '', batchNumber: '', site: 'left arm', adverseReaction: false, adverseReactionDetails: '' });
+  };
+
+  if (loading) {
+    return (
+      <>
+        <TopBar title="Immunizations" />
+        <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-3" style={{ borderColor: '#2B6FE0', borderTopColor: 'transparent' }} />
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading immunization records...</p>
+            </div>
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <TopBar title="Immunizations" />
+      <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <div className="flex items-center gap-3 mb-1">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: '#2B6FE0' }}>
+                <Syringe className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  Immunization Tracker
+                </h1>
+                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  EPI vaccination records & coverage monitoring
+                </p>
+              </div>
+            </div>
+          </div>
+          <button onClick={() => setShowModal(true)} className="btn btn-primary">
+            <Plus className="w-4 h-4" /> Record Vaccination
+          </button>
+        </div>
+
+        {/* Stats Row */}
+        {stats && (
+          <div className="grid grid-cols-4 gap-3 mb-6">
+            {[
+              { label: 'Total Vaccinations', value: stats.totalVaccinations.toString(), color: '#2B6FE0', bg: 'rgba(43,111,224,0.12)', icon: Syringe },
+              { label: 'Children Tracked', value: stats.totalChildren.toString(), color: '#2B6FE0', bg: 'rgba(43,111,224,0.12)', icon: Users },
+              { label: 'Overdue Doses', value: stats.overdue.toString(), color: '#E52E42', bg: 'rgba(229,46,66,0.12)', icon: AlertTriangle },
+              { label: 'Coverage Rate', value: `${stats.coverageRate}%`, color: '#2B6FE0', bg: 'rgba(43,111,224,0.12)', icon: CheckCircle2 },
+            ].map(stat => (
+              <div key={stat.label} className="card-elevated p-5">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>{stat.label}</p>
+                    <p className="text-3xl font-bold stat-value" style={{ color: stat.color }}>{stat.value}</p>
+                  </div>
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: stat.bg }}>
+                    <stat.icon className="w-5 h-5" style={{ color: stat.color }} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Coverage by Antigen */}
+        {coverage && (
+          <div className="card-elevated p-5 mb-6">
+            <h3 className="font-semibold text-sm mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+              <Syringe className="w-4 h-4" style={{ color: '#2B6FE0' }} />
+              Coverage by Antigen
+            </h3>
+            <div className="space-y-3">
+              {coverage.map(c => (
+                <div key={c.vaccine} className="flex items-center gap-3">
+                  <span className="text-xs font-medium w-24 text-right" style={{ color: 'var(--text-secondary)' }}>{c.vaccine}</span>
+                  <div className="flex-1 h-6 rounded-full overflow-hidden" style={{ background: 'var(--overlay-light)' }}>
+                    <div
+                      className="h-full rounded-full flex items-center justify-end pr-2 transition-all duration-700"
+                      style={{
+                        width: `${Math.max(c.percentage, 8)}%`,
+                        background: c.percentage >= 80 ? '#2B6FE0' :
+                                   c.percentage >= 50 ? '#F59E0B' :
+                                   '#E52E42',
+                      }}
+                    >
+                      <span className="text-[10px] font-bold text-white">{c.percentage}%</span>
+                    </div>
+                  </div>
+                  <span className="text-xs w-12 text-right" style={{ color: 'var(--text-muted)' }}>{c.count}/{stats?.totalChildren || 0}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Search */}
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+          <input
+            type="search"
+            className="search-icon-input"
+            placeholder="Search by child name..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
+
+        {/* Vaccine Schedule Table — Grouped by Child */}
+        <div className="card-elevated overflow-hidden">
+          <div className="p-4 border-b flex items-center gap-2" style={{ borderColor: 'var(--border-light)' }}>
+            <Syringe className="w-4 h-4" style={{ color: '#2B6FE0' }} />
+            <h3 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
+              Vaccination Records ({filteredChildren.length} children)
+            </h3>
+          </div>
+
+          {filteredChildren.map(([childId, records]) => {
+            const child = records[0];
+            const isExpanded = expandedChild === childId;
+            const completedCount = records.filter(r => r.status === 'completed').length;
+            const overdueCount = records.filter(r => r.status === 'overdue' || r.status === 'missed').length;
+
+            return (
+              <div key={childId} className="border-b" style={{ borderColor: 'var(--border-light)' }}>
+                <button
+                  onClick={() => setExpandedChild(isExpanded ? null : childId)}
+                  className="w-full flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[var(--table-row-hover)]"
+                >
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                    style={{ background: '#2B6FE0' }}>
+                    {child.patientName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                  </div>
+                  <div className="flex-1 text-left min-w-0">
+                    <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{child.patientName}</p>
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                      {child.gender} · DOB: {child.dateOfBirth} · {child.facilityName}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span className="text-xs px-2 py-1 rounded-full" style={{ background: 'rgba(43,111,224,0.12)', color: '#2B6FE0' }}>
+                      {completedCount} given
+                    </span>
+                    {overdueCount > 0 && (
+                      <span className="text-xs px-2 py-1 rounded-full" style={{ background: 'rgba(229,46,66,0.12)', color: '#E52E42' }}>
+                        {overdueCount} overdue
+                      </span>
+                    )}
+                    {isExpanded ? <ChevronUp className="w-4 h-4" style={{ color: 'var(--text-muted)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />}
+                  </div>
+                </button>
+
+                {isExpanded && (
+                  <div className="px-4 pb-4">
+                    <div className="grid grid-cols-4 gap-2 mt-2">
+                      {VACCINES.map(vac => {
+                        const doses = records.filter(r => r.vaccine === vac);
+                        if (doses.length === 0) return (
+                          <div key={vac} className="p-2 rounded-lg border" style={{ borderColor: 'var(--border-light)', background: 'var(--overlay-subtle)' }}>
+                            <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>{vac}</p>
+                            <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>Not scheduled</p>
+                          </div>
+                        );
+                        return doses.map(dose => {
+                          const cfg = statusConfig[dose.status];
+                          return (
+                            <div key={dose._id} className="p-2 rounded-lg border" style={{ borderColor: 'var(--border-light)', background: cfg.bg }}>
+                              <div className="flex items-center gap-1 mb-1">
+                                <cfg.icon className="w-3 h-3" style={{ color: cfg.color }} />
+                                <p className="text-xs font-medium" style={{ color: cfg.color }}>{dose.vaccine} {dose.doseNumber > 0 ? `#${dose.doseNumber}` : ''}</p>
+                              </div>
+                              <p className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>
+                                {dose.status === 'completed' ? dose.dateGiven : dose.status === 'scheduled' ? `Due: ${dose.nextDueDate}` : cfg.label}
+                              </p>
+                            </div>
+                          );
+                        });
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {filteredChildren.length === 0 && (
+            <div className="p-8 text-center">
+              <Syringe className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--text-muted)', opacity: 0.3 }} />
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No immunization records found</p>
+            </div>
+          )}
+        </div>
+
+        {/* Registration Modal */}
+        {showModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
+            <div className="card-elevated p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto animate-fadeIn" style={{ margin: '20px' }}>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Record Vaccination</h3>
+                <button onClick={() => setShowModal(false)} className="p-1 rounded-lg hover:bg-[var(--overlay-light)]">
+                  <X className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label>Child Name</label>
+                    <input type="text" required value={form.patientName} onChange={e => setForm({ ...form, patientName: e.target.value })} placeholder="Full name" />
+                  </div>
+                  <div>
+                    <label>Gender</label>
+                    <select value={form.gender} onChange={e => setForm({ ...form, gender: e.target.value as 'Male' | 'Female' })}>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label>Date of Birth</label>
+                  <input type="date" required value={form.dateOfBirth} onChange={e => setForm({ ...form, dateOfBirth: e.target.value })} />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label>Vaccine</label>
+                    <select value={form.vaccine} onChange={e => setForm({ ...form, vaccine: e.target.value })}>
+                      {VACCINES.map(v => <option key={v} value={v}>{v}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label>Dose Number</label>
+                    <input type="number" min={0} max={5} value={form.doseNumber} onChange={e => setForm({ ...form, doseNumber: parseInt(e.target.value) })} />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label>Date Given</label>
+                    <input type="date" required value={form.dateGiven} onChange={e => setForm({ ...form, dateGiven: e.target.value })} />
+                  </div>
+                  <div>
+                    <label>Next Due Date</label>
+                    <input type="date" value={form.nextDueDate} onChange={e => setForm({ ...form, nextDueDate: e.target.value })} />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label>Batch Number</label>
+                    <input type="text" value={form.batchNumber} onChange={e => setForm({ ...form, batchNumber: e.target.value })} placeholder="e.g. BCG-2026-001" />
+                  </div>
+                  <div>
+                    <label>Site</label>
+                    <select value={form.site} onChange={e => setForm({ ...form, site: e.target.value as typeof SITES[number] })}>
+                      {SITES.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 cursor-pointer" style={{ textTransform: 'none', fontSize: '0.875rem' }}>
+                    <input type="checkbox" checked={form.adverseReaction} onChange={e => setForm({ ...form, adverseReaction: e.target.checked })} className="w-4 h-4" />
+                    Adverse reaction observed
+                  </label>
+                  {form.adverseReaction && (
+                    <textarea
+                      className="mt-2"
+                      rows={2}
+                      placeholder="Describe the adverse reaction..."
+                      value={form.adverseReactionDetails}
+                      onChange={e => setForm({ ...form, adverseReactionDetails: e.target.value })}
+                    />
+                  )}
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button type="button" onClick={() => setShowModal(false)} className="btn btn-secondary flex-1">Cancel</button>
+                  <button type="submit" className="btn btn-primary flex-1">
+                    <Syringe className="w-4 h-4" /> Record Vaccination
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </main>
+    </>
+  );
+}
