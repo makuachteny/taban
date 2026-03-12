@@ -4,8 +4,8 @@
   "description": "Offline-first hospital record system for South Sudan's public hospital network. Connecting 87 hospitals, serving 11.4 million citizens.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F5F7FA",
-  "theme_color": "#2B6FE0",
+  "background_color": "#0A3D6B",
+  "theme_color": "#0A3D6B",
   "orientation": "any",
   "categories": ["medical", "health", "productivity"],
   "icons": [
@@ -16,10 +16,16 @@
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-192.svg",
+      "src": "/icons/icon-512.svg",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any"
+    },
+    {
+      "src": "/assets/taban-icon.svg",
+      "sizes": "64x64",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
   ],
   "screenshots": [],

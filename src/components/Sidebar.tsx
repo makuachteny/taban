@@ -3,7 +3,7 @@
 import { useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Settings, LogOut, Shield, Globe, Building2, X, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { Settings, LogOut, Globe, Building2, X, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import { useApp } from '@/lib/context';
 import { getRoleConfig } from '@/lib/permissions';
 import type { NavItem } from '@/lib/permissions';
@@ -131,11 +131,10 @@ export default function Sidebar() {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={brandLogo} alt={brandName} className="w-9 h-9 rounded-2xl flex-shrink-0 object-contain" />
           ) : (
-            <div className="w-9 h-9 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-accent" style={{
-              background: 'linear-gradient(135deg, #2B6FE0 0%, #1D5BC2 100%)',
-            }}>
-              <Shield className="w-4.5 h-4.5 text-white" />
-            </div>
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src="/assets/taban-icon.svg" alt={brandName} className="w-9 h-9 rounded-2xl flex-shrink-0 object-contain" style={{
+              boxShadow: '0 2px 8px rgba(10, 61, 107, 0.3)',
+            }} />
           )}
           {!collapsed && (
             <div className="flex-1 min-w-0">

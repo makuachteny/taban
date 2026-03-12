@@ -8,7 +8,8 @@ import {
   Users, AlertTriangle, TrendingUp,
   ChevronRight, Stethoscope,
   Syringe, HeartPulse, Baby, FlaskConical,
-  FileText, UserCheck
+  FileText, UserCheck, Globe, Pill,
+  ArrowUpRight, SendHorizontal,
 } from 'lucide-react';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
@@ -443,27 +444,75 @@ export default function DashboardPage() {
         </div>
 
         {/* ═══ QUICK ACTIONS ═══ */}
-        <div className="mt-6 card-elevated p-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>Quick Actions</p>
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-            {[
-              { label: 'New Patient', icon: Users, href: '/patients/new', color: '#2B6FE0' },
-              { label: 'Consultation', icon: FileText, href: '/consultation', color: '#2B6FE0' },
-              { label: 'Immunization', icon: Syringe, href: '/immunizations', color: '#A855F7' },
-              { label: 'ANC Visit', icon: HeartPulse, href: '/anc', color: '#EC4899' },
-              { label: 'Birth Reg.', icon: Baby, href: '/births', color: '#F59E0B' },
-              { label: 'Lab Results', icon: FlaskConical, href: '/lab', color: '#38BDF8' },
-            ].map(action => (
-              <button
-                key={action.label}
-                onClick={() => router.push(action.href)}
-                className="flex items-center gap-2 p-2.5 rounded-xl transition-all"
-                style={{ background: `${action.color}08`, border: `1px solid ${action.color}15` }}
-              >
-                <action.icon className="w-4 h-4" style={{ color: action.color }} />
-                <span className="text-[11px] font-medium" style={{ color: 'var(--text-primary)' }}>{action.label}</span>
+        <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+          {/* Quick Actions */}
+          <div className="lg:col-span-2 card-elevated p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>Quick Actions</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {[
+                { label: 'New Patient', icon: Users, href: '/patients/new', color: '#2B6FE0' },
+                { label: 'Consultation', icon: FileText, href: '/consultation', color: '#2B6FE0' },
+                { label: 'Immunization', icon: Syringe, href: '/immunizations', color: '#A855F7' },
+                { label: 'ANC Visit', icon: HeartPulse, href: '/anc', color: '#EC4899' },
+                { label: 'Birth Reg.', icon: Baby, href: '/births', color: '#F59E0B' },
+                { label: 'Lab Results', icon: FlaskConical, href: '/lab', color: '#38BDF8' },
+                { label: 'Pharmacy', icon: Pill, href: '/pharmacy', color: '#10B944' },
+                { label: 'Referral', icon: SendHorizontal, href: '/referrals', color: '#0D9488' },
+              ].map(action => (
+                <button
+                  key={action.label}
+                  onClick={() => router.push(action.href)}
+                  className="flex items-center gap-2 p-2.5 rounded-xl transition-all hover:shadow-sm"
+                  style={{ background: `${action.color}08`, border: `1px solid ${action.color}15` }}
+                >
+                  <action.icon className="w-4 h-4" style={{ color: action.color }} />
+                  <span className="text-[11px] font-medium" style={{ color: 'var(--text-primary)' }}>{action.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* DHIS2 Status Mini Card */}
+          <div className="card-elevated p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Globe className="w-4 h-4" style={{ color: '#2B6FE0' }} />
+                <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>DHIS2 Status</p>
+              </div>
+              <button onClick={() => router.push('/dhis2-export')} className="text-[10px] font-medium flex items-center gap-0.5" style={{ color: '#2B6FE0' }}>
+                Open <ArrowUpRight className="w-3 h-3" />
               </button>
-            ))}
+            </div>
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Connection</span>
+                <span className="flex items-center gap-1 text-[10px] font-bold" style={{ color: '#10B944' }}>
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#10B944' }} />
+                  Active
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Data Sync</span>
+                <span className="text-xs font-bold" style={{ color: '#2B6FE0' }}>8/10 Elements</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Last Sync</span>
+                <span className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>08:00 Today</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Reports Pending</span>
+                <span className="text-xs font-bold" style={{ color: '#F59E0B' }}>3</span>
+              </div>
+            </div>
+            <div className="mt-3 p-2 rounded-lg text-center" style={{
+              background: 'rgba(43,111,224,0.06)',
+              border: '1px solid rgba(43,111,224,0.1)',
+            }}>
+              <span className="text-[9px] font-medium" style={{ color: 'var(--text-muted)' }}>
+                hmis.southsudan.health
+              </span>
+            </div>
           </div>
         </div>
       </main>

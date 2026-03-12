@@ -33,7 +33,8 @@ export default function RootLayout({
   return (
     <html lang="en" data-theme="light" suppressHydrationWarning>
       <head>
-        <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
+        <link rel="icon" type="image/svg+xml" href="/assets/taban-icon.svg" />
+        <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.svg" />
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className="antialiased">

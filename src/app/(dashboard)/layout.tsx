@@ -28,13 +28,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return (
       <div className="flex items-center justify-center min-h-screen gradient-mesh-bg">
         <div className="flex flex-col items-center gap-4 relative z-10">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{
-            background: 'linear-gradient(135deg, #2B6FE0, #1D5BC2)',
-            boxShadow: '0 4px 16px rgba(43, 111, 224, 0.3)',
-          }}>
-            <Loader2 className="w-6 h-6 animate-spin text-white" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/assets/taban-logo.svg" alt="TABAN" className="w-14 h-14" style={{
+            filter: 'drop-shadow(0 4px 12px rgba(10, 61, 107, 0.3))',
+          }} />
+          <div className="flex items-center gap-2">
+            <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#2B6FE0' }} />
+            <p className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>Loading Taban...</p>
           </div>
-          <p className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>Loading Taban...</p>
         </div>
       </div>
     );

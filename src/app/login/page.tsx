@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Shield, Eye, EyeOff, Building2, Users, Wifi, ArrowRight, ChevronRight } from 'lucide-react';
+import { Eye, EyeOff, Building2, Users, Wifi, ArrowRight, ChevronRight } from 'lucide-react';
 import { hospitals } from '@/data/mock';
 import { useApp } from '@/lib/context';
 import { getDefaultDashboard } from '@/lib/permissions';
@@ -133,20 +133,27 @@ export default function LoginPage() {
       {/* ═══ Centered login form ═══ */}
       <div className="flex flex-col items-center justify-center px-6 py-10 relative">
 
-        {/* Mobile logo (shown on small screens) */}
-        <div className="lg:hidden text-center mb-8">
+        {/* Logo (shown on all screens) */}
+        <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-3">
-            <div className="w-11 h-11 rounded-2xl flex items-center justify-center" style={{
-              background: BLUE,
-              boxShadow: '0 4px 20px rgba(43,111,224,0.35)',
-            }}>
-              <Shield className="w-5 h-5 text-white" />
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/assets/taban-logo.svg" alt="TABAN" className="w-16 h-16" style={{
+              filter: 'drop-shadow(0 4px 12px rgba(10, 61, 107, 0.3))',
+            }} />
           </div>
-          <h1 className="text-[20px] font-extrabold tracking-[0.15em]" style={{ color: '#1e293b' }}>TABAN</h1>
+          <h1 className="text-[22px] font-extrabold tracking-[0.15em]" style={{ color: '#1e293b' }}>TABAN</h1>
           <p className="text-[9px] font-medium tracking-[0.25em] uppercase mt-1" style={{ color: '#94a3b8' }}>
-            Digital Health Records
+            Republic of South Sudan · Digital Health Records
           </p>
+          {/* South Sudan flag stripe */}
+          <div className="flex items-center justify-center gap-0 mt-3">
+            <div className="h-[3px] w-8 rounded-l-full" style={{ background: '#111' }} />
+            <div className="h-[3px] w-8" style={{ background: '#E52E42' }} />
+            <div className="h-[3px] w-4" style={{ background: '#fff', border: '0.5px solid #e2e8f0' }} />
+            <div className="h-[3px] w-8" style={{ background: '#10B944' }} />
+            <div className="h-[3px] w-4" style={{ background: '#0F4C81' }} />
+            <div className="h-[3px] w-2 rounded-r-full" style={{ background: '#FCD34D' }} />
+          </div>
         </div>
 
         {/* Form card */}
@@ -350,23 +357,24 @@ export default function LoginPage() {
               ))}
             </div>
             <div className="flex items-center justify-center gap-3 mb-3">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center overflow-hidden" style={{
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden" style={{
                 background: '#f1f5f9',
                 border: '1px solid #e2e8f0',
               }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/assets/ssrp.svg" alt="South Sudan" className="w-4 h-4 object-contain" />
+                <img src="/assets/ssrp.svg" alt="South Sudan" className="w-5 h-5 object-contain" />
               </div>
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center overflow-hidden" style={{
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden" style={{
                 background: '#f1f5f9',
                 border: '1px solid #e2e8f0',
               }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/assets/moh.jpg" alt="Ministry of Health" className="w-4 h-4 object-contain rounded-sm" />
+                <img src="/assets/moh.jpg" alt="Ministry of Health" className="w-5 h-5 object-contain rounded-sm" />
               </div>
               <div className="w-px h-5" style={{ background: '#e2e8f0' }} />
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: BLUE }}>
-                <Shield className="w-3.5 h-3.5 text-white" />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/assets/taban-icon.svg" alt="TABAN" className="w-8 h-8" />
               </div>
             </div>
             <p className="text-[9px]" style={{ color: '#94a3b8' }}>
