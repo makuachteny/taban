@@ -177,7 +177,7 @@ export default function LandingPage() {
           <div className="tb-container tb-hero__layout">
             <div className="tb-hero__content">
               <h1 className="tb-hero__title">
-                The EHR built for where <span className="tb-hero__title--gradient">nothing else works.</span>
+                The EHR built by people, for people,<br /><span className="tb-hero__title--gradient">with people.</span>
               </h1>
               <p className="tb-hero__subtitle">
                 67% of South Sudan&apos;s health facilities report zero data. Taban is the offline-first
@@ -249,7 +249,7 @@ export default function LandingPage() {
             <SectionIn>
               <div className="tb-section-header">
                 <span className="tb-eyebrow">The Challenge</span>
-                <h2 className="tb-heading">A health system without data<br />is a health system without hope</h2>
+                <h2 className="tb-heading">A health system <em>without</em> data,<br />is a health system <em>without</em> hope.</h2>
                 <p className="tb-lead">
                   South Sudan faces compounding barriers that make conventional EHR systems impossible.
                   Taban was designed from the ground up to solve every one of them.
@@ -281,7 +281,7 @@ export default function LandingPage() {
             <SectionIn>
               <div className="tb-section-header">
                 <span className="tb-eyebrow">Platform</span>
-                <h2 className="tb-heading">Everything you need.<br />Nothing you don&apos;t.</h2>
+                <h2 className="tb-heading"><em>Everything</em> you need.<br />Nothing you don&apos;t.</h2>
               </div>
             </SectionIn>
             <div className="tb-features__layout">
@@ -341,7 +341,7 @@ export default function LandingPage() {
             <SectionIn>
               <div className="tb-section-header">
                 <span className="tb-eyebrow">Implementation</span>
-                <h2 className="tb-heading">From zero to live in 30 days</h2>
+                <h2 className="tb-heading">From zero to <em>live</em> in 30 days</h2>
                 <p className="tb-lead">Our battle-tested deployment process gets your facilities running fast.</p>
               </div>
             </SectionIn>
@@ -374,7 +374,7 @@ export default function LandingPage() {
             <SectionIn>
               <div className="tb-section-header">
                 <span className="tb-eyebrow">Solutions</span>
-                <h2 className="tb-heading">Purpose-built for every stakeholder</h2>
+                <h2 className="tb-heading">Purpose-built for <em>every</em> stakeholder</h2>
               </div>
             </SectionIn>
             <div className="tb-solutions__grid">
@@ -413,7 +413,7 @@ export default function LandingPage() {
             <SectionIn>
               <div className="tb-section-header">
                 <span className="tb-eyebrow">Why Taban</span>
-                <h2 className="tb-heading">Every challenge. Addressed.</h2>
+                <h2 className="tb-heading">Every challenge. <em>Addressed.</em></h2>
                 <p className="tb-lead">We studied what makes EHR deployments fail in fragile states and engineered solutions for each one.</p>
               </div>
             </SectionIn>
@@ -439,7 +439,7 @@ export default function LandingPage() {
             <SectionIn>
               <div className="tb-section-header">
                 <span className="tb-eyebrow">Pricing</span>
-                <h2 className="tb-heading">Transparent pricing. No surprises.</h2>
+                <h2 className="tb-heading">Transparent pricing. <em>No surprises.</em></h2>
                 <p className="tb-lead">Offline-first architecture means dramatically lower infrastructure costs than any competitor.</p>
               </div>
             </SectionIn>
@@ -481,7 +481,7 @@ export default function LandingPage() {
           <div className="tb-container" style={{ textAlign: "center", maxWidth: 640 }}>
             <SectionIn>
               <span className="tb-eyebrow tb-eyebrow--light">Get Started</span>
-              <h2 className="tb-heading tb-heading--light">See Taban in action</h2>
+              <h2 className="tb-heading tb-heading--light">See Taban <em>in action</em></h2>
               <p style={{ fontSize: 17, lineHeight: 1.7, color: "rgba(255,255,255,0.55)", marginBottom: 20 }}>
                 Schedule a 30-minute personalized walkthrough. See all 11 dashboards, offline-first capabilities,
                 and how Taban transforms healthcare delivery at your facility.
@@ -591,7 +591,7 @@ export default function LandingPage() {
         <section className="tb-cta">
           <div className="tb-container tb-cta__inner">
             <SectionIn>
-              <h2 className="tb-cta__title">67% of facilities report nothing today.<br />Let&apos;s change that.</h2>
+              <h2 className="tb-cta__title">67% of facilities report nothing today.<br /><em>Let&apos;s change that.</em></h2>
               <p className="tb-cta__desc">Join the movement to bring data-driven healthcare to 11.4 million South Sudanese.</p>
               <div className="tb-cta__buttons">
                 <button className="tb-btn tb-btn--cta" onClick={() => setShowDemoModal(true)}>
@@ -800,7 +800,7 @@ const FAQS = [
 // ═══════════════════════════════════════════════════════════════════
 
 const globalCSS = `
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap');
 
 :root {
   --blue: #0077D7;
@@ -835,6 +835,7 @@ const globalCSS = `
   --shadow-xl: 0 16px 48px rgba(0,0,0,0.1);
 
   --font-display: 'Space Grotesk', 'DM Sans', Helvetica, Arial, sans-serif;
+  --font-serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
   --font-body: 'Inter', 'DM Sans', Helvetica, Arial, sans-serif;
   --font-accent: 'DM Sans', 'Inter', Helvetica, Arial, sans-serif;
 }
@@ -865,22 +866,27 @@ a { color: inherit; text-decoration: none; }
 }
 .tb-reveal--visible { opacity: 1; transform: translateY(0); }
 
-/* ── Section Headers — ModMed: lightweight display headings ── */
-.tb-section-header { text-align: center; max-width: 720px; margin: 0 auto 56px; }
+/* ── Section Headers ── */
+.tb-section-header { text-align: center; max-width: 780px; margin: 0 auto 60px; }
 .tb-eyebrow {
   display: inline-flex; align-items: center; gap: 6px;
-  font-family: var(--font-accent); font-size: 13px; font-weight: 700;
-  letter-spacing: 1.5px; text-transform: uppercase; color: var(--blue);
-  margin-bottom: 16px;
+  font-family: var(--font-accent); font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--blue);
+  margin-bottom: 18px;
 }
 .tb-eyebrow--light { color: rgba(255,255,255,0.5); }
 .tb-heading {
-  font-family: var(--font-display); font-size: clamp(30px, 4.6vw, 54px);
-  font-weight: 500; line-height: 1.08; color: var(--text);
-  letter-spacing: -0.01em; margin-bottom: 20px;
+  font-family: var(--font-display); font-size: clamp(32px, 5vw, 58px);
+  font-weight: 700; line-height: 1.08; color: var(--text);
+  letter-spacing: -0.025em; margin-bottom: 22px;
+}
+.tb-heading em {
+  font-style: normal; font-weight: 700;
+  color: var(--blue);
 }
 .tb-heading--light { color: #fff; }
-.tb-lead { font-size: 18px; line-height: 1.75; color: var(--text-secondary); max-width: 680px; margin: 0 auto; font-weight: 400; }
+.tb-heading--light em { color: rgba(255,255,255,0.6); }
+.tb-lead { font-size: 17px; line-height: 1.8; color: var(--text-secondary); max-width: 640px; margin: 0 auto; font-weight: 400; }
 .tb-check { color: var(--green); flex-shrink: 0; }
 
 /* ── Buttons — ModMed style: sharp, clean, 2px radius ── */
@@ -993,7 +999,7 @@ a { color: inherit; text-decoration: none; }
   animation: heroFade 0.8s ease 0.1s both;
 }
 .tb-hero__title--gradient {
-  color: rgba(255,255,255,0.85);
+  color: rgba(255,255,255,0.6);
   font-weight: 400;
 }
 .tb-hero__subtitle {
@@ -1093,7 +1099,7 @@ a { color: inherit; text-decoration: none; }
 
 /* ── Social Proof Ticker ── */
 .tb-ticker {
-  padding: 64px 0; background: var(--bg);
+  padding: 72px 0; background: var(--bg);
   border-bottom: 1px solid var(--border);
   box-shadow: 0 2px 8px rgba(0,0,0,0.03);
 }
@@ -1109,7 +1115,7 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 600px) { .tb-ticker__grid { grid-template-columns: repeat(2, 1fr); gap: 24px; } }
 
 /* ── Problem ── */
-.tb-problem { padding: 100px 0; background: var(--bg-subtle); }
+.tb-problem { padding: 112px 0; background: var(--bg-subtle); }
 .tb-problem__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
 .tb-stat-card {
   background: #fff; border-radius: var(--radius-lg); padding: 28px 24px;
@@ -1133,7 +1139,7 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 500px) { .tb-problem__grid { grid-template-columns: 1fr; } }
 
 /* ── Features ── */
-.tb-features { padding: 100px 0; background: var(--bg); }
+.tb-features { padding: 112px 0; background: var(--bg); }
 .tb-features__layout { display: grid; grid-template-columns: 240px 1fr; gap: 32px; margin-top: 0; }
 .tb-features__tabs { display: flex; flex-direction: column; gap: 2px; }
 .tb-features__tab {
@@ -1204,7 +1210,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ── How It Works ── */
-.tb-how { padding: 100px 0; background: var(--bg-subtle); }
+.tb-how { padding: 112px 0; background: var(--bg-subtle); }
 .tb-how__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; margin-top: 0; }
 .tb-how__step { display: flex; flex-direction: column; align-items: center; text-align: center; }
 .tb-how__step-connector { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; position: relative; }
@@ -1237,7 +1243,7 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 500px) { .tb-how__grid { grid-template-columns: 1fr; } }
 
 /* ── Solutions ── */
-.tb-solutions { padding: 100px 0; background: var(--bg); }
+.tb-solutions { padding: 112px 0; background: var(--bg); }
 .tb-solutions__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 0; }
 .tb-solutions__card {
   background: #fff; border-radius: var(--radius-lg); overflow: hidden;
@@ -1266,7 +1272,7 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 900px) { .tb-solutions__grid { grid-template-columns: 1fr; max-width: 480px; margin: 0 auto; } }
 
 /* ── Challenges ── */
-.tb-challenges { padding: 100px 0; background: var(--bg-subtle); }
+.tb-challenges { padding: 112px 0; background: var(--bg-subtle); }
 .tb-challenges__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 0; }
 .tb-challenges__card {
   background: var(--bg); border-radius: var(--radius-lg); padding: 28px;
@@ -1285,7 +1291,7 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 500px) { .tb-challenges__grid { grid-template-columns: 1fr; } }
 
 /* ── Pricing ── */
-.tb-pricing { padding: 100px 0; background: var(--bg); }
+.tb-pricing { padding: 112px 0; background: var(--bg); }
 .tb-pricing__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 0; align-items: start; }
 .tb-pricing__card {
   background: #fff; border-radius: var(--radius-lg); padding: 36px;
@@ -1376,7 +1382,7 @@ textarea.tb-field__input { resize: vertical; }
 @media (max-width: 800px) { .tb-demo__layout { grid-template-columns: 1fr; } }
 
 /* ── FAQ ── */
-.tb-faq { padding: 80px 0; background: var(--bg-subtle); }
+.tb-faq { padding: 96px 0; background: var(--bg-subtle); }
 .tb-faq__list { max-width: 720px; margin: 0 auto; }
 .tb-faq__item { border-bottom: 1px solid var(--border); }
 .tb-faq__question {
@@ -1401,8 +1407,11 @@ textarea.tb-field__input { resize: vertical; }
 }
 .tb-cta__title {
   font-family: var(--font-display); font-size: clamp(28px, 3.8vw, 42px);
-  font-weight: 400; line-height: 1.2; color: #fff; margin-bottom: 16px;
-  letter-spacing: -0.01em;
+  font-weight: 700; line-height: 1.2; color: #fff; margin-bottom: 16px;
+  letter-spacing: -0.02em;
+}
+.tb-cta__title em {
+  font-style: normal; font-weight: 400; color: rgba(255,255,255,0.6);
 }
 .tb-cta__desc { font-size: 17px; color: rgba(255,255,255,0.7); margin-bottom: 36px; }
 .tb-cta__buttons { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }

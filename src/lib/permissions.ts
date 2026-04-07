@@ -318,6 +318,32 @@ export const ROLE_PERMISSIONS: Record<UserRole, RoleConfig> = {
     gradientTo: '#2B6FE0',
     badgeLabel: 'Super Admin',
   },
+
+  data_entry_clerk: {
+    label: 'Data Entry Clerk',
+    defaultDashboard: '/dashboard/data-entry',
+    allowedRoutes: [
+      '/dashboard/data-entry', '/patients', '/facility-assessments',
+      '/data-quality', '/immunizations', '/anc', '/births', '/deaths',
+      '/messages', '/settings', '/my-facility',
+    ],
+    navItems: [
+      { href: '/dashboard/data-entry', label: 'Data Entry', icon: LayoutDashboard, section: 'DATA COLLECTION' },
+      { href: '/patients', label: 'Patient Registry', icon: Users, section: 'DATA COLLECTION' },
+      { href: '/facility-assessments', label: 'Facility Checks', icon: ClipboardCheck, section: 'DATA COLLECTION' },
+      { href: '/immunizations', label: 'Immunizations', icon: Syringe, section: 'VITAL EVENTS' },
+      { href: '/anc', label: 'Antenatal Care', icon: HeartPulse, section: 'VITAL EVENTS' },
+      { href: '/births', label: 'Births', icon: Baby, section: 'VITAL EVENTS' },
+      { href: '/deaths', label: 'Deaths', icon: Skull, section: 'VITAL EVENTS' },
+      { href: '/data-quality', label: 'Data Quality', icon: Database, section: 'MONITORING' },
+      { href: '/messages', label: 'Messages', icon: MessageSquare, section: 'MORE' },
+      { href: '/my-facility', label: 'My Facility', icon: Building2, section: 'MORE' },
+    ],
+    color: '#0891B2',
+    gradientFrom: '#0E7490',
+    gradientTo: '#0891B2',
+    badgeLabel: 'Data Entry',
+  },
 };
 
 export function getRoleConfig(role: UserRole): RoleConfig {
@@ -335,8 +361,8 @@ export function getDefaultDashboard(role: UserRole): string {
   return getRoleConfig(role).defaultDashboard;
 }
 
-const PRIVATE_SECTOR_ROLES: UserRole[] = ['org_admin', 'doctor', 'clinical_officer', 'nurse', 'lab_tech', 'pharmacist', 'front_desk'];
-const ALL_ROLES: UserRole[] = ['super_admin', 'org_admin', 'doctor', 'clinical_officer', 'nurse', 'lab_tech', 'pharmacist', 'front_desk', 'government', 'boma_health_worker', 'payam_supervisor'];
+const PRIVATE_SECTOR_ROLES: UserRole[] = ['org_admin', 'doctor', 'clinical_officer', 'nurse', 'lab_tech', 'pharmacist', 'front_desk', 'data_entry_clerk'];
+const ALL_ROLES: UserRole[] = ['super_admin', 'org_admin', 'doctor', 'clinical_officer', 'nurse', 'lab_tech', 'pharmacist', 'front_desk', 'government', 'boma_health_worker', 'payam_supervisor', 'data_entry_clerk'];
 
 export function getAvailableRoles(orgType: 'public' | 'private', isSuperAdmin = false): UserRole[] {
   if (isSuperAdmin) return ALL_ROLES;

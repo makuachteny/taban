@@ -174,6 +174,7 @@ export default function OrgUsersPage() {
       government: 'Government',
       boma_health_worker: 'BHW',
       payam_supervisor: 'Payam Supervisor',
+      data_entry_clerk: 'Data Entry Clerk',
     };
     return map[role] || role;
   };
@@ -191,6 +192,7 @@ export default function OrgUsersPage() {
       government: '#0077D7',
       boma_health_worker: '#059669',
       payam_supervisor: '#D97706',
+      data_entry_clerk: '#0891B2',
     };
     return map[role] || '#6B7280';
   };

@@ -79,6 +79,7 @@ const defaultUsers = [
   { username: 'desk.amira', password: 'Desk.Amira@JTH2026', name: 'Amira Juma Hassan', role: 'front_desk' as const, hospitalId: 'hosp-001', hospitalName: 'Juba Teaching Hospital', orgId: PUBLIC_ORG_ID },
   { username: 'bhw.akol', password: 'BHW.Akol@KJ2026', name: 'Akol Deng Mading', role: 'boma_health_worker' as const, hospitalId: 'phcu-001', hospitalName: 'Kajo-keji Boma PHCU', orgId: PUBLIC_ORG_ID },
   { username: 'sup.mary', password: 'Sup.Mary@KJ2026', name: 'Mary Lado Kenyi', role: 'payam_supervisor' as const, hospitalId: 'phcc-001', hospitalName: 'Kajo-keji PHCC', orgId: PUBLIC_ORG_ID },
+  { username: 'data.ayen', password: 'Data.Ayen@JTH2026', name: 'Ayen Dut Malual', role: 'data_entry_clerk' as const, hospitalId: 'hosp-001', hospitalName: 'Juba Teaching Hospital', orgId: PUBLIC_ORG_ID },
   // Private org admin (Mercy Hospital Group)
   { username: 'org.admin', password: 'OrgAdmin@Mercy2026', name: 'Mercy Org Administrator', role: 'org_admin' as const, hospitalId: undefined, hospitalName: undefined, orgId: PRIVATE_ORG_ID },
   { username: 'dr.mercy', password: 'Dr.Mercy@2026!', name: 'Dr. Grace Lado', role: 'doctor' as const, hospitalId: 'hosp-001', hospitalName: 'Juba Teaching Hospital', orgId: PRIVATE_ORG_ID },

@@ -1754,7 +1754,50 @@ function generatePatient(index: number): Patient {
   };
 }
 
-export const patients: Patient[] = Array.from({ length: 50 }, (_, i) => generatePatient(i));
+const _generatedPatients: Patient[] = Array.from({ length: 50 }, (_, i) => generatePatient(i));
+
+// Override first 3 patients with deterministic data for Patient Portal demo login
+_generatedPatients[0] = {
+  ..._generatedPatients[0],
+  firstName: 'Deng',
+  middleName: 'Mabior',
+  surname: 'Garang',
+  phone: '0912345678',
+  gender: 'Male',
+  dateOfBirth: '1988-03-15',
+  bloodType: 'O+',
+  allergies: ['Penicillin'],
+  chronicConditions: ['Hypertension'],
+  registrationHospital: 'hosp-001',
+};
+_generatedPatients[1] = {
+  ..._generatedPatients[1],
+  firstName: 'Nyabol',
+  middleName: 'Gatdet',
+  surname: 'Koang',
+  phone: '0916111222',
+  gender: 'Female',
+  dateOfBirth: '1995-07-22',
+  bloodType: 'A+',
+  allergies: ['None known'],
+  chronicConditions: ['None'],
+  registrationHospital: 'hosp-001',
+};
+_generatedPatients[2] = {
+  ..._generatedPatients[2],
+  firstName: 'Achol',
+  middleName: 'Mayen',
+  surname: 'Deng',
+  phone: '0921333444',
+  gender: 'Female',
+  dateOfBirth: '2001-11-05',
+  bloodType: 'B+',
+  allergies: ['None known'],
+  chronicConditions: ['Asthma'],
+  registrationHospital: 'hosp-001',
+};
+
+export const patients: Patient[] = _generatedPatients;
 
 // File attachments
 export interface Attachment {

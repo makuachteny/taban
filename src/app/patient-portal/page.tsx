@@ -24,18 +24,25 @@ function PatientLogin({ onLogin }: { onLogin: (patient: PatientDoc) => void }) {
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [dbReady, setDbReady] = useState(false);
+
   useEffect(() => {
     (async () => {
       try {
-        const { patientsDB } = await import('@/lib/db');
-        const db = patientsDB();
-        await db.info();
-      } catch { /* db not ready yet */ }
+        const { isSeeded } = await import('@/lib/db');
+        const seeded = await isSeeded();
+        if (!seeded) {
+          const { seedDatabase } = await import('@/lib/db-seed');
+          await seedDatabase();
+        }
+        setDbReady(true);
+      } catch { setDbReady(false); }
     })();
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!dbReady) { setError('Database is still loading. Please wait a moment and try again.'); return; }
     setError(''); setLoading(true);
     try {
       const { getAllPatients } = await import('@/lib/services/patient-service');
@@ -98,6 +105,12 @@ function PatientLogin({ onLogin }: { onLogin: (patient: PatientDoc) => void }) {
             <button onClick={() => { setMode('lookup'); setError(''); }} className={`pp-toggle__btn ${mode === 'lookup' ? 'pp-toggle__btn--active' : ''}`}>Name Lookup</button>
           </div>
 
+          {!dbReady && (
+            <div style={{ padding: '10px 14px', borderRadius: 4, background: 'var(--accent-light)', border: '1px solid var(--accent-border)', marginBottom: 16, textAlign: 'center' }}>
+              <p style={{ fontSize: 12, color: 'var(--accent-primary)', fontWeight: 600 }}>Initializing database...</p>
+            </div>
+          )}
+
           <form onSubmit={handleLogin}>
             {mode === 'login' ? (
               <>
@@ -144,15 +157,26 @@ function PatientLogin({ onLogin }: { onLogin: (patient: PatientDoc) => void }) {
           </form>
 
           <div className="pp-notice">
-            <Shield size={14} style={{ color: '#0077D7', flexShrink: 0, marginTop: 2 }} />
+            <Shield size={14} style={{ color: 'var(--accent-primary)', flexShrink: 0, marginTop: 2 }} />
             <span>Your data is encrypted and stored locally on this device. We never share your information without consent.</span>
           </div>
 
-          {/* Demo hint */}
-          <div style={{ marginTop: 14, textAlign: 'center' }}>
-            <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-              Demo: Try hospital number <strong>JTH-000001</strong> with any phone number from the patient registry.
-            </p>
+          {/* Demo accounts */}
+          <div style={{ marginTop: 16 }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Demo Accounts</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {[
+                { id: 'JTH-000001', phone: '0912345678', name: 'Deng Mabior Garang' },
+                { id: 'JTH-000002', phone: '0916111222', name: 'Nyabol Gatdet Koang' },
+                { id: 'JTH-000003', phone: '0921333444', name: 'Achol Mayen Deng' },
+              ].map(demo => (
+                <button key={demo.id} type="button" onClick={() => { setMode('login'); setHospitalNumber(demo.id); setPhoneNumber(demo.phone); setError(''); }}
+                  className="pp-demo-btn">
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>{demo.name}</span>
+                  <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{demo.id} &middot; {demo.phone}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -662,4 +686,11 @@ const patientPortalCSS = `
   display: flex; gap: 8px; align-items: flex-start;
   font-size: 12px; color: var(--text-secondary); line-height: 1.5;
 }
+.pp-demo-btn {
+  display: flex; flex-direction: column; gap: 2px; padding: 10px 14px;
+  background: var(--bg-card-solid); border: 1px solid var(--border-medium);
+  border-radius: 4px; cursor: pointer; text-align: left; width: 100%;
+  transition: all 0.15s ease;
+}
+.pp-demo-btn:hover { border-color: var(--accent-primary); background: var(--accent-light); }
 `;

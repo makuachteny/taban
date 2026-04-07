@@ -22,6 +22,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
   government: 'Government',
   boma_health_worker: 'Boma Health Worker',
   payam_supervisor: 'Payam Supervisor',
+  data_entry_clerk: 'Data Entry Clerk',
 };
 
 const ROLE_COLORS: Record<string, string> = {
@@ -36,6 +37,7 @@ const ROLE_COLORS: Record<string, string> = {
   government: '#10B981',
   boma_health_worker: '#F97316',
   payam_supervisor: '#8B5CF6',
+  data_entry_clerk: '#0891B2',
 };
 
 export default function AdminUsersPage() {

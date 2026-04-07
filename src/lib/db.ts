@@ -55,7 +55,7 @@ export const appointmentsDB = () => getDB('taban_appointments');
 export const telehealthDB = () => getDB('taban_telehealth');
 
 // Bump this version to force a re-seed (destroys all data and re-creates)
-export const SEED_VERSION = 15;
+export const SEED_VERSION = 17;
 
 export async function isSeeded(): Promise<boolean> {
   try {

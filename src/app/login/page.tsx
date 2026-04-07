@@ -106,6 +106,7 @@ export default function LoginPage() {
     { role: 'Doctor (Private)', user: 'dr.mercy', pass: 'Dr.Mercy@2026!', desc: 'Mercy Org · Juba Teaching', color: '#4F46E5', hospital: 'hosp-001' },
     { role: 'Payam Supervisor', user: 'sup.mary', pass: 'Sup.Mary@KJ2026', desc: 'Kajo-keji PHCC', color: '#D97706', hospital: 'phcc-001' },
     { role: 'Boma Health Worker', user: 'bhw.akol', pass: 'BHW.Akol@KJ2026', desc: 'Kajo-keji Boma PHCU', color: '#059669', hospital: 'phcu-001' },
+    { role: 'Data Entry Clerk', user: 'data.ayen', pass: 'Data.Ayen@JTH2026', desc: 'Juba Teaching Hospital', color: '#0891B2', hospital: 'hosp-001' },
   ];
 
   const inputLabelStyle: React.CSSProperties = {

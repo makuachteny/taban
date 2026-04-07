@@ -59,6 +59,10 @@ const ROLE_ROUTES: Record<string, { allowed: string[]; defaultDashboard: string 
     allowed: ['/government', '/hospitals', '/vital-statistics', '/immunizations', '/anc', '/births', '/deaths', '/facility-assessments', '/data-quality', '/surveillance', '/reports', '/dhis2-export', '/public-stats', '/settings', '/epidemic-intelligence', '/mch-analytics', '/appointments'],
     defaultDashboard: '/government',
   },
+  data_entry_clerk: {
+    allowed: ['/dashboard/data-entry', '/patients', '/facility-assessments', '/data-quality', '/immunizations', '/anc', '/births', '/deaths', '/messages', '/settings', '/my-facility'],
+    defaultDashboard: '/dashboard/data-entry',
+  },
 };
 
 function isPathAllowed(role: string, pathname: string): boolean {
