@@ -7,30 +7,42 @@ import { Baby, Skull, AlertTriangle, Activity } from 'lucide-react';
 export default function VitalStatisticsPage() {
   const { data, loading } = useVitalStatistics();
 
-  if (loading || !data) return <><TopBar title="Vital Statistics" /><main className="flex-1 p-6 flex items-center justify-center"><p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading vital statistics...</p></main></>;
+  if (loading || !data) return <><TopBar title="Vital Statistics" /><main className="page-container flex items-center justify-center"><p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading vital statistics...</p></main></>;
 
   const { birthStats, deathStats } = data;
 
   return (
     <>
       <TopBar title="Vital Statistics" />
-      <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
+      <main className="page-container page-enter">
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-1">
-            <Activity className="w-6 h-6" style={{ color: '#2B6FE0' }} />
+            <Activity className="w-6 h-6" style={{ color: '#0077D7' }} />
             <h1 className="text-xl font-semibold">National Vital Statistics</h1>
           </div>
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Civil Registration and Vital Statistics (CRVS) — Republic of South Sudan</p>
         </div>
 
         {/* Birth Statistics */}
-        <h2 className="font-semibold text-sm flex items-center gap-2 mb-3"><Baby className="w-4 h-4" style={{ color: '#2B6FE0' }} /> Birth Statistics</h2>
-        <div className="grid grid-cols-5 gap-3 mb-6">
-          <div className="card-elevated p-4"><p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Total Births</p><p className="text-2xl font-bold" style={{ color: '#2B6FE0' }}>{birthStats.total}</p></div>
-          <div className="card-elevated p-4"><p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>This Month</p><p className="text-2xl font-bold" style={{ color: '#2B6FE0' }}>{birthStats.thisMonth}</p></div>
-          <div className="card-elevated p-4"><p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Male Births</p><p className="text-2xl font-bold" style={{ color: '#2B6FE0' }}>{birthStats.byGender.male}</p></div>
-          <div className="card-elevated p-4"><p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Female Births</p><p className="text-2xl font-bold" style={{ color: '#E52E42' }}>{birthStats.byGender.female}</p></div>
-          <div className="card-elevated p-4"><p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Caesarean Rate</p><p className="text-2xl font-bold" style={{ color: '#FCD34D' }}>{birthStats.total ? Math.round(birthStats.byDeliveryType.caesarean / birthStats.total * 100) : 0}%</p></div>
+        <h2 className="font-semibold text-sm flex items-center gap-2 mb-3"><Baby className="w-4 h-4" style={{ color: '#0077D7' }} /> Birth Statistics</h2>
+        <div className="kpi-grid mb-6">
+          {[
+            { label: 'Total Births', value: birthStats.total, icon: Baby, color: '#0077D7', bg: 'rgba(43,111,224,0.12)' },
+            { label: 'This Month', value: birthStats.thisMonth, icon: Activity, color: '#0077D7', bg: 'rgba(43,111,224,0.12)' },
+            { label: 'Male Births', value: birthStats.byGender.male, icon: Baby, color: '#0077D7', bg: 'rgba(43,111,224,0.12)' },
+            { label: 'Female Births', value: birthStats.byGender.female, icon: Baby, color: '#E52E42', bg: 'rgba(229,46,66,0.12)' },
+            { label: 'Caesarean Rate', value: `${birthStats.total ? Math.round(birthStats.byDeliveryType.caesarean / birthStats.total * 100) : 0}%`, icon: Activity, color: '#FCD34D', bg: 'rgba(252,211,77,0.12)' },
+          ].map(stat => (
+            <div key={stat.label} className="kpi">
+              <div className="kpi__icon" style={{ background: stat.bg }}>
+                <stat.icon style={{ color: stat.color }} />
+              </div>
+              <div className="kpi__body">
+                <div className="kpi__value">{stat.value}</div>
+                <div className="kpi__label">{stat.label}</div>
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* Births by State */}
@@ -42,7 +54,7 @@ export default function VitalStatisticsPage() {
                 <div key={state} className="flex items-center gap-3">
                   <span className="text-xs w-48 truncate" style={{ color: 'var(--text-secondary)' }}>{state}</span>
                   <div className="flex-1 h-2 rounded-full" style={{ background: 'var(--overlay-light)' }}>
-                    <div className="h-full rounded-full" style={{ width: `${birthStats.total > 0 ? (count / birthStats.total) * 100 : 0}%`, background: '#2B6FE0' }} />
+                    <div className="h-full rounded-full" style={{ width: `${birthStats.total > 0 ? (count / birthStats.total) * 100 : 0}%`, background: '#0077D7' }} />
                   </div>
                   <span className="text-sm font-bold w-8 text-right">{count}</span>
                 </div>
@@ -53,12 +65,24 @@ export default function VitalStatisticsPage() {
 
         {/* Death Statistics */}
         <h2 className="font-semibold text-sm flex items-center gap-2 mb-3 mt-6"><Skull className="w-4 h-4" style={{ color: '#E52E42' }} /> Mortality Statistics</h2>
-        <div className="grid grid-cols-5 gap-3 mb-6">
-          <div className="card-elevated p-4"><p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Total Deaths</p><p className="text-2xl font-bold" style={{ color: '#E52E42' }}>{deathStats.total}</p></div>
-          <div className="card-elevated p-4"><p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Maternal Deaths</p><p className="text-2xl font-bold" style={{ color: '#E52E42' }}>{deathStats.maternalDeaths}</p></div>
-          <div className="card-elevated p-4"><p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Under-5 Deaths</p><p className="text-2xl font-bold" style={{ color: '#FCD34D' }}>{deathStats.under5Deaths}</p></div>
-          <div className="card-elevated p-4"><p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Neonatal Deaths</p><p className="text-2xl font-bold" style={{ color: '#FCD34D' }}>{deathStats.neonatalDeaths}</p></div>
-          <div className="card-elevated p-4"><p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>ICD-11 Coded</p><p className="text-2xl font-bold" style={{ color: '#2B6FE0' }}>{deathStats.total ? Math.round(deathStats.withICD11Code / deathStats.total * 100) : 0}%</p></div>
+        <div className="kpi-grid mb-6">
+          {[
+            { label: 'Total Deaths', value: deathStats.total, icon: Skull, color: '#E52E42', bg: 'rgba(229,46,66,0.12)' },
+            { label: 'Maternal Deaths', value: deathStats.maternalDeaths, icon: Skull, color: '#E52E42', bg: 'rgba(229,46,66,0.12)' },
+            { label: 'Under-5 Deaths', value: deathStats.under5Deaths, icon: AlertTriangle, color: '#FCD34D', bg: 'rgba(252,211,77,0.12)' },
+            { label: 'Neonatal Deaths', value: deathStats.neonatalDeaths, icon: AlertTriangle, color: '#FCD34D', bg: 'rgba(252,211,77,0.12)' },
+            { label: 'ICD-11 Coded', value: `${deathStats.total ? Math.round(deathStats.withICD11Code / deathStats.total * 100) : 0}%`, icon: Activity, color: '#0077D7', bg: 'rgba(43,111,224,0.12)' },
+          ].map(stat => (
+            <div key={stat.label} className="kpi">
+              <div className="kpi__icon" style={{ background: stat.bg }}>
+                <stat.icon style={{ color: stat.color }} />
+              </div>
+              <div className="kpi__body">
+                <div className="kpi__value">{stat.value}</div>
+                <div className="kpi__label">{stat.label}</div>
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* CRVS Indicators */}
@@ -76,7 +100,7 @@ export default function VitalStatisticsPage() {
               </div>
               <div>
                 <div className="flex justify-between text-xs mb-1"><span style={{ color: 'var(--text-secondary)' }}>ICD-11 Coding Rate</span><span className="font-bold">{deathStats.total ? Math.round(deathStats.withICD11Code / deathStats.total * 100) : 0}%</span></div>
-                <div className="w-full h-2 rounded-full" style={{ background: 'var(--overlay-light)' }}><div className="h-full rounded-full" style={{ width: `${deathStats.total ? (deathStats.withICD11Code / deathStats.total) * 100 : 0}%`, background: '#2B6FE0' }} /></div>
+                <div className="w-full h-2 rounded-full" style={{ background: 'var(--overlay-light)' }}><div className="h-full rounded-full" style={{ width: `${deathStats.total ? (deathStats.withICD11Code / deathStats.total) * 100 : 0}%`, background: '#0077D7' }} /></div>
               </div>
             </div>
           </div>

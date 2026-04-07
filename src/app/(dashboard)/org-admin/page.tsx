@@ -1,14 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
 import { useApp } from '@/lib/context';
 import {
   Users, Building2, UserCheck, CreditCard, Shield,
-  TrendingUp, CheckCircle, XCircle, Zap, BarChart3,
+  TrendingUp, TrendingDown, CheckCircle, XCircle, Zap, BarChart3,
+  Activity, Clock, ArrowUpDown, Minus, AlertTriangle,
 } from 'lucide-react';
-import type { OrganizationDoc } from '@/lib/db-types';
+import type { OrganizationDoc, AuditLogDoc, HospitalDoc } from '@/lib/db-types';
 
 interface OrgStats {
   userCount: number;
@@ -22,6 +23,17 @@ export default function OrgAdminDashboard() {
   const [stats, setStats] = useState<OrgStats>({ userCount: 0, hospitalCount: 0, patientCount: 0 });
   const [org, setOrg] = useState<OrganizationDoc | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // New state for features
+  const [auditLogs, setAuditLogs] = useState<AuditLogDoc[]>([]);
+  const [auditLoading, setAuditLoading] = useState(true);
+  const [orgHospitals, setOrgHospitals] = useState<HospitalDoc[]>([]);
+  const [hospitalsLoading, setHospitalsLoading] = useState(true);
+  const [facilitySortCol, setFacilitySortCol] = useState<string>('patients');
+  const [facilitySortAsc, setFacilitySortAsc] = useState(false);
+  const [lastMonthPatients, setLastMonthPatients] = useState(0);
+  const [thisMonthConsultations, setThisMonthConsultations] = useState(0);
+  const [thisMonthReferrals, setThisMonthReferrals] = useState(0);
 
   const brandColor = currentUser?.branding?.primaryColor || '#7C3AED';
 
@@ -46,6 +58,126 @@ export default function OrgAdminDashboard() {
     load();
   }, [currentUser?.orgId]);
 
+  // Load audit logs
+  useEffect(() => {
+    const loadAudit = async () => {
+      try {
+        const { getRecentAuditLogs } = await import('@/lib/services/audit-service');
+        const logs = await getRecentAuditLogs(50);
+        setAuditLogs(logs);
+      } catch (err) {
+        console.error('Failed to load audit logs:', err);
+      } finally {
+        setAuditLoading(false);
+      }
+    };
+    loadAudit();
+  }, []);
+
+  // Load org hospitals for facility comparison
+  useEffect(() => {
+    const loadHospitals = async () => {
+      try {
+        const { getAllHospitals } = await import('@/lib/services/hospital-service');
+        const all = await getAllHospitals();
+        // Filter by org if user has orgId
+        const filtered = currentUser?.orgId
+          ? all.filter(h => h.orgId === currentUser.orgId)
+          : all;
+        setOrgHospitals(filtered.length > 0 ? filtered : all);
+      } catch (err) {
+        console.error('Failed to load hospitals:', err);
+      } finally {
+        setHospitalsLoading(false);
+      }
+    };
+    loadHospitals();
+  }, [currentUser?.orgId]);
+
+  // Load usage metrics
+  useEffect(() => {
+    const loadUsage = async () => {
+      try {
+        const { getAllPatients } = await import('@/lib/services/patient-service');
+        const { getAllReferrals } = await import('@/lib/services/referral-service');
+        const [patients, referrals] = await Promise.all([getAllPatients(), getAllReferrals()]);
+
+        const now = new Date();
+        const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        const lastDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastMonth = `${lastDate.getFullYear()}-${String(lastDate.getMonth() + 1).padStart(2, '0')}`;
+
+        const thisMonthPats = patients.filter(p => p.createdAt?.startsWith(thisMonth)).length;
+        const lastMonthPats = patients.filter(p => p.createdAt?.startsWith(lastMonth)).length;
+        setLastMonthPatients(lastMonthPats);
+
+        // Estimate consultations from medical records count this month
+        try {
+          const { getDB } = await import('@/lib/db');
+          const db = getDB('taban_medical_records');
+          const result = await db.allDocs({ include_docs: true });
+          const thisMonthRecs = result.rows.filter(r => {
+            const doc = r.doc as { createdAt?: string };
+            return doc?.createdAt?.startsWith(thisMonth);
+          }).length;
+          setThisMonthConsultations(thisMonthRecs);
+        } catch {
+          setThisMonthConsultations(thisMonthPats);
+        }
+
+        const thisMonthRefs = referrals.filter(r => r.createdAt?.startsWith(thisMonth)).length;
+        setThisMonthReferrals(thisMonthRefs);
+      } catch (err) {
+        console.error('Failed to load usage:', err);
+      }
+    };
+    loadUsage();
+  }, []);
+
+  // Facility comparison sorting
+  const sortedFacilities = useMemo(() => {
+    const sorted = [...orgHospitals];
+    sorted.sort((a, b) => {
+      let aVal = 0, bVal = 0;
+      switch (facilitySortCol) {
+        case 'patients': aVal = a.patientCount; bVal = b.patientCount; break;
+        case 'staff': aVal = a.doctors + a.nurses + a.clinicalOfficers; bVal = b.doctors + b.nurses + b.clinicalOfficers; break;
+        case 'occupancy': aVal = a.totalBeds > 0 ? a.patientCount / a.totalBeds : 0; bVal = b.totalBeds > 0 ? b.patientCount / b.totalBeds : 0; break;
+        default: aVal = a.patientCount; bVal = b.patientCount;
+      }
+      return facilitySortAsc ? aVal - bVal : bVal - aVal;
+    });
+    return sorted;
+  }, [orgHospitals, facilitySortCol, facilitySortAsc]);
+
+  const handleFacilitySort = useCallback((col: string) => {
+    if (facilitySortCol === col) {
+      setFacilitySortAsc(prev => !prev);
+    } else {
+      setFacilitySortCol(col);
+      setFacilitySortAsc(false);
+    }
+  }, [facilitySortCol]);
+
+  // Top/bottom performer detection
+  const topFacilityId = sortedFacilities.length > 0 ? sortedFacilities[0]._id : '';
+  const bottomFacilityId = sortedFacilities.length > 1 ? sortedFacilities[sortedFacilities.length - 1]._id : '';
+
+  // Inactive users from audit logs: users with no login in 7+ days
+  const inactiveUsers = useMemo(() => {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const userLastAction: Record<string, string> = {};
+    auditLogs.forEach(log => {
+      if (log.username && (!userLastAction[log.username] || log.createdAt > userLastAction[log.username])) {
+        userLastAction[log.username] = log.createdAt;
+      }
+    });
+    return Object.entries(userLastAction)
+      .filter(([, lastAction]) => new Date(lastAction) < sevenDaysAgo)
+      .map(([username]) => username);
+  }, [auditLogs]);
+
   const statCards = [
     {
       label: 'Total Users',
@@ -58,21 +190,21 @@ export default function OrgAdminDashboard() {
       label: 'Hospitals',
       value: stats.hospitalCount,
       icon: Building2,
-      color: '#2B6FE0',
+      color: '#0077D7',
       bgOpacity: '15',
     },
     {
       label: 'Patients',
       value: stats.patientCount,
       icon: UserCheck,
-      color: '#2B6FE0',
+      color: '#0077D7',
       bgOpacity: '15',
     },
     {
       label: 'Subscription',
       value: org?.subscriptionStatus === 'active' ? 'Active' : org?.subscriptionStatus || 'N/A',
       icon: CreditCard,
-      color: org?.subscriptionStatus === 'active' ? '#2B6FE0' : '#F59E0B',
+      color: org?.subscriptionStatus === 'active' ? '#0077D7' : '#F59E0B',
       bgOpacity: '15',
     },
   ];
@@ -103,11 +235,16 @@ export default function OrgAdminDashboard() {
     );
   }
 
+  const formatTimestamp = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
   return (
     <div className="flex-1 flex flex-col">
       <TopBar title="Organization Dashboard" />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-5 page-enter">
+      <div className="page-container page-enter">
         {/* Org Header */}
         <div className="mb-6 flex items-center gap-4">
           {currentUser?.branding?.logoUrl ? (
@@ -184,8 +321,125 @@ export default function OrgAdminDashboard() {
           })}
         </div>
 
+        {/* USAGE DASHBOARD */}
+        <div className="p-5 rounded-xl mb-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+          <div className="flex items-center gap-2 mb-4">
+            <BarChart3 className="w-5 h-5" style={{ color: brandColor }} />
+            <h2 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+              Usage This Month
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Patients registered */}
+            <div className="p-4 rounded-xl" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Patients Registered</span>
+                {stats.patientCount > lastMonthPatients ? (
+                  <TrendingUp className="w-4 h-4" style={{ color: '#10B981' }} />
+                ) : stats.patientCount < lastMonthPatients ? (
+                  <TrendingDown className="w-4 h-4" style={{ color: '#EF4444' }} />
+                ) : (
+                  <Minus className="w-4 h-4" style={{ color: '#F59E0B' }} />
+                )}
+              </div>
+              <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{stats.patientCount}</p>
+              <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>
+                vs {lastMonthPatients} last month
+              </p>
+            </div>
+
+            {/* Consultations */}
+            <div className="p-4 rounded-xl" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Consultations</span>
+                <Activity className="w-4 h-4" style={{ color: '#0077D7' }} />
+              </div>
+              <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{thisMonthConsultations}</p>
+              <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>This month</p>
+            </div>
+
+            {/* Referrals */}
+            <div className="p-4 rounded-xl" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Referrals</span>
+                <TrendingUp className="w-4 h-4" style={{ color: '#7C3AED' }} />
+              </div>
+              <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{thisMonthReferrals}</p>
+              <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>This month</p>
+            </div>
+          </div>
+        </div>
+
+        {/* FACILITY PERFORMANCE COMPARISON */}
+        <div className="rounded-xl overflow-hidden mb-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+          <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--border-light)' }}>
+            <div className="flex items-center gap-2">
+              <Building2 className="w-4 h-4" style={{ color: brandColor }} />
+              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Facility Performance Comparison</span>
+            </div>
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="w-full">
+              <thead>
+                <tr>
+                  {[
+                    { key: 'name', label: 'Facility' },
+                    { key: 'patients', label: 'Patients' },
+                    { key: 'staff', label: 'Staff' },
+                    { key: 'occupancy', label: 'Occupancy' },
+                  ].map(col => (
+                    <th
+                      key={col.key}
+                      className="text-left px-4 py-3 text-xs uppercase tracking-wider cursor-pointer select-none"
+                      style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border-light)' }}
+                      onClick={() => col.key !== 'name' && handleFacilitySort(col.key)}
+                    >
+                      <span className="flex items-center gap-1">
+                        {col.label}
+                        {col.key !== 'name' && <ArrowUpDown className="w-3 h-3" />}
+                      </span>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {hospitalsLoading ? (
+                  <tr><td colSpan={4} className="px-4 py-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>Loading...</td></tr>
+                ) : sortedFacilities.map(h => {
+                  const isTop = h._id === topFacilityId && sortedFacilities.length > 1;
+                  const isBottom = h._id === bottomFacilityId && sortedFacilities.length > 1;
+                  const staffCount = h.doctors + h.nurses + h.clinicalOfficers;
+                  const occupancy = h.totalBeds > 0 ? Math.round((h.patientCount / h.totalBeds) * 100) : 0;
+                  return (
+                    <tr key={h._id} style={{
+                      borderBottom: '1px solid var(--border-light)',
+                      background: isTop ? 'rgba(16,185,129,0.04)' : isBottom ? 'rgba(239,68,68,0.04)' : 'transparent',
+                    }}>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{h.name}</span>
+                          {isTop && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{ background: 'rgba(16,185,129,0.12)', color: '#10B981' }}>TOP</span>}
+                          {isBottom && <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{ background: 'rgba(239,68,68,0.12)', color: '#EF4444' }}>LOW</span>}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{h.patientCount.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-primary)' }}>{staffCount}</td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs font-semibold px-2 py-1 rounded-full" style={{
+                          background: occupancy > 90 ? 'rgba(239,68,68,0.12)' : occupancy > 70 ? 'rgba(245,158,11,0.12)' : 'rgba(16,185,129,0.12)',
+                          color: occupancy > 90 ? '#EF4444' : occupancy > 70 ? '#F59E0B' : '#10B981',
+                        }}>{occupancy}%</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         {/* Plan & Limits + Feature Flags */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Plan Details */}
           <div className="p-5 rounded-xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
             <div className="flex items-center gap-2 mb-4">
@@ -208,7 +462,7 @@ export default function OrgAdminDashboard() {
                   className="text-xs font-medium px-2 py-0.5 rounded-full"
                   style={{
                     background: org?.subscriptionStatus === 'active' ? 'rgba(43,111,224,0.12)' : 'rgba(245,158,11,0.12)',
-                    color: org?.subscriptionStatus === 'active' ? '#2B6FE0' : '#F59E0B',
+                    color: org?.subscriptionStatus === 'active' ? '#0077D7' : '#F59E0B',
                   }}
                 >
                   {org?.subscriptionStatus || 'N/A'}
@@ -270,8 +524,8 @@ export default function OrgAdminDashboard() {
                   </span>
                   {flag.enabled ? (
                     <div className="flex items-center gap-1.5">
-                      <CheckCircle className="w-4 h-4" style={{ color: '#2B6FE0' }} />
-                      <span className="text-xs font-medium" style={{ color: '#2B6FE0' }}>Enabled</span>
+                      <CheckCircle className="w-4 h-4" style={{ color: '#0077D7' }} />
+                      <span className="text-xs font-medium" style={{ color: '#0077D7' }}>Enabled</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-1.5">
@@ -291,8 +545,76 @@ export default function OrgAdminDashboard() {
           </div>
         </div>
 
+        {/* USER ACTIVITY LOG */}
+        <div className="rounded-xl overflow-hidden mb-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+          <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--border-light)' }}>
+            <div className="flex items-center gap-2">
+              <Activity className="w-4 h-4" style={{ color: '#0077D7' }} />
+              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>User Activity Log</span>
+            </div>
+            {inactiveUsers.length > 0 && (
+              <span className="text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1" style={{ background: 'rgba(245,158,11,0.12)', color: '#F59E0B' }}>
+                <AlertTriangle className="w-3 h-3" />
+                {inactiveUsers.length} inactive user{inactiveUsers.length !== 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+          <div style={{ overflowX: 'auto', maxHeight: '320px', overflowY: 'auto' }}>
+            <table className="w-full">
+              <thead>
+                <tr>
+                  {['User', 'Action', 'Timestamp', 'Status'].map(h => (
+                    <th key={h} className="text-left px-4 py-3 text-xs uppercase tracking-wider sticky top-0" style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border-light)', background: 'var(--bg-card)' }}>
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {auditLoading ? (
+                  <tr><td colSpan={4} className="px-4 py-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>Loading...</td></tr>
+                ) : auditLogs.length === 0 ? (
+                  <tr><td colSpan={4} className="px-4 py-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>No activity recorded yet.</td></tr>
+                ) : auditLogs.slice(0, 20).map(log => {
+                  const isInactive = log.username ? inactiveUsers.includes(log.username) : false;
+                  return (
+                    <tr key={log._id} style={{
+                      borderBottom: '1px solid var(--border-light)',
+                      background: isInactive ? 'rgba(245,158,11,0.04)' : 'transparent',
+                    }}>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{log.username || 'System'}</span>
+                          {isInactive && (
+                            <span className="text-[8px] font-bold px-1 py-0.5 rounded" style={{ background: 'rgba(245,158,11,0.12)', color: '#F59E0B' }}>INACTIVE</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-secondary)' }}>{log.action}</td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
+                          <Clock className="w-3 h-3" />
+                          {formatTimestamp(log.createdAt)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{
+                          background: log.success ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
+                          color: log.success ? '#10B981' : '#EF4444',
+                        }}>
+                          {log.success ? 'Success' : 'Failed'}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         {/* Quick Actions */}
-        <div className="mt-6 p-5 rounded-xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+        <div className="p-5 rounded-xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
           <div className="flex items-center gap-2 mb-4">
             <BarChart3 className="w-5 h-5" style={{ color: brandColor }} />
             <h2 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
@@ -321,7 +643,7 @@ export default function OrgAdminDashboard() {
                     className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
                     style={{ background: `${brandColor}15` }}
                   >
-                    <Icon className="w-4.5 h-4.5" style={{ color: brandColor }} />
+                    <Icon className="w-4 h-4" style={{ color: brandColor }} />
                   </div>
                   <div>
                     <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{action.label}</p>

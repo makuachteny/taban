@@ -1,19 +1,24 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { ReferralDoc } from '../db-types';
 import type { Attachment } from '@/data/mock';
+import { useApp } from '../context';
 
 export function useReferrals() {
   const [referrals, setReferrals] = useState<ReferralDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { currentUser } = useApp();
+  const scope = useMemo(() => (
+    currentUser ? { orgId: currentUser.orgId, hospitalId: currentUser.hospitalId, role: currentUser.role } : undefined
+  ), [currentUser?.orgId, currentUser?.hospitalId, currentUser?.role]);
 
   const loadReferrals = useCallback(async () => {
     try {
       setError(null);
       const { getAllReferrals } = await import('../services/referral-service');
-      const data = await getAllReferrals();
+      const data = await getAllReferrals(scope);
       setReferrals(data);
     } catch (err) {
       console.error(err);
@@ -21,10 +26,18 @@ export function useReferrals() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [scope]);
 
   useEffect(() => {
     loadReferrals();
+  }, [loadReferrals]);
+
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadReferrals();
+    }, 30000);
+    return () => clearInterval(interval);
   }, [loadReferrals]);
 
   const create = useCallback(async (data: Omit<ReferralDoc, '_id' | '_rev' | 'type' | 'createdAt' | 'updatedAt'>) => {
@@ -57,7 +70,13 @@ export function useReferrals() {
     await loadReferrals();
   }, [loadReferrals]);
 
-  return { referrals, loading, error, create, createWithTransfer, updateStatus, accept, reload: loadReferrals };
+  const updateNotes = useCallback(async (id: string, notes: string) => {
+    const { updateReferralNotes } = await import('../services/referral-service');
+    await updateReferralNotes(id, notes);
+    await loadReferrals();
+  }, [loadReferrals]);
+
+  return { referrals, loading, error, create, createWithTransfer, updateStatus, updateNotes, accept, reload: loadReferrals };
 }
 
 export function usePatientReferrals(patientId?: string) {

@@ -30,7 +30,7 @@ export default function MessagesPage() {
 
   const statusIcon = (status: string) => {
     switch (status) {
-      case 'delivered': return <CheckCircle2 className="w-3.5 h-3.5" style={{ color: '#2B6FE0' }} />;
+      case 'delivered': return <CheckCircle2 className="w-3.5 h-3.5" style={{ color: '#0077D7' }} />;
       case 'sent': return <Clock className="w-3.5 h-3.5" style={{ color: '#FCD34D' }} />;
       case 'failed': return <XCircle className="w-3.5 h-3.5" style={{ color: '#E52E42' }} />;
       default: return null;
@@ -65,12 +65,15 @@ export default function MessagesPage() {
   return (
     <>
       <TopBar title="Messages" />
-      <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
+      <main className="page-container page-enter">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>Messages</h1>
-            <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>Send messages to patients via app or SMS</p>
+          <div className="page-header">
+            <div className="page-header__top">
+              <div className="page-header__icon"><MessageSquare size={18} /></div>
+              <h1 className="page-header__title">Messages</h1>
+            </div>
+            <p className="page-header__subtitle">Send messages to patients via app or SMS</p>
           </div>
           <button onClick={handleNewMessage} className="btn btn-primary btn-sm flex items-center gap-2">
             <Plus className="w-4 h-4" /> New Message

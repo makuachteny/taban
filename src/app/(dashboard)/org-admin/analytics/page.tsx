@@ -18,7 +18,7 @@ const RechartsBarChart = dynamic(
     const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } = mod;
 
     function ChartComponent({ data, brandColor }: { data: { name: string; patients: number }[]; brandColor: string }) {
-      const barColors = [brandColor, '#2B6FE0', '#3ECF8E', '#F59E0B', '#EC4899', '#06B6D4', '#8B5CF6', '#14B8A6'];
+      const barColors = [brandColor, '#0077D7', '#3ECF8E', '#F59E0B', '#EC4899', '#06B6D4', '#8B5CF6', '#14B8A6'];
 
       return (
         <ResponsiveContainer width="100%" height={300}>
@@ -142,7 +142,7 @@ export default function OrgAnalyticsPage() {
       label: 'Facilities',
       value: hospitals.length,
       icon: Building2,
-      color: '#2B6FE0',
+      color: '#0077D7',
       trend: 'Across org',
       trendUp: true,
     },
@@ -174,7 +174,7 @@ export default function OrgAnalyticsPage() {
     <div className="flex-1 flex flex-col">
       <TopBar title="Organization Analytics" />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-5 page-enter">
+      <div className="page-container page-enter">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: `${brandColor}15` }}>
@@ -216,8 +216,8 @@ export default function OrgAnalyticsPage() {
                   {card.value.toLocaleString()}
                 </p>
                 <div className="flex items-center gap-1 mt-1">
-                  <TrendingUp className="w-3 h-3" style={{ color: card.trendUp ? '#2B6FE0' : 'var(--text-muted)' }} />
-                  <span className="text-xs" style={{ color: card.trendUp ? '#2B6FE0' : 'var(--text-muted)' }}>
+                  <TrendingUp className="w-3 h-3" style={{ color: card.trendUp ? '#0077D7' : 'var(--text-muted)' }} />
+                  <span className="text-xs" style={{ color: card.trendUp ? '#0077D7' : 'var(--text-muted)' }}>
                     {card.trend}
                   </span>
                 </div>
@@ -257,7 +257,7 @@ export default function OrgAnalyticsPage() {
               </div>
 
               <div className="space-y-3">
-                <ProgressRow label="Completed" count={labCompleted} total={labTotal} color="#2B6FE0" />
+                <ProgressRow label="Completed" count={labCompleted} total={labTotal} color="#0077D7" />
                 <ProgressRow label="In Progress" count={labInProgress} total={labTotal} color="#F59E0B" />
                 <ProgressRow label="Pending" count={labPending} total={labTotal} color="#E52E42" />
               </div>
@@ -273,7 +273,7 @@ export default function OrgAnalyticsPage() {
             {/* Top Hospitals by Activity */}
             <div className="p-5 rounded-xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
               <div className="flex items-center gap-2 mb-4">
-                <Building2 className="w-5 h-5" style={{ color: '#2B6FE0' }} />
+                <Building2 className="w-5 h-5" style={{ color: '#0077D7' }} />
                 <h2 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
                   Top Facilities (Today)
                 </h2>
@@ -291,7 +291,7 @@ export default function OrgAnalyticsPage() {
                         <span
                           className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
                           style={{
-                            background: i === 0 ? brandColor : i === 1 ? '#2B6FE0' : i === 2 ? '#1D5BC2' : 'var(--text-muted)',
+                            background: i === 0 ? brandColor : i === 1 ? '#0077D7' : i === 2 ? '#005FBC' : 'var(--text-muted)',
                           }}
                         >
                           {i + 1}
@@ -347,9 +347,9 @@ export default function OrgAnalyticsPage() {
                   referrals.slice(0, 10).map(ref => {
                     const statusColor: Record<string, string> = {
                       sent: '#F59E0B',
-                      received: '#2B6FE0',
+                      received: '#0077D7',
                       seen: '#8B5CF6',
-                      completed: '#2B6FE0',
+                      completed: '#0077D7',
                       cancelled: '#6B7280',
                     };
                     return (

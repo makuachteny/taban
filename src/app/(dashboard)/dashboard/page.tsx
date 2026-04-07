@@ -1,15 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/context';
 import TopBar from '@/components/TopBar';
 import {
-  Users, AlertTriangle, TrendingUp,
+  Users, AlertTriangle,
   ChevronRight, Stethoscope,
   Syringe, HeartPulse, Baby, FlaskConical,
   FileText, UserCheck, Globe, Pill,
   ArrowUpRight, SendHorizontal,
+  X, ClipboardList, TestTube, Bell,
+  CheckCircle2, ChevronDown, ChevronUp
 } from 'lucide-react';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
@@ -22,11 +24,185 @@ import { useImmunizations } from '@/lib/hooks/useImmunizations';
 import { useANC } from '@/lib/hooks/useANC';
 import { useBirths } from '@/lib/hooks/useBirths';
 import { getDefaultDashboard } from '@/lib/permissions';
+import ReferralChainTracker from '@/components/ReferralChainTracker';
 
 const DEPARTMENTS = ['OPD', 'Emergency', 'Maternity', 'Pediatrics', 'Surgery', 'Lab', 'Pharmacy', 'ICU'];
 
 const DOCTORS = ['Dr. Wani James', 'Dr. Akol Deng', 'Dr. Ladu Morris', 'Dr. Achol Mabior', 'Dr. Taban Philip'];
 const NURSES = ['Nurse Ayen', 'Nurse Nyamal', 'Nurse Rose', 'Nurse Abuk', 'Nurse Dorothy'];
+
+// ═══════════════════════════════════════════════════
+// SOAP NOTE TEMPLATES
+// ═══════════════════════════════════════════════════
+interface SOAPTemplate {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  subjective: string;
+  objective: string;
+  assessment: string;
+  plan: string;
+}
+
+const SOAP_TEMPLATES: SOAPTemplate[] = [
+  {
+    id: 'malaria',
+    name: 'Malaria',
+    icon: 'bug',
+    color: '#E52E42',
+    subjective: 'Patient presents with high-grade intermittent fever for 3 days, associated with chills, rigors, headache, body aches, and generalized weakness. Reports loss of appetite and occasional nausea. No vomiting or diarrhea. Lives in malaria-endemic area. No recent travel history. No use of insecticide-treated bed net.',
+    objective: 'Temp: 38.8 C, HR: 102 bpm, BP: 110/70 mmHg, RR: 20/min, SpO2: 97%.\nGeneral: Febrile, mild pallor, no jaundice.\nAbdomen: Splenomegaly palpable 2cm below costal margin, mild hepatomegaly.\nNo neck stiffness. No rash.\nMalaria RDT: Positive (P. falciparum).',
+    assessment: 'Uncomplicated Plasmodium falciparum Malaria (ICD-11: 1F40).',
+    plan: '1. Artemether-Lumefantrine (ACT) 20/120mg - 4 tablets BD x 3 days.\n2. Paracetamol 500mg TDS x 3 days for fever/pain.\n3. Encourage oral fluid intake.\n4. Advise use of insecticide-treated bed net.\n5. Return if symptoms worsen (persistent vomiting, confusion, dark urine).\n6. Follow-up in 3 days or if fever persists.',
+  },
+  {
+    id: 'pneumonia',
+    name: 'Pneumonia',
+    icon: 'wind',
+    color: '#60A5FA',
+    subjective: 'Patient reports productive cough with yellowish sputum for 5 days, associated with fever, chest pain (pleuritic, worse on deep breathing), and shortness of breath on exertion. Reports night sweats and decreased appetite. No hemoptysis. No known TB contact.',
+    objective: 'Temp: 38.5 C, HR: 96 bpm, BP: 120/80 mmHg, RR: 26/min, SpO2: 94% on room air.\nGeneral: Appears unwell, mildly tachypneic.\nChest: Reduced air entry right lower zone, dullness to percussion, bronchial breathing and coarse crackles right base.\nNo peripheral edema. No lymphadenopathy.',
+    assessment: 'Community-Acquired Pneumonia, right lower lobe (ICD-11: CA40).',
+    plan: '1. Amoxicillin 500mg TDS x 7 days (or Amoxicillin-Clavulanate if moderate severity).\n2. Paracetamol 500mg TDS for fever/pain.\n3. Encourage oral fluids and rest.\n4. Sputum for AFB if cough persists > 2 weeks (TB screening).\n5. Chest X-ray if available.\n6. Return if worsening breathlessness, confusion, or no improvement in 48 hours.\n7. Follow-up in 3 days.',
+  },
+  {
+    id: 'anc',
+    name: 'ANC Visit',
+    icon: 'heart',
+    color: '#EC4899',
+    subjective: 'Pregnant woman presents for routine antenatal visit. Reports fetal movements present and regular. No vaginal bleeding or discharge. No headache, visual disturbances, or epigastric pain. Reports mild ankle swelling in the evenings. No dysuria. Taking iron-folate supplements as prescribed.',
+    objective: 'BP: 118/72 mmHg, Weight: 65 kg (gain 1.5kg since last visit), Temp: 36.6 C.\nFundal height: Corresponds to dates.\nFetal heart rate: 144 bpm, regular.\nPresentation: Cephalic.\nUrine dipstick: Protein negative, Glucose negative.\nHb: 11.2 g/dL.\nNo pedal edema.',
+    assessment: 'Normal intrauterine pregnancy, appropriate for gestational age. Low-risk pregnancy (ICD-11: QA00).',
+    plan: '1. Continue Iron-Folate supplementation daily.\n2. IPTp-SP dose given (if eligible by gestational age).\n3. Tetanus toxoid vaccine as per schedule.\n4. LLIN (bed net) provided/confirmed.\n5. Birth preparedness plan reviewed (facility, transport, blood donor).\n6. Danger signs counseling reinforced.\n7. Next ANC visit scheduled in 4 weeks.\n8. Refer for ultrasound if not yet done.',
+  },
+  {
+    id: 'diarrhea',
+    name: 'Diarrheal Disease',
+    icon: 'droplets',
+    color: '#FCD34D',
+    subjective: 'Patient presents with watery diarrhea for 2 days, 4-6 episodes per day. Associated with mild abdominal cramps and decreased appetite. No blood or mucus in stool. Low-grade fever reported. Drinking fluids but reduced oral intake. No recent travel. Unimproved water source at home.',
+    objective: 'Temp: 37.8 C, HR: 100 bpm, BP: 100/65 mmHg, RR: 20/min.\nGeneral: Mild dehydration - dry mucous membranes, slightly sunken eyes, skin turgor mildly decreased.\nAbdomen: Soft, mildly tender diffusely, hyperactive bowel sounds. No guarding or rigidity.\nNo blood in stool on examination.',
+    assessment: 'Acute Watery Diarrhea with mild dehydration (ICD-11: 1A00).',
+    plan: '1. ORS (Oral Rehydration Solution) - Plan B: 75ml/kg over 4 hours, then maintenance.\n2. Zinc 20mg daily x 10 days (10mg for children <6 months).\n3. Continue breastfeeding (if applicable) and age-appropriate feeding.\n4. Paracetamol for fever if needed.\n5. Advise on hand hygiene and safe water practices.\n6. Return immediately if: unable to drink, blood in stool, high fever, or worsening.\n7. Follow-up in 2 days if not improved.',
+  },
+  {
+    id: 'respiratory',
+    name: 'Respiratory Infection',
+    icon: 'thermometer',
+    color: '#A855F7',
+    subjective: 'Patient presents with dry cough for 3 days, sore throat, nasal congestion, and mild headache. Low-grade fever reported. No shortness of breath or chest pain. No known sick contacts with TB. No significant past medical history.',
+    objective: 'Temp: 37.6 C, HR: 82 bpm, BP: 120/76 mmHg, RR: 18/min, SpO2: 98%.\nGeneral: Appears well, not in distress.\nENT: Pharyngeal erythema, no exudates, no tonsillar enlargement. Nasal mucosa congested.\nChest: Clear breath sounds bilaterally, no crackles or wheezes.\nNo lymphadenopathy.',
+    assessment: 'Acute Upper Respiratory Tract Infection (ICD-11: CA02).',
+    plan: '1. Symptomatic management - Paracetamol 500mg TDS for fever/pain.\n2. Warm saline gargles for sore throat.\n3. Adequate oral fluid intake and rest.\n4. No antibiotics required (viral etiology likely).\n5. Return if: fever > 5 days, worsening cough, difficulty breathing, or new symptoms.\n6. Sputum AFB if cough persists beyond 2 weeks.',
+  },
+  {
+    id: 'general',
+    name: 'General Consultation',
+    icon: 'clipboard',
+    color: '#0077D7',
+    subjective: '',
+    objective: 'Temp: ___ C, HR: ___ bpm, BP: ___/___ mmHg, RR: ___/min, SpO2: ___%.\nGeneral appearance: \nHEENT: \nChest/Lungs: \nCardiovascular: \nAbdomen: \nExtremities: \nNeurological: ',
+    assessment: '',
+    plan: '1. \n2. \n3. \nFollow-up: ',
+  },
+];
+
+// ═══════════════════════════════════════════════════
+// PRESCRIPTION PRESETS
+// ═══════════════════════════════════════════════════
+interface PrescriptionItem {
+  medication: string;
+  dose: string;
+  route: string;
+  frequency: string;
+  duration: string;
+}
+
+interface PrescriptionPreset {
+  id: string;
+  name: string;
+  color: string;
+  items: PrescriptionItem[];
+}
+
+const PRESCRIPTION_PRESETS: PrescriptionPreset[] = [
+  {
+    id: 'malaria-adult',
+    name: 'Malaria Adult',
+    color: '#E52E42',
+    items: [
+      { medication: 'Artemether-Lumefantrine (ACT)', dose: '20/120mg (4 tablets)', route: 'Oral', frequency: 'BD (twice daily)', duration: '3 days' },
+      { medication: 'Paracetamol', dose: '500mg', route: 'Oral', frequency: 'TDS (three times daily)', duration: '3 days' },
+    ],
+  },
+  {
+    id: 'malaria-child',
+    name: 'Malaria Child',
+    color: '#EC4899',
+    items: [
+      { medication: 'ACT Suspension (Artemether-Lumefantrine)', dose: 'Weight-based dosing', route: 'Oral', frequency: 'BD (twice daily)', duration: '3 days' },
+      { medication: 'Paracetamol Syrup', dose: '10-15mg/kg', route: 'Oral', frequency: 'TDS (three times daily)', duration: '3 days' },
+    ],
+  },
+  {
+    id: 'pneumonia-adult',
+    name: 'Pneumonia Adult',
+    color: '#60A5FA',
+    items: [
+      { medication: 'Amoxicillin', dose: '500mg', route: 'Oral', frequency: 'TDS (three times daily)', duration: '5 days' },
+    ],
+  },
+  {
+    id: 'pneumonia-child',
+    name: 'Pneumonia Child',
+    color: '#38BDF8',
+    items: [
+      { medication: 'Amoxicillin Suspension', dose: '25-50mg/kg/day divided', route: 'Oral', frequency: 'TDS (three times daily)', duration: '5 days' },
+      { medication: 'Paracetamol Syrup', dose: '10-15mg/kg', route: 'Oral', frequency: 'TDS (three times daily)', duration: '3 days' },
+    ],
+  },
+  {
+    id: 'diarrhea',
+    name: 'Diarrhea',
+    color: '#FCD34D',
+    items: [
+      { medication: 'ORS (Oral Rehydration Salts)', dose: '1 sachet per 200ml water', route: 'Oral', frequency: 'After each loose stool', duration: 'Until resolved' },
+      { medication: 'Zinc', dose: '20mg', route: 'Oral', frequency: 'Once daily', duration: '10 days' },
+    ],
+  },
+  {
+    id: 'uti',
+    name: 'UTI',
+    color: '#A855F7',
+    items: [
+      { medication: 'Ciprofloxacin', dose: '500mg', route: 'Oral', frequency: 'BD (twice daily)', duration: '5 days' },
+    ],
+  },
+];
+
+// ═══════════════════════════════════════════════════
+// COMMON LAB TESTS
+// ═══════════════════════════════════════════════════
+interface LabTest {
+  id: string;
+  name: string;
+  specimen: string;
+  category: string;
+}
+
+const COMMON_LAB_TESTS: LabTest[] = [
+  { id: 'malaria-rdt', name: 'Malaria RDT', specimen: 'Blood (finger prick)', category: 'Rapid' },
+  { id: 'fbc', name: 'Full Blood Count', specimen: 'Blood (EDTA tube)', category: 'Hematology' },
+  { id: 'urinalysis', name: 'Urinalysis', specimen: 'Urine (midstream)', category: 'Chemistry' },
+  { id: 'blood-glucose', name: 'Blood Glucose', specimen: 'Blood (finger prick)', category: 'Chemistry' },
+  { id: 'hiv-test', name: 'HIV Test', specimen: 'Blood (finger prick)', category: 'Rapid' },
+  { id: 'hep-b', name: 'Hepatitis B', specimen: 'Blood (serum)', category: 'Serology' },
+  { id: 'lft', name: 'Liver Function Test', specimen: 'Blood (serum)', category: 'Chemistry' },
+  { id: 'rft', name: 'Renal Function Test', specimen: 'Blood (serum)', category: 'Chemistry' },
+  { id: 'pregnancy-test', name: 'Pregnancy Test', specimen: 'Urine', category: 'Rapid' },
+  { id: 'sputum-afb', name: 'Sputum AFB', specimen: 'Sputum (morning sample)', category: 'Microbiology' },
+];
 
 // Chart tooltip
 function ChartTooltip({ active, payload, label }: {
@@ -51,16 +227,75 @@ function ChartTooltip({ active, payload, label }: {
 
 const SATISFACTION_COLORS = ['#3ECF8E', '#60A5FA', '#FCD34D', '#F87171'];
 
+// ═══════════════════════════════════════════════════
+// MODAL OVERLAY COMPONENT
+// ═══════════════════════════════════════════════════
+function ModalOverlay({ open, onClose, title, children }: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
+      <div
+        className="w-full max-w-3xl max-h-[85vh] overflow-auto rounded-2xl shadow-2xl"
+        style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}
+      >
+        <div className="flex items-center justify-between p-4 sticky top-0 z-10" style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border-light)' }}>
+          <h2 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>{title}</h2>
+          <button onClick={onClose} className="p-1.5 rounded-lg transition-colors hover:opacity-80" style={{ background: 'var(--bg-secondary)' }}>
+            <X className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+          </button>
+        </div>
+        <div className="p-4">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+// SOAP template icon helper
+function TemplateIcon({ icon, color }: { icon: string; color: string }) {
+  const iconMap: Record<string, React.ReactNode> = {
+    bug: <AlertTriangle className="w-5 h-5" style={{ color }} />,
+    wind: <Stethoscope className="w-5 h-5" style={{ color }} />,
+    heart: <HeartPulse className="w-5 h-5" style={{ color }} />,
+    droplets: <FlaskConical className="w-5 h-5" style={{ color }} />,
+    thermometer: <Syringe className="w-5 h-5" style={{ color }} />,
+    clipboard: <ClipboardList className="w-5 h-5" style={{ color }} />,
+  };
+  return <>{iconMap[icon] || <FileText className="w-5 h-5" style={{ color }} />}</>;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const { currentUser, globalSearch } = useApp();
   const { patients } = usePatients();
   const { referrals } = useReferrals();
   const { alerts: diseaseAlerts } = useSurveillance();
-  const { stats: immStats } = useImmunizations();
+  const { stats: immStats, immunizations } = useImmunizations();
   const { stats: ancStats } = useANC();
   const { stats: birthStats } = useBirths();
   const [activeTab, setActiveTab] = useState('satisfaction');
+
+  // Modal states
+  const [soapModalOpen, setSoapModalOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<SOAPTemplate | null>(null);
+  const [soapForm, setSoapForm] = useState({ subjective: '', objective: '', assessment: '', plan: '' });
+  const [soapPatientId, setSoapPatientId] = useState('');
+
+  const [prescribeModalOpen, setPrescribeModalOpen] = useState(false);
+  const [prescribePatientId, setPrescribePatientId] = useState('');
+  const [prescriptionItems, setPrescriptionItems] = useState<PrescriptionItem[]>([]);
+  const [prescriptionSuccess, setPrescriptionSuccess] = useState(false);
+
+  const [labModalOpen, setLabModalOpen] = useState(false);
+  const [labPatientId, setLabPatientId] = useState('');
+  const [selectedLabTests, setSelectedLabTests] = useState<Set<string>>(new Set());
+  const [labOrderSuccess, setLabOrderSuccess] = useState(false);
+
+  const [alertsExpanded, setAlertsExpanded] = useState(false);
 
   // Redirect non-doctor/CO roles to their own dashboards
   useEffect(() => {
@@ -68,6 +303,66 @@ export default function DashboardPage() {
       router.push(getDefaultDashboard(currentUser.role));
     }
   }, [currentUser, router]);
+
+  // SOAP template selection handler
+  const handleSelectTemplate = useCallback((template: SOAPTemplate) => {
+    setSelectedTemplate(template);
+    setSoapForm({
+      subjective: template.subjective,
+      objective: template.objective,
+      assessment: template.assessment,
+      plan: template.plan,
+    });
+  }, []);
+
+  const handleSoapSave = useCallback(() => {
+    alert(`SOAP note saved for patient ${soapPatientId || '(unselected)'}:\n\nS: ${soapForm.subjective.slice(0, 60)}...\nA: ${soapForm.assessment}`);
+    setSoapModalOpen(false);
+    setSelectedTemplate(null);
+    setSoapForm({ subjective: '', objective: '', assessment: '', plan: '' });
+    setSoapPatientId('');
+  }, [soapForm, soapPatientId]);
+
+  // Prescription handler
+  const handleApplyPreset = useCallback((preset: PrescriptionPreset) => {
+    setPrescriptionItems(prev => [...prev, ...preset.items]);
+  }, []);
+
+  const handleRemovePrescriptionItem = useCallback((index: number) => {
+    setPrescriptionItems(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const handleSubmitPrescription = useCallback(() => {
+    if (!prescribePatientId || prescriptionItems.length === 0) return;
+    setPrescriptionSuccess(true);
+    setTimeout(() => {
+      setPrescriptionSuccess(false);
+      setPrescribeModalOpen(false);
+      setPrescriptionItems([]);
+      setPrescribePatientId('');
+    }, 2000);
+  }, [prescribePatientId, prescriptionItems]);
+
+  // Lab order handler
+  const handleToggleLabTest = useCallback((testId: string) => {
+    setSelectedLabTests(prev => {
+      const next = new Set(prev);
+      if (next.has(testId)) next.delete(testId);
+      else next.add(testId);
+      return next;
+    });
+  }, []);
+
+  const handleSubmitLabOrder = useCallback(() => {
+    if (!labPatientId || selectedLabTests.size === 0) return;
+    setLabOrderSuccess(true);
+    setTimeout(() => {
+      setLabOrderSuccess(false);
+      setLabModalOpen(false);
+      setSelectedLabTests(new Set());
+      setLabPatientId('');
+    }, 2000);
+  }, [labPatientId, selectedLabTests]);
 
   if (!currentUser || (currentUser.role !== 'doctor' && currentUser.role !== 'clinical_officer')) return null;
 
@@ -131,7 +426,7 @@ export default function DashboardPage() {
     { week: 'Week 4', 'In Patients': Math.floor(patients.length * 0.4), 'Out Patients': Math.floor(patients.length * 0.25) },
   ];
 
-  // Module distribution donut (replaces "Covid" donut — more relevant for South Sudan)
+  // Module distribution donut (replaces "Covid" donut -- more relevant for South Sudan)
   const diseaseDistribution = [
     { name: 'Malaria', value: Math.floor(patients.length * 0.35), color: '#E52E42' },
     { name: 'Respiratory', value: Math.floor(patients.length * 0.2), color: '#FCD34D' },
@@ -141,145 +436,298 @@ export default function DashboardPage() {
   ];
   const totalCases = diseaseDistribution.reduce((s, d) => s + d.value, 0);
 
-  const TABS = ['satisfaction', 'equipment', 'department', 'avg-wait'];
+  const TABS = ['satisfaction', 'equipment', 'department', 'avg-wait'] as const;
+
+  // Equipment status data
+  const equipmentData = [
+    { name: 'Operational', value: 72, color: '#3ECF8E' },
+    { name: 'Needs Repair', value: 15, color: '#FCD34D' },
+    { name: 'Out of Service', value: 8, color: '#F87171' },
+    { name: 'On Order', value: 5, color: '#60A5FA' },
+  ];
+  const equipmentRate = 72;
+
+  // Department load data
+  const departmentData = [
+    { name: 'OPD', value: 35, color: '#3ECF8E' },
+    { name: 'Emergency', value: 25, color: '#F87171' },
+    { name: 'Maternity', value: 22, color: '#EC4899' },
+    { name: 'Pediatrics', value: 18, color: '#60A5FA' },
+  ];
+
+  // Average wait time data
+  const waitTimeData = [
+    { name: 'OPD', value: 45, color: '#60A5FA' },
+    { name: 'Emergency', value: 12, color: '#F87171' },
+    { name: 'Lab', value: 30, color: '#A855F7' },
+    { name: 'Pharmacy', value: 20, color: '#3ECF8E' },
+  ];
+  const avgWaitTime = 27;
+
+  // Get data for active tab
+  const getTabData = () => {
+    switch (activeTab) {
+      case 'equipment': return { data: equipmentData, center: `${equipmentRate}%`, colors: equipmentData.map(d => d.color) };
+      case 'department': return { data: departmentData, center: `${departmentData.length}`, colors: departmentData.map(d => d.color) };
+      case 'avg-wait': return { data: waitTimeData, center: `${avgWaitTime}m`, colors: waitTimeData.map(d => d.color) };
+      default: return { data: satisfactionData, center: `${satisfactionRate}%`, colors: SATISFACTION_COLORS };
+    }
+  };
+  const tabContent = getTabData();
+
+  // ═══════════════════════════════════════════════════
+  // CLINICAL ALERTS COMPUTATION
+  // ═══════════════════════════════════════════════════
+  const overdueImmunizations = immunizations ? immunizations.filter(imm => imm.status === 'overdue') : [];
+  const emergencyAlerts = diseaseAlerts.filter(a => a.alertLevel === 'emergency');
+  const warningAlerts = diseaseAlerts.filter(a => a.alertLevel === 'warning');
+  const criticalLabCount = Math.floor(patients.length * 0.03);
+
+  const totalAlertCount = overdueImmunizations.length + emergencyAlerts.length + warningAlerts.length + (criticalLabCount > 0 ? 1 : 0);
 
   return (
     <>
       <TopBar title="Dashboard" />
-      <main className="flex-1 p-4 sm:p-6 overflow-auto page-enter">
+      <main className="page-container page-enter">
 
-        {/* ═══ TOP ROW: KPI Cards + Satisfaction ═══ */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" style={{ gridAutoRows: '1fr' }}>
-
-          {/* Total Admitted Patients */}
-          <div className="card-elevated p-4 flex flex-col">
-            <p className="text-[11px] font-medium mb-2" style={{ color: 'var(--text-muted)' }}>Total Admitted Patients</p>
-            <div className="flex items-end gap-2 mb-2">
-              <span className="text-2xl font-bold leading-none" style={{ color: 'var(--text-primary)' }}>{patients.length || 0}</span>
-              <span className="text-[10px] font-semibold flex items-center gap-0.5 mb-0.5" style={{ color: '#2B6FE0' }}>
-                <TrendingUp className="w-3 h-3" /> 2%
-              </span>
-            </div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded flex items-center justify-center" style={{ background: 'rgba(96,165,250,0.15)' }}>
-                  <Users className="w-2 h-2" style={{ color: '#60A5FA' }} />
+        {/* ═══ CLINICAL ALERTS BANNER ═══ */}
+        {totalAlertCount > 0 && (
+          <div className="mb-4 rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+            <button
+              onClick={() => setAlertsExpanded(!alertsExpanded)}
+              className="w-full flex items-center justify-between p-3 px-4"
+              style={{ background: 'rgba(229,46,66,0.04)' }}
+            >
+              <div className="flex items-center gap-2">
+                <Bell className="w-4 h-4" style={{ color: '#E52E42' }} />
+                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  Clinical Alerts
                 </span>
-                <span className="text-[10px] font-semibold" style={{ color: 'var(--text-primary)' }}>{maleCount}</span>
-                <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Male</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="w-3 h-3 rounded flex items-center justify-center" style={{ background: 'rgba(236,72,153,0.15)' }}>
-                  <Users className="w-2 h-2" style={{ color: '#EC4899' }} />
-                </span>
-                <span className="text-[10px] font-semibold" style={{ color: 'var(--text-primary)' }}>{femaleCount}</span>
-                <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Female</span>
-              </div>
-            </div>
-            <div className="border-t pt-2 mt-auto grid grid-cols-3 gap-1" style={{ borderColor: 'var(--border-light)' }}>
-              <div className="text-center">
-                <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{waitingCount}</p>
-                <p className="text-[9px]" style={{ color: 'var(--text-muted)' }}>Waiting</p>
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{dischargeCount}</p>
-                <p className="text-[9px]" style={{ color: 'var(--text-muted)' }}>Discharge</p>
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{transferCount}</p>
-                <p className="text-[9px]" style={{ color: 'var(--text-muted)' }}>Transfer</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Total Active Staff */}
-          <div className="card-elevated p-4 flex flex-col">
-            <p className="text-[11px] font-medium mb-2" style={{ color: 'var(--text-muted)' }}>Total Active Staff</p>
-            <span className="text-2xl font-bold leading-none" style={{ color: 'var(--text-primary)' }}>{totalDoctors + totalNurses}</span>
-            <div className="mt-auto space-y-2 pt-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Stethoscope className="w-3.5 h-3.5" style={{ color: '#60A5FA' }} />
-                  <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>Doctors</span>
-                </div>
-                <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{totalDoctors}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <UserCheck className="w-3.5 h-3.5" style={{ color: '#2B6FE0' }} />
-                  <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>Nursing</span>
-                </div>
-                <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{totalNurses}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="card-elevated p-4 flex flex-col">
-            <p className="text-[11px] font-medium mb-2" style={{ color: 'var(--text-muted)' }}>Quick Overview</p>
-            <div className="mt-auto space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>Pending Referrals</span>
-                <span className="text-sm font-bold" style={{ color: '#F59E0B' }}>{pendingReferrals.length}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>Active Alerts</span>
-                <span className="text-sm font-bold" style={{ color: '#E52E42' }}>{activeAlerts.length}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>Immunizations</span>
-                <span className="text-sm font-bold" style={{ color: '#A855F7' }}>{immStats?.totalVaccinations || 0}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>ANC / Births</span>
-                <span className="text-sm font-bold" style={{ color: '#EC4899' }}>{ancStats?.totalVisits || 0} / {birthStats?.total || 0}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Patient Satisfaction Donut */}
-          <div className="card-elevated p-4 flex flex-col">
-            {/* Tabs */}
-            <div className="flex gap-0 mb-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
-              {TABS.map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className="px-1.5 py-1 text-[9px] font-semibold uppercase tracking-wider transition-colors"
-                  style={{
-                    color: activeTab === tab ? '#2B6FE0' : 'var(--text-muted)',
-                    borderBottom: activeTab === tab ? '2px solid #2B6FE0' : '2px solid transparent',
-                  }}
+                <span
+                  className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  style={{ background: 'rgba(229,46,66,0.12)', color: '#E52E42' }}
                 >
-                  {tab === 'satisfaction' ? 'Satisfaction' : tab === 'equipment' ? 'Equipment' : tab === 'department' ? 'Dept' : 'Avg Wait'}
+                  {totalAlertCount}
+                </span>
+              </div>
+              {alertsExpanded ? (
+                <ChevronUp className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+              ) : (
+                <ChevronDown className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+              )}
+            </button>
+
+            {alertsExpanded && (
+              <div className="p-3 pt-0 space-y-2">
+                {/* Critical: Emergency disease alerts */}
+                {emergencyAlerts.map((alert, i) => (
+                  <div
+                    key={`em-${i}`}
+                    className="flex items-center gap-3 p-2.5 rounded-xl"
+                    style={{ background: 'rgba(229,46,66,0.06)', border: '1px solid rgba(229,46,66,0.15)' }}
+                  >
+                    <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: '#E52E42' }} />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[11px] font-semibold" style={{ color: '#E52E42' }}>CRITICAL</span>
+                      <p className="text-[12px] truncate" style={{ color: 'var(--text-primary)' }}>
+                        {alert.disease} outbreak alert - {alert.state || 'Region'}: {alert.cases || 0} cases reported
+                      </p>
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); router.push('/surveillance'); }}
+                      className="text-[10px] font-medium flex-shrink-0 px-2 py-1 rounded-lg"
+                      style={{ background: 'rgba(229,46,66,0.1)', color: '#E52E42' }}
+                    >
+                      View
+                    </button>
+                  </div>
+                ))}
+
+                {/* Critical: Critical lab results */}
+                {criticalLabCount > 0 && (
+                  <div
+                    className="flex items-center gap-3 p-2.5 rounded-xl"
+                    style={{ background: 'rgba(229,46,66,0.06)', border: '1px solid rgba(229,46,66,0.15)' }}
+                  >
+                    <FlaskConical className="w-4 h-4 flex-shrink-0" style={{ color: '#E52E42' }} />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[11px] font-semibold" style={{ color: '#E52E42' }}>CRITICAL</span>
+                      <p className="text-[12px]" style={{ color: 'var(--text-primary)' }}>
+                        {criticalLabCount} critical lab result(s) awaiting review
+                      </p>
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); router.push('/lab'); }}
+                      className="text-[10px] font-medium flex-shrink-0 px-2 py-1 rounded-lg"
+                      style={{ background: 'rgba(229,46,66,0.1)', color: '#E52E42' }}
+                    >
+                      Review
+                    </button>
+                  </div>
+                )}
+
+                {/* Warning: Disease surveillance warnings */}
+                {warningAlerts.map((alert, i) => (
+                  <div
+                    key={`warn-${i}`}
+                    className="flex items-center gap-3 p-2.5 rounded-xl"
+                    style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)' }}
+                  >
+                    <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: '#F59E0B' }} />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[11px] font-semibold" style={{ color: '#F59E0B' }}>WARNING</span>
+                      <p className="text-[12px] truncate" style={{ color: 'var(--text-primary)' }}>
+                        {alert.disease} surveillance warning - {alert.county}, {alert.state}: {alert.cases || 0} cases
+                      </p>
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); router.push('/surveillance'); }}
+                      className="text-[10px] font-medium flex-shrink-0 px-2 py-1 rounded-lg"
+                      style={{ background: 'rgba(245,158,11,0.1)', color: '#F59E0B' }}
+                    >
+                      View
+                    </button>
+                  </div>
+                ))}
+
+                {/* Info: Overdue immunizations */}
+                {overdueImmunizations.length > 0 && (
+                  <div
+                    className="flex items-center gap-3 p-2.5 rounded-xl"
+                    style={{ background: 'rgba(43,111,224,0.06)', border: '1px solid rgba(43,111,224,0.15)' }}
+                  >
+                    <Syringe className="w-4 h-4 flex-shrink-0" style={{ color: '#0077D7' }} />
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[11px] font-semibold" style={{ color: '#0077D7' }}>INFO</span>
+                      <p className="text-[12px]" style={{ color: 'var(--text-primary)' }}>
+                        {overdueImmunizations.length} patient(s) with overdue immunizations
+                      </p>
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); router.push('/immunizations'); }}
+                      className="text-[10px] font-medium flex-shrink-0 px-2 py-1 rounded-lg"
+                      style={{ background: 'rgba(43,111,224,0.1)', color: '#0077D7' }}
+                    >
+                      View
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ═══ TOP ROW: KPI Cards ═══ */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+
+          {/* ── Admitted Patients ── */}
+          <div className="card-elevated" style={{ padding: '16px 18px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Admitted Patients</p>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#10B981', display: 'inline-flex', alignItems: 'center', gap: 2 }}><ArrowUpRight className="w-3 h-3" />2%</span>
+            </div>
+            <div className="stat-value" style={{ fontSize: 32, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1, marginBottom: 14 }}>{patients.length || 0}</div>
+            <div style={{ display: 'flex', gap: 14, marginBottom: 14 }}>
+              {[{ n: maleCount, l: 'Male', c: '#60A5FA' }, { n: femaleCount, l: 'Female', c: '#EC4899' }].map(g => (
+                <div key={g.l} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: g.c }} />
+                  <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}><span className="stat-value" style={{ fontWeight: 700, color: 'var(--text-primary)', marginRight: 3 }}>{g.n}</span>{g.l}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ borderTop: '1px solid var(--border-light)', paddingTop: 12, display: 'flex', gap: 0 }}>
+              {[
+                { v: waitingCount, l: 'Waiting', c: '#F59E0B' },
+                { v: dischargeCount, l: 'Discharge', c: '#10B981' },
+                { v: transferCount, l: 'Transfer', c: 'var(--accent-primary)' },
+              ].map((s, i) => (
+                <div key={s.l} style={{ flex: 1, textAlign: 'center', borderRight: i < 2 ? '1px solid var(--border-light)' : 'none' }}>
+                  <div className="stat-value" style={{ fontSize: 16, fontWeight: 700, color: s.c }}>{s.v}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>{s.l}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Active Staff ── */}
+          <div className="card-elevated" style={{ padding: '16px 18px' }}>
+            <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 12 }}>Active Staff</p>
+            <div className="stat-value" style={{ fontSize: 32, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1, marginBottom: 16 }}>{totalDoctors + totalNurses}</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {[
+                { Icon: Stethoscope, label: 'Doctors', count: totalDoctors, color: '#60A5FA' },
+                { Icon: UserCheck, label: 'Nursing', count: totalNurses, color: '#A78BFA' },
+              ].map(r => (
+                <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 30, height: 30, borderRadius: 8, background: `${r.color}12`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <r.Icon className="w-3.5 h-3.5" style={{ color: r.color }} />
+                  </div>
+                  <span style={{ fontSize: 13, color: 'var(--text-secondary)', flex: 1 }}>{r.label}</span>
+                  <span className="stat-value" style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>{r.count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Quick Overview ── */}
+          <div className="card-elevated" style={{ padding: '16px 18px' }}>
+            <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 14 }}>Quick Overview</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[
+                { Icon: SendHorizontal, label: 'Pending Referrals', value: pendingReferrals.length, color: '#F59E0B' },
+                { Icon: AlertTriangle, label: 'Active Alerts', value: activeAlerts.length, color: '#E52E42' },
+                { Icon: Syringe, label: 'Immunizations', value: immStats?.totalVaccinations || 0, color: '#A855F7' },
+                { Icon: Baby, label: 'ANC / Births', value: `${ancStats?.totalVisits || 0} / ${birthStats?.total || 0}`, color: '#EC4899' },
+              ].map(item => (
+                <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 7, background: `${item.color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <item.Icon className="w-3.5 h-3.5" style={{ color: item.color }} />
+                  </div>
+                  <span style={{ fontSize: 13, color: 'var(--text-secondary)', flex: 1 }}>{item.label}</span>
+                  <span className="stat-value" style={{ fontSize: 15, fontWeight: 700, color: item.color }}>{item.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Insights Card (tabbed) ── */}
+          <div className="card-elevated" style={{ padding: '16px 18px' }}>
+            <div style={{ display: 'flex', gap: 0, marginBottom: 10, borderBottom: '1px solid var(--border-light)' }}>
+              {TABS.map(tab => (
+                <button key={tab} onClick={() => setActiveTab(tab)} style={{
+                  padding: '4px 8px 6px', fontSize: 10, fontWeight: 700, textTransform: 'uppercase' as const,
+                  letterSpacing: '0.02em', border: 'none', background: 'none', cursor: 'pointer',
+                  color: activeTab === tab ? 'var(--accent-primary)' : 'var(--text-muted)',
+                  borderBottom: activeTab === tab ? '2px solid var(--accent-primary)' : '2px solid transparent',
+                }}>
+                  {tab === 'satisfaction' ? 'Score' : tab === 'equipment' ? 'Equip' : tab === 'department' ? 'Dept' : 'Wait'}
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-2 flex-1">
-              <div className="relative flex-shrink-0">
-                <ResponsiveContainer width={90} height={90}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ flexShrink: 0, position: 'relative' }}>
+                <ResponsiveContainer width={84} height={84}>
                   <PieChart>
-                    <Pie data={satisfactionData} dataKey="value" cx="50%" cy="50%" outerRadius={40} innerRadius={25} paddingAngle={2}>
-                      {satisfactionData.map((entry, i) => (
-                        <Cell key={i} fill={entry.color} />
-                      ))}
+                    <Pie data={tabContent.data} dataKey="value" cx="50%" cy="50%" outerRadius={38} innerRadius={24} paddingAngle={3} strokeWidth={0}>
+                      {tabContent.data.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                     </Pie>
                   </PieChart>
                 </ResponsiveContainer>
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span className="stat-value" style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{tabContent.center}</span>
+                </div>
               </div>
-              <div className="flex-1 space-y-1">
-                {satisfactionData.map((d, i) => (
-                  <div key={d.name} className="flex items-center gap-1.5 text-[10px]">
-                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: SATISFACTION_COLORS[i] }} />
-                    <span style={{ color: 'var(--text-secondary)' }}>{d.name}</span>
-                    <span className="font-bold ml-auto" style={{ color: 'var(--text-primary)' }}>{d.value}%</span>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                {tabContent.data.map((d, i) => (
+                  <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: tabContent.colors[i], flexShrink: 0 }} />
+                    <span style={{ fontSize: 12, color: 'var(--text-secondary)', flex: 1 }}>{d.name}</span>
+                    <span className="stat-value" style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+                      {d.value}{activeTab === 'avg-wait' ? 'm' : activeTab === 'department' ? '%' : '%'}
+                    </span>
                   </div>
                 ))}
               </div>
-            </div>
-            <div className="mt-2 p-1.5 rounded-lg text-center" style={{ background: 'rgba(43,111,224,0.08)', border: '1px solid rgba(43,111,224,0.15)' }}>
-              <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Patient Satisfaction Rate</span>
-              <span className="text-xl font-bold ml-2" style={{ color: '#2B6FE0' }}>{satisfactionRate}%</span>
             </div>
           </div>
         </div>
@@ -293,7 +741,7 @@ export default function DashboardPage() {
                 <span className="w-2 h-2 rounded-full" style={{ background: '#E52E42' }} />
                 <span style={{ color: 'var(--text-muted)' }}>Critical</span>
               </span>
-              <button onClick={() => router.push('/patients')} className="text-[11px] font-medium flex items-center gap-0.5" style={{ color: '#2B6FE0' }}>
+              <button onClick={() => router.push('/patients')} className="text-[11px] font-medium flex items-center gap-0.5" style={{ color: '#0077D7' }}>
                 Details <ChevronRight className="w-3 h-3" />
               </button>
             </div>
@@ -348,7 +796,7 @@ export default function DashboardPage() {
           <div className="glass-section">
             <div className="glass-section-header">
               <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Disease Distribution</span>
-              <button onClick={() => router.push('/surveillance')} className="text-[10px] font-medium flex items-center gap-0.5" style={{ color: '#2B6FE0' }}>
+              <button onClick={() => router.push('/surveillance')} className="text-[10px] font-medium flex items-center gap-0.5" style={{ color: '#0077D7' }}>
                 Details <ChevronRight className="w-3 h-3" />
               </button>
             </div>
@@ -401,7 +849,7 @@ export default function DashboardPage() {
                 <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Bed Occupancy</span>
                 <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>({bedOccupancy}/{bedTotal})</span>
               </div>
-              <button onClick={() => router.push('/hospitals')} className="text-[10px] font-medium flex items-center gap-0.5" style={{ color: '#2B6FE0' }}>
+              <button onClick={() => router.push('/hospitals')} className="text-[10px] font-medium flex items-center gap-0.5" style={{ color: '#0077D7' }}>
                 Details <ChevronRight className="w-3 h-3" />
               </button>
             </div>
@@ -443,7 +891,18 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* ═══ QUICK ACTIONS ═══ */}
+        {/* ═══ REFERRAL CHAIN TRACKER ═══ */}
+        {referrals.length > 0 && (
+          <div className="mt-6">
+            <ReferralChainTracker
+              referrals={referrals}
+              currentFacilityId={currentUser?.hospitalId}
+              compact
+            />
+          </div>
+        )}
+
+        {/* ═══ QUICK ACTIONS (updated with clinical action modals) ═══ */}
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
 
           {/* Quick Actions */}
@@ -451,18 +910,18 @@ export default function DashboardPage() {
             <p className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>Quick Actions</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[
-                { label: 'New Patient', icon: Users, href: '/patients/new', color: '#2B6FE0' },
-                { label: 'Consultation', icon: FileText, href: '/consultation', color: '#2B6FE0' },
-                { label: 'Immunization', icon: Syringe, href: '/immunizations', color: '#A855F7' },
-                { label: 'ANC Visit', icon: HeartPulse, href: '/anc', color: '#EC4899' },
-                { label: 'Birth Reg.', icon: Baby, href: '/births', color: '#F59E0B' },
-                { label: 'Lab Results', icon: FlaskConical, href: '/lab', color: '#38BDF8' },
-                { label: 'Pharmacy', icon: Pill, href: '/pharmacy', color: '#10B944' },
-                { label: 'Referral', icon: SendHorizontal, href: '/referrals', color: '#0D9488' },
+                { label: 'New Patient', icon: Users, action: () => router.push('/patients/new'), color: '#0077D7' },
+                { label: 'New Consultation', icon: ClipboardList, action: () => setSoapModalOpen(true), color: '#3ECF8E' },
+                { label: 'Quick Prescribe', icon: Pill, action: () => setPrescribeModalOpen(true), color: '#A855F7' },
+                { label: 'Quick Lab Order', icon: TestTube, action: () => setLabModalOpen(true), color: '#F59E0B' },
+                { label: 'Immunization', icon: Syringe, action: () => router.push('/immunizations'), color: '#0D9488' },
+                { label: 'ANC Visit', icon: HeartPulse, action: () => router.push('/anc'), color: '#EC4899' },
+                { label: 'Birth Reg.', icon: Baby, action: () => router.push('/births'), color: '#60A5FA' },
+                { label: 'Referral', icon: SendHorizontal, action: () => router.push('/referrals'), color: '#E52E42' },
               ].map(action => (
                 <button
                   key={action.label}
-                  onClick={() => router.push(action.href)}
+                  onClick={action.action}
                   className="flex items-center gap-2 p-2.5 rounded-xl transition-all hover:shadow-sm"
                   style={{ background: `${action.color}08`, border: `1px solid ${action.color}15` }}
                 >
@@ -477,10 +936,10 @@ export default function DashboardPage() {
           <div className="card-elevated p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Globe className="w-4 h-4" style={{ color: '#2B6FE0' }} />
+                <Globe className="w-4 h-4" style={{ color: '#0077D7' }} />
                 <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>DHIS2 Status</p>
               </div>
-              <button onClick={() => router.push('/dhis2-export')} className="text-[10px] font-medium flex items-center gap-0.5" style={{ color: '#2B6FE0' }}>
+              <button onClick={() => router.push('/dhis2-export')} className="text-[10px] font-medium flex items-center gap-0.5" style={{ color: '#0077D7' }}>
                 Open <ArrowUpRight className="w-3 h-3" />
               </button>
             </div>
@@ -494,7 +953,7 @@ export default function DashboardPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Data Sync</span>
-                <span className="text-xs font-bold" style={{ color: '#2B6FE0' }}>8/10 Elements</span>
+                <span className="text-xs font-bold" style={{ color: '#0077D7' }}>8/10 Elements</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Last Sync</span>
@@ -515,6 +974,314 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* ═══════════════════════════════════════════════
+            SOAP NOTE MODAL
+        ═══════════════════════════════════════════════ */}
+        <ModalOverlay open={soapModalOpen} onClose={() => { setSoapModalOpen(false); setSelectedTemplate(null); setSoapForm({ subjective: '', objective: '', assessment: '', plan: '' }); setSoapPatientId(''); }} title="New Consultation - SOAP Note">
+          {/* Patient selector */}
+          <div className="mb-4">
+            <label className="text-[11px] font-semibold uppercase tracking-wider block mb-1.5" style={{ color: 'var(--text-muted)' }}>
+              Select Patient
+            </label>
+            <select
+              value={soapPatientId}
+              onChange={e => setSoapPatientId(e.target.value)}
+              className="w-full p-2.5 rounded-xl text-[13px]"
+              style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+            >
+              <option value="">-- Select Patient --</option>
+              {patients.slice(0, 20).map(p => (
+                <option key={p._id} value={p._id}>
+                  {p.firstName} {p.surname} ({p.hospitalNumber})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Template selector */}
+          <div className="mb-4">
+            <label className="text-[11px] font-semibold uppercase tracking-wider block mb-2" style={{ color: 'var(--text-muted)' }}>
+              Choose Template
+            </label>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+              {SOAP_TEMPLATES.map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => handleSelectTemplate(t)}
+                  className="flex flex-col items-center gap-1.5 p-2.5 rounded-xl transition-all text-center"
+                  style={{
+                    background: selectedTemplate?.id === t.id ? `${t.color}15` : 'var(--bg-secondary)',
+                    border: selectedTemplate?.id === t.id ? `2px solid ${t.color}` : '1px solid var(--border-light)',
+                  }}
+                >
+                  <TemplateIcon icon={t.icon} color={t.color} />
+                  <span className="text-[10px] font-medium" style={{ color: 'var(--text-primary)' }}>{t.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* SOAP fields */}
+          {(['subjective', 'objective', 'assessment', 'plan'] as const).map(field => (
+            <div key={field} className="mb-3">
+              <label className="text-[11px] font-semibold uppercase tracking-wider flex items-center gap-2 mb-1.5" style={{ color: 'var(--text-muted)' }}>
+                <span className="w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-bold text-white" style={{ background: field === 'subjective' ? '#0077D7' : field === 'objective' ? '#3ECF8E' : field === 'assessment' ? '#F59E0B' : '#A855F7' }}>
+                  {field[0].toUpperCase()}
+                </span>
+                {field === 'subjective' ? 'Subjective' : field === 'objective' ? 'Objective' : field === 'assessment' ? 'Assessment' : 'Plan'}
+              </label>
+              <textarea
+                value={soapForm[field]}
+                onChange={e => setSoapForm(prev => ({ ...prev, [field]: e.target.value }))}
+                rows={field === 'plan' || field === 'objective' ? 5 : 3}
+                className="w-full p-2.5 rounded-xl text-[12px] resize-y"
+                style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+                placeholder={`Enter ${field} notes...`}
+              />
+            </div>
+          ))}
+
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <button
+              onClick={() => { setSoapModalOpen(false); setSelectedTemplate(null); setSoapForm({ subjective: '', objective: '', assessment: '', plan: '' }); }}
+              className="px-4 py-2 rounded-xl text-[12px] font-medium"
+              style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-light)' }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSoapSave}
+              className="px-4 py-2 rounded-xl text-[12px] font-semibold text-white"
+              style={{ background: '#0077D7' }}
+            >
+              Save SOAP Note
+            </button>
+          </div>
+        </ModalOverlay>
+
+        {/* ═══════════════════════════════════════════════
+            PRESCRIPTION MODAL
+        ═══════════════════════════════════════════════ */}
+        <ModalOverlay open={prescribeModalOpen} onClose={() => { setPrescribeModalOpen(false); setPrescriptionItems([]); setPrescribePatientId(''); setPrescriptionSuccess(false); }} title="Quick Prescribe">
+          {prescriptionSuccess ? (
+            <div className="flex flex-col items-center justify-center py-8 gap-3">
+              <CheckCircle2 className="w-12 h-12" style={{ color: '#3ECF8E' }} />
+              <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Prescription Created Successfully</p>
+            </div>
+          ) : (
+            <>
+              {/* Patient selector */}
+              <div className="mb-4">
+                <label className="text-[11px] font-semibold uppercase tracking-wider block mb-1.5" style={{ color: 'var(--text-muted)' }}>
+                  Select Patient
+                </label>
+                <select
+                  value={prescribePatientId}
+                  onChange={e => setPrescribePatientId(e.target.value)}
+                  className="w-full p-2.5 rounded-xl text-[13px]"
+                  style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+                >
+                  <option value="">-- Select Patient --</option>
+                  {patients.slice(0, 20).map(p => (
+                    <option key={p._id} value={p._id}>
+                      {p.firstName} {p.surname} ({p.hospitalNumber})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Preset buttons */}
+              <div className="mb-4">
+                <label className="text-[11px] font-semibold uppercase tracking-wider block mb-2" style={{ color: 'var(--text-muted)' }}>
+                  Preset Combos (click to add)
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {PRESCRIPTION_PRESETS.map(preset => (
+                    <button
+                      key={preset.id}
+                      onClick={() => handleApplyPreset(preset)}
+                      className="p-2.5 rounded-xl text-left transition-all hover:scale-[1.01]"
+                      style={{ background: `${preset.color}08`, border: `1px solid ${preset.color}20` }}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <Pill className="w-3.5 h-3.5" style={{ color: preset.color }} />
+                        <span className="text-[11px] font-semibold" style={{ color: 'var(--text-primary)' }}>{preset.name}</span>
+                      </div>
+                      <div className="space-y-0.5">
+                        {preset.items.map((item, idx) => (
+                          <p key={idx} className="text-[9px]" style={{ color: 'var(--text-muted)' }}>
+                            {item.medication} {item.dose} {item.frequency}
+                          </p>
+                        ))}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Current prescription items */}
+              {prescriptionItems.length > 0 && (
+                <div className="mb-4">
+                  <label className="text-[11px] font-semibold uppercase tracking-wider block mb-2" style={{ color: 'var(--text-muted)' }}>
+                    Prescription Items ({prescriptionItems.length})
+                  </label>
+                  <div className="space-y-2">
+                    {prescriptionItems.map((item, i) => (
+                      <div
+                        key={i}
+                        className="flex items-start justify-between p-2.5 rounded-xl"
+                        style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-light)' }}
+                      >
+                        <div className="flex-1">
+                          <p className="text-[12px] font-semibold" style={{ color: 'var(--text-primary)' }}>{item.medication}</p>
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(43,111,224,0.08)', color: '#0077D7' }}>{item.dose}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(62,207,142,0.08)', color: '#3ECF8E' }}>{item.route}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(168,85,247,0.08)', color: '#A855F7' }}>{item.frequency}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(245,158,11,0.08)', color: '#F59E0B' }}>{item.duration}</span>
+                          </div>
+                        </div>
+                        <button onClick={() => handleRemovePrescriptionItem(i)} className="p-1 rounded-lg hover:opacity-80" style={{ background: 'rgba(229,46,66,0.08)' }}>
+                          <X className="w-3 h-3" style={{ color: '#E52E42' }} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  onClick={() => { setPrescribeModalOpen(false); setPrescriptionItems([]); setPrescribePatientId(''); }}
+                  className="px-4 py-2 rounded-xl text-[12px] font-medium"
+                  style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-light)' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSubmitPrescription}
+                  disabled={!prescribePatientId || prescriptionItems.length === 0}
+                  className="px-4 py-2 rounded-xl text-[12px] font-semibold text-white disabled:opacity-40"
+                  style={{ background: '#A855F7' }}
+                >
+                  Create Prescription ({prescriptionItems.length} items)
+                </button>
+              </div>
+            </>
+          )}
+        </ModalOverlay>
+
+        {/* ═══════════════════════════════════════════════
+            LAB ORDER MODAL
+        ═══════════════════════════════════════════════ */}
+        <ModalOverlay open={labModalOpen} onClose={() => { setLabModalOpen(false); setSelectedLabTests(new Set()); setLabPatientId(''); setLabOrderSuccess(false); }} title="Quick Lab Order">
+          {labOrderSuccess ? (
+            <div className="flex flex-col items-center justify-center py-8 gap-3">
+              <CheckCircle2 className="w-12 h-12" style={{ color: '#3ECF8E' }} />
+              <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Lab Order Submitted Successfully</p>
+              <p className="text-[12px]" style={{ color: 'var(--text-muted)' }}>{selectedLabTests.size} test(s) ordered</p>
+            </div>
+          ) : (
+            <>
+              {/* Patient selector */}
+              <div className="mb-4">
+                <label className="text-[11px] font-semibold uppercase tracking-wider block mb-1.5" style={{ color: 'var(--text-muted)' }}>
+                  Select Patient
+                </label>
+                <select
+                  value={labPatientId}
+                  onChange={e => setLabPatientId(e.target.value)}
+                  className="w-full p-2.5 rounded-xl text-[13px]"
+                  style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+                >
+                  <option value="">-- Select Patient --</option>
+                  {patients.slice(0, 20).map(p => (
+                    <option key={p._id} value={p._id}>
+                      {p.firstName} {p.surname} ({p.hospitalNumber})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Lab test checkboxes */}
+              <div className="mb-4">
+                <label className="text-[11px] font-semibold uppercase tracking-wider block mb-2" style={{ color: 'var(--text-muted)' }}>
+                  Select Tests
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {COMMON_LAB_TESTS.map(test => {
+                    const isSelected = selectedLabTests.has(test.id);
+                    return (
+                      <button
+                        key={test.id}
+                        onClick={() => handleToggleLabTest(test.id)}
+                        className="flex items-center gap-3 p-2.5 rounded-xl text-left transition-all"
+                        style={{
+                          background: isSelected ? 'rgba(43,111,224,0.08)' : 'var(--bg-secondary)',
+                          border: isSelected ? '2px solid #0077D7' : '1px solid var(--border-light)',
+                        }}
+                      >
+                        <div
+                          className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0"
+                          style={{
+                            background: isSelected ? '#0077D7' : 'transparent',
+                            border: isSelected ? 'none' : '2px solid var(--border-light)',
+                          }}
+                        >
+                          {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-white" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[12px] font-medium" style={{ color: 'var(--text-primary)' }}>{test.name}</p>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>{test.specimen}</span>
+                            <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(43,111,224,0.06)', color: '#0077D7' }}>
+                              {test.category}
+                            </span>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Selected summary */}
+              {selectedLabTests.size > 0 && (
+                <div className="mb-4 p-3 rounded-xl" style={{ background: 'rgba(43,111,224,0.04)', border: '1px solid rgba(43,111,224,0.12)' }}>
+                  <p className="text-[11px] font-medium mb-1" style={{ color: '#0077D7' }}>
+                    {selectedLabTests.size} test(s) selected:
+                  </p>
+                  <p className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+                    {COMMON_LAB_TESTS.filter(t => selectedLabTests.has(t.id)).map(t => t.name).join(', ')}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  onClick={() => { setLabModalOpen(false); setSelectedLabTests(new Set()); setLabPatientId(''); }}
+                  className="px-4 py-2 rounded-xl text-[12px] font-medium"
+                  style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-light)' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSubmitLabOrder}
+                  disabled={!labPatientId || selectedLabTests.size === 0}
+                  className="px-4 py-2 rounded-xl text-[12px] font-semibold text-white disabled:opacity-40"
+                  style={{ background: '#F59E0B' }}
+                >
+                  <span className="flex items-center gap-1.5">
+                    <TestTube className="w-3.5 h-3.5" />
+                    Order {selectedLabTests.size} Test(s)
+                  </span>
+                </button>
+              </div>
+            </>
+          )}
+        </ModalOverlay>
+
       </main>
     </>
   );

@@ -34,7 +34,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
     return (
       <>
         <TopBar title="Patient Record" />
-        <main className="flex-1 p-6 flex items-center justify-center">
+        <main className="page-container flex items-center justify-center">
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
             {loading ? 'Loading patient...' : 'Patient not found.'}
           </p>
@@ -60,7 +60,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
   return (
     <>
       <TopBar title="Patient Record" />
-      <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
+      <main className="page-container page-enter">
           <button onClick={() => router.push('/patients')} className="flex items-center gap-1.5 text-sm mb-4" style={{ color: 'var(--taban-blue)' }}>
             <ArrowLeft className="w-4 h-4" /> Back to Patients
           </button>
@@ -68,7 +68,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
           {/* Patient Header */}
           <div className="card-elevated p-5 mb-4">
             <div className="flex items-start gap-5">
-              <div className="w-16 h-16 rounded-xl flex items-center justify-center text-xl font-bold text-white flex-shrink-0"
+              <div className="w-16 h-16 rounded-md flex items-center justify-center text-xl font-bold text-white flex-shrink-0"
                 style={{ background: patient.gender === 'Male' ? 'var(--taban-blue)' : 'var(--taban-sky)' }}>
                 {(patient.firstName || '?')[0]}{(patient.surname || '?')[0]}
               </div>
@@ -77,7 +77,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                   <h1 className="text-xl font-semibold">
                     {patient.firstName} {patient.middleName} {patient.surname}
                   </h1>
-                  <span className="font-mono text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(43,111,224,0.12)', color: 'var(--taban-blue)' }}>
+                  <span className="font-mono text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(0,119,215,0.12)', color: 'var(--taban-blue)' }}>
                     {patient.hospitalNumber}
                   </span>
                 </div>
@@ -126,12 +126,12 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
 
           {/* Overview Tab */}
           {activeTab === 'overview' && (
-            <div className="grid grid-cols-3 gap-4">
-              <div className="col-span-2 space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="lg:col-span-2 space-y-4">
                 {/* Latest Vitals */}
                 <div className="card-elevated p-5">
                   <h3 className="font-semibold text-sm mb-4">Latest Vital Signs</h3>
-                  <div className="grid grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     {latestVitals && [
                       { label: 'Temperature', value: `${latestVitals.temperature}°C`, warn: latestVitals.temperature > 37.5 },
                       { label: 'Blood Pressure', value: `${latestVitals.systolic}/${latestVitals.diastolic}`, warn: latestVitals.systolic > 140 },
@@ -183,7 +183,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">
                           {(rec.diagnoses || []).map((d, i) => (
-                            <span key={i} className="text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(43,111,224,0.12)', color: 'var(--taban-blue)' }}>
+                            <span key={i} className="text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(0,119,215,0.12)', color: 'var(--taban-blue)' }}>
                               {d.icd10Code} {d.name}
                             </span>
                           ))}
@@ -333,7 +333,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                       <p className="text-xs mb-2" style={{ color: 'var(--text-secondary)' }}>{rec.historyOfPresentIllness.slice(0, 150)}...</p>
                       <div className="flex flex-wrap gap-1.5 mb-2">
                         {(rec.diagnoses || []).map((d, j) => (
-                          <span key={j} className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(43,111,224,0.12)', color: 'var(--taban-blue)' }}>
+                          <span key={j} className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(0,119,215,0.12)', color: 'var(--taban-blue)' }}>
                             {d.icd10Code} {d.name}
                           </span>
                         ))}
@@ -538,7 +538,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                             {ref.status === 'sent' ? 'Sent' : ref.status === 'received' ? 'Received' : ref.status === 'seen' ? 'Being Seen' : ref.status === 'completed' ? 'Completed' : 'Cancelled'}
                           </span>
                           {tp && (
-                            <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(43,111,224,0.12)', color: 'var(--taban-blue)', border: '1px solid rgba(43,111,224,0.2)' }}>
+                            <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(0,119,215,0.12)', color: 'var(--taban-blue)', border: '1px solid rgba(0,119,215,0.2)' }}>
                               <Package className="w-3 h-3" /> Data Package
                             </span>
                           )}

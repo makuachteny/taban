@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
 import { useApp } from '@/lib/context';
 import { useLabResults } from '@/lib/hooks/useLabResults';
@@ -9,10 +8,72 @@ import {
   FlaskConical, Clock, CheckCircle2, AlertTriangle, Activity, Zap,
   Radio, TestTubes, Microscope, Droplets, FileText,
   MessageSquare, ChevronRight, Beaker, Thermometer, Loader2,
+  X, Save, Table, List, BarChart3, Timer, Bell, BellOff,
 } from 'lucide-react';
 
-const ACCENT = '#2B6FE0';
+const ACCENT = '#0077D7';
 
+// ===== Reference Ranges for Auto-Flagging =====
+interface ReferenceRange {
+  test: string;
+  unit: string;
+  normalMin?: number;
+  normalMax?: number;
+  criticalLow?: number;
+  criticalHigh?: number;
+  qualitative?: string[]; // For qualitative tests like Malaria RDT, HIV
+  referenceStr: string;
+}
+
+const REFERENCE_RANGES: ReferenceRange[] = [
+  { test: 'Hemoglobin', unit: 'g/dL', normalMin: 12, normalMax: 17, criticalLow: 7, criticalHigh: 20, referenceStr: '12-17 g/dL' },
+  { test: 'WBC', unit: '/μL', normalMin: 4000, normalMax: 11000, criticalLow: 2000, criticalHigh: 30000, referenceStr: '4000-11000 /μL' },
+  { test: 'Platelets', unit: '/μL', normalMin: 150000, normalMax: 400000, criticalLow: 50000, referenceStr: '150000-400000 /μL' },
+  { test: 'Blood Glucose', unit: 'mg/dL', normalMin: 70, normalMax: 140, criticalLow: 40, criticalHigh: 400, referenceStr: '70-140 mg/dL' },
+  { test: 'Creatinine', unit: 'mg/dL', normalMin: 0.6, normalMax: 1.2, criticalHigh: 5, referenceStr: '0.6-1.2 mg/dL' },
+  { test: 'Malaria RDT', unit: '', qualitative: ['Positive', 'Negative'], referenceStr: 'Negative' },
+  { test: 'HIV', unit: '', qualitative: ['Reactive', 'Non-reactive'], referenceStr: 'Non-reactive' },
+];
+
+function getRefRange(testName: string): ReferenceRange | undefined {
+  return REFERENCE_RANGES.find(r => testName.toLowerCase().includes(r.test.toLowerCase()));
+}
+
+function flagResult(testName: string, value: string): { flag: 'NORMAL' | 'ABNORMAL' | 'CRITICAL'; abnormal: boolean; critical: boolean } {
+  const ref = getRefRange(testName);
+  if (!ref) return { flag: 'NORMAL', abnormal: false, critical: false };
+
+  // Qualitative tests
+  if (ref.qualitative) {
+    const normalValues = ['Negative', 'Non-reactive'];
+    const isNormal = normalValues.some(n => value.toLowerCase() === n.toLowerCase());
+    return isNormal
+      ? { flag: 'NORMAL', abnormal: false, critical: false }
+      : { flag: 'ABNORMAL', abnormal: true, critical: false };
+  }
+
+  // Numeric tests
+  const num = parseFloat(value);
+  if (isNaN(num)) return { flag: 'NORMAL', abnormal: false, critical: false };
+
+  // Check critical first
+  if (ref.criticalLow !== undefined && num < ref.criticalLow) return { flag: 'CRITICAL', abnormal: true, critical: true };
+  if (ref.criticalHigh !== undefined && num > ref.criticalHigh) return { flag: 'CRITICAL', abnormal: true, critical: true };
+
+  // Check abnormal
+  if (ref.normalMin !== undefined && num < ref.normalMin) return { flag: 'ABNORMAL', abnormal: true, critical: false };
+  if (ref.normalMax !== undefined && num > ref.normalMax) return { flag: 'ABNORMAL', abnormal: true, critical: false };
+
+  return { flag: 'NORMAL', abnormal: false, critical: false };
+}
+
+const FLAG_COLORS = {
+  NORMAL: { bg: 'rgba(74,222,128,0.12)', color: '#4ADE80', border: 'rgba(74,222,128,0.25)' },
+  ABNORMAL: { bg: 'rgba(251,191,36,0.12)', color: '#FBBF24', border: 'rgba(251,191,36,0.25)' },
+  CRITICAL: { bg: 'rgba(239,68,68,0.12)', color: '#EF4444', border: 'rgba(239,68,68,0.25)' },
+};
+
+// ===== Existing Constants =====
 const LAB_EVENT_TYPES = [
   { label: 'Specimen Received', color: '#06B6D4', icon: Droplets },
   { label: 'Centrifuge Started', color: '#A855F7', icon: Loader2 },
@@ -21,7 +82,7 @@ const LAB_EVENT_TYPES = [
   { label: 'CBC Analysis Running', color: '#60A5FA', icon: Activity },
   { label: 'Urinalysis Complete', color: '#FBBF24', icon: Beaker },
   { label: 'Blood Culture Incubated', color: '#EC4899', icon: Thermometer },
-  { label: 'Result Validated', color: '#2B6FE0', icon: CheckCircle2 },
+  { label: 'Result Validated', color: '#0077D7', icon: CheckCircle2 },
   { label: 'Specimen Rejected - Hemolyzed', color: '#EF4444', icon: AlertTriangle },
   { label: 'Glucose Result Ready', color: '#38BDF8', icon: FlaskConical },
 ];
@@ -42,12 +103,45 @@ interface LiveEvent {
   isNew: boolean;
 }
 
+interface CriticalAlert {
+  id: string;
+  patientName: string;
+  testName: string;
+  value: string;
+  unit: string;
+  orderedBy: string;
+  timestamp: string;
+  acknowledged: boolean;
+}
+
+interface BatchEntry {
+  orderId: string;
+  patientName: string;
+  specimen: string;
+  resultValue: string;
+  flag: 'NORMAL' | 'ABNORMAL' | 'CRITICAL' | '';
+}
+
 export default function LabDashboardPage() {
   const { currentUser } = useApp();
-  const router = useRouter();
-  const { results, loading } = useLabResults();
+  const { results, loading, update } = useLabResults();
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
   const [eventCounter, setEventCounter] = useState(0);
+
+  // Feature 1: Result Entry Modal
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState('');
+  const [resultValue, setResultValue] = useState('');
+  const [resultSaving, setResultSaving] = useState(false);
+
+  // Feature 2: Critical Alerts
+  const [criticalAlerts, setCriticalAlerts] = useState<CriticalAlert[]>([]);
+
+  // Feature 3: Batch Entry
+  const [entryMode, setEntryMode] = useState<'single' | 'batch'>('single');
+  const [batchTestType, setBatchTestType] = useState('');
+  const [batchEntries, setBatchEntries] = useState<BatchEntry[]>([]);
+  const [batchSaving, setBatchSaving] = useState(false);
 
   // --- Derived KPIs ---
   const kpis = useMemo(() => {
@@ -62,7 +156,50 @@ export default function LabDashboardPage() {
       ? Math.round(completed.reduce((sum, r) => sum + (new Date(r.completedAt).getTime() - new Date(r.orderedAt).getTime()) / 3600000, 0) / completed.length)
       : 0;
     const specimens = new Set(results.map(r => r.specimen)).size;
-    return { pending, inProgress, completedToday, critical, abnormal, avgTurnaround, specimens, total: results.length };
+    const unacknowledgedCritical = criticalAlerts.filter(a => !a.acknowledged).length;
+    return { pending, inProgress, completedToday, critical, abnormal, avgTurnaround, specimens, total: results.length, unacknowledgedCritical };
+  }, [results, criticalAlerts]);
+
+  // Feature 4: TAT Dashboard data
+  const tatData = useMemo(() => {
+    const completed = results.filter(r => r.status === 'completed' && r.completedAt && r.orderedAt);
+    const today = new Date().toISOString().slice(0, 10);
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 3600000).toISOString().slice(0, 10);
+
+    // By test type
+    const byTest: Record<string, { totalHrs: number; count: number; todayHrs: number; todayCount: number }> = {};
+    completed.forEach(r => {
+      const hrs = (new Date(r.completedAt).getTime() - new Date(r.orderedAt).getTime()) / 3600000;
+      if (!byTest[r.testName]) byTest[r.testName] = { totalHrs: 0, count: 0, todayHrs: 0, todayCount: 0 };
+      if (r.orderedAt >= oneWeekAgo) {
+        byTest[r.testName].totalHrs += hrs;
+        byTest[r.testName].count += 1;
+      }
+      if (r.completedAt.startsWith(today)) {
+        byTest[r.testName].todayHrs += hrs;
+        byTest[r.testName].todayCount += 1;
+      }
+    });
+
+    const rows = Object.entries(byTest).map(([test, d]) => ({
+      test,
+      weeklyAvg: d.count > 0 ? d.totalHrs / d.count : 0,
+      todayAvg: d.todayCount > 0 ? d.todayHrs / d.todayCount : 0,
+      todayCount: d.todayCount,
+    })).sort((a, b) => b.todayCount - a.todayCount).slice(0, 8);
+
+    // Overall today average
+    const todayCompleted = completed.filter(r => r.completedAt.startsWith(today));
+    const overallTodayAvg = todayCompleted.length > 0
+      ? todayCompleted.reduce((s, r) => s + (new Date(r.completedAt).getTime() - new Date(r.orderedAt).getTime()) / 3600000, 0) / todayCompleted.length
+      : 0;
+
+    const weekCompleted = completed.filter(r => r.orderedAt >= oneWeekAgo);
+    const overallWeekAvg = weekCompleted.length > 0
+      ? weekCompleted.reduce((s, r) => s + (new Date(r.completedAt).getTime() - new Date(r.orderedAt).getTime()) / 3600000, 0) / weekCompleted.length
+      : 0;
+
+    return { rows, overallTodayAvg, overallWeekAvg };
   }, [results]);
 
   // --- Simulated live events ---
@@ -91,14 +228,184 @@ export default function LabDashboardPage() {
     return () => clearInterval(interval);
   }, [generateEvent]);
 
+  // Initialize critical alerts from existing results
+  useEffect(() => {
+    const criticalResults = results.filter(r => r.critical && r.status === 'completed');
+    setCriticalAlerts(prev => {
+      const existingIds = new Set(prev.map(a => a.id));
+      const newAlerts = criticalResults
+        .filter(r => !existingIds.has(r._id))
+        .map(r => ({
+          id: r._id,
+          patientName: r.patientName,
+          testName: r.testName,
+          value: r.result,
+          unit: r.unit,
+          orderedBy: r.orderedBy,
+          timestamp: r.completedAt || r.updatedAt,
+          acknowledged: false,
+        }));
+      if (newAlerts.length === 0) return prev;
+      return [...newAlerts, ...prev];
+    });
+  }, [results]);
+
   // --- Categorized results ---
   const pendingOrders = useMemo(() => results.filter(r => r.status === 'pending' || r.status === 'in_progress').slice(0, 8), [results]);
+  const allPendingOrders = useMemo(() => results.filter(r => r.status === 'pending' || r.status === 'in_progress'), [results]);
   const recentCompleted = useMemo(() => results.filter(r => r.status === 'completed').slice(0, 6), [results]);
   const specimenCounts = useMemo(() => {
     const map: Record<string, number> = {};
     results.forEach(r => { map[r.specimen] = (map[r.specimen] || 0) + 1; });
     return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 6);
   }, [results]);
+
+  // Unique test types for batch mode
+  const pendingTestTypes = useMemo(() => {
+    const types = new Set(allPendingOrders.map(o => o.testName));
+    return Array.from(types).sort();
+  }, [allPendingOrders]);
+
+  // Batch mode: populate entries when test type changes
+  useEffect(() => {
+    if (batchTestType && entryMode === 'batch') {
+      const orders = allPendingOrders.filter(o => o.testName === batchTestType);
+      setBatchEntries(orders.map(o => ({
+        orderId: o._id,
+        patientName: o.patientName,
+        specimen: o.specimen,
+        resultValue: '',
+        flag: '',
+      })));
+    }
+  }, [batchTestType, entryMode, allPendingOrders]);
+
+  // Selected order details for modal
+  const selectedOrder = useMemo(() => {
+    if (!selectedOrderId) return null;
+    return allPendingOrders.find(o => o._id === selectedOrderId) || null;
+  }, [selectedOrderId, allPendingOrders]);
+
+  const currentRefRange = useMemo(() => {
+    if (!selectedOrder) return null;
+    return getRefRange(selectedOrder.testName);
+  }, [selectedOrder]);
+
+  const currentFlag = useMemo(() => {
+    if (!selectedOrder || !resultValue) return null;
+    return flagResult(selectedOrder.testName, resultValue);
+  }, [selectedOrder, resultValue]);
+
+  // --- Handlers ---
+  const handleSaveResult = async () => {
+    if (!selectedOrder || !resultValue) return;
+    setResultSaving(true);
+    try {
+      const flags = flagResult(selectedOrder.testName, resultValue);
+      const ref = getRefRange(selectedOrder.testName);
+      await update(selectedOrder._id, {
+        status: 'completed' as const,
+        result: resultValue,
+        unit: ref?.unit || selectedOrder.unit,
+        referenceRange: ref?.referenceStr || selectedOrder.referenceRange,
+        abnormal: flags.abnormal,
+        critical: flags.critical,
+        completedAt: new Date().toISOString(),
+      });
+
+      // If critical, add alert
+      if (flags.critical) {
+        setCriticalAlerts(prev => [{
+          id: selectedOrder._id,
+          patientName: selectedOrder.patientName,
+          testName: selectedOrder.testName,
+          value: resultValue,
+          unit: ref?.unit || selectedOrder.unit,
+          orderedBy: selectedOrder.orderedBy,
+          timestamp: new Date().toISOString(),
+          acknowledged: false,
+        }, ...prev]);
+      }
+
+      setShowResultModal(false);
+      setSelectedOrderId('');
+      setResultValue('');
+    } catch (err) {
+      console.error('Failed to save result:', err);
+    } finally {
+      setResultSaving(false);
+    }
+  };
+
+  const handleBatchSave = async () => {
+    const filled = batchEntries.filter(e => e.resultValue.trim() !== '');
+    if (filled.length === 0) return;
+    setBatchSaving(true);
+    try {
+      const newCriticals: CriticalAlert[] = [];
+      for (const entry of filled) {
+        const order = allPendingOrders.find(o => o._id === entry.orderId);
+        if (!order) continue;
+        const flags = flagResult(order.testName, entry.resultValue);
+        const ref = getRefRange(order.testName);
+        await update(order._id, {
+          status: 'completed' as const,
+          result: entry.resultValue,
+          unit: ref?.unit || order.unit,
+          referenceRange: ref?.referenceStr || order.referenceRange,
+          abnormal: flags.abnormal,
+          critical: flags.critical,
+          completedAt: new Date().toISOString(),
+        });
+        if (flags.critical) {
+          newCriticals.push({
+            id: order._id,
+            patientName: order.patientName,
+            testName: order.testName,
+            value: entry.resultValue,
+            unit: ref?.unit || order.unit,
+            orderedBy: order.orderedBy,
+            timestamp: new Date().toISOString(),
+            acknowledged: false,
+          });
+        }
+      }
+      if (newCriticals.length > 0) {
+        setCriticalAlerts(prev => [...newCriticals, ...prev]);
+      }
+      setBatchTestType('');
+      setBatchEntries([]);
+    } catch (err) {
+      console.error('Failed to batch save:', err);
+    } finally {
+      setBatchSaving(false);
+    }
+  };
+
+  const handleAcknowledgeAlert = (alertId: string) => {
+    setCriticalAlerts(prev => prev.map(a => a.id === alertId ? { ...a, acknowledged: true } : a));
+  };
+
+  const handleBatchEntryChange = (orderId: string, value: string) => {
+    setBatchEntries(prev => prev.map(e => {
+      if (e.orderId !== orderId) return e;
+      const order = allPendingOrders.find(o => o._id === orderId);
+      const flagRes = order && value ? flagResult(order.testName, value) : null;
+      return { ...e, resultValue: value, flag: flagRes ? flagRes.flag : '' };
+    }));
+  };
+
+  const getTATColor = (hrs: number) => {
+    if (hrs < 2) return '#4ADE80';
+    if (hrs < 4) return '#FBBF24';
+    return '#EF4444';
+  };
+
+  const getTATLabel = (hrs: number) => {
+    if (hrs < 2) return 'On-time';
+    if (hrs < 4) return 'Warning';
+    return 'Overdue';
+  };
 
   if (loading) {
     return (
@@ -111,34 +418,72 @@ export default function LabDashboardPage() {
     );
   }
 
+  const unackAlerts = criticalAlerts.filter(a => !a.acknowledged);
+
   const kpiStrip = [
     { label: 'Pending Orders', value: kpis.pending, icon: Clock, color: '#FBBF24' },
     { label: 'In Progress', value: kpis.inProgress, icon: Loader2, color: '#A855F7' },
     { label: 'Completed Today', value: kpis.completedToday, icon: CheckCircle2, color: '#4ADE80' },
     { label: 'Critical Results', value: kpis.critical, icon: AlertTriangle, color: '#EF4444' },
+    { label: 'Unack Critical', value: kpis.unacknowledgedCritical, icon: Bell, color: '#EF4444' },
     { label: 'Abnormal', value: kpis.abnormal, icon: AlertTriangle, color: '#FB923C' },
     { label: 'Avg Turnaround', value: `${kpis.avgTurnaround}h`, icon: Zap, color: '#38BDF8' },
-    { label: 'Specimens', value: kpis.specimens, icon: Droplets, color: '#EC4899' },
     { label: 'Total Tests', value: kpis.total, icon: TestTubes, color: ACCENT },
   ];
 
   const quickActions = [
-    { label: 'Accept Order', icon: FileText, color: '#4ADE80' },
-    { label: 'Enter Result', icon: Microscope, color: ACCENT },
-    { label: 'Flag Critical', icon: AlertTriangle, color: '#EF4444' },
-    { label: 'Message', icon: MessageSquare, color: '#60A5FA' },
+    { label: 'Accept Order', icon: FileText, color: '#4ADE80', onClick: () => {} },
+    { label: 'Enter Result', icon: Microscope, color: ACCENT, onClick: () => setShowResultModal(true) },
+    { label: 'Batch Entry', icon: Table, color: '#A855F7', onClick: () => { setEntryMode('batch'); setShowResultModal(true); } },
+    { label: 'Message', icon: MessageSquare, color: '#60A5FA', onClick: () => {} },
   ];
 
   return (
     <>
       <TopBar title="Laboratory" />
-      <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
+      <main className="page-container page-enter">
+
+        {/* --- Feature 2: Critical Result Alert Banner --- */}
+        {unackAlerts.length > 0 && (
+          <div className="mb-4 space-y-2">
+            {unackAlerts.map(alert => (
+              <div key={alert.id} className="flex items-center gap-3 p-3 rounded-2xl" style={{
+                background: 'rgba(239,68,68,0.08)',
+                border: '2px solid rgba(239,68,68,0.35)',
+                boxShadow: '0 0 12px rgba(239,68,68,0.15)',
+              }}>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(239,68,68,0.15)' }}>
+                  <AlertTriangle className="w-4 h-4" style={{ color: '#EF4444' }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ background: 'rgba(239,68,68,0.15)', color: '#EF4444' }}>CRITICAL RESULT</span>
+                  </div>
+                  <p className="text-[12px] font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    {alert.patientName} &mdash; {alert.testName}: <span style={{ color: '#EF4444' }}>{alert.value} {alert.unit}</span>
+                  </p>
+                  <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                    Ordered by {alert.orderedBy} &middot; {new Date(alert.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleAcknowledgeAlert(alert.id)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all flex-shrink-0"
+                  style={{ background: 'rgba(239,68,68,0.15)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.3)' }}
+                >
+                  <BellOff className="w-3 h-3" />
+                  Acknowledge
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* --- Command Center Header --- */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{
-              background: '#2B6FE0',
+              background: '#0077D7',
             }}>
               <FlaskConical className="w-5 h-5 text-white" />
             </div>
@@ -152,6 +497,14 @@ export default function LabDashboardPage() {
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => setShowResultModal(true)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all"
+              style={{ background: ACCENT, color: '#fff' }}
+            >
+              <Microscope className="w-3.5 h-3.5" />
+              Enter Result
+            </button>
             <div className="text-[10px] text-right" style={{ color: 'var(--text-muted)' }}>
               <div className="flex items-center gap-1">
                 <Radio className="w-3 h-3" style={{ color: ACCENT }} />
@@ -164,7 +517,7 @@ export default function LabDashboardPage() {
         {/* --- KPI Strip --- */}
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 mb-4">
           {kpiStrip.map((kpi) => (
-            <div key={kpi.label} className="relative px-3 py-2.5 rounded-xl transition-all cursor-pointer overflow-hidden" onClick={() => router.push('/lab')} style={{
+            <div key={kpi.label} className="relative px-3 py-2.5 rounded-xl transition-all cursor-pointer overflow-hidden" style={{
               background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)',
             }}>
               <div className="absolute top-0 left-0 w-full h-[2px]" style={{ background: kpi.color }} />
@@ -198,7 +551,12 @@ export default function LabDashboardPage() {
             </div>
             <div className="p-3 space-y-1.5" style={{ maxHeight: '340px', overflowY: 'auto' }}>
               {pendingOrders.length > 0 ? pendingOrders.map(order => (
-                <div key={order._id} className="flex items-center gap-3 p-2.5 rounded-xl transition-all cursor-pointer" onClick={() => router.push('/lab')} style={{
+                <div key={order._id} className="flex items-center gap-3 p-2.5 rounded-xl transition-all cursor-pointer" onClick={() => {
+                  setSelectedOrderId(order._id);
+                  setResultValue('');
+                  setEntryMode('single');
+                  setShowResultModal(true);
+                }} style={{
                   background: 'var(--overlay-subtle)', border: `1px solid ${order.critical ? 'rgba(239,68,68,0.25)' : 'var(--border-light)'}`,
                 }}>
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{
@@ -324,7 +682,7 @@ export default function LabDashboardPage() {
               <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Quick Actions</p>
               <div className="grid grid-cols-2 gap-1.5">
                 {quickActions.map(action => (
-                  <button key={action.label} className="flex items-center gap-2 p-2 rounded-lg transition-all" style={{
+                  <button key={action.label} onClick={action.onClick} className="flex items-center gap-2 p-2 rounded-lg transition-all" style={{
                     background: `${action.color}08`, border: `1px solid ${action.color}15`,
                   }}>
                     <action.icon className="w-3.5 h-3.5" style={{ color: action.color }} />
@@ -337,7 +695,7 @@ export default function LabDashboardPage() {
         </div>
 
         {/* --- Bottom: Recent Completed Results --- */}
-        <div className="rounded-2xl overflow-hidden" style={{
+        <div className="rounded-2xl overflow-hidden mb-4" style={{
           background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)',
         }}>
           <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
@@ -383,7 +741,477 @@ export default function LabDashboardPage() {
           </div>
         </div>
 
+        {/* --- Feature 4: TAT (Turnaround Time) Dashboard --- */}
+        <div className="rounded-2xl overflow-hidden" style={{
+          background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)',
+        }}>
+          <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
+            <div className="flex items-center gap-2">
+              <Timer className="w-4 h-4" style={{ color: '#38BDF8' }} />
+              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Turnaround Time (TAT) Dashboard</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full" style={{ background: '#4ADE80' }} />
+                <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>&lt;2h</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full" style={{ background: '#FBBF24' }} />
+                <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>2-4h</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-full" style={{ background: '#EF4444' }} />
+                <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>&gt;4h</span>
+              </div>
+            </div>
+          </div>
+          <div className="p-3">
+            {/* Summary cards */}
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <div className="p-3 rounded-xl" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+                <p className="text-[9px] font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Today Avg TAT</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-bold" style={{ color: getTATColor(tatData.overallTodayAvg) }}>
+                    {tatData.overallTodayAvg > 0 ? tatData.overallTodayAvg.toFixed(1) : '--'}h
+                  </span>
+                  {tatData.overallTodayAvg > 0 && (
+                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{
+                      background: `${getTATColor(tatData.overallTodayAvg)}15`,
+                      color: getTATColor(tatData.overallTodayAvg),
+                    }}>{getTATLabel(tatData.overallTodayAvg)}</span>
+                  )}
+                </div>
+              </div>
+              <div className="p-3 rounded-xl" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+                <p className="text-[9px] font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Weekly Avg TAT</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-bold" style={{ color: getTATColor(tatData.overallWeekAvg) }}>
+                    {tatData.overallWeekAvg > 0 ? tatData.overallWeekAvg.toFixed(1) : '--'}h
+                  </span>
+                  {tatData.overallWeekAvg > 0 && (
+                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{
+                      background: `${getTATColor(tatData.overallWeekAvg)}15`,
+                      color: getTATColor(tatData.overallWeekAvg),
+                    }}>{getTATLabel(tatData.overallWeekAvg)}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* TAT by test type - bar chart style */}
+            {tatData.rows.length > 0 ? (
+              <div className="space-y-2">
+                {tatData.rows.map(row => {
+                  const maxHrs = 8;
+                  const todayPct = Math.min((row.todayAvg / maxHrs) * 100, 100);
+                  const weekPct = Math.min((row.weeklyAvg / maxHrs) * 100, 100);
+                  return (
+                    <div key={row.test} className="p-2.5 rounded-xl" style={{
+                      background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)',
+                    }}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-[11px] font-semibold" style={{ color: 'var(--text-primary)' }}>{row.test}</span>
+                        <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>{row.todayCount} today</span>
+                      </div>
+                      {/* Today bar */}
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[9px] w-12 flex-shrink-0" style={{ color: 'var(--text-muted)' }}>Today</span>
+                        <div className="flex-1 h-2.5 rounded-full overflow-hidden" style={{ background: 'var(--border-light)' }}>
+                          <div className="h-full rounded-full transition-all duration-700" style={{
+                            width: `${todayPct}%`,
+                            background: getTATColor(row.todayAvg),
+                          }} />
+                        </div>
+                        <span className="text-[10px] font-bold w-10 text-right flex-shrink-0" style={{ color: getTATColor(row.todayAvg) }}>
+                          {row.todayAvg > 0 ? row.todayAvg.toFixed(1) : '--'}h
+                        </span>
+                      </div>
+                      {/* Weekly bar */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] w-12 flex-shrink-0" style={{ color: 'var(--text-muted)' }}>Week</span>
+                        <div className="flex-1 h-2.5 rounded-full overflow-hidden" style={{ background: 'var(--border-light)' }}>
+                          <div className="h-full rounded-full transition-all duration-700" style={{
+                            width: `${weekPct}%`,
+                            background: getTATColor(row.weeklyAvg),
+                            opacity: 0.6,
+                          }} />
+                        </div>
+                        <span className="text-[10px] font-bold w-10 text-right flex-shrink-0" style={{ color: getTATColor(row.weeklyAvg) }}>
+                          {row.weeklyAvg > 0 ? row.weeklyAvg.toFixed(1) : '--'}h
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <BarChart3 className="w-8 h-8 mb-2" style={{ color: 'var(--text-muted)', opacity: 0.15 }} />
+                <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>No turnaround data available yet</p>
+              </div>
+            )}
+          </div>
+        </div>
+
       </main>
+
+      {/* ===== Feature 1 & 3: Result Entry Modal (Single + Batch) ===== */}
+      {showResultModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
+          <div className="w-full max-w-2xl mx-4 rounded-2xl overflow-hidden" style={{
+            background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
+            maxHeight: '85vh', display: 'flex', flexDirection: 'column',
+          }}>
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
+              <div className="flex items-center gap-2">
+                <Microscope className="w-4 h-4" style={{ color: ACCENT }} />
+                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Enter Lab Result</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Mode tabs */}
+                <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid var(--border-light)' }}>
+                  <button
+                    onClick={() => { setEntryMode('single'); setBatchTestType(''); }}
+                    className="flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium transition-all"
+                    style={{
+                      background: entryMode === 'single' ? ACCENT : 'transparent',
+                      color: entryMode === 'single' ? '#fff' : 'var(--text-muted)',
+                    }}
+                  >
+                    <List className="w-3 h-3" />
+                    Single
+                  </button>
+                  <button
+                    onClick={() => { setEntryMode('batch'); setSelectedOrderId(''); setResultValue(''); }}
+                    className="flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium transition-all"
+                    style={{
+                      background: entryMode === 'batch' ? ACCENT : 'transparent',
+                      color: entryMode === 'batch' ? '#fff' : 'var(--text-muted)',
+                    }}
+                  >
+                    <Table className="w-3 h-3" />
+                    Batch
+                  </button>
+                </div>
+                <button onClick={() => { setShowResultModal(false); setEntryMode('single'); setSelectedOrderId(''); setResultValue(''); setBatchTestType(''); }} className="p-1 rounded-lg transition-all" style={{ color: 'var(--text-muted)' }}>
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-4">
+              {entryMode === 'single' ? (
+                /* ===== Single Entry Mode ===== */
+                <div className="space-y-4">
+                  {/* Order Selection */}
+                  <div>
+                    <label className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 block" style={{ color: 'var(--text-muted)' }}>
+                      Select Pending Order
+                    </label>
+                    <select
+                      value={selectedOrderId}
+                      onChange={e => { setSelectedOrderId(e.target.value); setResultValue(''); }}
+                      className="w-full px-3 py-2 rounded-xl text-[12px] outline-none transition-all"
+                      style={{
+                        background: 'var(--overlay-subtle)',
+                        border: '1px solid var(--border-light)',
+                        color: 'var(--text-primary)',
+                      }}
+                    >
+                      <option value="">-- Select an order --</option>
+                      {allPendingOrders.map(o => (
+                        <option key={o._id} value={o._id}>
+                          {o.testName} - {o.patientName} ({o.specimen})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {selectedOrder && (
+                    <>
+                      {/* Order Details */}
+                      <div className="p-3 rounded-xl" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Patient</p>
+                            <p className="text-[12px] font-medium" style={{ color: 'var(--text-primary)' }}>{selectedOrder.patientName}</p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Test</p>
+                            <p className="text-[12px] font-medium" style={{ color: 'var(--text-primary)' }}>{selectedOrder.testName}</p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Specimen</p>
+                            <p className="text-[12px] font-medium" style={{ color: 'var(--text-primary)' }}>{selectedOrder.specimen}</p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Ordered By</p>
+                            <p className="text-[12px] font-medium" style={{ color: 'var(--text-primary)' }}>{selectedOrder.orderedBy}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Reference Range Display */}
+                      {currentRefRange && (
+                        <div className="p-3 rounded-xl" style={{ background: 'rgba(43,111,224,0.06)', border: '1px solid rgba(43,111,224,0.15)' }}>
+                          <p className="text-[9px] font-semibold uppercase tracking-wider mb-1" style={{ color: ACCENT }}>Reference Range</p>
+                          <p className="text-[12px] font-medium" style={{ color: 'var(--text-primary)' }}>
+                            {currentRefRange.referenceStr}
+                          </p>
+                          {currentRefRange.qualitative && (
+                            <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>
+                              Expected values: {currentRefRange.qualitative.join(', ')}
+                            </p>
+                          )}
+                          {currentRefRange.criticalLow !== undefined && (
+                            <p className="text-[10px] mt-0.5" style={{ color: '#EF4444' }}>
+                              Critical: {currentRefRange.criticalLow !== undefined ? `<${currentRefRange.criticalLow}` : ''}{currentRefRange.criticalLow !== undefined && currentRefRange.criticalHigh !== undefined ? ' or ' : ''}{currentRefRange.criticalHigh !== undefined ? `>${currentRefRange.criticalHigh}` : ''}
+                            </p>
+                          )}
+                          {currentRefRange.criticalLow === undefined && currentRefRange.criticalHigh !== undefined && (
+                            <p className="text-[10px] mt-0.5" style={{ color: '#EF4444' }}>
+                              Critical: &gt;{currentRefRange.criticalHigh}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Result Input */}
+                      <div>
+                        <label className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 block" style={{ color: 'var(--text-muted)' }}>
+                          Result Value
+                        </label>
+                        {currentRefRange?.qualitative ? (
+                          <select
+                            value={resultValue}
+                            onChange={e => setResultValue(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl text-[12px] outline-none transition-all"
+                            style={{
+                              background: 'var(--overlay-subtle)',
+                              border: '1px solid var(--border-light)',
+                              color: 'var(--text-primary)',
+                            }}
+                          >
+                            <option value="">-- Select result --</option>
+                            {currentRefRange.qualitative.map(v => (
+                              <option key={v} value={v}>{v}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              step="any"
+                              value={resultValue}
+                              onChange={e => setResultValue(e.target.value)}
+                              placeholder="Enter value..."
+                              className="flex-1 px-3 py-2 rounded-xl text-[12px] outline-none transition-all"
+                              style={{
+                                background: 'var(--overlay-subtle)',
+                                border: '1px solid var(--border-light)',
+                                color: 'var(--text-primary)',
+                              }}
+                            />
+                            {currentRefRange && (
+                              <span className="text-[11px] font-medium flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
+                                {currentRefRange.unit}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Auto-Flag Indicator */}
+                      {currentFlag && resultValue && (
+                        <div className="p-3 rounded-xl flex items-center gap-3" style={{
+                          background: FLAG_COLORS[currentFlag.flag].bg,
+                          border: `1px solid ${FLAG_COLORS[currentFlag.flag].border}`,
+                        }}>
+                          {currentFlag.flag === 'CRITICAL' && <AlertTriangle className="w-5 h-5" style={{ color: FLAG_COLORS[currentFlag.flag].color }} />}
+                          {currentFlag.flag === 'ABNORMAL' && <AlertTriangle className="w-5 h-5" style={{ color: FLAG_COLORS[currentFlag.flag].color }} />}
+                          {currentFlag.flag === 'NORMAL' && <CheckCircle2 className="w-5 h-5" style={{ color: FLAG_COLORS[currentFlag.flag].color }} />}
+                          <div>
+                            <span className="text-[11px] font-bold" style={{ color: FLAG_COLORS[currentFlag.flag].color }}>
+                              {currentFlag.flag}
+                            </span>
+                            <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                              {currentFlag.flag === 'CRITICAL' ? 'This result requires immediate clinical attention!' :
+                                currentFlag.flag === 'ABNORMAL' ? 'Result is outside the normal reference range.' :
+                                  'Result is within normal reference range.'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              ) : (
+                /* ===== Batch Entry Mode ===== */
+                <div className="space-y-4">
+                  {/* Test Type Selection */}
+                  <div>
+                    <label className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 block" style={{ color: 'var(--text-muted)' }}>
+                      Select Test Type
+                    </label>
+                    <select
+                      value={batchTestType}
+                      onChange={e => setBatchTestType(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl text-[12px] outline-none transition-all"
+                      style={{
+                        background: 'var(--overlay-subtle)',
+                        border: '1px solid var(--border-light)',
+                        color: 'var(--text-primary)',
+                      }}
+                    >
+                      <option value="">-- Select test type --</option>
+                      {pendingTestTypes.map(t => {
+                        const count = allPendingOrders.filter(o => o.testName === t).length;
+                        return (
+                          <option key={t} value={t}>{t} ({count} pending)</option>
+                        );
+                      })}
+                    </select>
+                  </div>
+
+                  {/* Reference range for selected test */}
+                  {batchTestType && (() => {
+                    const ref = getRefRange(batchTestType);
+                    return ref ? (
+                      <div className="p-2.5 rounded-xl" style={{ background: 'rgba(43,111,224,0.06)', border: '1px solid rgba(43,111,224,0.15)' }}>
+                        <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: ACCENT }}>
+                          Reference: {ref.referenceStr}
+                          {ref.criticalLow !== undefined && ` | Critical: <${ref.criticalLow}`}
+                          {ref.criticalHigh !== undefined && ` | Critical: >${ref.criticalHigh}`}
+                        </p>
+                      </div>
+                    ) : null;
+                  })()}
+
+                  {/* Batch Table */}
+                  {batchEntries.length > 0 ? (
+                    <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border-light)' }}>
+                      <table className="w-full">
+                        <thead>
+                          <tr style={{ background: 'var(--overlay-subtle)' }}>
+                            <th className="text-left px-3 py-2 text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Patient</th>
+                            <th className="text-left px-3 py-2 text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Specimen</th>
+                            <th className="text-left px-3 py-2 text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Result</th>
+                            <th className="text-center px-3 py-2 text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Flag</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {batchEntries.map((entry) => {
+                            const ref = getRefRange(batchTestType);
+                            return (
+                              <tr key={entry.orderId} style={{ borderTop: '1px solid var(--border-light)' }}>
+                                <td className="px-3 py-2">
+                                  <span className="text-[11px] font-medium" style={{ color: 'var(--text-primary)' }}>{entry.patientName}</span>
+                                </td>
+                                <td className="px-3 py-2">
+                                  <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{entry.specimen}</span>
+                                </td>
+                                <td className="px-3 py-2">
+                                  {ref?.qualitative ? (
+                                    <select
+                                      value={entry.resultValue}
+                                      onChange={e => handleBatchEntryChange(entry.orderId, e.target.value)}
+                                      className="w-full px-2 py-1 rounded-lg text-[11px] outline-none"
+                                      style={{
+                                        background: 'var(--overlay-subtle)',
+                                        border: '1px solid var(--border-light)',
+                                        color: 'var(--text-primary)',
+                                      }}
+                                    >
+                                      <option value="">--</option>
+                                      {ref.qualitative.map(v => (
+                                        <option key={v} value={v}>{v}</option>
+                                      ))}
+                                    </select>
+                                  ) : (
+                                    <input
+                                      type="number"
+                                      step="any"
+                                      value={entry.resultValue}
+                                      onChange={e => handleBatchEntryChange(entry.orderId, e.target.value)}
+                                      placeholder="Value..."
+                                      className="w-full px-2 py-1 rounded-lg text-[11px] outline-none"
+                                      style={{
+                                        background: 'var(--overlay-subtle)',
+                                        border: '1px solid var(--border-light)',
+                                        color: 'var(--text-primary)',
+                                      }}
+                                    />
+                                  )}
+                                </td>
+                                <td className="px-3 py-2 text-center">
+                                  {entry.flag ? (
+                                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{
+                                      background: FLAG_COLORS[entry.flag as keyof typeof FLAG_COLORS].bg,
+                                      color: FLAG_COLORS[entry.flag as keyof typeof FLAG_COLORS].color,
+                                    }}>{entry.flag}</span>
+                                  ) : (
+                                    <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>--</span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : batchTestType ? (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <Table className="w-8 h-8 mb-2" style={{ color: 'var(--text-muted)', opacity: 0.15 }} />
+                      <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>No pending orders for this test type</p>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between px-4 py-3 border-t" style={{ borderColor: 'var(--border-light)' }}>
+              <button
+                onClick={() => { setShowResultModal(false); setEntryMode('single'); setSelectedOrderId(''); setResultValue(''); setBatchTestType(''); }}
+                className="px-4 py-1.5 rounded-lg text-[11px] font-medium transition-all"
+                style={{ color: 'var(--text-muted)', border: '1px solid var(--border-light)' }}
+              >
+                Cancel
+              </button>
+
+              {entryMode === 'single' ? (
+                <button
+                  onClick={handleSaveResult}
+                  disabled={!selectedOrder || !resultValue || resultSaving}
+                  className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all disabled:opacity-40"
+                  style={{
+                    background: selectedOrder && resultValue ? ACCENT : 'var(--border-light)',
+                    color: selectedOrder && resultValue ? '#fff' : 'var(--text-muted)',
+                  }}
+                >
+                  {resultSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                  Save Result
+                </button>
+              ) : (
+                <button
+                  onClick={handleBatchSave}
+                  disabled={batchEntries.filter(e => e.resultValue.trim() !== '').length === 0 || batchSaving}
+                  className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-[11px] font-semibold transition-all disabled:opacity-40"
+                  style={{
+                    background: batchEntries.some(e => e.resultValue.trim()) ? ACCENT : 'var(--border-light)',
+                    color: batchEntries.some(e => e.resultValue.trim()) ? '#fff' : 'var(--text-muted)',
+                  }}
+                >
+                  {batchSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                  Save All ({batchEntries.filter(e => e.resultValue.trim() !== '').length})
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

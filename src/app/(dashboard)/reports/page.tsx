@@ -489,7 +489,7 @@ export default function ReportsPage() {
   return (
     <>
       <TopBar title="Reports" />
-      <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
+      <main className="page-container page-enter">
         {/* ── Page heading ────────────────────────────────────── */}
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -510,31 +510,24 @@ export default function ReportsPage() {
         </div>
 
         {/* ── Summary stats cards ─────────────────────────────── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div className="kpi-grid mb-6">
           {[
-            { label: 'Total Patients', value: totalPatients, icon: Users, color: 'var(--taban-blue)' },
-            { label: 'Total Referrals', value: totalReferrals, icon: BedDouble, color: '#8b5cf6' },
-            { label: 'Lab Results', value: totalLabResults, icon: FileText, color: '#10b981' },
-            { label: 'Disease Alerts', value: totalDiseaseAlerts, icon: Activity, color: '#f59e0b' },
+            { label: 'Total Patients', value: totalPatients, icon: Users, color: 'var(--taban-blue)', bg: 'rgba(43,111,224,0.12)' },
+            { label: 'Total Referrals', value: totalReferrals, icon: BedDouble, color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)' },
+            { label: 'Lab Results', value: totalLabResults, icon: FileText, color: '#10b981', bg: 'rgba(16,185,129,0.12)' },
+            { label: 'Disease Alerts', value: totalDiseaseAlerts, icon: Activity, color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
           ].map(stat => (
-            <div key={stat.label} className="card-elevated p-4">
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ background: `${stat.color}18` }}
-                >
-                  <stat.icon className="w-5 h-5" style={{ color: stat.color }} />
-                </div>
-                <div>
-                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{stat.label}</p>
-                  {dataLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin mt-1" style={{ color: 'var(--text-muted)' }} />
-                  ) : (
-                    <p className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
-                      {stat.value.toLocaleString()}
-                    </p>
-                  )}
-                </div>
+            <div key={stat.label} className="kpi">
+              <div className="kpi__icon" style={{ background: stat.bg }}>
+                <stat.icon style={{ color: stat.color }} />
+              </div>
+              <div className="kpi__body">
+                {dataLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--text-muted)' }} />
+                ) : (
+                  <div className="kpi__value">{stat.value.toLocaleString()}</div>
+                )}
+                <div className="kpi__label">{stat.label}</div>
               </div>
             </div>
           ))}

@@ -34,7 +34,7 @@ type OrgFormData = {
 
 const emptyForm: OrgFormData = {
   name: '', slug: '', orgType: 'public', contactEmail: '', country: 'South Sudan',
-  primaryColor: '#2B6FE0', secondaryColor: '#0F47AF', accentColor: '#F59E0B',
+  primaryColor: '#0077D7', secondaryColor: '#0F47AF', accentColor: '#F59E0B',
   subscriptionPlan: 'professional', subscriptionStatus: 'trial',
   maxUsers: 50, maxHospitals: 10,
   epidemicIntelligence: true, mchAnalytics: true, dhis2Export: false,
@@ -189,7 +189,7 @@ export default function AdminOrganizationsPage() {
   return (
     <>
       <TopBar title="Organizations" />
-      <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
+      <main className="page-container page-enter">
 
         {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-3 mb-6">
@@ -385,7 +385,7 @@ export default function AdminOrganizationsPage() {
               {/* Branding */}
               <div>
                 <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#DC2626' }}>Branding Colors</h4>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[
                     { key: 'primaryColor' as const, label: 'Primary Color' },
                     { key: 'secondaryColor' as const, label: 'Secondary Color' },

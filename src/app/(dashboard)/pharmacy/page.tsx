@@ -78,28 +78,33 @@ export default function PharmacyPage() {
   return (
     <>
       <TopBar title="Pharmacy" />
-      <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
-          <h1 className="text-xl font-semibold mb-1">Pharmacy Management</h1>
-          <p className="text-sm mb-5" style={{ color: 'var(--text-muted)' }}>Dispense medications and manage inventory</p>
+      <main className="page-container page-enter">
+          <div className="page-header mb-5">
+            <div className="page-header__top">
+              <div className="page-header__icon"><Pill size={18} /></div>
+              <h1 className="page-header__title">Pharmacy Management</h1>
+            </div>
+            <p className="page-header__subtitle">Dispense medications and manage inventory</p>
+          </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-4 gap-3 mb-4">
+          <div className="kpi-grid mb-4">
             {[
               { label: 'Pending Prescriptions', value: pendingRx, icon: Pill, color: '#FCD34D', bg: 'rgba(252,211,77,0.10)' },
-              { label: 'Dispensed Today', value: dispensedRx, icon: CheckCircle2, color: '#2B6FE0', bg: 'rgba(43,111,224,0.12)' },
+              { label: 'Dispensed Today', value: dispensedRx, icon: CheckCircle2, color: '#0077D7', bg: 'rgba(0,119,215,0.12)' },
               { label: 'Low Stock Items', value: lowStock, icon: TrendingDown, color: '#E52E42', bg: 'rgba(229,46,66,0.10)' },
               { label: 'Expired Items', value: expiredItems, icon: AlertTriangle, color: '#F87171', bg: 'rgba(229,46,66,0.12)' },
             ].map(s => (
-              <div key={s.label} className="card-elevated p-4 flex items-center gap-4 cursor-pointer" onClick={() => {
+              <div key={s.label} className="kpi cursor-pointer" onClick={() => {
                 const tabMap: Record<string, 'queue' | 'inventory'> = { 'Pending Prescriptions': 'queue', 'Dispensed Today': 'queue', 'Low Stock Items': 'inventory', 'Expired Items': 'inventory' };
                 setActiveTab(tabMap[s.label] || 'queue');
               }}>
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: s.bg }}>
-                  <s.icon className="w-5 h-5" style={{ color: s.color }} />
+                <div className="kpi__icon" style={{ background: s.bg }}>
+                  <s.icon style={{ color: s.color }} />
                 </div>
-                <div>
-                  <p className="text-2xl font-bold" style={{ color: s.color }}>{s.value}</p>
-                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{s.label}</p>
+                <div className="kpi__body">
+                  <div className="kpi__value">{s.value}</div>
+                  <div className="kpi__label">{s.label}</div>
                 </div>
               </div>
             ))}
@@ -109,12 +114,12 @@ export default function PharmacyPage() {
           <div className="flex gap-0 border-b mb-4" style={{ borderColor: 'var(--border-light)' }}>
             <button onClick={() => setActiveTab('queue')}
               className={`px-4 py-3 text-sm font-medium ${activeTab === 'queue' ? 'tab-active' : ''}`}
-              style={{ color: activeTab === 'queue' ? '#2B6FE0' : 'var(--text-muted)' }}>
+              style={{ color: activeTab === 'queue' ? '#0077D7' : 'var(--text-muted)' }}>
               Prescription Queue ({pendingRx})
             </button>
             <button onClick={() => setActiveTab('inventory')}
               className={`px-4 py-3 text-sm font-medium ${activeTab === 'inventory' ? 'tab-active' : ''}`}
-              style={{ color: activeTab === 'inventory' ? '#2B6FE0' : 'var(--text-muted)' }}>
+              style={{ color: activeTab === 'inventory' ? '#0077D7' : 'var(--text-muted)' }}>
               Inventory ({inventory.length})
             </button>
           </div>
@@ -147,7 +152,7 @@ export default function PharmacyPage() {
                     </tr>
                   ) : filteredQueue.map(rx => (
                     <tr key={rx._id} className="cursor-pointer hover:bg-[var(--table-row-hover)]" onClick={() => { if (rx.patientId) router.push(`/patients/${rx.patientId}`); }}>
-                      <td className="font-medium text-sm" style={{ color: '#2B6FE0' }}>{rx.patientName}</td>
+                      <td className="font-medium text-sm" style={{ color: '#0077D7' }}>{rx.patientName}</td>
                       <td className="text-sm">{rx.medication}</td>
                       <td className="text-xs font-mono" style={{ color: 'var(--text-secondary)' }}>
                         {rx.dose} {rx.frequency} {rx.duration ? `x ${rx.duration}` : ''}

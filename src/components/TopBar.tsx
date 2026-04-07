@@ -36,7 +36,7 @@ export default function TopBar({ hideSearch }: { title?: string; hideSearch?: bo
         {/* Hamburger menu - visible on mobile/tablet */}
         <button
           onClick={() => setSidebarOpen(true)}
-          className="lg:hidden p-2 -ml-1 rounded-xl transition-all hover:scale-105"
+          className="lg:hidden p-2 -ml-1 rounded-md transition-all hover:scale-105"
           style={{
             background: 'var(--overlay-subtle)',
             border: '1px solid var(--border-glass)',
@@ -63,7 +63,7 @@ export default function TopBar({ hideSearch }: { title?: string; hideSearch?: bo
                 fontSize: '0.82rem',
                 color: 'var(--text-primary)',
                 transition: 'width 0.3s ease, box-shadow 0.2s ease',
-                borderRadius: '14px',
+                borderRadius: 'var(--input-radius)',
               }}
               onFocus={e => { e.currentTarget.style.width = '340px'; }}
               onBlur={e => { e.currentTarget.style.width = '260px'; }}
@@ -74,7 +74,7 @@ export default function TopBar({ hideSearch }: { title?: string; hideSearch?: bo
         {/* Mobile search button */}
         {!hideSearch && (
           <button
-            className="sm:hidden p-2.5 rounded-xl transition-all"
+            className="sm:hidden p-2.5 rounded-md transition-all"
             style={{
               background: 'var(--overlay-subtle)',
               border: '1px solid var(--border-glass)',
@@ -93,7 +93,7 @@ export default function TopBar({ hideSearch }: { title?: string; hideSearch?: bo
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
-          className="p-2.5 rounded-xl transition-all hover:scale-105"
+          className="p-2.5 rounded-md transition-all hover:scale-105"
           style={{
             background: 'var(--overlay-subtle)',
             border: '1px solid var(--border-glass)',
@@ -113,20 +113,20 @@ export default function TopBar({ hideSearch }: { title?: string; hideSearch?: bo
         </div>
 
         {/* Notifications */}
-        <button className="relative p-2.5 rounded-xl transition-all hover:scale-105" style={{
+        <button className="relative p-2.5 rounded-md transition-all hover:scale-105" style={{
           background: 'var(--overlay-subtle)',
           border: '1px solid var(--border-glass)',
         }}>
           <Bell className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full" style={{
-            background: '#2B6FE0',
+            background: '#0077D7',
             boxShadow: '0 0 6px rgba(43, 111, 224, 0.5)',
           }} />
         </button>
 
         {/* Super Admin badge */}
         {isSuperAdmin && (
-          <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold" style={{
+          <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold" style={{
             background: 'rgba(239, 68, 68, 0.08)',
             color: '#ef4444',
             border: '1px solid rgba(239, 68, 68, 0.15)',
@@ -138,9 +138,9 @@ export default function TopBar({ hideSearch }: { title?: string; hideSearch?: bo
 
         {/* Org Admin badge */}
         {isOrgAdmin && (
-          <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold" style={{
+          <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold" style={{
             background: 'rgba(43, 111, 224, 0.08)',
-            color: '#2B6FE0',
+            color: '#0077D7',
             border: '1px solid rgba(43, 111, 224, 0.15)',
           }}>
             <Globe className="w-3.5 h-3.5" />
@@ -150,9 +150,9 @@ export default function TopBar({ hideSearch }: { title?: string; hideSearch?: bo
 
         {/* Government badge */}
         {isGovernment && (
-          <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold" style={{
+          <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold" style={{
             background: 'rgba(43, 111, 224, 0.08)',
-            color: '#2B6FE0',
+            color: '#0077D7',
             border: '1px solid rgba(43, 111, 224, 0.15)',
           }}>
             <Globe className="w-3.5 h-3.5" />
@@ -162,12 +162,12 @@ export default function TopBar({ hideSearch }: { title?: string; hideSearch?: bo
 
         {/* User avatar */}
         {currentUser && (
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{
+          <div className="w-9 h-9 rounded-md flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{
             background: isSuperAdmin
               ? 'linear-gradient(135deg, #dc2626, #ef4444)'
               : isGovernment
-              ? 'linear-gradient(135deg, #2B6FE0, #1D5BC2)'
-              : 'linear-gradient(135deg, #2B6FE0, #1D5BC2)',
+              ? 'linear-gradient(135deg, #0077D7, #005FBC)'
+              : 'linear-gradient(135deg, #0077D7, #005FBC)',
             boxShadow: '0 2px 8px rgba(43, 111, 224, 0.25)',
           }}>
             {currentUser.name.split(' ').map(n => n[0]).join('').slice(0, 2)}

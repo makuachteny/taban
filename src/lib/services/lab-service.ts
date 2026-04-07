@@ -1,9 +1,20 @@
-import { labResultsDB } from '../db';
-import type { LabResultDoc } from '../db-types';
+import { labResultsDB, hospitalsDB } from '../db';
+import type { LabResultDoc, HospitalDoc } from '../db-types';
 import type { DataScope } from './data-scope';
 import { filterByScope } from './data-scope';
 import { v4 as uuidv4 } from 'uuid';
 import { logAudit } from './audit-service';
+
+async function inferOrgIdFromHospital(hospitalId?: string): Promise<string | undefined> {
+  if (!hospitalId) return undefined;
+  try {
+    const hdb = hospitalsDB();
+    const hosp = await hdb.get(hospitalId) as HospitalDoc;
+    return hosp.orgId;
+  } catch {
+    return undefined;
+  }
+}
 
 export async function getAllLabResults(scope?: DataScope): Promise<LabResultDoc[]> {
   const db = labResultsDB();
@@ -25,10 +36,12 @@ export async function createLabResult(
 ): Promise<LabResultDoc> {
   const db = labResultsDB();
   const now = new Date().toISOString();
+  const orgId = data.orgId || await inferOrgIdFromHospital(data.hospitalId);
   const doc: LabResultDoc = {
     _id: `lab-${uuidv4().slice(0, 8)}`,
     type: 'lab_result',
     ...data,
+    orgId,
     createdAt: now,
     updatedAt: now,
   } as LabResultDoc;

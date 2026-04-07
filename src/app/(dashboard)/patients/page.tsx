@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
-import { Search, Filter, ChevronRight, UserPlus } from 'lucide-react';
+import { Search, Filter, ChevronRight, UserPlus, Users } from 'lucide-react';
 import { usePatients } from '@/lib/hooks/usePatients';
 import { useApp } from '@/lib/context';
 import { usePermissions } from '@/lib/hooks/usePermissions';
@@ -33,12 +33,15 @@ export default function PatientsPage() {
   return (
     <>
       <TopBar title="Patients" />
-      <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
+      <main className="page-container page-enter">
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
-            <div>
-              <h1 className="text-xl font-semibold">Patient Registry</h1>
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{filtered.length} patients found</p>
+            <div className="page-header">
+              <div className="page-header__top">
+                <div className="page-header__icon"><Users size={18} /></div>
+                <h1 className="page-header__title">Patient Registry</h1>
+              </div>
+              <p className="page-header__subtitle">{filtered.length} patients found</p>
             </div>
             {canRegisterPatients && (
               <button onClick={() => router.push('/patients/new')} className="btn btn-primary">
@@ -67,15 +70,15 @@ export default function PatientsPage() {
               </button>
             </div>
             {showFilters && (
-              <div className="flex gap-3 mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-light)' }}>
-                <div className="w-48">
+              <div className="flex flex-wrap gap-3 mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-light)' }}>
+                <div className="w-full sm:w-48">
                   <label>State</label>
                   <select value={filterState} onChange={(e) => setFilterState(e.target.value)}>
                     <option value="">All States</option>
                     {states.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
-                <div className="w-36">
+                <div className="w-full sm:w-36">
                   <label>Gender</label>
                   <select value={filterGender} onChange={(e) => setFilterGender(e.target.value)}>
                     <option value="">All</option>
@@ -116,7 +119,7 @@ export default function PatientsPage() {
                         <td className="col-patient">
                           <div className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                              style={{ background: '#2B6FE0' }}>
+                              style={{ background: '#0077D7' }}>
                               {(patient.firstName || '?')[0]}{(patient.surname || '?')[0]}
                             </div>
                             <div className="min-w-0">
@@ -125,7 +128,7 @@ export default function PatientsPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="col-hospital"><span className="font-mono text-xs whitespace-nowrap" style={{ color: '#2B6FE0' }}>{patient.hospitalNumber}</span></td>
+                        <td className="col-hospital"><span className="font-mono text-xs whitespace-nowrap" style={{ color: '#0077D7' }}>{patient.hospitalNumber}</span></td>
                         <td className="col-age whitespace-nowrap">{age}y · {patient.gender[0]}</td>
                         <td className="col-state text-xs">{patient.state}</td>
                         <td className="col-phone hide-mobile font-mono text-xs">{patient.phone}</td>

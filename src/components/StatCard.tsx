@@ -17,7 +17,7 @@ export default function StatCard({
   label,
   value,
   icon: Icon,
-  color = '#2B6FE0',
+  color = '#0077D7',
   bg,
   subtitle,
   onClick,
@@ -69,7 +69,7 @@ export function StatCardLarge({
   label,
   value,
   icon: Icon,
-  color = '#2B6FE0',
+  color = '#0077D7',
   bg,
 }: StatCardLargeProps) {
   return (

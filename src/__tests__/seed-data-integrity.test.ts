@@ -83,7 +83,7 @@ describe('Seed Data Integrity', () => {
 
     test('hospital IDs follow hosp-XXX or phcc/phcu naming convention', () => {
       hospitals.forEach((h) => {
-        expect(h.id).toMatch(/^(hosp-\d{3}|phcc-\d{3}|phcu-\d{3})$/);
+        expect(h.id).toMatch(/^(hosp-\d{3}|county-\d{3}|phcc-\d{3}|phcu-\d{3})$/);
       });
     });
   });

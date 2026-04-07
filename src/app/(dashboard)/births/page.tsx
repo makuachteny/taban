@@ -6,7 +6,7 @@ import { useBirths } from '@/lib/hooks/useBirths';
 import { useHospitals } from '@/lib/hooks/useHospitals';
 import { useApp } from '@/lib/context';
 import {
-  Baby, Plus, Search, X, ChevronDown, ChevronUp
+  Baby, Plus, Search, X, ChevronDown, ChevronUp, Users, Calendar, Activity
 } from 'lucide-react';
 
 export default function BirthsPage() {
@@ -48,7 +48,7 @@ export default function BirthsPage() {
   return (
     <>
       <TopBar title="Birth Registration" />
-      <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
+      <main className="page-container page-enter">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-xl font-semibold">Birth Registration</h1>
@@ -61,29 +61,23 @@ export default function BirthsPage() {
 
         {/* Stats */}
         {stats && (
-          <div className="grid grid-cols-4 gap-3 mb-6">
-            <div className="card-elevated p-4">
-              <p className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Total Registered</p>
-              <p className="text-2xl font-bold" style={{ color: '#2B6FE0' }}>{stats.total}</p>
-            </div>
-            <div className="card-elevated p-4">
-              <p className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>This Month</p>
-              <p className="text-2xl font-bold" style={{ color: '#2B6FE0' }}>{stats.thisMonth}</p>
-            </div>
-            <div className="card-elevated p-4">
-              <p className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Male / Female</p>
-              <p className="text-2xl font-bold">
-                <span style={{ color: '#2B6FE0' }}>{stats.byGender.male}</span>
-                <span style={{ color: 'var(--text-muted)' }}> / </span>
-                <span style={{ color: '#E52E42' }}>{stats.byGender.female}</span>
-              </p>
-            </div>
-            <div className="card-elevated p-4">
-              <p className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Caesarean Rate</p>
-              <p className="text-2xl font-bold" style={{ color: '#FCD34D' }}>
-                {stats.total ? Math.round(stats.byDeliveryType.caesarean / stats.total * 100) : 0}%
-              </p>
-            </div>
+          <div className="kpi-grid mb-6">
+            {[
+              { label: 'Total Registered', value: stats.total, icon: Baby, color: '#0077D7', bg: 'rgba(43,111,224,0.12)' },
+              { label: 'This Month', value: stats.thisMonth, icon: Calendar, color: '#0077D7', bg: 'rgba(43,111,224,0.12)' },
+              { label: 'Male / Female', value: <><span style={{ color: '#0077D7' }}>{stats.byGender.male}</span><span style={{ color: 'var(--text-muted)' }}> / </span><span style={{ color: '#E52E42' }}>{stats.byGender.female}</span></>, icon: Users, color: '#0077D7', bg: 'rgba(43,111,224,0.12)' },
+              { label: 'Caesarean Rate', value: `${stats.total ? Math.round(stats.byDeliveryType.caesarean / stats.total * 100) : 0}%`, icon: Activity, color: '#FCD34D', bg: 'rgba(252,211,77,0.12)' },
+            ].map(stat => (
+              <div key={stat.label} className="kpi">
+                <div className="kpi__icon" style={{ background: stat.bg }}>
+                  <stat.icon style={{ color: stat.color }} />
+                </div>
+                <div className="kpi__body">
+                  <div className="kpi__value">{stat.value}</div>
+                  <div className="kpi__label">{stat.label}</div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
@@ -120,7 +114,7 @@ export default function BirthsPage() {
                   <tr key={b._id} className="cursor-pointer hover:bg-[var(--table-row-hover)]" onClick={() => setExpandedBirth(expandedBirth === b._id ? null : b._id)}>
                     <td className="font-mono text-xs">{b.certificateNumber}</td>
                     <td className="font-medium text-sm">{b.childFirstName} {b.childSurname}</td>
-                    <td><span className="badge text-[10px]" style={{ background: b.childGender === 'Male' ? 'rgba(43,111,224,0.12)' : 'rgba(229,46,66,0.12)', color: b.childGender === 'Male' ? '#2B6FE0' : '#E52E42' }}>{b.childGender}</span></td>
+                    <td><span className="badge text-[10px]" style={{ background: b.childGender === 'Male' ? 'rgba(43,111,224,0.12)' : 'rgba(229,46,66,0.12)', color: b.childGender === 'Male' ? '#0077D7' : '#E52E42' }}>{b.childGender}</span></td>
                     <td className="text-xs font-mono">{b.dateOfBirth}</td>
                     <td className="text-sm">{b.birthWeight}g</td>
                     <td className="text-xs capitalize">{b.deliveryType}</td>
@@ -140,7 +134,7 @@ export default function BirthsPage() {
                   return (
                     <tr>
                       <td colSpan={9} style={{ background: 'var(--overlay-subtle)', padding: 0 }}>
-                        <div className="p-4 grid grid-cols-4 gap-4 text-xs">
+                        <div className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
                           <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Certificate #</span>{b.certificateNumber}</div>
                           <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Birth Type</span><span className="capitalize">{b.birthType}</span></div>
                           <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Delivery Type</span><span className="capitalize">{b.deliveryType}</span></div>
@@ -168,7 +162,7 @@ export default function BirthsPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
             <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
               <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: 'var(--border-light)' }}>
-                <div className="flex items-center gap-2"><Baby className="w-5 h-5" style={{ color: '#2B6FE0' }} /><h2 className="font-semibold">Register New Birth</h2></div>
+                <div className="flex items-center gap-2"><Baby className="w-5 h-5" style={{ color: '#0077D7' }} /><h2 className="font-semibold">Register New Birth</h2></div>
                 <button onClick={() => setShowForm(false)}><X className="w-5 h-5" style={{ color: 'var(--text-muted)' }} /></button>
               </div>
               <div className="p-4 space-y-4">

@@ -250,7 +250,7 @@ export default function SettingsPage() {
     backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center',
   };
   const btnPrimary: React.CSSProperties = {
-    background: '#2B6FE0', color: 'white',
+    background: '#0077D7', color: 'white',
     border: 'none', borderRadius: '10px', padding: '10px 20px',
     fontSize: '14px', fontWeight: 600, cursor: 'pointer',
     display: 'flex', alignItems: 'center', gap: '8px',
@@ -277,7 +277,7 @@ export default function SettingsPage() {
   return (
     <>
       <TopBar title="Settings" />
-      <main className="flex-1 p-4 sm:p-5 space-y-6 overflow-auto page-enter">
+      <main className="page-container space-y-6 page-enter">
 
         {/* Tab bar */}
         <div className="flex gap-2" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '0' }}>
@@ -290,12 +290,12 @@ export default function SettingsPage() {
               onClick={() => { setActiveTab(tab.key); setSearch(''); }}
               className="flex items-center gap-2 px-5 py-3 font-medium text-sm transition-colors"
               style={{
-                color: activeTab === tab.key ? '#2B6FE0' : 'var(--text-muted)',
-                borderBottom: activeTab === tab.key ? '2px solid #2B6FE0' : '2px solid transparent',
+                color: activeTab === tab.key ? '#0077D7' : 'var(--text-muted)',
+                borderBottom: activeTab === tab.key ? '2px solid #0077D7' : '2px solid transparent',
                 marginBottom: '-1px',
                 background: 'transparent', border: 'none', borderBottomStyle: 'solid',
                 borderBottomWidth: '2px',
-                borderBottomColor: activeTab === tab.key ? '#2B6FE0' : 'transparent',
+                borderBottomColor: activeTab === tab.key ? '#0077D7' : 'transparent',
                 cursor: 'pointer',
               }}
             >
@@ -353,7 +353,7 @@ export default function SettingsPage() {
                       <tr><td colSpan={7} className="px-4 py-8 text-center" style={{ color: 'var(--text-muted)' }}>No users found</td></tr>
                     ) : filteredUsers.map(u => (
                       <tr key={u._id} style={{ borderBottom: '1px solid var(--border-light)' }}
-                          className="hover:bg-[rgba(43,111,224,0.03)] transition-colors">
+                          className="hover:bg-[rgba(0,119,215,0.03)] transition-colors">
                         <td className="px-4 py-3">
                           <span className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>{u.name}</span>
                         </td>
@@ -362,8 +362,8 @@ export default function SettingsPage() {
                         </td>
                         <td className="px-4 py-3">
                           <span className="text-xs font-semibold px-2 py-1 rounded-full" style={{
-                            background: u.role === 'government' ? 'rgba(43,111,224,0.12)' : 'rgba(43,111,224,0.12)',
-                            color: u.role === 'government' ? '#2B6FE0' : '#2B6FE0',
+                            background: u.role === 'government' ? 'rgba(0,119,215,0.12)' : 'rgba(0,119,215,0.12)',
+                            color: u.role === 'government' ? '#0077D7' : '#0077D7',
                           }}>{roleLabel(u.role)}</span>
                         </td>
                         <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-secondary)' }}>
@@ -371,8 +371,8 @@ export default function SettingsPage() {
                         </td>
                         <td className="px-4 py-3">
                           <span className="flex items-center gap-1.5 text-xs font-semibold">
-                            <span className="w-2 h-2 rounded-full" style={{ background: u.isActive ? '#2B6FE0' : '#94A3B8' }} />
-                            <span style={{ color: u.isActive ? '#2B6FE0' : '#94A3B8' }}>{u.isActive ? 'Active' : 'Inactive'}</span>
+                            <span className="w-2 h-2 rounded-full" style={{ background: u.isActive ? '#0077D7' : '#94A3B8' }} />
+                            <span style={{ color: u.isActive ? '#0077D7' : '#94A3B8' }}>{u.isActive ? 'Active' : 'Inactive'}</span>
                           </span>
                         </td>
                         <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-muted)' }}>
@@ -381,7 +381,7 @@ export default function SettingsPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1">
                             <button onClick={() => openEditUser(u._id)} title="Edit"
-                              className="p-1.5 rounded-lg hover:bg-[rgba(43,111,224,0.1)] transition-colors" style={{ color: 'var(--text-muted)' }}>
+                              className="p-1.5 rounded-lg hover:bg-[rgba(0,119,215,0.1)] transition-colors" style={{ color: 'var(--text-muted)' }}>
                               <Edit3 className="w-3.5 h-3.5" />
                             </button>
                             <button onClick={() => { setResetUserId(u._id); setNewPassword(generatePassword()); setShowNewPassword(true); }} title="Reset Password"
@@ -390,7 +390,7 @@ export default function SettingsPage() {
                             </button>
                             <button onClick={() => handleToggleActive(u._id, u.isActive)} title={u.isActive ? 'Deactivate' : 'Activate'}
                               className="p-1.5 rounded-lg transition-colors" style={{
-                                color: u.isActive ? '#E52E42' : '#2B6FE0',
+                                color: u.isActive ? '#E52E42' : '#0077D7',
                               }}>
                               {u.isActive ? <UserX className="w-3.5 h-3.5" /> : <UserCheck className="w-3.5 h-3.5" />}
                             </button>
@@ -447,15 +447,15 @@ export default function SettingsPage() {
                       return h.name.toLowerCase().includes(q) || h.state.toLowerCase().includes(q);
                     }).map(h => (
                       <tr key={h._id} style={{ borderBottom: '1px solid var(--border-light)' }}
-                          className="hover:bg-[rgba(43,111,224,0.03)] transition-colors">
+                          className="hover:bg-[rgba(0,119,215,0.03)] transition-colors">
                         <td className="px-4 py-3">
                           <span className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>{h.name}</span>
                         </td>
                         <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-secondary)' }}>{h.state}</td>
                         <td className="px-4 py-3">
                           <span className="text-xs font-semibold px-2 py-1 rounded-full" style={{
-                            background: h.facilityType === 'national_referral' ? 'rgba(43,111,224,0.12)' : h.facilityType === 'state_hospital' ? 'rgba(43,111,224,0.12)' : 'rgba(43,111,224,0.12)',
-                            color: h.facilityType === 'national_referral' ? '#2B6FE0' : h.facilityType === 'state_hospital' ? '#2B6FE0' : '#2B6FE0',
+                            background: h.facilityType === 'national_referral' ? 'rgba(0,119,215,0.12)' : h.facilityType === 'state_hospital' ? 'rgba(0,119,215,0.12)' : 'rgba(0,119,215,0.12)',
+                            color: h.facilityType === 'national_referral' ? '#0077D7' : h.facilityType === 'state_hospital' ? '#0077D7' : '#0077D7',
                           }}>
                             {FACILITY_TYPES.find(f => f.value === h.facilityType)?.label || h.facilityType}
                           </span>
@@ -467,10 +467,10 @@ export default function SettingsPage() {
                         <td className="px-4 py-3">
                           <span className="flex items-center gap-1.5 text-xs font-semibold">
                             <span className="w-2 h-2 rounded-full" style={{
-                              background: h.syncStatus === 'online' ? '#2B6FE0' : h.syncStatus === 'syncing' ? '#FCD34D' : '#94A3B8',
+                              background: h.syncStatus === 'online' ? '#0077D7' : h.syncStatus === 'syncing' ? '#FCD34D' : '#94A3B8',
                             }} />
                             <span style={{
-                              color: h.syncStatus === 'online' ? '#2B6FE0' : h.syncStatus === 'syncing' ? '#FCD34D' : '#94A3B8',
+                              color: h.syncStatus === 'online' ? '#0077D7' : h.syncStatus === 'syncing' ? '#FCD34D' : '#94A3B8',
                             }}>{h.syncStatus === 'online' ? 'Online' : h.syncStatus === 'syncing' ? 'Syncing' : 'Offline'}</span>
                           </span>
                         </td>
@@ -535,7 +535,7 @@ export default function SettingsPage() {
                     </button>
                   </div>
                   {showPassword && userForm.password && (
-                    <div className="mt-2 p-3 rounded-lg" style={{ background: 'rgba(43,111,224,0.08)', border: '1px solid rgba(43,111,224,0.15)' }}>
+                    <div className="mt-2 p-3 rounded-lg" style={{ background: 'rgba(0,119,215,0.08)', border: '1px solid rgba(0,119,215,0.15)' }}>
                       <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Share this password with the staff member:</p>
                       <p className="text-sm font-mono font-bold mt-1" style={{ color: 'var(--text-primary)', userSelect: 'all' }}>{userForm.password}</p>
                     </div>
@@ -637,9 +637,9 @@ export default function SettingsPage() {
             <div className="space-y-5">
               {/* Basic Info */}
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#2B6FE0' }}>Basic Information</h4>
+                <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#0077D7' }}>Basic Information</h4>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="col-span-2">
+                  <div className="sm:col-span-2">
                     <label style={labelStyle}>Hospital Name</label>
                     <input type="text" value={hospitalForm.name}
                       onChange={e => setHospitalForm(p => ({ ...p, name: e.target.value }))}
@@ -673,8 +673,8 @@ export default function SettingsPage() {
 
               {/* Beds */}
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#2B6FE0' }}>Bed Capacity</h4>
-                <div className="grid grid-cols-4 gap-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#0077D7' }}>Bed Capacity</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
                     { key: 'totalBeds', label: 'Total Beds' },
                     { key: 'icuBeds', label: 'ICU Beds' },
@@ -694,7 +694,7 @@ export default function SettingsPage() {
 
               {/* Staff */}
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#2B6FE0' }}>Staff Numbers</h4>
+                <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#0077D7' }}>Staff Numbers</h4>
                 <div className="grid grid-cols-5 gap-3">
                   {[
                     { key: 'doctors', label: 'Doctors' },
@@ -716,7 +716,7 @@ export default function SettingsPage() {
 
               {/* Infrastructure */}
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#2B6FE0' }}>Infrastructure</h4>
+                <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#0077D7' }}>Infrastructure</h4>
                 <div className="grid grid-cols-2 gap-x-6 gap-y-3">
                   {[
                     { key: 'hasElectricity', label: 'Has Electricity' },
@@ -730,7 +730,7 @@ export default function SettingsPage() {
                       <input type="checkbox"
                         checked={hospitalForm[f.key as keyof typeof hospitalForm] as boolean}
                         onChange={e => setHospitalForm(p => ({ ...p, [f.key]: e.target.checked }))}
-                        className="w-4 h-4 rounded accent-[#2B6FE0]"
+                        className="w-4 h-4 rounded accent-[#0077D7]"
                       />
                       {f.label}
                     </label>
@@ -757,15 +757,15 @@ export default function SettingsPage() {
 
               {/* Services */}
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#2B6FE0' }}>Services Offered</h4>
+                <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#0077D7' }}>Services Offered</h4>
                 <div className="flex flex-wrap gap-2">
                   {ALL_SERVICES.map(svc => (
                     <button key={svc} type="button" onClick={() => toggleService(svc)}
                       className="px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer"
                       style={{
-                        background: hospitalForm.services.includes(svc) ? 'rgba(43,111,224,0.15)' : 'var(--input-bg)',
-                        color: hospitalForm.services.includes(svc) ? '#2B6FE0' : 'var(--text-muted)',
-                        border: `1px solid ${hospitalForm.services.includes(svc) ? 'rgba(43,111,224,0.3)' : 'var(--border-light)'}`,
+                        background: hospitalForm.services.includes(svc) ? 'rgba(0,119,215,0.15)' : 'var(--input-bg)',
+                        color: hospitalForm.services.includes(svc) ? '#0077D7' : 'var(--text-muted)',
+                        border: `1px solid ${hospitalForm.services.includes(svc) ? 'rgba(0,119,215,0.3)' : 'var(--border-light)'}`,
                       }}>
                       {hospitalForm.services.includes(svc) && <Check className="w-3 h-3 inline mr-1" />}
                       {svc}
@@ -776,7 +776,7 @@ export default function SettingsPage() {
 
               {/* Coordinates */}
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#2B6FE0' }}>Location Coordinates</h4>
+                <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#0077D7' }}>Location Coordinates</h4>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label style={labelStyle}>Latitude</label>

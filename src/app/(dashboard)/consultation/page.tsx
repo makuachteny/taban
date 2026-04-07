@@ -147,7 +147,7 @@ export default function ConsultationPage() {
     return (
       <>
         <TopBar title="New Consultation" />
-        <main className="flex-1 flex items-center justify-center p-8">
+        <main className="page-container flex items-center justify-center">
           <div className="text-center max-w-md">
             <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{
               background: 'rgba(229,46,66,0.1)',
@@ -561,7 +561,7 @@ export default function ConsultationPage() {
       >
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(43,111,224,0.10)' }}>
-            <Icon className="w-4 h-4" style={{ color: '#2B6FE0' }} />
+            <Icon className="w-4 h-4" style={{ color: '#0077D7' }} />
           </div>
           <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{label}</span>
         </div>
@@ -577,8 +577,8 @@ export default function ConsultationPage() {
   return (
     <>
       <TopBar title="New Consultation" />
-      <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
-          <button onClick={() => router.push('/patients')} className="flex items-center gap-1.5 text-sm mb-4" style={{ color: '#2B6FE0' }}>
+      <main className="page-container page-enter">
+          <button onClick={() => router.push('/patients')} className="flex items-center gap-1.5 text-sm mb-4" style={{ color: '#0077D7' }}>
             <ArrowLeft className="w-4 h-4" /> Back to Patients
           </button>
 
@@ -591,7 +591,7 @@ export default function ConsultationPage() {
               className="btn btn-sm flex items-center gap-2"
               style={{
                 background: scribeOpen ? 'rgba(229,46,66,0.12)' : 'rgba(43,111,224,0.10)',
-                color: scribeOpen ? '#EF4444' : '#2B6FE0',
+                color: scribeOpen ? '#EF4444' : '#0077D7',
                 border: `1px solid ${scribeOpen ? 'rgba(229,46,66,0.2)' : 'rgba(43,111,224,0.2)'}`,
               }}
             >
@@ -604,7 +604,7 @@ export default function ConsultationPage() {
           <div className="card-elevated p-5 mb-4">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(43,111,224,0.10)' }}>
-                <UserSearch className="w-4 h-4" style={{ color: '#2B6FE0' }} />
+                <UserSearch className="w-4 h-4" style={{ color: '#0077D7' }} />
               </div>
               <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Select Patient</span>
             </div>
@@ -613,7 +613,7 @@ export default function ConsultationPage() {
               <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'rgba(43,111,224,0.12)', border: '1px solid var(--taban-green)' }}>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white"
-                    style={{ background: selectedPatientData.gender === 'Male' ? '#2B6FE0' : '#2B6FE0' }}>
+                    style={{ background: selectedPatientData.gender === 'Male' ? '#0077D7' : '#0077D7' }}>
                     {(selectedPatientData.firstName || '?')[0]}{(selectedPatientData.surname || '?')[0]}
                   </div>
                   <div>
@@ -651,7 +651,7 @@ export default function ConsultationPage() {
                           style={{ borderBottom: '1px solid var(--border-light)' }}
                         >
                           <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                            style={{ background: p.gender === 'Male' ? '#2B6FE0' : '#2B6FE0' }}>
+                            style={{ background: p.gender === 'Male' ? '#0077D7' : '#0077D7' }}>
                             {(p.firstName || '?')[0]}{(p.surname || '?')[0]}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -706,7 +706,7 @@ export default function ConsultationPage() {
               <SectionHeader index={1} />
               {openSections[1] && (
                 <div className="p-5">
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                       <label>Temperature (°C)</label>
                       <input type="number" step="0.1" value={vitals.temperature}
@@ -812,7 +812,7 @@ export default function ConsultationPage() {
                       onClick={runAIEvaluation}
                       disabled={aiLoading || !chiefComplaint}
                       className="btn btn-primary btn-sm"
-                      style={{ background: !chiefComplaint ? 'var(--text-muted)' : '#2B6FE0', border: 'none' }}
+                      style={{ background: !chiefComplaint ? 'var(--text-muted)' : '#0077D7', border: 'none' }}
                     >
                       {aiLoading ? (
                         <span className="flex items-center gap-2">
@@ -869,7 +869,7 @@ export default function ConsultationPage() {
                       {aiEvaluation.suggestedDiagnoses.length > 0 && (
                         <div>
                           <div className="flex items-center gap-2 mb-2">
-                            <Brain className="w-4 h-4" style={{ color: '#2B6FE0' }} />
+                            <Brain className="w-4 h-4" style={{ color: '#0077D7' }} />
                             <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Suggested Diagnoses</span>
                           </div>
                           <div className="space-y-2">
@@ -882,7 +882,7 @@ export default function ConsultationPage() {
                                 }}>
                                   <div className="flex items-center justify-between mb-1.5">
                                     <div className="flex items-center gap-2">
-                                      <span className="font-mono text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(43,111,224,0.10)', color: '#2B6FE0' }}>{dx.icd10Code}</span>
+                                      <span className="font-mono text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(43,111,224,0.10)', color: '#0077D7' }}>{dx.icd10Code}</span>
                                       <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{dx.name}</span>
                                       <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${dx.severity === 'severe' ? 'badge-emergency' : dx.severity === 'moderate' ? 'badge-warning' : 'badge-normal'}`}>
                                         {dx.severity}
@@ -893,10 +893,10 @@ export default function ConsultationPage() {
                                         <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--border-light)' }}>
                                           <div className="h-full rounded-full" style={{
                                             width: `${dx.confidence}%`,
-                                            background: dx.confidence >= 70 ? '#2B6FE0' : dx.confidence >= 40 ? '#F59E0B' : 'var(--text-muted)',
+                                            background: dx.confidence >= 70 ? '#0077D7' : dx.confidence >= 40 ? '#F59E0B' : 'var(--text-muted)',
                                           }} />
                                         </div>
-                                        <span className="text-xs font-bold" style={{ color: dx.confidence >= 70 ? '#2B6FE0' : dx.confidence >= 40 ? '#F59E0B' : 'var(--text-muted)' }}>
+                                        <span className="text-xs font-bold" style={{ color: dx.confidence >= 70 ? '#0077D7' : dx.confidence >= 40 ? '#F59E0B' : 'var(--text-muted)' }}>
                                           {dx.confidence}%
                                         </span>
                                       </div>
@@ -908,7 +908,7 @@ export default function ConsultationPage() {
                                         <button
                                           onClick={() => acceptAIDiagnosis(dx.icd10Code, dx.name, dx.severity)}
                                           className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded transition-colors"
-                                          style={{ background: 'rgba(43,111,224,0.10)', color: '#2B6FE0' }}
+                                          style={{ background: 'rgba(43,111,224,0.10)', color: '#0077D7' }}
                                           onMouseEnter={e => { e.currentTarget.style.background = 'rgba(43,111,224,0.20)'; }}
                                           onMouseLeave={e => { e.currentTarget.style.background = 'rgba(43,111,224,0.10)'; }}
                                         >
@@ -934,7 +934,7 @@ export default function ConsultationPage() {
                       {aiEvaluation.recommendedTests.length > 0 && (
                         <div>
                           <div className="flex items-center gap-2 mb-2">
-                            <TestTubes className="w-4 h-4" style={{ color: '#2B6FE0' }} />
+                            <TestTubes className="w-4 h-4" style={{ color: '#0077D7' }} />
                             <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Recommended Tests</span>
                           </div>
                           <div className="flex flex-wrap gap-2">
@@ -948,8 +948,8 @@ export default function ConsultationPage() {
                                   className="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg transition-colors"
                                   style={{
                                     background: isAccepted ? 'rgba(43,111,224,0.12)' : 'rgba(43,111,224,0.08)',
-                                    border: `1px solid ${isAccepted ? 'var(--taban-green)' : '#2B6FE0'}`,
-                                    color: isAccepted ? 'var(--taban-green)' : '#2B6FE0',
+                                    border: `1px solid ${isAccepted ? 'var(--taban-green)' : '#0077D7'}`,
+                                    color: isAccepted ? 'var(--taban-green)' : '#0077D7',
                                     cursor: isAccepted ? 'default' : 'pointer',
                                   }}
                                 >
@@ -1015,7 +1015,7 @@ export default function ConsultationPage() {
                             className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/5 transition-colors"
                             style={{ borderBottom: '1px solid var(--border-light)' }}
                           >
-                            <span className="font-mono text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(43,111,224,0.10)', color: '#2B6FE0' }}>{c.code}</span>
+                            <span className="font-mono text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(43,111,224,0.10)', color: '#0077D7' }}>{c.code}</span>
                             <span className="text-sm">{c.name}</span>
                           </button>
                         ))}
@@ -1028,7 +1028,7 @@ export default function ConsultationPage() {
                     <div className="space-y-2">
                       {diagnoses.map((d, i) => (
                         <div key={i} className="flex items-center gap-3 p-3 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
-                          <span className="font-mono text-xs px-2 py-0.5 rounded flex-shrink-0" style={{ background: 'rgba(43,111,224,0.10)', color: '#2B6FE0' }}>{d.code}</span>
+                          <span className="font-mono text-xs px-2 py-0.5 rounded flex-shrink-0" style={{ background: 'rgba(43,111,224,0.10)', color: '#0077D7' }}>{d.code}</span>
                           <span className="text-sm font-medium flex-1 min-w-0 truncate">{d.name}</span>
                           <select
                             value={d.type}
@@ -1115,14 +1115,14 @@ export default function ConsultationPage() {
                         <div key={i} className="p-4 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
-                              <Pill className="w-4 h-4" style={{ color: '#2B6FE0' }} />
+                              <Pill className="w-4 h-4" style={{ color: '#0077D7' }} />
                               <span className="text-sm font-semibold">{rx.medication}</span>
                             </div>
                             <button onClick={() => removePrescription(i)} className="p-1 rounded transition-colors" style={{ background: 'transparent' }} onMouseEnter={e => (e.currentTarget.style.background = 'rgba(229,46,66,0.15)')} onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
                               <X className="w-4 h-4" style={{ color: 'var(--taban-red)' }} />
                             </button>
                           </div>
-                          <div className="grid grid-cols-4 gap-3">
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                             <div>
                               <label>Dose</label>
                               <input type="text" value={rx.dose}
@@ -1178,7 +1178,7 @@ export default function ConsultationPage() {
                         className="flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors"
                         style={{
                           background: labOrders[test] ? 'rgba(43,111,224,0.10)' : 'var(--overlay-subtle)',
-                          border: `1px solid ${labOrders[test] ? '#2B6FE0' : 'var(--border-light)'}`,
+                          border: `1px solid ${labOrders[test] ? '#0077D7' : 'var(--border-light)'}`,
                         }}
                       >
                         <input
@@ -1186,11 +1186,11 @@ export default function ConsultationPage() {
                           checked={labOrders[test]}
                           onChange={e => setLabOrders(prev => ({ ...prev, [test]: e.target.checked }))}
                           className="w-4 h-4 rounded"
-                          style={{ accentColor: '#2B6FE0' }}
+                          style={{ accentColor: '#0077D7' }}
                         />
                         <div className="flex items-center gap-2">
-                          <FlaskConical className="w-3.5 h-3.5" style={{ color: labOrders[test] ? '#2B6FE0' : 'var(--text-muted)' }} />
-                          <span className="text-sm font-medium" style={{ color: labOrders[test] ? '#2B6FE0' : 'var(--text-primary)' }}>{test}</span>
+                          <FlaskConical className="w-3.5 h-3.5" style={{ color: labOrders[test] ? '#0077D7' : 'var(--text-muted)' }} />
+                          <span className="text-sm font-medium" style={{ color: labOrders[test] ? '#0077D7' : 'var(--text-primary)' }}>{test}</span>
                         </div>
                       </label>
                     ))}
@@ -1273,7 +1273,7 @@ export default function ConsultationPage() {
                       checked={addReferral}
                       onChange={e => setAddReferral(e.target.checked)}
                       className="w-4 h-4 rounded"
-                      style={{ accentColor: '#2B6FE0' }}
+                      style={{ accentColor: '#0077D7' }}
                     />
                     <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Add referral to another facility</span>
                   </label>
@@ -1342,7 +1342,7 @@ export default function ConsultationPage() {
                   <div className="card-elevated p-5">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold text-white"
-                        style={{ background: selectedPatientData.gender === 'Male' ? '#2B6FE0' : '#2B6FE0' }}>
+                        style={{ background: selectedPatientData.gender === 'Male' ? '#0077D7' : '#0077D7' }}>
                         {(selectedPatientData.firstName || '?')[0]}{(selectedPatientData.surname || '?')[0]}
                       </div>
                       <div>
@@ -1433,7 +1433,7 @@ export default function ConsultationPage() {
                               border: `1px solid ${filled ? 'var(--taban-green)' : 'var(--border-light)'}`,
                             }}>
                               {filled ? (
-                                <svg className="w-3 h-3" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-6" stroke="#2B6FE0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                <svg className="w-3 h-3" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-6" stroke="#0077D7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                               ) : (
                                 <Icon className="w-2.5 h-2.5" style={{ color: 'var(--text-muted)' }} />
                               )}

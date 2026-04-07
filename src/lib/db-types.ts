@@ -458,5 +458,121 @@ export interface PlatformConfigDoc extends BaseDoc {
   defaultSecondaryColor: string;
 }
 
+// ===== Appointment Booking (Payam Level & Above) =====
+export type AppointmentStatus = 'scheduled' | 'confirmed' | 'checked_in' | 'in_progress' | 'completed' | 'cancelled' | 'no_show';
+export type AppointmentType = 'general' | 'follow_up' | 'specialist' | 'anc' | 'immunization' | 'lab' | 'telehealth' | 'surgical' | 'dental' | 'mental_health' | 'walk_in';
+export type AppointmentPriority = 'routine' | 'urgent' | 'emergency';
+
+export interface AppointmentDoc extends BaseDoc {
+  type: 'appointment';
+  patientId: string;
+  patientName: string;
+  patientPhone?: string;
+  providerId: string;         // Doctor/clinical officer assigned
+  providerName: string;
+  facilityId: string;
+  facilityName: string;
+  facilityLevel: FacilityLevel;
+  // Scheduling
+  appointmentDate: string;    // YYYY-MM-DD
+  appointmentTime: string;    // HH:MM (24h)
+  endTime?: string;           // HH:MM estimated end
+  duration: number;           // minutes
+  appointmentType: AppointmentType;
+  priority: AppointmentPriority;
+  department: string;
+  // Clinical context
+  reason: string;             // Chief complaint or reason for visit
+  notes?: string;
+  referralId?: string;        // If appointment was created from a referral
+  previousAppointmentId?: string; // For follow-up chain
+  // Status tracking
+  status: AppointmentStatus;
+  cancelledReason?: string;
+  cancelledBy?: string;
+  checkedInAt?: string;
+  completedAt?: string;
+  // Reminders
+  reminderSent: boolean;
+  reminderChannel?: 'sms' | 'app' | 'both';
+  // Recurrence (for regular follow-ups)
+  isRecurring: boolean;
+  recurrencePattern?: 'weekly' | 'biweekly' | 'monthly' | 'quarterly';
+  recurrenceEndDate?: string;
+  // Administrative
+  bookedBy: string;
+  bookedByName: string;
+  state: string;
+  county?: string;
+  orgId?: string;
+}
+
+// ===== Telehealth Services (Private Sector) =====
+export type TelehealthStatus = 'scheduled' | 'waiting_room' | 'in_session' | 'completed' | 'cancelled' | 'failed' | 'no_show';
+export type TelehealthType = 'video' | 'audio' | 'chat';
+export type SessionQuality = 'excellent' | 'good' | 'fair' | 'poor' | 'failed';
+
+export interface TelehealthSessionDoc extends BaseDoc {
+  type: 'telehealth_session';
+  // Linked appointment
+  appointmentId?: string;
+  // Participants
+  patientId: string;
+  patientName: string;
+  patientPhone?: string;
+  patientEmail?: string;
+  providerId: string;
+  providerName: string;
+  providerRole: string;
+  facilityId: string;
+  facilityName: string;
+  // Session details
+  sessionType: TelehealthType;
+  scheduledDate: string;
+  scheduledTime: string;
+  actualStartTime?: string;
+  actualEndTime?: string;
+  duration?: number;          // actual minutes
+  status: TelehealthStatus;
+  // Connection
+  roomId: string;             // Unique room identifier for joining
+  joinUrl?: string;           // URL for patient to join
+  providerJoinUrl?: string;
+  // Clinical
+  chiefComplaint: string;
+  clinicalNotes?: string;
+  diagnosis?: string;
+  icd10Code?: string;
+  prescriptionsIssued?: string[];
+  labOrdersIssued?: string[];
+  followUpRequired: boolean;
+  followUpDate?: string;
+  referralRequired: boolean;
+  referralFacility?: string;
+  // Quality & compliance (ISO 13131 alignment)
+  sessionQuality?: SessionQuality;
+  connectionDrops: number;
+  patientConsentGiven: boolean;
+  consentTimestamp?: string;
+  // Recording & documentation
+  sessionRecorded: boolean;
+  recordingUrl?: string;
+  attachments?: { name: string; type: string; url: string }[];
+  // Patient satisfaction
+  patientRating?: number;     // 1-5
+  patientFeedback?: string;
+  // Billing (private sector)
+  consultationFee?: number;
+  currency?: string;
+  paymentStatus?: 'pending' | 'paid' | 'waived' | 'insurance';
+  insuranceProvider?: string;
+  // Administrative
+  cancelledReason?: string;
+  cancelledBy?: string;
+  state: string;
+  county?: string;
+  orgId?: string;
+}
+
 // Re-export mock types for convenience
 export type { Hospital, Patient, Referral, DiseaseAlert, VitalSigns, Diagnosis, Prescription, LabResult, MedicalRecord, Attachment, TransferPackage };

@@ -59,11 +59,14 @@ export default function DeathsPage() {
   return (
     <>
       <TopBar title="Death Registration" />
-      <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
+      <main className="page-container page-enter">
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-xl font-semibold">Death Registration</h1>
-            <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>WHO Medical Certificate of Cause of Death with ICD-11 Coding</p>
+          <div className="page-header">
+            <div className="page-header__top">
+              <div className="page-header__icon"><FileText size={18} /></div>
+              <h1 className="page-header__title">Death Registration</h1>
+            </div>
+            <p className="page-header__subtitle">WHO Medical Certificate of Cause of Death with ICD-11 Coding</p>
           </div>
           <button onClick={() => setShowForm(true)} className="btn btn-primary btn-sm flex items-center gap-2">
             <Plus className="w-4 h-4" /> Register Death
@@ -87,11 +90,11 @@ export default function DeathsPage() {
             </div>
             <div className="card-elevated p-4">
               <p className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>With ICD-11 Code</p>
-              <p className="text-2xl font-bold" style={{ color: '#2B6FE0' }}>{stats.withICD11Code}/{stats.total}</p>
+              <p className="text-2xl font-bold" style={{ color: '#0077D7' }}>{stats.withICD11Code}/{stats.total}</p>
             </div>
             <div className="card-elevated p-4">
               <p className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Registered</p>
-              <p className="text-2xl font-bold" style={{ color: '#2B6FE0' }}>{stats.registered}/{stats.total}</p>
+              <p className="text-2xl font-bold" style={{ color: '#0077D7' }}>{stats.registered}/{stats.total}</p>
             </div>
           </div>
         )}
@@ -168,7 +171,7 @@ export default function DeathsPage() {
                   <tr>
                     <td colSpan={8} style={{ background: 'var(--overlay-subtle)', padding: 0 }}>
                       <div className="p-4 space-y-3">
-                        <div className="grid grid-cols-4 gap-4 text-xs">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
                           <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Full Name</span>{d.deceasedFirstName} {d.deceasedSurname}</div>
                           <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Gender</span>{d.deceasedGender}</div>
                           <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Date of Birth</span>{d.dateOfBirth || 'N/A'}</div>
@@ -184,7 +187,7 @@ export default function DeathsPage() {
                             {d.contributingConditions && <p><span className="font-medium">Contributing:</span> {d.contributingConditions}</p>}
                           </div>
                         </div>
-                        <div className="grid grid-cols-4 gap-4 text-xs">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
                           <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Manner</span><span className="capitalize">{(d.mannerOfDeath || '').replace(/_/g, ' ')}</span></div>
                           <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Maternal Death</span>{d.maternalDeath ? 'Yes' : 'No'}</div>
                           <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Certified By</span>{d.certifiedBy || 'N/A'} ({d.certifierRole || 'N/A'})</div>
@@ -209,7 +212,7 @@ export default function DeathsPage() {
               </div>
               <div className="p-4 space-y-4">
                 <h3 className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>Deceased Information</h3>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div><label className="text-xs font-medium uppercase tracking-wider mb-1 block" style={{ color: 'var(--text-muted)' }}>First Name *</label><input type="text" value={form.deceasedFirstName} onChange={e => setForm({ ...form, deceasedFirstName: e.target.value })} className="w-full p-2 rounded-lg text-sm outline-none" style={{ background: 'var(--overlay-subtle)', color: 'var(--text-primary)', border: '1px solid var(--border-light)' }} /></div>
                   <div><label className="text-xs font-medium uppercase tracking-wider mb-1 block" style={{ color: 'var(--text-muted)' }}>Surname</label><input type="text" value={form.deceasedSurname} onChange={e => setForm({ ...form, deceasedSurname: e.target.value })} className="w-full p-2 rounded-lg text-sm outline-none" style={{ background: 'var(--overlay-subtle)', color: 'var(--text-primary)', border: '1px solid var(--border-light)' }} /></div>
                   <div><label className="text-xs font-medium uppercase tracking-wider mb-1 block" style={{ color: 'var(--text-muted)' }}>Gender</label><select value={form.deceasedGender} onChange={e => setForm({ ...form, deceasedGender: e.target.value as 'Male' | 'Female' })} className="w-full p-2 rounded-lg text-sm outline-none" style={{ background: 'var(--overlay-subtle)', color: 'var(--text-primary)', border: '1px solid var(--border-light)' }}><option value="Male">Male</option><option value="Female">Female</option></select></div>

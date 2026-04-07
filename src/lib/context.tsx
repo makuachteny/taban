@@ -50,7 +50,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
   const [isOnline, setIsOnline] = useState(true);
   const [lastSync, setLastSync] = useState('');
-  const [theme, setTheme] = useState<Theme>('light');
+  const [theme, setTheme] = useState<Theme>('dark');
   const [dbReady, setDbReady] = useState(false);
   const [globalSearch, setGlobalSearch] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -122,14 +122,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     init();
 
-    // Theme — default to light
+    // Theme — default to dark
     const saved = localStorage.getItem('taban-theme') as Theme | null;
     if (saved === 'light' || saved === 'dark') {
       setTheme(saved);
       document.documentElement.setAttribute('data-theme', saved);
     } else {
-      setTheme('light');
-      document.documentElement.setAttribute('data-theme', 'light');
+      setTheme('dark');
+      document.documentElement.setAttribute('data-theme', 'dark');
     }
 
     // Register service worker
@@ -141,6 +141,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const handleOnline = () => {
       setIsOnline(true);
       setLastSync(new Date().toISOString());
+      if (syncManagerRef.current) {
+        syncManagerRef.current.syncNow().catch(() => {});
+      }
       // Notify service worker to flush sync queue
       if (navigator.serviceWorker?.controller) {
         navigator.serviceWorker.controller.postMessage('ONLINE');

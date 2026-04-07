@@ -13,8 +13,8 @@ const VACCINES = ['BCG', 'OPV', 'Penta', 'PCV', 'Rota', 'Measles', 'Yellow Fever
 const SITES: Array<'left arm' | 'right arm' | 'left thigh' | 'right thigh' | 'oral'> = ['left arm', 'right arm', 'left thigh', 'right thigh', 'oral'];
 
 const statusConfig = {
-  completed: { color: '#2B6FE0', bg: 'rgba(43,111,224,0.12)', icon: CheckCircle2, label: 'Completed' },
-  scheduled: { color: '#2B6FE0', bg: 'rgba(43,111,224,0.12)', icon: Clock, label: 'Scheduled' },
+  completed: { color: '#0077D7', bg: 'rgba(43,111,224,0.12)', icon: CheckCircle2, label: 'Completed' },
+  scheduled: { color: '#0077D7', bg: 'rgba(43,111,224,0.12)', icon: Clock, label: 'Scheduled' },
   overdue: { color: '#E52E42', bg: 'rgba(229,46,66,0.12)', icon: AlertTriangle, label: 'Overdue' },
   missed: { color: '#94A3B8', bg: 'rgba(100,116,139,0.12)', icon: XCircle, label: 'Missed' },
 };
@@ -82,10 +82,10 @@ export default function ImmunizationsPage() {
     return (
       <>
         <TopBar title="Immunizations" />
-        <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
+        <main className="page-container page-enter">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-3" style={{ borderColor: '#2B6FE0', borderTopColor: 'transparent' }} />
+              <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-3" style={{ borderColor: '#0077D7', borderTopColor: 'transparent' }} />
               <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading immunization records...</p>
             </div>
           </div>
@@ -97,12 +97,12 @@ export default function ImmunizationsPage() {
   return (
     <>
       <TopBar title="Immunizations" />
-      <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
+      <main className="page-container page-enter">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: '#2B6FE0' }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: '#0077D7' }}>
                 <Syringe className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -122,22 +122,20 @@ export default function ImmunizationsPage() {
 
         {/* Stats Row */}
         {stats && (
-          <div className="grid grid-cols-4 gap-3 mb-6">
+          <div className="kpi-grid mb-6">
             {[
-              { label: 'Total Vaccinations', value: stats.totalVaccinations.toString(), color: '#2B6FE0', bg: 'rgba(43,111,224,0.12)', icon: Syringe },
-              { label: 'Children Tracked', value: stats.totalChildren.toString(), color: '#2B6FE0', bg: 'rgba(43,111,224,0.12)', icon: Users },
+              { label: 'Total Vaccinations', value: stats.totalVaccinations.toString(), color: '#0077D7', bg: 'rgba(43,111,224,0.12)', icon: Syringe },
+              { label: 'Children Tracked', value: stats.totalChildren.toString(), color: '#0077D7', bg: 'rgba(43,111,224,0.12)', icon: Users },
               { label: 'Overdue Doses', value: stats.overdue.toString(), color: '#E52E42', bg: 'rgba(229,46,66,0.12)', icon: AlertTriangle },
-              { label: 'Coverage Rate', value: `${stats.coverageRate}%`, color: '#2B6FE0', bg: 'rgba(43,111,224,0.12)', icon: CheckCircle2 },
+              { label: 'Coverage Rate', value: `${stats.coverageRate}%`, color: '#0077D7', bg: 'rgba(43,111,224,0.12)', icon: CheckCircle2 },
             ].map(stat => (
-              <div key={stat.label} className="card-elevated p-5">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>{stat.label}</p>
-                    <p className="text-3xl font-bold stat-value" style={{ color: stat.color }}>{stat.value}</p>
-                  </div>
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: stat.bg }}>
-                    <stat.icon className="w-5 h-5" style={{ color: stat.color }} />
-                  </div>
+              <div key={stat.label} className="kpi">
+                <div className="kpi__icon" style={{ background: stat.bg }}>
+                  <stat.icon style={{ color: stat.color }} />
+                </div>
+                <div className="kpi__body">
+                  <div className="kpi__value">{stat.value}</div>
+                  <div className="kpi__label">{stat.label}</div>
                 </div>
               </div>
             ))}
@@ -148,7 +146,7 @@ export default function ImmunizationsPage() {
         {coverage && (
           <div className="card-elevated p-5 mb-6">
             <h3 className="font-semibold text-sm mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-              <Syringe className="w-4 h-4" style={{ color: '#2B6FE0' }} />
+              <Syringe className="w-4 h-4" style={{ color: '#0077D7' }} />
               Coverage by Antigen
             </h3>
             <div className="space-y-3">
@@ -160,7 +158,7 @@ export default function ImmunizationsPage() {
                       className="h-full rounded-full flex items-center justify-end pr-2 transition-all duration-700"
                       style={{
                         width: `${Math.max(c.percentage, 8)}%`,
-                        background: c.percentage >= 80 ? '#2B6FE0' :
+                        background: c.percentage >= 80 ? '#0077D7' :
                                    c.percentage >= 50 ? '#F59E0B' :
                                    '#E52E42',
                       }}
@@ -190,7 +188,7 @@ export default function ImmunizationsPage() {
         {/* Vaccine Schedule Table — Grouped by Child */}
         <div className="card-elevated overflow-hidden">
           <div className="p-4 border-b flex items-center gap-2" style={{ borderColor: 'var(--border-light)' }}>
-            <Syringe className="w-4 h-4" style={{ color: '#2B6FE0' }} />
+            <Syringe className="w-4 h-4" style={{ color: '#0077D7' }} />
             <h3 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
               Vaccination Records ({filteredChildren.length} children)
             </h3>
@@ -209,7 +207,7 @@ export default function ImmunizationsPage() {
                   className="w-full flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[var(--table-row-hover)]"
                 >
                   <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                    style={{ background: '#2B6FE0' }}>
+                    style={{ background: '#0077D7' }}>
                     {child.patientName.split(' ').map(n => n[0]).join('').slice(0, 2)}
                   </div>
                   <div className="flex-1 text-left min-w-0">
@@ -219,7 +217,7 @@ export default function ImmunizationsPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0">
-                    <span className="text-xs px-2 py-1 rounded-full" style={{ background: 'rgba(43,111,224,0.12)', color: '#2B6FE0' }}>
+                    <span className="text-xs px-2 py-1 rounded-full" style={{ background: 'rgba(43,111,224,0.12)', color: '#0077D7' }}>
                       {completedCount} given
                     </span>
                     {overdueCount > 0 && (
@@ -233,7 +231,7 @@ export default function ImmunizationsPage() {
 
                 {isExpanded && (
                   <div className="px-4 pb-4">
-                    <div className="grid grid-cols-4 gap-2 mt-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
                       {VACCINES.map(vac => {
                         const doses = records.filter(r => r.vaccine === vac);
                         if (doses.length === 0) return (

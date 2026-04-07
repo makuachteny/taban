@@ -141,7 +141,7 @@ export default function Sidebar() {
               <h1 className="font-extrabold text-[15px] leading-tight tracking-wide" style={{ color: 'var(--text-primary)' }}>
                 {brandName.length > 12 ? brandName.slice(0, 12) : brandName}
               </h1>
-              <p className="text-[9px] uppercase tracking-[0.18em] font-semibold" style={{ color: '#2B6FE0' }}>
+              <p className="text-[9px] uppercase tracking-[0.18em] font-semibold" style={{ color: '#0077D7' }}>
                 {subtitle}
               </p>
             </div>
@@ -193,7 +193,7 @@ export default function Sidebar() {
                     <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Current Facility</p>
                     <span className="text-[8px] font-bold px-2 py-0.5 rounded-full" style={{
                       background: 'rgba(43, 111, 224, 0.12)',
-                      color: '#2B6FE0',
+                      color: '#0077D7',
                     }}>{roleConfig?.badgeLabel}</span>
                   </div>
                   <p className="text-[12px] font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{currentUser.hospital?.name || currentUser.hospitalName}</p>
@@ -204,7 +204,7 @@ export default function Sidebar() {
           </div>
           {!isSuperAdmin && !isOrgAdmin && !isGovernment && currentUser.organization && (
             <div className="flex items-center gap-1.5 mt-2 pt-2" style={{ borderTop: '1px solid var(--border-glass)' }}>
-              <Building2 className="w-3 h-3 flex-shrink-0" style={{ color: '#2B6FE0' }} />
+              <Building2 className="w-3 h-3 flex-shrink-0" style={{ color: '#0077D7' }} />
               <p className="text-[9px] font-medium truncate" style={{ color: 'var(--text-muted)' }}>{currentUser.organization.name}</p>
             </div>
           )}
@@ -314,7 +314,7 @@ export default function Sidebar() {
         }}>
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0" style={{
-              background: 'linear-gradient(135deg, #2B6FE0 0%, #1D5BC2 100%)',
+              background: 'linear-gradient(135deg, #0077D7 0%, #005FBC 100%)',
               boxShadow: '0 2px 8px rgba(43, 111, 224, 0.3)',
             }}>
               {(currentUser.name || '').split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2) || '?'}
@@ -331,7 +331,7 @@ export default function Sidebar() {
       {currentUser && collapsed && (
         <div className="flex justify-center mb-3">
           <div className="w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0" style={{
-            background: 'linear-gradient(135deg, #2B6FE0 0%, #1D5BC2 100%)',
+            background: 'linear-gradient(135deg, #0077D7 0%, #005FBC 100%)',
             boxShadow: '0 2px 8px rgba(43, 111, 224, 0.3)',
           }}
           title={currentUser.name}
@@ -357,7 +357,7 @@ export default function Sidebar() {
           background: 'var(--sidebar-bg)',
           backdropFilter: `blur(var(--sidebar-blur))`,
           WebkitBackdropFilter: `blur(var(--sidebar-blur))`,
-          borderRadius: '24px',
+          borderRadius: '10px',
           border: '1px solid var(--border-glass)',
           boxShadow: 'var(--glass-shadow)',
         }}
@@ -368,11 +368,11 @@ export default function Sidebar() {
           onMouseDown={onMouseDown}
           onTouchStart={onTouchStart}
           className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize z-50 group"
-          style={{ borderRadius: '0 24px 24px 0' }}
+          style={{ borderRadius: '0 10px 10px 0' }}
         >
           <div
             className="absolute right-0 top-1/2 -translate-y-1/2 w-[3px] h-10 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-            style={{ background: '#2B6FE0' }}
+            style={{ background: '#0077D7' }}
           />
         </div>
       </aside>
@@ -398,7 +398,7 @@ export default function Sidebar() {
           background: 'var(--sidebar-bg)',
           backdropFilter: `blur(var(--sidebar-blur))`,
           WebkitBackdropFilter: `blur(var(--sidebar-blur))`,
-          borderRadius: '24px',
+          borderRadius: '10px',
           border: '1px solid var(--border-glass)',
           boxShadow: sidebarOpen ? 'var(--card-shadow-xl)' : 'none',
         }}

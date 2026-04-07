@@ -123,24 +123,24 @@ export default function AdminUsersPage() {
   return (
     <>
       <TopBar title="Cross-Org Users" />
-      <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
+      <main className="page-container page-enter">
 
         {/* Header stats */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="kpi-grid mb-6">
           {[
-            { label: 'Total Users', value: users.length, icon: Users, accent: '#2563EB' },
-            { label: 'Active Users', value: users.filter(u => u.isActive).length, icon: UserCheck, accent: '#059669' },
-            { label: 'Inactive Users', value: users.filter(u => !u.isActive).length, icon: UserX, accent: '#EF4444' },
-            { label: 'Admin Users', value: users.filter(u => u.role === 'super_admin' || u.role === 'org_admin').length, icon: Shield, accent: '#7C3AED' },
+            { label: 'Total Users', value: users.length, icon: Users, color: '#2563EB', bg: '#2563EB15' },
+            { label: 'Active Users', value: users.filter(u => u.isActive).length, icon: UserCheck, color: '#059669', bg: '#05966915' },
+            { label: 'Inactive Users', value: users.filter(u => !u.isActive).length, icon: UserX, color: '#EF4444', bg: '#EF444415' },
+            { label: 'Admin Users', value: users.filter(u => u.role === 'super_admin' || u.role === 'org_admin').length, icon: Shield, color: '#7C3AED', bg: '#7C3AED15' },
           ].map(stat => (
-            <div key={stat.label} className="p-5 rounded-xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${stat.accent}15` }}>
-                  <stat.icon className="w-5 h-5" style={{ color: stat.accent }} />
-                </div>
+            <div key={stat.label} className="kpi">
+              <div className="kpi__icon" style={{ background: stat.bg }}>
+                <stat.icon style={{ color: stat.color }} />
               </div>
-              <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{stat.value}</p>
-              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{stat.label}</p>
+              <div className="kpi__body">
+                <div className="kpi__value">{stat.value}</div>
+                <div className="kpi__label">{stat.label}</div>
+              </div>
             </div>
           ))}
         </div>

@@ -135,8 +135,8 @@ export default function OrgHospitalsPage() {
     const map: Record<string, string> = {
       national_referral: '#DC2626',
       state_hospital: '#7C3AED',
-      county_hospital: '#2B6FE0',
-      phcc: '#2B6FE0',
+      county_hospital: '#0077D7',
+      phcc: '#0077D7',
       phcu: '#06B6D4',
     };
     return map[ft] || '#6B7280';
@@ -157,10 +157,10 @@ export default function OrgHospitalsPage() {
     <div className="flex-1 flex flex-col">
       <TopBar title="Facility Management" />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-5 page-enter">
+      <div className="page-container page-enter">
         {/* Success/Error */}
         {success && (
-          <div className="mb-4 p-3 rounded-lg text-sm font-medium" style={{ background: 'rgba(43,111,224,0.1)', color: '#2B6FE0', border: '1px solid rgba(43,111,224,0.2)' }}>
+          <div className="mb-4 p-3 rounded-lg text-sm font-medium" style={{ background: 'rgba(43,111,224,0.1)', color: '#0077D7', border: '1px solid rgba(43,111,224,0.2)' }}>
             {success}
           </div>
         )}

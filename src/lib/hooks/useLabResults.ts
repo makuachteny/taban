@@ -1,18 +1,23 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { LabResultDoc } from '../db-types';
+import { useApp } from '../context';
 
 export function useLabResults() {
   const [results, setResults] = useState<LabResultDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { currentUser } = useApp();
+  const scope = useMemo(() => (
+    currentUser ? { orgId: currentUser.orgId, hospitalId: currentUser.hospitalId, role: currentUser.role } : undefined
+  ), [currentUser?.orgId, currentUser?.hospitalId, currentUser?.role]);
 
   const loadResults = useCallback(async () => {
     try {
       setError(null);
       const { getAllLabResults } = await import('../services/lab-service');
-      const data = await getAllLabResults();
+      const data = await getAllLabResults(scope);
       setResults(data);
     } catch (err) {
       console.error(err);
@@ -20,10 +25,18 @@ export function useLabResults() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [scope]);
 
   useEffect(() => {
     loadResults();
+  }, [loadResults]);
+
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadResults();
+    }, 30000);
+    return () => clearInterval(interval);
   }, [loadResults]);
 
   const create = useCallback(async (data: Omit<LabResultDoc, '_id' | '_rev' | 'type' | 'createdAt' | 'updatedAt'>) => {

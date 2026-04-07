@@ -5,11 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/context';
 import TopBar from '@/components/TopBar';
 import {
-  Users, AlertTriangle, TrendingUp,
+  Users, AlertTriangle, TrendingUp, TrendingDown,
   ChevronRight, Stethoscope,
   Syringe, HeartPulse, Baby, FlaskConical,
   FileText, UserCheck, ArrowRightLeft,
-  CheckCircle2, Building2,
+  CheckCircle2, Building2, Eye, Flag, Clock, Home,
+  Search, Check, MessageSquare, ThumbsUp,
 } from 'lucide-react';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
@@ -23,6 +24,8 @@ import { useANC } from '@/lib/hooks/useANC';
 import { useBirths } from '@/lib/hooks/useBirths';
 import { useHospitals } from '@/lib/hooks/useHospitals';
 import type { BHWPerformance } from '@/lib/services/boma-visit-service';
+import type { BomaVisitDoc } from '@/lib/db-types';
+import type { ImmunizationDefaulter } from '@/lib/services/immunization-service';
 
 const DEPARTMENTS = ['OPD', 'Emergency', 'Maternity', 'Pediatrics', 'Surgery', 'Lab', 'Pharmacy', 'ICU'];
 const DOCTORS = ['Dr. Wani James', 'Dr. Akol Deng', 'Dr. Ladu Morris', 'Dr. Achol Mabior', 'Dr. Taban Philip'];
@@ -63,20 +66,89 @@ export default function PayamSupervisorDashboard() {
   const { hospitals } = useHospitals();
   const [activeTab, setActiveTab] = useState('satisfaction');
 
-  // BHW supervision data (kept for the supervision sub-tab)
+  // BHW supervision data
   const [bhwPerformance, setBhwPerformance] = useState<BHWPerformance[]>([]);
+  const [reviewQueue, setReviewQueue] = useState<BomaVisitDoc[]>([]);
+  const [reviewStats, setReviewStats] = useState({ pending: 0, reviewed: 0, flagged: 0, total: 0 });
+  const [defaulters, setDefaulters] = useState<ImmunizationDefaulter[]>([]);
+  const [defaulterStats, setDefaulterStats] = useState({ totalDefaulters: 0, uniqueChildren: 0, critical: 0, high: 0, medium: 0, byVaccine: {} as Record<string, number> });
+  const [supervisionTab, setSupervisionTab] = useState<'bhw' | 'review' | 'defaulters'>('bhw');
+  const [reviewSearchQ, setReviewSearchQ] = useState('');
+  const [reviewingId, setReviewingId] = useState<string | null>(null);
+  const [reviewNotes, setReviewNotes] = useState('');
+  const [selectedVisits, setSelectedVisits] = useState<Set<string>>(new Set());
+  const [bulkApproving, setBulkApproving] = useState(false);
+
+  // Feedback types
+  type FeedbackType = 'good' | 'needs_improvement' | 'urgent';
+  interface BHWFeedback { workerId: string; type: FeedbackType; note: string; timestamp: string; }
+  const [feedbackMap, setFeedbackMap] = useState<Record<string, BHWFeedback>>({});
+  const [feedbackWorkerId, setFeedbackWorkerId] = useState<string | null>(null);
+  const [feedbackNote, setFeedbackNote] = useState('');
 
   const loadBHWData = useCallback(async () => {
     try {
-      const { getBHWPerformance } = await import('@/lib/services/boma-visit-service');
-      const perf = await getBHWPerformance();
-      setBhwPerformance(perf);
+      const { getBHWPerformance, getVisitsForReview, getReviewStats } = await import('@/lib/services/boma-visit-service');
+      const { getDefaulters, getDefaulterStats } = await import('@/lib/services/immunization-service');
+      const [perf, queue, rStats, defs, dStats] = await Promise.all([
+        getBHWPerformance(), getVisitsForReview(), getReviewStats(), getDefaulters(), getDefaulterStats(),
+      ]);
+      setBhwPerformance(perf); setReviewQueue(queue); setReviewStats(rStats);
+      setDefaulters(defs); setDefaulterStats(dStats);
+      try { const saved = localStorage.getItem('payam_bhw_feedback'); if (saved) setFeedbackMap(JSON.parse(saved)); } catch { /* ignore */ }
     } catch (err) {
       console.error('Failed to load BHW data:', err);
     }
   }, []);
 
   useEffect(() => { loadBHWData(); }, [loadBHWData]);
+
+  const handleReview = useCallback(async (visitId: string, status: 'reviewed' | 'flagged') => {
+    if (!currentUser) return;
+    const { reviewVisit } = await import('@/lib/services/boma-visit-service');
+    await reviewVisit(visitId, currentUser._id, currentUser.name, status, reviewNotes);
+    setReviewingId(null); setReviewNotes('');
+    setSelectedVisits(prev => { const n = new Set(prev); n.delete(visitId); return n; });
+    loadBHWData();
+  }, [currentUser, reviewNotes, loadBHWData]);
+
+  const handleBulkApprove = useCallback(async () => {
+    if (!currentUser || selectedVisits.size === 0) return;
+    setBulkApproving(true);
+    try {
+      const { reviewVisit } = await import('@/lib/services/boma-visit-service');
+      for (const visitId of selectedVisits) { await reviewVisit(visitId, currentUser._id, currentUser.name, 'reviewed', 'Bulk approved'); }
+      setSelectedVisits(new Set()); loadBHWData();
+    } catch (err) { console.error('Bulk approve failed:', err); }
+    finally { setBulkApproving(false); }
+  }, [currentUser, selectedVisits, loadBHWData]);
+
+  const toggleVisitSelection = useCallback((visitId: string) => {
+    setSelectedVisits(prev => { const n = new Set(prev); if (n.has(visitId)) n.delete(visitId); else n.add(visitId); return n; });
+  }, []);
+
+  const saveFeedback = useCallback((workerId: string, type: FeedbackType) => {
+    const fb: BHWFeedback = { workerId, type, note: feedbackNote, timestamp: new Date().toISOString() };
+    setFeedbackMap(prev => { const u = { ...prev, [workerId]: fb }; try { localStorage.setItem('payam_bhw_feedback', JSON.stringify(u)); } catch { /* */ } return u; });
+    setFeedbackWorkerId(null); setFeedbackNote('');
+  }, [feedbackNote]);
+
+  // Performance scoring
+  const getPerformanceScore = useCallback((bhw: BHWPerformance) => {
+    const visitsPct = Math.min(100, (bhw.thisWeekVisits / 20) * 100);
+    const approvalRate = Math.max(0, 100 - bhw.referralRate);
+    return Math.min(100, Math.max(0, Math.round((visitsPct * 0.4) + (bhw.followUpCompletionRate * 0.3) + (approvalRate * 0.3))));
+  }, []);
+
+  // Alert escalation badges
+  const getBHWAlerts = useCallback((bhw: BHWPerformance) => {
+    const alerts: { label: string; color: string; bg: string }[] = [];
+    const days = bhw.lastActiveDate ? Math.floor((Date.now() - new Date(bhw.lastActiveDate).getTime()) / 86400000) : 999;
+    if (days >= 3) alerts.push({ label: 'INACTIVE', color: '#EF4444', bg: '#EF444415' });
+    if (bhw.referralRate > 50) alerts.push({ label: 'HIGH REFERRAL RATE', color: '#F59E0B', bg: '#F59E0B15' });
+    if (bhw.followUpCompletionRate < 50) alerts.push({ label: 'LOW FOLLOW-UP', color: '#F59E0B', bg: '#F59E0B15' });
+    return alerts;
+  }, []);
 
   if (!currentUser) return null;
 
@@ -163,10 +235,20 @@ export default function PayamSupervisorDashboard() {
   const activeBHWs = bhwPerformance.filter(b => b.isActive).length;
   const totalBHWs = bhwPerformance.length;
 
+  const filteredReviewQueue = reviewQueue.filter(v =>
+    !reviewSearchQ || v.patientName.toLowerCase().includes(reviewSearchQ.toLowerCase()) ||
+    v.workerName.toLowerCase().includes(reviewSearchQ.toLowerCase())
+  );
+
+  const selectAllRoutine = () => {
+    const routineIds = filteredReviewQueue.filter(v => v.action === 'treated' && !v.referredTo).map(v => v._id);
+    setSelectedVisits(new Set(routineIds));
+  };
+
   return (
     <>
       <TopBar title="Payam Dashboard" />
-      <main className="flex-1 p-4 sm:p-6 overflow-auto page-enter">
+      <main className="page-container page-enter">
 
         {/* ═══ TOP ROW: KPI Cards + Satisfaction ═══ */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" style={{ gridAutoRows: '1fr' }}>
@@ -176,7 +258,7 @@ export default function PayamSupervisorDashboard() {
             <p className="text-[11px] font-medium mb-2" style={{ color: 'var(--text-muted)' }}>Total Admitted Patients</p>
             <div className="flex items-end gap-2 mb-2">
               <span className="text-2xl font-bold leading-none" style={{ color: 'var(--text-primary)' }}>{patients.length || 0}</span>
-              <span className="text-[10px] font-semibold flex items-center gap-0.5 mb-0.5" style={{ color: '#2B6FE0' }}>
+              <span className="text-[10px] font-semibold flex items-center gap-0.5 mb-0.5" style={{ color: '#0077D7' }}>
                 <TrendingUp className="w-3 h-3" /> 2%
               </span>
             </div>
@@ -226,7 +308,7 @@ export default function PayamSupervisorDashboard() {
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <UserCheck className="w-3.5 h-3.5" style={{ color: '#2B6FE0' }} />
+                  <UserCheck className="w-3.5 h-3.5" style={{ color: '#0077D7' }} />
                   <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>Nursing</span>
                 </div>
                 <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{totalNurses}</span>
@@ -277,8 +359,8 @@ export default function PayamSupervisorDashboard() {
                   onClick={() => setActiveTab(tab)}
                   className="px-1.5 py-1 text-[9px] font-semibold uppercase tracking-wider transition-colors"
                   style={{
-                    color: activeTab === tab ? '#2B6FE0' : 'var(--text-muted)',
-                    borderBottom: activeTab === tab ? '2px solid #2B6FE0' : '2px solid transparent',
+                    color: activeTab === tab ? '#0077D7' : 'var(--text-muted)',
+                    borderBottom: activeTab === tab ? '2px solid #0077D7' : '2px solid transparent',
                   }}
                 >
                   {tab === 'satisfaction' ? 'Satisfaction' : tab === 'equipment' ? 'Equipment' : tab === 'department' ? 'Dept' : 'Avg Wait'}
@@ -309,7 +391,7 @@ export default function PayamSupervisorDashboard() {
             </div>
             <div className="mt-2 p-1.5 rounded-lg text-center" style={{ background: 'rgba(43,111,224,0.08)', border: '1px solid rgba(43,111,224,0.15)' }}>
               <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Patient Satisfaction Rate</span>
-              <span className="text-xl font-bold ml-2" style={{ color: '#2B6FE0' }}>{satisfactionRate}%</span>
+              <span className="text-xl font-bold ml-2" style={{ color: '#0077D7' }}>{satisfactionRate}%</span>
             </div>
           </div>
         </div>
@@ -325,7 +407,7 @@ export default function PayamSupervisorDashboard() {
                   {incomingBomaTransfers.length}
                 </span>
               </div>
-              <button onClick={() => router.push('/referrals')} className="text-[11px] font-medium flex items-center gap-0.5" style={{ color: '#2B6FE0' }}>
+              <button onClick={() => router.push('/referrals')} className="text-[11px] font-medium flex items-center gap-0.5" style={{ color: '#0077D7' }}>
                 All Referrals <ChevronRight className="w-3 h-3" />
               </button>
             </div>
@@ -393,7 +475,7 @@ export default function PayamSupervisorDashboard() {
                 <span className="w-2 h-2 rounded-full" style={{ background: '#E52E42' }} />
                 <span style={{ color: 'var(--text-muted)' }}>Critical</span>
               </span>
-              <button onClick={() => router.push('/patients')} className="text-[11px] font-medium flex items-center gap-0.5" style={{ color: '#2B6FE0' }}>
+              <button onClick={() => router.push('/patients')} className="text-[11px] font-medium flex items-center gap-0.5" style={{ color: '#0077D7' }}>
                 Details <ChevronRight className="w-3 h-3" />
               </button>
             </div>
@@ -448,7 +530,7 @@ export default function PayamSupervisorDashboard() {
           <div className="glass-section">
             <div className="glass-section-header">
               <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Disease Distribution</span>
-              <button onClick={() => router.push('/surveillance')} className="text-[10px] font-medium flex items-center gap-0.5" style={{ color: '#2B6FE0' }}>
+              <button onClick={() => router.push('/surveillance')} className="text-[10px] font-medium flex items-center gap-0.5" style={{ color: '#0077D7' }}>
                 Details <ChevronRight className="w-3 h-3" />
               </button>
             </div>
@@ -544,8 +626,8 @@ export default function PayamSupervisorDashboard() {
           <p className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>Quick Actions</p>
           <div className="grid grid-cols-3 sm:grid-cols-7 gap-2">
             {[
-              { label: 'New Patient', icon: Users, href: '/patients/new', color: '#2B6FE0' },
-              { label: 'Consultation', icon: FileText, href: '/consultation', color: '#2B6FE0' },
+              { label: 'New Patient', icon: Users, href: '/patients/new', color: '#0077D7' },
+              { label: 'Consultation', icon: FileText, href: '/consultation', color: '#0077D7' },
               { label: 'Referral', icon: ArrowRightLeft, href: '/referrals', color: ACCENT },
               { label: 'Immunization', icon: Syringe, href: '/immunizations', color: '#A855F7' },
               { label: 'ANC Visit', icon: HeartPulse, href: '/anc', color: '#EC4899' },
@@ -563,6 +645,271 @@ export default function PayamSupervisorDashboard() {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* ═══ BHW SUPERVISION SECTION ═══ */}
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Eye className="w-5 h-5" style={{ color: ACCENT }} />
+              <h2 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>BHW Supervision</h2>
+            </div>
+            <div className="flex gap-3 text-xs font-medium">
+              <span style={{ color: 'var(--text-muted)' }}>Reviews: <strong style={{ color: ACCENT }}>{reviewStats.pending}</strong></span>
+              <span style={{ color: 'var(--text-muted)' }}>Defaulters: <strong style={{ color: '#8B5CF6' }}>{defaulterStats.uniqueChildren}</strong></span>
+            </div>
+          </div>
+
+          {/* Supervision tabs */}
+          <div className="flex gap-1 mb-4 p-1 rounded-xl" style={{ background: 'var(--overlay-subtle)' }}>
+            {[
+              { id: 'bhw' as const, label: 'BHW Performance', icon: Users },
+              { id: 'review' as const, label: `Review Queue (${reviewStats.pending})`, icon: Eye },
+              { id: 'defaulters' as const, label: `Defaulters (${defaulterStats.uniqueChildren})`, icon: Syringe },
+            ].map(tab => (
+              <button key={tab.id} onClick={() => setSupervisionTab(tab.id)}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-semibold transition-all"
+                style={{ background: supervisionTab === tab.id ? 'var(--bg-card)' : 'transparent', color: supervisionTab === tab.id ? ACCENT : 'var(--text-muted)', boxShadow: supervisionTab === tab.id ? 'var(--card-shadow)' : 'none' }}>
+                <tab.icon className="w-3.5 h-3.5" />{tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* BHW Performance Tab */}
+          {supervisionTab === 'bhw' && (
+            <div className="space-y-3">
+              {bhwPerformance.length === 0 && (<div className="text-center py-12"><Users className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--text-muted)', opacity: 0.3 }} /><p className="text-sm" style={{ color: 'var(--text-muted)' }}>No BHW data available yet</p></div>)}
+              {bhwPerformance.map(bhw => {
+                const daysSinceActive = bhw.lastActiveDate ? Math.floor((Date.now() - new Date(bhw.lastActiveDate).getTime()) / 86400000) : 0;
+                const perfScore = getPerformanceScore(bhw);
+                const scoreColor = perfScore > 80 ? '#059669' : perfScore >= 50 ? '#F59E0B' : '#EF4444';
+                const alerts = getBHWAlerts(bhw);
+                const feedback = feedbackMap[bhw.workerId];
+                return (
+                  <div key={bhw.workerId} className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: `1px solid ${bhw.isActive ? 'var(--border-light)' : 'rgba(239,68,68,0.2)'}`, boxShadow: 'var(--card-shadow)' }}>
+                    <div className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold text-white" style={{ background: bhw.isActive ? '#059669' : '#94A3B8' }}>
+                            {bhw.workerName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{bhw.workerName}</p>
+                            <div className="flex items-center gap-2"><Home className="w-3 h-3" style={{ color: 'var(--text-muted)' }} /><span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Boma: {bhw.boma}</span></div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {/* Performance Score */}
+                          <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl" style={{ background: `${scoreColor}10`, border: `1px solid ${scoreColor}20` }}>
+                            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: scoreColor }}>
+                              <span className="text-xs font-bold text-white">{perfScore}</span>
+                            </div>
+                            <div>
+                              <p className="text-[9px] font-bold" style={{ color: scoreColor }}>SCORE</p>
+                              <div className="flex items-center gap-0.5">
+                                {perfScore >= 50 ? <TrendingUp className="w-2.5 h-2.5" style={{ color: scoreColor }} /> : <TrendingDown className="w-2.5 h-2.5" style={{ color: scoreColor }} />}
+                                <span className="text-[8px] font-bold" style={{ color: scoreColor }}>/100</span>
+                              </div>
+                            </div>
+                          </div>
+                          <span className="text-[10px] font-bold px-2 py-1 rounded-full" style={{ background: bhw.isActive ? '#05966915' : '#EF444415', color: bhw.isActive ? '#059669' : '#EF4444' }}>
+                            {bhw.isActive ? 'ACTIVE' : `INACTIVE ${daysSinceActive}d`}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Alert Escalation Badges */}
+                      {alerts.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mb-3">
+                          {alerts.map(alert => (
+                            <span key={alert.label} className="flex items-center gap-1 text-[9px] font-bold px-2 py-1 rounded-full" style={{ background: alert.bg, color: alert.color }}>
+                              <AlertTriangle className="w-2.5 h-2.5" />{alert.label}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-5 gap-2">
+                        {[
+                          { label: 'This Week', value: bhw.thisWeekVisits, color: '#3B82F6' },
+                          { label: 'Total Visits', value: bhw.totalVisits, color: '#059669' },
+                          { label: 'Treated', value: bhw.treated, color: '#10B981' },
+                          { label: 'Referred', value: bhw.referred, color: '#F59E0B' },
+                          { label: 'Follow-Up %', value: `${bhw.followUpCompletionRate}%`, color: bhw.followUpCompletionRate >= 80 ? '#059669' : '#EF4444' },
+                        ].map(metric => (
+                          <div key={metric.label} className="p-2 rounded-lg text-center" style={{ background: 'var(--overlay-subtle)' }}>
+                            <p className="text-base font-bold" style={{ color: metric.color }}>{metric.value}</p>
+                            <p className="text-[9px]" style={{ color: 'var(--text-muted)' }}>{metric.label}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="mt-2 flex items-center gap-2">
+                        <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Referral Rate:</span>
+                        <div className="flex-1 h-1.5 rounded-full" style={{ background: 'var(--overlay-subtle)' }}>
+                          <div className="h-full rounded-full" style={{ width: `${bhw.referralRate}%`, background: bhw.referralRate > 40 ? '#EF4444' : bhw.referralRate > 20 ? '#F59E0B' : '#059669' }} />
+                        </div>
+                        <span className="text-[10px] font-mono font-bold" style={{ color: 'var(--text-muted)' }}>{bhw.referralRate}%</span>
+                      </div>
+
+                      {bhw.pendingReviews > 0 && (
+                        <div className="mt-2 flex items-center gap-1.5"><Clock className="w-3 h-3" style={{ color: ACCENT }} /><span className="text-[10px] font-medium" style={{ color: ACCENT }}>{bhw.pendingReviews} visits pending review</span></div>
+                      )}
+
+                      {/* Feedback indicator */}
+                      {feedback && (
+                        <div className="mt-2 flex items-center gap-1.5 px-2 py-1 rounded-lg" style={{ background: feedback.type === 'good' ? '#05966908' : feedback.type === 'urgent' ? '#EF444408' : '#F59E0B08' }}>
+                          <MessageSquare className="w-3 h-3" style={{ color: feedback.type === 'good' ? '#059669' : feedback.type === 'urgent' ? '#EF4444' : '#F59E0B' }} />
+                          <span className="text-[9px] font-medium" style={{ color: 'var(--text-muted)' }}>
+                            Feedback: {feedback.type === 'good' ? 'Good Work' : feedback.type === 'urgent' ? 'Urgent Attention' : 'Needs Improvement'} ({new Date(feedback.timestamp).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })})
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Supervisor Feedback */}
+                      {feedbackWorkerId === bhw.workerId ? (
+                        <div className="mt-3 p-3 rounded-xl" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+                          <p className="text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Send Feedback</p>
+                          <div className="flex gap-2 mb-2">
+                            <button onClick={() => saveFeedback(bhw.workerId, 'good')} className="flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95" style={{ background: '#05966915', color: '#059669', border: '1px solid #05966920' }}><ThumbsUp className="w-3.5 h-3.5" /> Good Work</button>
+                            <button onClick={() => saveFeedback(bhw.workerId, 'needs_improvement')} className="flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95" style={{ background: '#F59E0B15', color: '#F59E0B', border: '1px solid #F59E0B20' }}><AlertTriangle className="w-3.5 h-3.5" /> Needs Work</button>
+                            <button onClick={() => saveFeedback(bhw.workerId, 'urgent')} className="flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95" style={{ background: '#EF444415', color: '#EF4444', border: '1px solid #EF444420' }}><Flag className="w-3.5 h-3.5" /> Urgent</button>
+                          </div>
+                          <textarea value={feedbackNote} onChange={e => setFeedbackNote(e.target.value)} placeholder="Optional note..." className="w-full px-3 py-2 rounded-lg text-xs mb-2" style={{ background: 'var(--bg-input)', border: '1px solid var(--border-medium)', color: 'var(--text-primary)', minHeight: '50px' }} />
+                          <button onClick={() => { setFeedbackWorkerId(null); setFeedbackNote(''); }} className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Cancel</button>
+                        </div>
+                      ) : (
+                        <button onClick={() => setFeedbackWorkerId(bhw.workerId)} className="mt-2 w-full py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]" style={{ background: `${ACCENT}10`, color: ACCENT, border: `1px solid ${ACCENT}20` }}>
+                          <MessageSquare className="w-3.5 h-3.5" /> Send Feedback
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Review Queue Tab */}
+          {supervisionTab === 'review' && (
+            <div>
+              <div className="relative mb-3">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+                <input type="text" value={reviewSearchQ} onChange={e => setReviewSearchQ(e.target.value)} placeholder="Search by patient or BHW name..."
+                  className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }} />
+              </div>
+
+              {/* Bulk Actions */}
+              <div className="flex items-center justify-between mb-3 px-3 py-2 rounded-xl" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{selectedVisits.size > 0 ? `${selectedVisits.size} selected` : 'Bulk Actions'}</span>
+                  <button onClick={selectAllRoutine} className="text-[10px] font-bold px-2.5 py-1 rounded-lg transition-all active:scale-95" style={{ background: `${ACCENT}15`, color: ACCENT, border: `1px solid ${ACCENT}20` }}>Select All Routine</button>
+                </div>
+                {selectedVisits.size > 0 && (
+                  <div className="flex items-center gap-2">
+                    <button onClick={handleBulkApprove} disabled={bulkApproving} className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg text-white transition-all active:scale-95" style={{ background: '#059669', opacity: bulkApproving ? 0.7 : 1 }}>
+                      <CheckCircle2 className="w-3 h-3" />{bulkApproving ? 'Approving...' : `Approve Selected (${selectedVisits.size})`}
+                    </button>
+                    <button onClick={() => setSelectedVisits(new Set())} className="text-[10px] font-medium px-2 py-1" style={{ color: 'var(--text-muted)' }}>Clear</button>
+                  </div>
+                )}
+              </div>
+
+              {filteredReviewQueue.length === 0 && (<div className="text-center py-12"><CheckCircle2 className="w-12 h-12 mx-auto mb-3" style={{ color: '#059669', opacity: 0.3 }} /><p className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>All visits reviewed!</p></div>)}
+
+              <div className="space-y-2">
+                {filteredReviewQueue.map(visit => (
+                  <div key={visit._id} className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: reviewingId === visit._id ? `2px solid ${ACCENT}` : selectedVisits.has(visit._id) ? '2px solid #059669' : '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)' }}>
+                    <div className="p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => toggleVisitSelection(visit._id)} className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 transition-all" style={{ background: selectedVisits.has(visit._id) ? '#059669' : 'transparent', border: selectedVisits.has(visit._id) ? '2px solid #059669' : '2px solid var(--border-medium)' }}>
+                            {selectedVisits.has(visit._id) && <Check className="w-3 h-3 text-white" />}
+                          </button>
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white" style={{ background: visit.action === 'treated' ? '#059669' : '#EF4444' }}>
+                            {visit.patientName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{visit.patientName}</p>
+                            <p className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>{visit.geocodeId}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: visit.action === 'treated' ? '#05966915' : '#EF444415', color: visit.action === 'treated' ? '#059669' : '#EF4444' }}>{visit.action.toUpperCase()}</span>
+                          <p className="text-[9px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{new Date(visit.visitDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 mb-2">
+                        <div className="p-1.5 rounded-lg" style={{ background: 'var(--overlay-subtle)' }}><p className="text-[9px]" style={{ color: 'var(--text-muted)' }}>Complaint</p><p className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{visit.chiefComplaint}</p></div>
+                        <div className="p-1.5 rounded-lg" style={{ background: 'var(--overlay-subtle)' }}><p className="text-[9px]" style={{ color: 'var(--text-muted)' }}>Condition</p><p className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{visit.suspectedCondition}</p></div>
+                        <div className="p-1.5 rounded-lg" style={{ background: 'var(--overlay-subtle)' }}><p className="text-[9px]" style={{ color: 'var(--text-muted)' }}>BHW</p><p className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{visit.workerName}</p></div>
+                      </div>
+                      {visit.treatmentGiven && <p className="text-xs mb-2 p-1.5 rounded-lg" style={{ background: '#05966908', color: '#059669' }}>Treatment: {visit.treatmentGiven}</p>}
+                      {visit.referredTo && <p className="text-xs mb-2 p-1.5 rounded-lg" style={{ background: '#EF444408', color: '#EF4444' }}>Referred to: {visit.referredTo}</p>}
+                      {reviewingId === visit._id ? (
+                        <div className="space-y-2 mt-2">
+                          <textarea value={reviewNotes} onChange={e => setReviewNotes(e.target.value)} placeholder="Add review notes (optional)..." className="w-full px-3 py-2 rounded-lg text-xs" style={{ background: 'var(--bg-input)', border: '1px solid var(--border-medium)', color: 'var(--text-primary)', minHeight: '60px' }} />
+                          <div className="flex gap-2">
+                            <button onClick={() => handleReview(visit._id, 'reviewed')} className="flex-1 py-2.5 rounded-lg text-xs font-bold text-white flex items-center justify-center gap-1.5" style={{ background: '#059669' }}><CheckCircle2 className="w-3.5 h-3.5" /> Approve</button>
+                            <button onClick={() => handleReview(visit._id, 'flagged')} className="flex-1 py-2.5 rounded-lg text-xs font-bold text-white flex items-center justify-center gap-1.5" style={{ background: '#EF4444' }}><Flag className="w-3.5 h-3.5" /> Flag</button>
+                            <button onClick={() => { setReviewingId(null); setReviewNotes(''); }} className="px-3 py-2.5 rounded-lg text-xs font-medium" style={{ background: 'var(--overlay-subtle)', color: 'var(--text-muted)' }}>Cancel</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button onClick={() => setReviewingId(visit._id)} className="w-full py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 mt-1" style={{ background: `${ACCENT}10`, color: ACCENT, border: `1px solid ${ACCENT}20` }}><Eye className="w-3.5 h-3.5" /> Review This Visit</button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Defaulters Tab */}
+          {supervisionTab === 'defaulters' && (
+            <div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                {[
+                  { label: 'Total Overdue', value: defaulterStats.totalDefaulters, color: '#EF4444' },
+                  { label: 'Children', value: defaulterStats.uniqueChildren, color: '#8B5CF6' },
+                  { label: 'Critical (>30d)', value: defaulterStats.critical, color: '#DC2626' },
+                  { label: 'High (>14d)', value: defaulterStats.high, color: '#F59E0B' },
+                ].map(stat => (
+                  <div key={stat.label} className="rounded-xl p-3" style={{ background: `${stat.color}08`, border: `1px solid ${stat.color}15` }}>
+                    <p className="text-xl font-bold" style={{ color: stat.color }}>{stat.value}</p>
+                    <p className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+              {defaulters.length === 0 && (<div className="text-center py-12"><Syringe className="w-12 h-12 mx-auto mb-3" style={{ color: '#059669', opacity: 0.3 }} /><p className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>No immunization defaulters!</p></div>)}
+              <div className="space-y-2">
+                {defaulters.map((d, i) => (
+                  <div key={`${d.patientId}-${d.vaccine}-${i}`} className="rounded-2xl p-3" style={{ background: 'var(--bg-card)', border: `1px solid ${d.urgency === 'critical' ? 'rgba(239,68,68,0.3)' : d.urgency === 'high' ? 'rgba(245,158,11,0.2)' : 'var(--border-light)'}`, boxShadow: 'var(--card-shadow)' }}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold text-white" style={{ background: d.urgency === 'critical' ? '#EF4444' : d.urgency === 'high' ? '#F59E0B' : '#8B5CF6' }}>
+                          {d.patientName.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{d.patientName}</p>
+                          <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{d.gender} &middot; {d.ageMonths} months &middot; {d.facilityName}</p>
+                        </div>
+                      </div>
+                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: d.urgency === 'critical' ? '#EF444415' : d.urgency === 'high' ? '#F59E0B15' : '#8B5CF615', color: d.urgency === 'critical' ? '#EF4444' : d.urgency === 'high' ? '#F59E0B' : '#8B5CF6' }}>
+                        {d.daysOverdue} DAYS OVERDUE
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg" style={{ background: '#8B5CF610' }}>
+                        <Syringe className="w-3 h-3" style={{ color: '#8B5CF6' }} /><span className="text-xs font-medium" style={{ color: '#8B5CF6' }}>{d.vaccine} Dose {d.doseNumber}</span>
+                      </div>
+                      <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Due: {new Date(d.dueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </>

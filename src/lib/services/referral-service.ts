@@ -1,11 +1,28 @@
-import { referralsDB } from '../db';
-import type { ReferralDoc } from '../db-types';
+import { referralsDB, hospitalsDB } from '../db';
+import type { ReferralDoc, HospitalDoc } from '../db-types';
 import type { DataScope } from './data-scope';
 import { filterByScope } from './data-scope';
 import type { Attachment } from '@/data/mock';
 import { v4 as uuidv4 } from 'uuid';
 import { assembleTransferPackage } from './transfer-service';
 import { logAudit } from './audit-service';
+
+async function inferOrgId(fromHospitalId?: string, toHospitalId?: string): Promise<string | undefined> {
+  try {
+    const hdb = hospitalsDB();
+    if (fromHospitalId) {
+      const from = await hdb.get(fromHospitalId) as HospitalDoc;
+      if (from?.orgId) return from.orgId;
+    }
+    if (toHospitalId) {
+      const to = await hdb.get(toHospitalId) as HospitalDoc;
+      if (to?.orgId) return to.orgId;
+    }
+  } catch {
+    // ignore
+  }
+  return undefined;
+}
 
 export async function getAllReferrals(scope?: DataScope): Promise<ReferralDoc[]> {
   const db = referralsDB();
@@ -27,10 +44,12 @@ export async function createReferral(
 ): Promise<ReferralDoc> {
   const db = referralsDB();
   const now = new Date().toISOString();
+  const orgId = data.orgId || await inferOrgId(data.fromHospitalId, data.toHospitalId);
   const doc: ReferralDoc = {
     _id: `ref-${uuidv4().slice(0, 8)}`,
     type: 'referral',
     ...data,
+    orgId,
     createdAt: now,
     updatedAt: now,
   } as ReferralDoc;
@@ -58,10 +77,12 @@ export async function createReferralWithTransfer(
 
   const db = referralsDB();
   const now = new Date().toISOString();
+  const orgId = data.orgId || await inferOrgId(data.fromHospitalId, data.toHospitalId);
   const doc: ReferralDoc = {
     _id: `ref-${uuidv4().slice(0, 8)}`,
     type: 'referral',
     ...data,
+    orgId,
     transferPackage,
     referralAttachments: referralAttachments.length > 0 ? referralAttachments : undefined,
     createdAt: now,
@@ -83,6 +104,23 @@ export async function updateReferralStatus(
     const resp = await db.put(updated);
     updated._rev = resp.rev;
     logAudit('UPDATE_REFERRAL', undefined, undefined, `Referral ${id} status changed to ${status}`).catch(() => {});
+    return updated;
+  } catch {
+    return null;
+  }
+}
+
+export async function updateReferralNotes(
+  id: string,
+  notes: string
+): Promise<ReferralDoc | null> {
+  const db = referralsDB();
+  try {
+    const existing = await db.get(id) as ReferralDoc;
+    const updated = { ...existing, notes, updatedAt: new Date().toISOString() };
+    const resp = await db.put(updated);
+    updated._rev = resp.rev;
+    logAudit('UPDATE_REFERRAL', undefined, undefined, `Referral ${id} notes updated`).catch(() => {});
     return updated;
   } catch {
     return null;

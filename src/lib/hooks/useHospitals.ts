@@ -1,18 +1,23 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { HospitalDoc } from '../db-types';
+import { useApp } from '../context';
 
 export function useHospitals() {
   const [hospitals, setHospitals] = useState<HospitalDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { currentUser } = useApp();
+  const scope = useMemo(() => (
+    currentUser ? { orgId: currentUser.orgId, hospitalId: currentUser.hospitalId, role: currentUser.role } : undefined
+  ), [currentUser?.orgId, currentUser?.hospitalId, currentUser?.role]);
 
   const loadHospitals = useCallback(async () => {
     try {
       setError(null);
       const { getAllHospitals } = await import('../services/hospital-service');
-      const data = await getAllHospitals();
+      const data = await getAllHospitals(scope);
       setHospitals(data);
     } catch (err) {
       console.error(err);
@@ -20,7 +25,7 @@ export function useHospitals() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [scope]);
 
   useEffect(() => {
     loadHospitals();

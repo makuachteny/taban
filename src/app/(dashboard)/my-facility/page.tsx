@@ -102,7 +102,7 @@ export default function MyFacilityPage() {
     return (
       <>
         <TopBar title="My Facility" />
-        <main className="flex-1 p-4 overflow-auto page-enter">
+        <main className="page-container page-enter">
           <div className="card-elevated p-8 text-center max-w-md mx-auto mt-16">
             <Building2 className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--text-muted)' }} />
             <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Not Assigned to a Facility</h2>
@@ -119,7 +119,7 @@ export default function MyFacilityPage() {
     return (
       <>
         <TopBar title="My Facility" />
-        <main className="flex-1 p-4 overflow-auto page-enter flex items-center justify-center">
+        <main className="page-container page-enter flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin" style={{ color: 'var(--text-muted)' }} />
         </main>
       </>
@@ -169,7 +169,7 @@ export default function MyFacilityPage() {
         onClick={() => onChange(!checked)}
         className="relative w-10 h-5.5 rounded-full transition-colors duration-200"
         style={{
-          background: checked ? '#2B6FE0' : 'var(--border-light)',
+          background: checked ? '#0077D7' : 'var(--border-light)',
           width: '40px',
           height: '22px',
         }}
@@ -189,22 +189,22 @@ export default function MyFacilityPage() {
   return (
     <>
       <TopBar title="My Facility" />
-      <main className="flex-1 p-3 sm:p-4 overflow-auto page-enter">
+      <main className="page-container page-enter">
 
         {/* Header Card */}
         <div className="card-elevated p-5 mb-4">
           <div className="flex items-start justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'rgba(43,111,224,0.12)' }}>
-                <Building2 className="w-6 h-6" style={{ color: '#2B6FE0' }} />
+              <div className="w-12 h-12 rounded-md flex items-center justify-center" style={{ background: 'rgba(0,119,215,0.12)' }}>
+                <Building2 className="w-6 h-6" style={{ color: '#0077D7' }} />
               </div>
               <div>
                 <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{hospital?.name || 'Unknown Facility'}</h2>
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{hospital?.state}</span>
                   <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{
-                    background: 'rgba(43,111,224,0.08)',
-                    color: '#2B6FE0',
+                    background: 'rgba(0,119,215,0.08)',
+                    color: '#0077D7',
                   }}>
                     {hospital?.facilityType?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
                   </span>
@@ -225,10 +225,10 @@ export default function MyFacilityPage() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all"
+                className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold text-white transition-all"
                 style={{
-                  background: saving ? '#94A3B8' : 'linear-gradient(135deg, #2B6FE0, #1d5bc4)',
-                  boxShadow: '0 2px 8px rgba(43,111,224,0.3)',
+                  background: saving ? '#94A3B8' : 'linear-gradient(135deg, #0077D7, #005FBC)',
+                  boxShadow: '0 2px 8px rgba(0,119,215,0.3)',
                 }}
               >
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
@@ -243,7 +243,7 @@ export default function MyFacilityPage() {
 
           {/* Operational Status */}
           <div className={sectionClass}>
-            {sectionTitle(<Activity className="w-4 h-4" style={{ color: '#2B6FE0' }} />, 'Operational Status')}
+            {sectionTitle(<Activity className="w-4 h-4" style={{ color: '#0077D7' }} />, 'Operational Status')}
             <div>
               <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Current Status</label>
               <select

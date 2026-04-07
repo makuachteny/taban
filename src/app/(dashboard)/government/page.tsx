@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/context';
 import TopBar from '@/components/TopBar';
 import {
   Building2, Users, BedDouble, Stethoscope, Wifi, WifiOff,
   AlertTriangle, ArrowRightLeft, TrendingUp, TrendingDown,
-  Minus, Clock, Zap, Sun, Truck
+  Minus, ChevronDown, ChevronRight, Download, Calendar,
+  GitCompareArrows, ArrowUpDown, Check
 } from 'lucide-react';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
@@ -18,6 +19,7 @@ import { usePatients } from '@/lib/hooks/usePatients';
 import { useSurveillance } from '@/lib/hooks/useSurveillance';
 import { useReferrals } from '@/lib/hooks/useReferrals';
 import { weeklyDiseaseData, casesByState } from '@/data/mock';
+import type { HospitalDoc } from '@/lib/db-types';
 
 // Chart tooltip
 function ChartTooltip({ active, payload, label }: {
@@ -67,7 +69,31 @@ function CircularGauge({ value, label, color, size = 100, strokeWidth = 8 }: {
   );
 }
 
+// Data Quality Badge
+function DataQualityBadge({ score }: { score: number }) {
+  const color = score > 90 ? '#10B981' : score >= 70 ? '#F59E0B' : '#EF4444';
+  const bg = score > 90 ? 'rgba(16,185,129,0.12)' : score >= 70 ? 'rgba(245,158,11,0.12)' : 'rgba(239,68,68,0.12)';
+  return (
+    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: bg, color }}>
+      {score}%
+    </span>
+  );
+}
+
 const FACILITY_COLORS = ['#3ECF8E', '#60A5FA', '#A855F7', '#FCD34D', '#94A3B8'];
+
+// Calculate data quality score for a hospital
+function calcDataQuality(h: HospitalDoc): number {
+  const fields = [
+    h.name, h.state, h.facilityType, h.totalBeds, h.doctors, h.nurses,
+    h.clinicalOfficers, h.syncStatus, h.lastSync, h.patientCount,
+    h.operationalStatus, h.performance?.reportingCompleteness,
+    h.performance?.serviceReadinessScore, h.performance?.immunizationCoverage,
+    h.performance?.qualityScore, h.county,
+  ];
+  const filled = fields.filter(f => f !== undefined && f !== null && f !== '' && f !== 0).length;
+  return Math.round((filled / fields.length) * 100);
+}
 
 export default function GovernmentDashboardPage() {
   const router = useRouter();
@@ -76,6 +102,19 @@ export default function GovernmentDashboardPage() {
   const { patients: allPatients } = usePatients();
   const { alerts: diseaseAlerts } = useSurveillance();
   const { referrals } = useReferrals();
+
+  // State/County Drill-Down state
+  const [expandedStates, setExpandedStates] = useState<Record<string, boolean>>({});
+
+  // DHIS2 Export state
+  const [dhis2Period, setDhis2Period] = useState<'monthly' | 'quarterly'>('monthly');
+
+  // Facility Comparison state
+  const [comparisonIds, setComparisonIds] = useState<string[]>([]);
+  const [compDropdownOpen, setCompDropdownOpen] = useState(false);
+
+  // Hospital table sort
+  const [tableSortBy, setTableSortBy] = useState<'name' | 'quality'>('name');
 
   useEffect(() => {
     if (currentUser && currentUser.role !== 'government') {
@@ -95,21 +134,6 @@ export default function GovernmentDashboardPage() {
   const offlineHospitals = hospitals.filter(h => h.syncStatus === 'offline').length;
   const activeAlerts = diseaseAlerts.filter(a => a.alertLevel === 'emergency' || a.alertLevel === 'warning').length;
   const pendingReferrals = referrals.filter(r => r.status === 'sent' || r.status === 'received').length;
-
-  // Resource allocation aggregates
-  const totalICUBeds = hospitals.reduce((s, h) => s + (h.icuBeds || 0), 0);
-  const totalMaternityBeds = hospitals.reduce((s, h) => s + (h.maternityBeds || 0), 0);
-  const totalPediatricBeds = hospitals.reduce((s, h) => s + (h.pediatricBeds || 0), 0);
-  const totalGeneralBeds = totalBeds - totalICUBeds - totalMaternityBeds - totalPediatricBeds;
-  const hospitalsWithElectricity = hospitals.filter(h => h.hasElectricity).length;
-  const hospitalsWithGenerator = hospitals.filter(h => h.hasGenerator).length;
-  const hospitalsWithSolar = hospitals.filter(h => h.hasSolar).length;
-  const hospitalsWithInternet = hospitals.filter(h => h.hasInternet).length;
-  const hospitalsWithAmbulance = hospitals.filter(h => h.hasAmbulance).length;
-  const hospitals24hrEmergency = hospitals.filter(h => h.emergency24hr).length;
-  const totalLabTechs = hospitals.reduce((s, h) => s + (h.labTechnicians || 0), 0);
-  const totalPharmacists = hospitals.reduce((s, h) => s + (h.pharmacists || 0), 0);
-  const totalAllStaff = totalDoctors + totalNurses + totalCOs + totalLabTechs + totalPharmacists;
 
   // Facility type distribution for donut
   const facilityDistribution = useMemo(() => {
@@ -195,6 +219,91 @@ export default function GovernmentDashboardPage() {
     });
   }, [diseaseAlerts]);
 
+  // ===== STATE/COUNTY DRILL-DOWN DATA =====
+  const hospitalsByState = useMemo(() => {
+    const grouped: Record<string, HospitalDoc[]> = {};
+    hospitals.forEach(h => {
+      const state = h.state || 'Unknown';
+      if (!grouped[state]) grouped[state] = [];
+      grouped[state].push(h);
+    });
+    return grouped;
+  }, [hospitals]);
+
+  const stateAggregates = useMemo(() => {
+    return Object.entries(hospitalsByState).map(([state, hosps]) => ({
+      state,
+      hospitals: hosps,
+      totalPatients: hosps.reduce((s, h) => s + h.patientCount, 0),
+      totalBeds: hosps.reduce((s, h) => s + h.totalBeds, 0),
+      totalStaff: hosps.reduce((s, h) => s + h.doctors + h.nurses + h.clinicalOfficers, 0),
+      facilityCount: hosps.length,
+    })).sort((a, b) => b.totalPatients - a.totalPatients);
+  }, [hospitalsByState]);
+
+  const toggleState = useCallback((state: string) => {
+    setExpandedStates(prev => ({ ...prev, [state]: !prev[state] }));
+  }, []);
+
+  // ===== DHIS2 EXPORT =====
+  const handleDhis2Export = useCallback(() => {
+    const now = new Date();
+    const period = dhis2Period === 'monthly'
+      ? `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`
+      : `${now.getFullYear()}Q${Math.ceil((now.getMonth() + 1) / 3)}`;
+
+    const dataValues: Array<{ dataElement: string; period: string; orgUnit: string; value: number }> = [];
+
+    // Disease counts from casesByState
+    casesByState.forEach(s => {
+      const orgUnit = s.state.replace(/\s+/g, '_').toUpperCase();
+      dataValues.push({ dataElement: 'MALARIA_CASES', period, orgUnit, value: s.malaria });
+      dataValues.push({ dataElement: 'CHOLERA_CASES', period, orgUnit, value: s.cholera });
+      dataValues.push({ dataElement: 'MEASLES_CASES', period, orgUnit, value: s.measles });
+      dataValues.push({ dataElement: 'TB_CASES', period, orgUnit, value: s.tb });
+      dataValues.push({ dataElement: 'HIV_CASES', period, orgUnit, value: s.hiv });
+    });
+
+    // Per-hospital patient counts, immunizations
+    hospitals.forEach(h => {
+      const orgUnit = h._id;
+      dataValues.push({ dataElement: 'PATIENT_COUNT', period, orgUnit, value: h.patientCount });
+      const lastTrend = h.monthlyTrends?.[h.monthlyTrends.length - 1];
+      if (lastTrend) {
+        dataValues.push({ dataElement: 'IMMUNIZATION_COUNT', period, orgUnit, value: lastTrend.immunizations || 0 });
+        dataValues.push({ dataElement: 'OPD_VISITS', period, orgUnit, value: lastTrend.opdVisits || 0 });
+        dataValues.push({ dataElement: 'ANC_VISITS', period, orgUnit, value: lastTrend.ancVisits || 0 });
+      }
+    });
+
+    const dhis2Payload = {
+      dataValueSet: {
+        dataValues,
+      },
+    };
+
+    const blob = new Blob([JSON.stringify(dhis2Payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `dhis2_export_${period}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [dhis2Period, hospitals]);
+
+  // ===== FACILITY COMPARISON =====
+  const comparisonFacilities = useMemo(() => {
+    return hospitals.filter(h => comparisonIds.includes(h._id));
+  }, [hospitals, comparisonIds]);
+
+  const toggleCompFacility = useCallback((id: string) => {
+    setComparisonIds(prev => {
+      if (prev.includes(id)) return prev.filter(x => x !== id);
+      if (prev.length >= 3) return prev;
+      return [...prev, id];
+    });
+  }, []);
+
   if (!currentUser || currentUser.role !== 'government') return null;
 
   const typeLabel = (type: string) => {
@@ -215,6 +324,7 @@ export default function GovernmentDashboardPage() {
     }
   };
 
+  /* formatLastSync - available for future use
   const formatLastSync = (iso: string) => {
     const d = new Date(iso);
     const now = new Date();
@@ -224,38 +334,44 @@ export default function GovernmentDashboardPage() {
     const diffHr = Math.floor(diffMin / 60);
     if (diffHr < 24) return `${diffHr}h ago`;
     return `${Math.floor(diffHr / 24)}d ago`;
+  }; */
+
+  // Helper: get best value for comparison highlighting
+  const getBest = (vals: number[], higherIsBetter = true) => {
+    if (higherIsBetter) return Math.max(...vals);
+    return Math.min(...vals);
   };
 
   return (
     <>
       <TopBar title="National Dashboard" />
-      <main className="flex-1 p-3 sm:p-4 overflow-auto page-enter">
+      <main className="page-container page-enter">
 
-        {/* ═══ KPI STRIP ═══ */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5 mb-4">
+        {/* KPI STRIP */}
+        <div className="kpi-grid mb-4">
           {[
-            { label: 'Total Hospitals', value: totalHospitals.toString(), icon: Building2, color: '#2B6FE0', bg: 'rgba(43,111,224,0.12)', href: '/hospitals' },
-            { label: 'Total Patients', value: totalPatients.toLocaleString(), icon: Users, color: '#2B6FE0', bg: 'rgba(43,111,224,0.12)', href: '/hospitals' },
-            { label: 'Total Beds', value: totalBeds.toLocaleString(), icon: BedDouble, color: '#FCD34D', bg: 'rgba(252,211,77,0.10)', href: '/hospitals' },
-            { label: 'Total Staff', value: totalStaff.toLocaleString(), icon: Stethoscope, color: '#38BDF8', bg: 'rgba(56,189,248,0.12)', href: '/hospitals' },
-            { label: 'Online', value: onlineHospitals.toString(), icon: Wifi, color: '#2B6FE0', bg: 'rgba(43,111,224,0.12)', href: '/hospitals' },
-            { label: 'Offline', value: offlineHospitals.toString(), icon: WifiOff, color: '#94A3B8', bg: 'rgba(100,116,139,0.12)', href: '/hospitals' },
-            { label: 'Disease Alerts', value: activeAlerts.toString(), icon: AlertTriangle, color: '#E52E42', bg: 'rgba(229,46,66,0.10)', href: '/surveillance' },
+            { label: 'Hospitals', value: totalHospitals.toString(), icon: Building2, color: '#0077D7', bg: 'rgba(0,119,215,0.10)', href: '/hospitals' },
+            { label: 'Patients', value: totalPatients.toLocaleString(), icon: Users, color: '#0077D7', bg: 'rgba(0,119,215,0.10)', href: '/hospitals' },
+            { label: 'Beds', value: totalBeds.toLocaleString(), icon: BedDouble, color: '#FCD34D', bg: 'rgba(252,211,77,0.10)', href: '/hospitals' },
+            { label: 'Staff', value: totalStaff.toLocaleString(), icon: Stethoscope, color: '#38BDF8', bg: 'rgba(56,189,248,0.10)', href: '/hospitals' },
+            { label: 'Online', value: onlineHospitals.toString(), icon: Wifi, color: '#0077D7', bg: 'rgba(0,119,215,0.10)', href: '/hospitals' },
+            { label: 'Offline', value: offlineHospitals.toString(), icon: WifiOff, color: '#94A3B8', bg: 'rgba(100,116,139,0.10)', href: '/hospitals' },
+            { label: 'Alerts', value: activeAlerts.toString(), icon: AlertTriangle, color: '#E52E42', bg: 'rgba(229,46,66,0.08)', href: '/surveillance' },
             { label: 'Referrals', value: pendingReferrals.toString(), icon: ArrowRightLeft, color: '#FCD34D', bg: 'rgba(252,211,77,0.10)' },
           ].map(stat => (
-            <div key={stat.label} className="card-elevated p-2.5 cursor-pointer transition-all hover:scale-[1.02]" onClick={() => stat.href && router.push(stat.href)}>
-              <div className="flex items-center justify-between mb-1">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: stat.bg }}>
-                  <stat.icon className="w-3.5 h-3.5" style={{ color: stat.color }} />
-                </div>
+            <div key={stat.label} className="kpi" onClick={() => stat.href && router.push(stat.href)}>
+              <div className="kpi__icon" style={{ background: stat.bg }}>
+                <stat.icon style={{ color: stat.color }} />
               </div>
-              <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{stat.value}</p>
-              <span className="text-[9px] font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{stat.label}</span>
+              <div className="kpi__body">
+                <div className="kpi__value">{stat.value}</div>
+                <div className="kpi__label">{stat.label}</div>
+              </div>
             </div>
           ))}
         </div>
 
-        {/* ═══ CHARTS ROW 1: Disease Trends + Facility Distribution + Gauges ═══ */}
+        {/* CHARTS ROW 1: Disease Trends + Facility Distribution + Gauges */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-4">
 
           {/* Disease Trend Line Chart */}
@@ -326,7 +442,7 @@ export default function GovernmentDashboardPage() {
               </div>
               <div className="p-3 grid grid-cols-2 gap-2">
                 <CircularGauge value={avgReporting} label="Reporting" color="#60A5FA" size={72} strokeWidth={5} />
-                <CircularGauge value={avgReadiness} label="Readiness" color="#2B6FE0" size={72} strokeWidth={5} />
+                <CircularGauge value={avgReadiness} label="Readiness" color="#0077D7" size={72} strokeWidth={5} />
                 <CircularGauge value={avgImmCoverage} label="EPI Coverage" color="#A855F7" size={72} strokeWidth={5} />
                 <CircularGauge value={functionalPct} label="Functional" color="#FCD34D" size={72} strokeWidth={5} />
               </div>
@@ -334,10 +450,10 @@ export default function GovernmentDashboardPage() {
           </div>
         </div>
 
-        {/* ═══ CHARTS ROW 2: Cases by State (horizontal bar) + OPD Trend + Staff Distribution ═══ */}
+        {/* CHARTS ROW 2: Cases by State (horizontal bar) + OPD Trend + Staff Distribution */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-4">
 
-          {/* Cases by State — Horizontal Bar Chart */}
+          {/* Cases by State */}
           <div className="glass-section">
             <div className="glass-section-header">
               <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Malaria Cases by State</span>
@@ -355,7 +471,7 @@ export default function GovernmentDashboardPage() {
             </div>
           </div>
 
-          {/* National OPD Trend — Line Chart */}
+          {/* National OPD Trend */}
           <div className="glass-section">
             <div className="glass-section-header">
               <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>National Health Visits</span>
@@ -377,7 +493,7 @@ export default function GovernmentDashboardPage() {
             </div>
           </div>
 
-          {/* Staff Distribution — Grouped Bar Chart */}
+          {/* Staff Distribution */}
           <div className="glass-section">
             <div className="glass-section-header">
               <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Staff by Hospital</span>
@@ -399,232 +515,333 @@ export default function GovernmentDashboardPage() {
           </div>
         </div>
 
-        {/* ═══ RESOURCE ALLOCATION ═══ */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-4">
-
-          {/* Bed Capacity Breakdown */}
-          <div className="glass-section">
-            <div className="glass-section-header">
-              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Bed Capacity Breakdown</span>
-              <span className="text-xs font-bold" style={{ color: '#2B6FE0' }}>{totalBeds.toLocaleString()} total</span>
+        {/* DHIS2 EXPORT SECTION */}
+        <div className="card-elevated p-4 mb-4">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-md flex items-center justify-center" style={{ background: 'rgba(5,150,105,0.1)' }}>
+                <Download className="w-5 h-5" style={{ color: '#059669' }} />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Export to DHIS2</h3>
+                <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Download data in DHIS2 data value set format</p>
+              </div>
             </div>
-            <div className="p-4 space-y-3">
-              {[
-                { type: 'General', count: totalGeneralBeds, color: '#60A5FA' },
-                { type: 'ICU', count: totalICUBeds, color: '#E52E42' },
-                { type: 'Maternity', count: totalMaternityBeds, color: '#EC4899' },
-                { type: 'Pediatric', count: totalPediatricBeds, color: '#A855F7' },
-              ].map(bed => (
-                <div key={bed.type}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{bed.type}</span>
-                    <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>{bed.count}</span>
-                  </div>
-                  <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--border-light)' }}>
-                    <div
-                      className="h-full rounded-full transition-all duration-700"
-                      style={{
-                        width: totalBeds > 0 ? `${(bed.count / totalBeds) * 100}%` : '0%',
-                        background: bed.color,
-                      }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Infrastructure Coverage */}
-          <div className="glass-section">
-            <div className="glass-section-header">
-              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Infrastructure Coverage</span>
-            </div>
-            <div className="p-4 space-y-2.5">
-              {[
-                { label: 'Electricity', count: hospitalsWithElectricity, icon: Zap, color: '#F59E0B' },
-                { label: 'Generator', count: hospitalsWithGenerator, icon: Zap, color: '#60A5FA' },
-                { label: 'Solar Power', count: hospitalsWithSolar, icon: Sun, color: '#FCD34D' },
-                { label: 'Internet', count: hospitalsWithInternet, icon: Wifi, color: '#2B6FE0' },
-                { label: 'Ambulance', count: hospitalsWithAmbulance, icon: Truck, color: '#E52E42' },
-                { label: '24hr Emergency', count: hospitals24hrEmergency, icon: AlertTriangle, color: '#EC4899' },
-              ].map(item => {
-                const pct = totalHospitals > 0 ? Math.round((item.count / totalHospitals) * 100) : 0;
-                return (
-                  <div key={item.label} className="flex items-center justify-between py-1">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: `${item.color}15` }}>
-                        <item.icon className="w-3 h-3" style={{ color: item.color }} />
-                      </div>
-                      <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{item.label}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{item.count}/{totalHospitals}</span>
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{
-                        background: pct >= 75 ? 'rgba(74,222,128,0.12)' : pct >= 50 ? 'rgba(252,211,77,0.12)' : 'rgba(229,46,66,0.12)',
-                        color: pct >= 75 ? '#4ADE80' : pct >= 50 ? '#FCD34D' : '#E52E42',
-                      }}>{pct}%</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* National Workforce */}
-          <div className="glass-section">
-            <div className="glass-section-header">
-              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>National Workforce</span>
-              <span className="text-xs font-bold" style={{ color: '#2B6FE0' }}>{totalAllStaff.toLocaleString()} total</span>
-            </div>
-            <div className="p-4 grid grid-cols-2 gap-2.5">
-              {[
-                { label: 'Doctors', count: totalDoctors, color: '#60A5FA', bg: 'rgba(96,165,250,0.12)' },
-                { label: 'Nurses', count: totalNurses, color: '#3ECF8E', bg: 'rgba(62,207,142,0.12)' },
-                { label: 'Clinical Officers', count: totalCOs, color: '#A855F7', bg: 'rgba(168,85,247,0.12)' },
-                { label: 'Lab Techs', count: totalLabTechs, color: '#06B6D4', bg: 'rgba(6,182,212,0.12)' },
-                { label: 'Pharmacists', count: totalPharmacists, color: '#F59E0B', bg: 'rgba(245,158,11,0.12)' },
-                { label: 'Total Staff', count: totalAllStaff, color: '#2B6FE0', bg: 'rgba(43,111,224,0.12)' },
-              ].map(role => (
-                <div key={role.label} className="p-3 rounded-xl" style={{ background: role.bg }}>
-                  <p className="text-lg font-bold" style={{ color: role.color }}>{role.count.toLocaleString()}</p>
-                  <span className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>{role.label}</span>
-                </div>
-              ))}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />
+                <select
+                  value={dhis2Period}
+                  onChange={e => setDhis2Period(e.target.value as 'monthly' | 'quarterly')}
+                  className="text-xs rounded-lg px-2 py-1.5 outline-none"
+                  style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+                >
+                  <option value="monthly">Monthly</option>
+                  <option value="quarterly">Quarterly</option>
+                </select>
+              </div>
+              <button
+                onClick={handleDhis2Export}
+                className="flex items-center gap-2 px-4 py-2 rounded-md text-xs font-semibold text-white transition-all hover:opacity-90"
+                style={{ background: '#059669' }}
+              >
+                <Download className="w-3.5 h-3.5" />
+                Export .json
+              </button>
             </div>
           </div>
         </div>
 
-        {/* ═══ BOTTOM SECTION: Hospital Table + Alerts + Referrals ═══ */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-
-          {/* Hospital Performance Table */}
-          <div className="lg:col-span-2 card-elevated overflow-hidden">
-            <div className="flex items-center justify-between p-4 pb-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
-              <h3 className="font-semibold text-sm flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-                <Building2 className="w-4 h-4" style={{ color: '#2B6FE0' }} />
-                Hospital Performance
-              </h3>
-              <button onClick={() => router.push('/hospitals')} className="text-xs font-medium" style={{ color: '#2B6FE0' }}>View All</button>
+        {/* STATE/COUNTY DRILL-DOWN TABLE */}
+        <div className="card-elevated overflow-hidden mb-4">
+          <div className="flex items-center justify-between p-4 pb-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
+            <h3 className="font-semibold text-sm flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+              <Building2 className="w-4 h-4" style={{ color: '#0077D7' }} />
+              Hospital Performance by State
+            </h3>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setTableSortBy(prev => prev === 'name' ? 'quality' : 'name')}
+                className="flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-lg"
+                style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)', color: 'var(--text-secondary)' }}
+              >
+                <ArrowUpDown className="w-3 h-3" />
+                Sort: {tableSortBy === 'quality' ? 'Data Quality' : 'Name'}
+              </button>
+              <button onClick={() => router.push('/hospitals')} className="text-xs font-medium" style={{ color: '#0077D7' }}>View All</button>
             </div>
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>State / Hospital</th>
+                  <th>Facilities</th>
+                  <th>Patients</th>
+                  <th>Beds</th>
+                  <th>Staff</th>
+                  <th>Data Quality</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stateAggregates.map(sa => {
+                  const isExpanded = expandedStates[sa.state] || false;
+                  const stateHospitals = tableSortBy === 'quality'
+                    ? [...sa.hospitals].sort((a, b) => calcDataQuality(b) - calcDataQuality(a))
+                    : [...sa.hospitals].sort((a, b) => a.name.localeCompare(b.name));
+                  const avgQuality = sa.hospitals.length > 0
+                    ? Math.round(sa.hospitals.reduce((s, h) => s + calcDataQuality(h), 0) / sa.hospitals.length)
+                    : 0;
+                  return (
+                    <React.Fragment key={sa.state}>
+                      {/* State Row */}
+                      <tr
+                        className="cursor-pointer transition-colors"
+                        onClick={() => toggleState(sa.state)}
+                        style={{ background: 'var(--overlay-subtle)' }}
+                      >
+                        <td>
+                          <div className="flex items-center gap-2">
+                            {isExpanded ? (
+                              <ChevronDown className="w-4 h-4 flex-shrink-0" style={{ color: '#0077D7' }} />
+                            ) : (
+                              <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
+                            )}
+                            <span className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{sa.state}</span>
+                          </div>
+                        </td>
+                        <td className="font-semibold text-sm">{sa.facilityCount}</td>
+                        <td className="font-semibold text-sm">{sa.totalPatients.toLocaleString()}</td>
+                        <td className="text-sm">{sa.totalBeds.toLocaleString()}</td>
+                        <td className="text-sm">{sa.totalStaff.toLocaleString()}</td>
+                        <td><DataQualityBadge score={avgQuality} /></td>
+                        <td>
+                          <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                            {sa.hospitals.filter(h => h.syncStatus === 'online').length}/{sa.facilityCount} online
+                          </span>
+                        </td>
+                      </tr>
+                      {/* Expanded Hospital Rows */}
+                      {isExpanded && stateHospitals.map(h => (
+                        <tr key={h._id} className="cursor-pointer" onClick={() => router.push('/hospitals')}>
+                          <td>
+                            <div className="flex items-center gap-2 pl-6">
+                              <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(0,119,215,0.1)' }}>
+                                <Building2 className="w-3.5 h-3.5" style={{ color: '#0077D7' }} />
+                              </div>
+                              <div>
+                                <p className="font-medium text-sm">{h.name}</p>
+                                <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{typeLabel(h.facilityType)}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="text-[10px]" style={{ color: 'var(--text-muted)' }}>--</td>
+                          <td className="font-semibold text-sm">{h.patientCount.toLocaleString()}</td>
+                          <td className="text-sm">{h.totalBeds}</td>
+                          <td className="text-sm">{h.doctors + h.nurses + h.clinicalOfficers}</td>
+                          <td><DataQualityBadge score={calcDataQuality(h)} /></td>
+                          <td>
+                            <span className="flex items-center gap-1 text-[10px] font-semibold">
+                              <span className="w-1.5 h-1.5 rounded-full" style={{ background: syncDotColor(h.syncStatus) }} />
+                              {h.syncStatus.charAt(0).toUpperCase() + h.syncStatus.slice(1)}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* FACILITY COMPARISON TOOL */}
+        <div className="card-elevated p-4 mb-4">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-9 h-9 rounded-md flex items-center justify-center" style={{ background: 'rgba(124,58,237,0.1)' }}>
+              <GitCompareArrows className="w-5 h-5" style={{ color: '#7C3AED' }} />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Facility Comparison Tool</h3>
+              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Select 2-3 facilities to compare side by side</p>
+            </div>
+          </div>
+
+          {/* Multi-select dropdown */}
+          <div className="relative mb-4">
+            <button
+              onClick={() => setCompDropdownOpen(!compDropdownOpen)}
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-md text-sm"
+              style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+            >
+              <span>
+                {comparisonIds.length === 0
+                  ? 'Select facilities to compare...'
+                  : `${comparisonIds.length} facilit${comparisonIds.length === 1 ? 'y' : 'ies'} selected`}
+              </span>
+              <ChevronDown className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+            </button>
+            {compDropdownOpen && (
+              <div
+                className="absolute z-10 mt-1 w-full rounded-xl shadow-lg max-h-48 overflow-y-auto"
+                style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}
+              >
+                {hospitals.map(h => {
+                  const selected = comparisonIds.includes(h._id);
+                  const disabled = !selected && comparisonIds.length >= 3;
+                  return (
+                    <button
+                      key={h._id}
+                      onClick={() => { toggleCompFacility(h._id); }}
+                      disabled={disabled}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-left text-xs transition-colors"
+                      style={{
+                        color: disabled ? 'var(--text-muted)' : 'var(--text-primary)',
+                        background: selected ? 'rgba(124,58,237,0.08)' : 'transparent',
+                        borderBottom: '1px solid var(--border-light)',
+                        opacity: disabled ? 0.5 : 1,
+                      }}
+                    >
+                      <span
+                        className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0"
+                        style={{
+                          border: selected ? '2px solid #7C3AED' : '2px solid var(--border-light)',
+                          background: selected ? '#7C3AED' : 'transparent',
+                        }}
+                      >
+                        {selected && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
+                      </span>
+                      {h.name} <span style={{ color: 'var(--text-muted)' }}>({h.state})</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Comparison Table */}
+          {comparisonFacilities.length >= 2 && (
             <div style={{ overflowX: 'auto' }}>
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>Hospital</th>
-                    <th>State</th>
-                    <th>Status</th>
-                    <th>Patients</th>
-                    <th>Beds</th>
-                    <th>Staff</th>
-                    <th>Last Sync</th>
+                    <th>Metric</th>
+                    {comparisonFacilities.map(f => (
+                      <th key={f._id}>{f.name}</th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {hospitals.map(h => (
-                    <tr key={h._id} className="cursor-pointer" onClick={() => router.push('/hospitals')}>
-                      <td>
-                        <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(43,111,224,0.1)' }}>
-                            <Building2 className="w-3.5 h-3.5" style={{ color: '#2B6FE0' }} />
-                          </div>
-                          <div>
-                            <p className="font-medium text-sm">{h.name}</p>
-                            <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{typeLabel(h.facilityType)}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="text-xs">{h.state}</td>
-                      <td>
-                        <span className="flex items-center gap-1 text-[10px] font-semibold">
-                          <span className="w-1.5 h-1.5 rounded-full" style={{ background: syncDotColor(h.syncStatus) }} />
-                          {h.syncStatus.charAt(0).toUpperCase() + h.syncStatus.slice(1)}
-                        </span>
-                      </td>
-                      <td className="font-semibold text-sm">{h.patientCount.toLocaleString()}</td>
-                      <td className="text-sm">{h.totalBeds}</td>
-                      <td className="text-sm">{h.doctors + h.nurses + h.clinicalOfficers}</td>
-                      <td>
-                        <span className="text-[10px] flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
-                          <Clock className="w-2.5 h-2.5" />
-                          {formatLastSync(h.lastSync)}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                  {(() => {
+                    const metrics: Array<{ label: string; values: number[]; higherBetter: boolean }> = [
+                      { label: 'Patients', values: comparisonFacilities.map(f => f.patientCount), higherBetter: true },
+                      { label: 'Beds', values: comparisonFacilities.map(f => f.totalBeds), higherBetter: true },
+                      { label: 'Staff', values: comparisonFacilities.map(f => f.doctors + f.nurses + f.clinicalOfficers), higherBetter: true },
+                      { label: 'Occupancy Rate (%)', values: comparisonFacilities.map(f => f.totalBeds > 0 ? Math.round((f.patientCount / f.totalBeds) * 100) : 0), higherBetter: false },
+                      { label: 'Disease Cases (est.)', values: comparisonFacilities.map(f => {
+                        const stateData = casesByState.find(s => s.state === f.state);
+                        return stateData ? stateData.malaria + stateData.cholera + stateData.measles + stateData.tb : 0;
+                      }), higherBetter: false },
+                    ];
+                    return metrics.map(m => {
+                      const best = getBest(m.values, m.higherBetter);
+                      return (
+                        <tr key={m.label}>
+                          <td className="font-medium text-sm">{m.label}</td>
+                          {m.values.map((v, i) => (
+                            <td key={i}>
+                              <span
+                                className="font-semibold text-sm"
+                                style={{ color: v === best && comparisonFacilities.length > 1 ? '#10B981' : 'var(--text-primary)' }}
+                              >
+                                {v.toLocaleString()}
+                              </span>
+                            </td>
+                          ))}
+                        </tr>
+                      );
+                    });
+                  })()}
                 </tbody>
               </table>
             </div>
+          )}
+          {comparisonFacilities.length < 2 && comparisonIds.length > 0 && (
+            <p className="text-xs text-center py-3" style={{ color: 'var(--text-muted)' }}>Select at least 2 facilities to compare</p>
+          )}
+        </div>
+
+        {/* BOTTOM SECTION: Alerts + Referrals */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+
+          {/* Disease Alerts */}
+          <div className="glass-section">
+            <div className="glass-section-header">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4" style={{ color: '#E52E42' }} />
+                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Disease Alerts</span>
+              </div>
+              <button onClick={() => router.push('/surveillance')} className="text-[10px] font-medium" style={{ color: '#0077D7' }}>View All</button>
+            </div>
+            <div className="p-3 space-y-2" style={{ maxHeight: '280px', overflowY: 'auto' }}>
+              {sortedAlerts.slice(0, 5).map(alert => (
+                <div key={alert._id} className="p-3 rounded-md cursor-pointer" onClick={() => router.push('/surveillance')} style={{
+                  background: alert.alertLevel === 'emergency' ? 'rgba(229,46,66,0.08)' :
+                              alert.alertLevel === 'warning' ? 'rgba(252,211,77,0.08)' : 'rgba(56,189,248,0.06)',
+                  border: `1px solid ${alert.alertLevel === 'emergency' ? 'rgba(229,46,66,0.15)' : alert.alertLevel === 'warning' ? 'rgba(252,211,77,0.15)' : 'rgba(56,189,248,0.1)'}`,
+                }}>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="text-[11px] font-semibold" style={{ color: 'var(--text-primary)' }}>{alert.disease}</span>
+                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{
+                      background: alert.alertLevel === 'emergency' ? 'rgba(229,46,66,0.15)' : alert.alertLevel === 'warning' ? 'rgba(252,211,77,0.15)' : 'rgba(56,189,248,0.15)',
+                      color: alert.alertLevel === 'emergency' ? '#E52E42' : alert.alertLevel === 'warning' ? '#FBBF24' : '#38BDF8',
+                    }}>{alert.alertLevel.toUpperCase()}</span>
+                  </div>
+                  <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                    {alert.state} · {alert.cases} cases · {alert.deaths} deaths
+                  </p>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    {alert.trend === 'increasing' ? (
+                      <TrendingUp className="w-2.5 h-2.5" style={{ color: '#EF4444' }} />
+                    ) : alert.trend === 'decreasing' ? (
+                      <TrendingDown className="w-2.5 h-2.5" style={{ color: '#4ADE80' }} />
+                    ) : (
+                      <Minus className="w-2.5 h-2.5" style={{ color: '#FBBF24' }} />
+                    )}
+                    <span className="text-[9px]" style={{
+                      color: alert.trend === 'increasing' ? '#EF4444' : alert.trend === 'decreasing' ? '#4ADE80' : '#FBBF24'
+                    }}>{alert.trend}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Right: Alerts + Referrals */}
-          <div className="space-y-3">
-            {/* Disease Alerts */}
-            <div className="glass-section">
-              <div className="glass-section-header">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4" style={{ color: '#E52E42' }} />
-                  <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Disease Alerts</span>
-                </div>
-                <button onClick={() => router.push('/surveillance')} className="text-[10px] font-medium" style={{ color: '#2B6FE0' }}>View All</button>
+          {/* Recent Referrals */}
+          <div className="glass-section">
+            <div className="glass-section-header">
+              <div className="flex items-center gap-2">
+                <ArrowRightLeft className="w-4 h-4" style={{ color: '#FCD34D' }} />
+                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Recent Referrals</span>
               </div>
-              <div className="p-3 space-y-2" style={{ maxHeight: '280px', overflowY: 'auto' }}>
-                {sortedAlerts.slice(0, 5).map(alert => (
-                  <div key={alert._id} className="p-3 rounded-xl cursor-pointer" onClick={() => router.push('/surveillance')} style={{
-                    background: alert.alertLevel === 'emergency' ? 'rgba(229,46,66,0.08)' :
-                                alert.alertLevel === 'warning' ? 'rgba(252,211,77,0.08)' : 'rgba(56,189,248,0.06)',
-                    border: `1px solid ${alert.alertLevel === 'emergency' ? 'rgba(229,46,66,0.15)' : alert.alertLevel === 'warning' ? 'rgba(252,211,77,0.15)' : 'rgba(56,189,248,0.1)'}`,
-                  }}>
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-[11px] font-semibold" style={{ color: 'var(--text-primary)' }}>{alert.disease}</span>
-                      <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{
-                        background: alert.alertLevel === 'emergency' ? 'rgba(229,46,66,0.15)' : alert.alertLevel === 'warning' ? 'rgba(252,211,77,0.15)' : 'rgba(56,189,248,0.15)',
-                        color: alert.alertLevel === 'emergency' ? '#E52E42' : alert.alertLevel === 'warning' ? '#FBBF24' : '#38BDF8',
-                      }}>{alert.alertLevel.toUpperCase()}</span>
-                    </div>
-                    <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-                      {alert.state} · {alert.cases} cases · {alert.deaths} deaths
-                    </p>
-                    <div className="flex items-center gap-1 mt-0.5">
-                      {alert.trend === 'increasing' ? (
-                        <TrendingUp className="w-2.5 h-2.5" style={{ color: '#EF4444' }} />
-                      ) : alert.trend === 'decreasing' ? (
-                        <TrendingDown className="w-2.5 h-2.5" style={{ color: '#4ADE80' }} />
-                      ) : (
-                        <Minus className="w-2.5 h-2.5" style={{ color: '#FBBF24' }} />
-                      )}
-                      <span className="text-[9px]" style={{
-                        color: alert.trend === 'increasing' ? '#EF4444' : alert.trend === 'decreasing' ? '#4ADE80' : '#FBBF24'
-                      }}>{alert.trend}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <button onClick={() => router.push('/referrals')} className="text-[10px] font-medium" style={{ color: '#0077D7' }}>View All</button>
             </div>
-
-            {/* Recent Referrals */}
-            <div className="glass-section">
-              <div className="glass-section-header">
-                <div className="flex items-center gap-2">
-                  <ArrowRightLeft className="w-4 h-4" style={{ color: '#FCD34D' }} />
-                  <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Recent Referrals</span>
-                </div>
-                <button onClick={() => router.push('/referrals')} className="text-[10px] font-medium" style={{ color: '#2B6FE0' }}>View All</button>
-              </div>
-              <div className="p-3 space-y-2">
-                {referrals.slice(0, 4).map(ref => (
-                  <div key={ref._id} className="p-2.5 rounded-xl" style={{ border: '1px solid var(--border-light)' }}>
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-[11px] font-semibold" style={{ color: 'var(--text-primary)' }}>{ref.patientName}</span>
-                      <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{
-                        background: ref.urgency === 'emergency' ? 'rgba(229,46,66,0.12)' : ref.urgency === 'urgent' ? 'rgba(252,211,77,0.12)' : 'rgba(43,111,224,0.12)',
-                        color: ref.urgency === 'emergency' ? '#E52E42' : ref.urgency === 'urgent' ? '#FBBF24' : '#2B6FE0',
-                      }}>{ref.urgency}</span>
-                    </div>
-                    <p className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>{ref.fromHospital} → {ref.toHospital}</p>
-                    <p className="text-[9px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{ref.department} · {ref.referralDate}</p>
+            <div className="p-3 space-y-2">
+              {referrals.slice(0, 4).map(ref => (
+                <div key={ref._id} className="p-2.5 rounded-md" style={{ border: '1px solid var(--border-light)' }}>
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="text-[11px] font-semibold" style={{ color: 'var(--text-primary)' }}>{ref.patientName}</span>
+                    <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{
+                      background: ref.urgency === 'emergency' ? 'rgba(229,46,66,0.12)' : ref.urgency === 'urgent' ? 'rgba(252,211,77,0.12)' : 'rgba(0,119,215,0.12)',
+                      color: ref.urgency === 'emergency' ? '#E52E42' : ref.urgency === 'urgent' ? '#FBBF24' : '#0077D7',
+                    }}>{ref.urgency}</span>
                   </div>
-                ))}
-              </div>
+                  <p className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>{ref.fromHospital} → {ref.toHospital}</p>
+                  <p className="text-[9px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{ref.department} · {ref.referralDate}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>

@@ -8,15 +8,15 @@ import type { UserRole } from '../lib/db-types';
 // Mirror of the middleware route map (must stay in sync)
 const MIDDLEWARE_ROLE_ROUTES: Record<string, { allowed: string[]; defaultDashboard: string }> = {
   doctor: {
-    allowed: ['/dashboard', '/patients', '/consultation', '/referrals', '/messages', '/lab', '/pharmacy', '/immunizations', '/anc', '/births', '/deaths', '/surveillance', '/reports', '/hospitals', '/settings', '/epidemic-intelligence', '/mch-analytics'],
+    allowed: ['/dashboard', '/patients', '/consultation', '/referrals', '/messages', '/lab', '/pharmacy', '/immunizations', '/anc', '/births', '/deaths', '/surveillance', '/reports', '/hospitals', '/settings', '/epidemic-intelligence', '/mch-analytics', '/my-facility'],
     defaultDashboard: '/dashboard',
   },
   clinical_officer: {
-    allowed: ['/dashboard', '/patients', '/consultation', '/referrals', '/messages', '/lab', '/pharmacy', '/immunizations', '/anc', '/births', '/deaths', '/surveillance', '/reports', '/hospitals', '/settings', '/epidemic-intelligence', '/mch-analytics'],
+    allowed: ['/dashboard', '/patients', '/consultation', '/referrals', '/messages', '/lab', '/pharmacy', '/immunizations', '/anc', '/births', '/deaths', '/surveillance', '/reports', '/hospitals', '/settings', '/epidemic-intelligence', '/mch-analytics', '/my-facility'],
     defaultDashboard: '/dashboard',
   },
   nurse: {
-    allowed: ['/dashboard/nurse', '/patients', '/messages', '/lab', '/immunizations', '/anc', '/births', '/settings'],
+    allowed: ['/dashboard/nurse', '/patients', '/messages', '/lab', '/immunizations', '/anc', '/births', '/settings', '/my-facility'],
     defaultDashboard: '/dashboard/nurse',
   },
   lab_tech: {
@@ -28,7 +28,7 @@ const MIDDLEWARE_ROLE_ROUTES: Record<string, { allowed: string[]; defaultDashboa
     defaultDashboard: '/dashboard/pharmacy',
   },
   front_desk: {
-    allowed: ['/dashboard/front-desk', '/patients', '/referrals', '/messages', '/settings'],
+    allowed: ['/dashboard/front-desk', '/patients', '/referrals', '/messages', '/settings', '/my-facility'],
     defaultDashboard: '/dashboard/front-desk',
   },
   government: {
@@ -64,9 +64,7 @@ describe('middleware-routes sync with permissions', () => {
       const isAllowed = mwConfig.allowed.some(
         r => item.href === r || item.href.startsWith(r + '/')
       );
-      if (!isAllowed) {
-        fail(`Nav item "${item.label}" (${item.href}) for role ${role} is not in middleware allowedRoutes`);
-      }
+      expect(isAllowed).toBe(true);
     }
   });
 

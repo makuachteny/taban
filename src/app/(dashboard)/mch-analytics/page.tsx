@@ -20,7 +20,7 @@ export default function MCHAnalyticsPage() {
     return (
       <>
         <TopBar title="MCH Analytics" />
-        <main className="flex-1 p-6 flex items-center justify-center">
+        <main className="page-container flex items-center justify-center">
           <div className="text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(236,72,153,0.1)' }}>
               <HeartPulse className="w-8 h-8" style={{ color: '#EC4899' }} />
@@ -58,28 +58,19 @@ export default function MCHAnalyticsPage() {
   return (
     <>
       <TopBar title="MCH Analytics" />
-      <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
+      <main className="page-container page-enter">
 
         {/* ═══ HEADER ═══ */}
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{
-              background: 'linear-gradient(135deg, #DB2777, #EC4899)',
-              boxShadow: '0 4px 12px rgba(219,39,119,0.3)',
-            }}>
-              <HeartPulse className="w-5 h-5 text-white" />
+          <div className="page-header">
+            <div className="page-header__top">
+              <div className="page-header__icon"><HeartPulse size={18} /></div>
+              <h1 className="page-header__title">Maternal & Child Health Analytics</h1>
             </div>
-            <div>
-              <h1 className="text-xl font-semibold tracking-wide" style={{ color: 'var(--text-primary)' }}>
-                Maternal & Child Health Analytics
-              </h1>
-              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                WHO RMNCH &middot; SDG 3.1 &amp; 3.2 &middot; Continuum of Care Tracking
-              </p>
-            </div>
+            <p className="page-header__subtitle">WHO RMNCH &middot; SDG 3.1 &amp; 3.2 &middot; Continuum of Care Tracking</p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="px-4 py-2 rounded-xl flex items-center gap-2" style={{
+            <div className="px-4 py-2 rounded-md flex items-center gap-2" style={{
               background: grade.bg,
               border: `1px solid ${grade.text}30`,
             }}>
@@ -88,38 +79,37 @@ export default function MCHAnalyticsPage() {
                 Grade: {summary.overallGrade}
               </span>
             </div>
-            <div className="px-3 py-2 rounded-xl" style={{ background: 'rgba(236,72,153,0.08)', border: '1px solid rgba(236,72,153,0.15)' }}>
+            <div className="px-3 py-2 rounded-md" style={{ background: 'rgba(236,72,153,0.08)', border: '1px solid rgba(236,72,153,0.15)' }}>
               <p className="text-[10px] font-semibold" style={{ color: '#EC4899' }}>{summary.highRiskCount} High Risk</p>
             </div>
           </div>
         </div>
 
         {/* ═══ KPI STRIP ═══ */}
-        <div className="grid grid-cols-7 gap-2 mb-4">
+        <div className="kpi-grid mb-4">
           {[
-            { label: 'Mothers Tracked', value: summary.totalMothersTracked, icon: Users, color: '#EC4899' },
-            { label: 'ANC4+ Rate', value: `${summary.anc4PlusCoverage}%`, icon: HeartPulse, color: scoreColor(summary.anc4PlusCoverage, 50) },
-            { label: 'MMR /100k', value: summary.maternalMortalityRatio.toLocaleString(), icon: Heart, color: summary.maternalMortalityRatio > 500 ? '#F87171' : '#FBBF24' },
-            { label: 'NMR /1000', value: summary.neonatalMortalityRate, icon: Baby, color: summary.neonatalMortalityRate > 30 ? '#F87171' : '#FBBF24' },
-            { label: 'Immunization', value: `${summary.immunizationCoverage}%`, icon: Syringe, color: scoreColor(summary.immunizationCoverage, 80) },
-            { label: 'Facility Births', value: `${summary.facilityDeliveryRate}%`, icon: Activity, color: scoreColor(summary.facilityDeliveryRate, 50) },
-            { label: 'High Risk', value: summary.highRiskCount, icon: AlertTriangle, color: '#F87171' },
+            { label: 'Mothers Tracked', value: summary.totalMothersTracked, icon: Users, color: '#EC4899', bg: 'rgba(236,72,153,0.12)' },
+            { label: 'ANC4+ Rate', value: `${summary.anc4PlusCoverage}%`, icon: HeartPulse, color: scoreColor(summary.anc4PlusCoverage, 50), bg: 'rgba(236,72,153,0.08)' },
+            { label: 'MMR /100k', value: summary.maternalMortalityRatio.toLocaleString(), icon: Heart, color: summary.maternalMortalityRatio > 500 ? '#F87171' : '#FBBF24', bg: summary.maternalMortalityRatio > 500 ? 'rgba(248,113,113,0.12)' : 'rgba(251,191,36,0.12)' },
+            { label: 'NMR /1000', value: summary.neonatalMortalityRate, icon: Baby, color: summary.neonatalMortalityRate > 30 ? '#F87171' : '#FBBF24', bg: summary.neonatalMortalityRate > 30 ? 'rgba(248,113,113,0.12)' : 'rgba(251,191,36,0.12)' },
+            { label: 'Immunization', value: `${summary.immunizationCoverage}%`, icon: Syringe, color: scoreColor(summary.immunizationCoverage, 80), bg: 'rgba(236,72,153,0.08)' },
+            { label: 'Facility Births', value: `${summary.facilityDeliveryRate}%`, icon: Activity, color: scoreColor(summary.facilityDeliveryRate, 50), bg: 'rgba(236,72,153,0.08)' },
+            { label: 'High Risk', value: summary.highRiskCount, icon: AlertTriangle, color: '#F87171', bg: 'rgba(248,113,113,0.12)' },
           ].map((kpi) => (
-            <div key={kpi.label} className="p-3 rounded-xl" style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-light)',
-            }}>
-              <div className="flex items-center gap-1.5 mb-1">
-                <kpi.icon className="w-3 h-3" style={{ color: kpi.color }} />
-                <span className="text-[8px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{kpi.label}</span>
+            <div key={kpi.label} className="kpi">
+              <div className="kpi__icon" style={{ background: kpi.bg }}>
+                <kpi.icon style={{ color: kpi.color }} />
               </div>
-              <p className="text-lg font-bold stat-value" style={{ color: 'var(--text-primary)' }}>{kpi.value}</p>
+              <div className="kpi__body">
+                <div className="kpi__value">{kpi.value}</div>
+                <div className="kpi__label">{kpi.label}</div>
+              </div>
             </div>
           ))}
         </div>
 
         {/* ═══ TAB NAVIGATION ═══ */}
-        <div className="flex gap-1 mb-4 p-1 rounded-xl" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+        <div className="flex gap-1 mb-4 p-1 rounded-md" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
           {tabs.map(tab => (
             <button
               key={tab.key}
@@ -140,7 +130,7 @@ export default function MCHAnalyticsPage() {
 
         {/* ═══ OVERVIEW TAB ═══ */}
         {activeTab === 'overview' && (
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* ANC Cascade Visual */}
             <div className="card-elevated">
               <div className="px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
@@ -199,7 +189,7 @@ export default function MCHAnalyticsPage() {
                 </h3>
               </div>
               <div className="p-4 space-y-3">
-                <div className="p-3 rounded-xl text-center" style={{
+                <div className="p-3 rounded-md text-center" style={{
                   background: maternalMortality.mmr > 500 ? 'rgba(248,113,113,0.08)' : 'rgba(251,191,36,0.08)',
                   border: `1px solid ${maternalMortality.mmr > 500 ? 'rgba(248,113,113,0.15)' : 'rgba(251,191,36,0.15)'}`,
                 }}>
@@ -255,7 +245,7 @@ export default function MCHAnalyticsPage() {
                 ].map(item => {
                   const color = item.value > item.target * 2 ? '#F87171' : item.value > item.target ? '#FBBF24' : '#4ADE80';
                   return (
-                    <div key={item.label} className="p-3 rounded-xl" style={{ background: `${color}08`, border: `1px solid ${color}15` }}>
+                    <div key={item.label} className="p-3 rounded-md" style={{ background: `${color}08`, border: `1px solid ${color}15` }}>
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{item.label}</span>
                         <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>{item.deaths} deaths</span>
@@ -283,7 +273,7 @@ export default function MCHAnalyticsPage() {
             </div>
 
             {/* Immunization Coverage Overview */}
-            <div className="col-span-2 card-elevated">
+            <div className="lg:col-span-2 card-elevated">
               <div className="px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
                 <h3 className="font-semibold text-sm flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                   <Syringe className="w-4 h-4" style={{ color: '#A855F7' }} />
@@ -291,11 +281,11 @@ export default function MCHAnalyticsPage() {
                 </h3>
               </div>
               <div className="p-4">
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {immunizationGaps.map(gap => {
                     const color = gap.coverageRate >= 80 ? '#4ADE80' : gap.coverageRate >= 50 ? '#FBBF24' : '#F87171';
                     return (
-                      <div key={gap.vaccine} className="p-3 rounded-xl" style={{
+                      <div key={gap.vaccine} className="p-3 rounded-md" style={{
                         background: 'var(--overlay-subtle)',
                         border: '1px solid var(--border-light)',
                       }}>
@@ -332,7 +322,7 @@ export default function MCHAnalyticsPage() {
               </div>
               <div className="p-4 space-y-3">
                 {[
-                  { label: 'Total Births', value: birthOutcomes.totalBirths, color: '#2B6FE0' },
+                  { label: 'Total Births', value: birthOutcomes.totalBirths, color: '#0077D7' },
                   { label: 'Facility Delivery', value: `${birthOutcomes.facilityDeliveryRate}%`, color: scoreColor(birthOutcomes.facilityDeliveryRate, 50) },
                   { label: 'Caesarean Rate', value: `${birthOutcomes.caesareanRate}%`, color: birthOutcomes.caesareanRate > 5 && birthOutcomes.caesareanRate < 15 ? '#4ADE80' : '#FBBF24' },
                   { label: 'Low Birth Weight', value: `${birthOutcomes.lowBirthWeightRate}%`, color: birthOutcomes.lowBirthWeightRate > 15 ? '#F87171' : '#FBBF24' },
@@ -436,9 +426,9 @@ export default function MCHAnalyticsPage() {
         {/* ═══ BIRTHS TAB ═══ */}
         {activeTab === 'births' && (
           <div className="space-y-4">
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {[
-                { label: 'Total Births', value: birthOutcomes.totalBirths, color: '#2B6FE0' },
+                { label: 'Total Births', value: birthOutcomes.totalBirths, color: '#0077D7' },
                 { label: 'Facility Delivery', value: `${birthOutcomes.facilityDeliveryRate}%`, color: scoreColor(birthOutcomes.facilityDeliveryRate, 50) },
                 { label: 'Caesarean Rate', value: `${birthOutcomes.caesareanRate}%`, color: '#A855F7' },
                 { label: 'Low Birth Weight', value: `${birthOutcomes.lowBirthWeightRate}%`, sub: `${birthOutcomes.lowBirthWeight} babies`, color: birthOutcomes.lowBirthWeightRate > 15 ? '#F87171' : '#FBBF24' },
@@ -455,7 +445,7 @@ export default function MCHAnalyticsPage() {
               {/* Delivery Type */}
               <div className="card-elevated p-4">
                 <h3 className="font-semibold text-sm mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-                  <Baby className="w-4 h-4" style={{ color: '#2B6FE0' }} />
+                  <Baby className="w-4 h-4" style={{ color: '#0077D7' }} />
                   By Delivery Type
                 </h3>
                 <div className="space-y-3">
@@ -480,7 +470,7 @@ export default function MCHAnalyticsPage() {
               {/* Birth Attendant */}
               <div className="card-elevated p-4">
                 <h3 className="font-semibold text-sm mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-                  <Users className="w-4 h-4" style={{ color: '#2B6FE0' }} />
+                  <Users className="w-4 h-4" style={{ color: '#0077D7' }} />
                   By Birth Attendant
                 </h3>
                 <div className="space-y-3">
@@ -488,7 +478,7 @@ export default function MCHAnalyticsPage() {
                     .sort(([, a], [, b]) => b - a)
                     .map(([attendant, count]) => {
                       const pct = birthOutcomes.totalBirths > 0 ? Math.round((count / birthOutcomes.totalBirths) * 100) : 0;
-                      const color = attendant === 'doctor' ? '#2B6FE0' : attendant === 'midwife' ? '#EC4899' : attendant === 'nurse' ? '#2B6FE0' : '#FB923C';
+                      const color = attendant === 'doctor' ? '#0077D7' : attendant === 'midwife' ? '#EC4899' : attendant === 'nurse' ? '#0077D7' : '#FB923C';
                       return (
                         <div key={attendant}>
                           <div className="flex justify-between text-xs mb-1">
@@ -526,7 +516,7 @@ export default function MCHAnalyticsPage() {
                           <div className="w-full rounded-t-md" style={{
                             height: `${height}%`,
                             minHeight: m.births > 0 ? '4px' : '0',
-                            background: 'linear-gradient(180deg, #2B6FE0, rgba(43,111,224,0.3))',
+                            background: 'linear-gradient(180deg, #0077D7, rgba(0,119,215,0.3))',
                           }} />
                         </div>
                         <span className="text-[9px] font-mono" style={{ color: 'var(--text-muted)' }}>{m.month}</span>
@@ -658,11 +648,11 @@ export default function MCHAnalyticsPage() {
                   <div>
                     <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Under-5 by Gender</p>
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="p-3 rounded-xl text-center" style={{ background: 'rgba(56,189,248,0.08)' }}>
+                      <div className="p-3 rounded-md text-center" style={{ background: 'rgba(56,189,248,0.08)' }}>
                         <p className="text-xl font-bold" style={{ color: '#38BDF8' }}>{neonatalData.byGender?.Male || 0}</p>
                         <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Male</p>
                       </div>
-                      <div className="p-3 rounded-xl text-center" style={{ background: 'rgba(236,72,153,0.08)' }}>
+                      <div className="p-3 rounded-md text-center" style={{ background: 'rgba(236,72,153,0.08)' }}>
                         <p className="text-xl font-bold" style={{ color: '#EC4899' }}>{neonatalData.byGender?.Female || 0}</p>
                         <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Female</p>
                       </div>
@@ -844,7 +834,7 @@ export default function MCHAnalyticsPage() {
         {/* ═══ HIGH RISK TAB ═══ */}
         {activeTab === 'high-risk' && (
           <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="card-elevated p-4">
                 <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Total High Risk</p>
                 <p className="text-2xl font-bold" style={{ color: '#F87171' }}>
@@ -859,7 +849,7 @@ export default function MCHAnalyticsPage() {
               </div>
               <div className="card-elevated p-4">
                 <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Total Tracked</p>
-                <p className="text-2xl font-bold" style={{ color: '#2B6FE0' }}>
+                <p className="text-2xl font-bold" style={{ color: '#0077D7' }}>
                   {highRiskPregnancies.length}
                 </p>
               </div>
@@ -877,7 +867,7 @@ export default function MCHAnalyticsPage() {
                       onClick={() => setExpandedMother(isExpanded ? null : mother.motherId)}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{
+                        <div className="w-10 h-10 rounded-md flex items-center justify-center" style={{
                           background: `${color}12`,
                           border: `1px solid ${color}20`,
                         }}>
@@ -906,7 +896,7 @@ export default function MCHAnalyticsPage() {
                     </div>
                     {isExpanded && (
                       <div className="px-4 pb-4 border-t" style={{ borderColor: 'var(--border-light)' }}>
-                        <div className="mt-3 grid grid-cols-4 gap-3">
+                        <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
                           <div className="p-2 rounded-lg" style={{ background: 'var(--overlay-subtle)' }}>
                             <p className="text-[9px] uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Blood Pressure</p>
                             <p className="text-sm font-bold mt-0.5" style={{ color: 'var(--text-primary)' }}>{mother.bloodPressure}</p>

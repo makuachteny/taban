@@ -16,7 +16,7 @@ const RISK_FACTOR_OPTIONS = [
 ];
 
 const riskColors = {
-  low: { color: '#2B6FE0', bg: 'rgba(43,111,224,0.12)', label: 'Low Risk' },
+  low: { color: '#0077D7', bg: 'rgba(43,111,224,0.12)', label: 'Low Risk' },
   moderate: { color: '#F59E0B', bg: 'rgba(245,158,11,0.12)', label: 'Moderate' },
   high: { color: '#E52E42', bg: 'rgba(229,46,66,0.12)', label: 'High Risk' },
 };
@@ -117,10 +117,10 @@ export default function ANCPage() {
     return (
       <>
         <TopBar title="Antenatal Care" />
-        <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
+        <main className="page-container page-enter">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-3" style={{ borderColor: '#2B6FE0', borderTopColor: 'transparent' }} />
+              <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin mx-auto mb-3" style={{ borderColor: '#0077D7', borderTopColor: 'transparent' }} />
               <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading ANC records...</p>
             </div>
           </div>
@@ -132,12 +132,12 @@ export default function ANCPage() {
   return (
     <>
       <TopBar title="Antenatal Care" />
-      <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
+      <main className="page-container page-enter">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: '#2B6FE0' }}>
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: '#0077D7' }}>
                 <HeartPulse className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -157,22 +157,20 @@ export default function ANCPage() {
 
         {/* Stats Row */}
         {stats && (
-          <div className="grid grid-cols-4 gap-3 mb-6">
+          <div className="kpi-grid mb-6">
             {[
-              { label: 'Mothers Enrolled', value: stats.totalMothers.toString(), color: '#2B6FE0', bg: 'rgba(43,111,224,0.12)', icon: Users },
-              { label: 'ANC4+ Rate', value: `${stats.anc4PlusRate}%`, color: '#2B6FE0', bg: 'rgba(43,111,224,0.12)', icon: Activity },
+              { label: 'Mothers Enrolled', value: stats.totalMothers.toString(), color: '#0077D7', bg: 'rgba(43,111,224,0.12)', icon: Users },
+              { label: 'ANC4+ Rate', value: `${stats.anc4PlusRate}%`, color: '#0077D7', bg: 'rgba(43,111,224,0.12)', icon: Activity },
               { label: 'High Risk', value: stats.highRiskCount.toString(), color: '#E52E42', bg: 'rgba(229,46,66,0.12)', icon: AlertTriangle },
-              { label: 'This Month', value: stats.thisMonthVisits.toString(), color: '#2B6FE0', bg: 'rgba(43,111,224,0.12)', icon: Calendar },
+              { label: 'This Month', value: stats.thisMonthVisits.toString(), color: '#0077D7', bg: 'rgba(43,111,224,0.12)', icon: Calendar },
             ].map(stat => (
-              <div key={stat.label} className="card-elevated p-5">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>{stat.label}</p>
-                    <p className="text-3xl font-bold stat-value" style={{ color: stat.color }}>{stat.value}</p>
-                  </div>
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: stat.bg }}>
-                    <stat.icon className="w-5 h-5" style={{ color: stat.color }} />
-                  </div>
+              <div key={stat.label} className="kpi">
+                <div className="kpi__icon" style={{ background: stat.bg }}>
+                  <stat.icon style={{ color: stat.color }} />
+                </div>
+                <div className="kpi__body">
+                  <div className="kpi__value">{stat.value}</div>
+                  <div className="kpi__label">{stat.label}</div>
                 </div>
               </div>
             ))}
@@ -203,11 +201,11 @@ export default function ANCPage() {
           </select>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Mother List */}
-          <div className="col-span-2 card-elevated overflow-hidden">
+          <div className="lg:col-span-2 card-elevated overflow-hidden">
             <div className="p-4 border-b flex items-center gap-2" style={{ borderColor: 'var(--border-light)' }}>
-              <HeartPulse className="w-4 h-4" style={{ color: '#2B6FE0' }} />
+              <HeartPulse className="w-4 h-4" style={{ color: '#0077D7' }} />
               <h3 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
                 Mothers Enrolled ({filteredMothers.length})
               </h3>
@@ -225,7 +223,7 @@ export default function ANCPage() {
                     style={{ background: isSelected ? 'var(--nav-active-bg)' : undefined }}
                   >
                     <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                      style={{ background: '#2B6FE0' }}>
+                      style={{ background: '#0077D7' }}>
                       {latest.motherName.split(' ').map(n => n?.[0] || '').join('').slice(0, 2)}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -262,7 +260,7 @@ export default function ANCPage() {
                 {/* Mother Summary */}
                 <div className="card-elevated p-4">
                   <h3 className="font-semibold text-sm mb-3 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-                    <HeartPulse className="w-4 h-4" style={{ color: '#2B6FE0' }} />
+                    <HeartPulse className="w-4 h-4" style={{ color: '#0077D7' }} />
                     Visit History
                   </h3>
                   <div className="space-y-3">
@@ -321,7 +319,7 @@ export default function ANCPage() {
                         </div>
                         <div className="flex justify-between">
                           <span>Next Visit</span>
-                          <span className="font-medium" style={{ color: '#2B6FE0' }}>{latest.nextVisitDate || '—'}</span>
+                          <span className="font-medium" style={{ color: '#0077D7' }}>{latest.nextVisitDate || '—'}</span>
                         </div>
                       </div>
                     </div>
@@ -351,9 +349,9 @@ export default function ANCPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Mother Info */}
                 <div className="p-3 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
-                  <p className="text-xs font-semibold mb-3 uppercase tracking-wider" style={{ color: '#2B6FE0' }}>Mother Information</p>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="col-span-2">
+                  <p className="text-xs font-semibold mb-3 uppercase tracking-wider" style={{ color: '#0077D7' }}>Mother Information</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="sm:col-span-2">
                       <label>Mother Name</label>
                       <input type="text" required value={form.motherName} onChange={e => setForm({ ...form, motherName: e.target.value })} placeholder="Full name" />
                     </div>
@@ -362,7 +360,7 @@ export default function ANCPage() {
                       <input type="number" min={14} max={55} value={form.motherAge} onChange={e => setForm({ ...form, motherAge: parseInt(e.target.value) })} />
                     </div>
                   </div>
-                  <div className="grid grid-cols-4 gap-3 mt-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
                     <div>
                       <label>Gravida</label>
                       <input type="number" min={1} max={20} value={form.gravida} onChange={e => setForm({ ...form, gravida: parseInt(e.target.value) })} />
@@ -384,8 +382,8 @@ export default function ANCPage() {
 
                 {/* Clinical Assessment */}
                 <div className="p-3 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
-                  <p className="text-xs font-semibold mb-3 uppercase tracking-wider" style={{ color: '#2B6FE0' }}>Clinical Assessment</p>
-                  <div className="grid grid-cols-4 gap-3">
+                  <p className="text-xs font-semibold mb-3 uppercase tracking-wider" style={{ color: '#0077D7' }}>Clinical Assessment</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <div>
                       <label>BP (mmHg)</label>
                       <input type="text" value={form.bloodPressure} onChange={e => setForm({ ...form, bloodPressure: e.target.value })} placeholder="120/80" />
@@ -403,7 +401,7 @@ export default function ANCPage() {
                       <input type="number" value={form.fetalHeartRate || ''} onChange={e => setForm({ ...form, fetalHeartRate: parseInt(e.target.value) })} />
                     </div>
                   </div>
-                  <div className="grid grid-cols-4 gap-3 mt-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
                     <div>
                       <label>Hemoglobin</label>
                       <input type="number" step="0.1" value={form.hemoglobin || ''} onChange={e => setForm({ ...form, hemoglobin: parseFloat(e.target.value) })} />
@@ -431,8 +429,8 @@ export default function ANCPage() {
 
                 {/* Lab & Interventions */}
                 <div className="p-3 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
-                  <p className="text-xs font-semibold mb-3 uppercase tracking-wider" style={{ color: '#2B6FE0' }}>Lab & Interventions</p>
-                  <div className="grid grid-cols-3 gap-3">
+                  <p className="text-xs font-semibold mb-3 uppercase tracking-wider" style={{ color: '#0077D7' }}>Lab & Interventions</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                       <label>HIV Status</label>
                       <select value={form.hivStatus} onChange={e => setForm({ ...form, hivStatus: e.target.value })}>
@@ -470,7 +468,7 @@ export default function ANCPage() {
 
                 {/* Risk Assessment */}
                 <div className="p-3 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
-                  <p className="text-xs font-semibold mb-3 uppercase tracking-wider" style={{ color: '#2B6FE0' }}>Risk Assessment</p>
+                  <p className="text-xs font-semibold mb-3 uppercase tracking-wider" style={{ color: '#0077D7' }}>Risk Assessment</p>
                   <div className="mb-3">
                     <label>Risk Level</label>
                     <select value={form.riskLevel} onChange={e => setForm({ ...form, riskLevel: e.target.value as 'low' | 'moderate' | 'high' })}>

@@ -29,7 +29,7 @@ export default function EpidemicIntelligencePage() {
     return (
       <>
         <TopBar title="Epidemic Intelligence" />
-        <main className="flex-1 p-6 flex items-center justify-center">
+        <main className="page-container flex items-center justify-center">
           <div className="text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(239,68,68,0.1)' }}>
               <Activity className="w-8 h-8" style={{ color: '#EF4444' }} />
@@ -86,7 +86,7 @@ export default function EpidemicIntelligencePage() {
   return (
     <>
       <TopBar title="Epidemic Intelligence" />
-      <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
+      <main className="page-container page-enter">
 
         {/* ═══ HEADER ═══ */}
         <div className="flex items-center justify-between mb-4">
@@ -125,29 +125,23 @@ export default function EpidemicIntelligencePage() {
         </div>
 
         {/* ═══ KPI STRIP ═══ */}
-        <div className="grid grid-cols-6 gap-2 mb-4">
+        <div className="kpi-grid mb-4">
           {[
-            { label: 'Active Diseases', value: summary.totalActiveDiseases, icon: Bug, color: '#EF4444' },
-            { label: 'Cases This Week', value: summary.totalCasesThisWeek.toLocaleString(), icon: Activity, color: '#FB923C' },
-            { label: 'Deaths This Week', value: summary.totalDeathsThisWeek, icon: AlertTriangle, color: '#F87171' },
-            { label: 'Highest Rt', value: summary.highestRt ? `${summary.highestRt.value.toFixed(2)}` : 'N/A', sub: summary.highestRt?.disease, icon: TrendingUp, color: summary.highestRt && summary.highestRt.value > 1 ? '#EF4444' : '#4ADE80' },
-            { label: 'Emergency States', value: summary.statesWithEmergency.length, icon: Zap, color: '#F87171' },
-            { label: 'EWARS Alerts', value: ewarsAlerts.length, icon: Radio, color: '#FBBF24' },
+            { label: 'Active Diseases', value: summary.totalActiveDiseases, icon: Bug, color: '#EF4444', bg: 'rgba(239,68,68,0.12)' },
+            { label: 'Cases This Week', value: summary.totalCasesThisWeek.toLocaleString(), icon: Activity, color: '#FB923C', bg: 'rgba(251,146,60,0.12)' },
+            { label: 'Deaths This Week', value: summary.totalDeathsThisWeek, icon: AlertTriangle, color: '#F87171', bg: 'rgba(248,113,113,0.12)' },
+            { label: 'Highest Rt', value: summary.highestRt ? `${summary.highestRt.value.toFixed(2)}` : 'N/A', icon: TrendingUp, color: summary.highestRt && summary.highestRt.value > 1 ? '#EF4444' : '#4ADE80', bg: summary.highestRt && summary.highestRt.value > 1 ? 'rgba(239,68,68,0.12)' : 'rgba(74,222,128,0.12)' },
+            { label: 'Emergency States', value: summary.statesWithEmergency.length, icon: Zap, color: '#F87171', bg: 'rgba(248,113,113,0.12)' },
+            { label: 'EWARS Alerts', value: ewarsAlerts.length, icon: Radio, color: '#FBBF24', bg: 'rgba(251,191,36,0.12)' },
           ].map((kpi) => (
-            <div key={kpi.label} className="relative px-3 py-2.5 rounded-xl transition-all cursor-pointer overflow-hidden" style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-light)',
-              boxShadow: 'var(--card-shadow)',
-            }}>
-              <div className="absolute top-0 left-0 w-full h-[2px]" style={{ background: kpi.color }} />
-              <div className="flex items-center gap-1.5 mb-1">
-                <kpi.icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: kpi.color }} />
-                <span className="text-[9px] font-semibold uppercase tracking-wider truncate" style={{ color: 'var(--text-muted)' }}>{kpi.label}</span>
+            <div key={kpi.label} className="kpi">
+              <div className="kpi__icon" style={{ background: kpi.bg }}>
+                <kpi.icon style={{ color: kpi.color }} />
               </div>
-              <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{kpi.value}</p>
-              {'sub' in kpi && kpi.sub && (
-                <p className="text-[10px] mt-0.5" style={{ color: kpi.color }}>{kpi.sub}</p>
-              )}
+              <div className="kpi__body">
+                <div className="kpi__value">{kpi.value}</div>
+                <div className="kpi__label">{kpi.label}</div>
+              </div>
             </div>
           ))}
         </div>
@@ -176,9 +170,9 @@ export default function EpidemicIntelligencePage() {
 
         {/* OVERVIEW TAB */}
         {activeTab === 'overview' && (
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Rt Tracker */}
-            <div className="col-span-2 card-elevated">
+            <div className="lg:col-span-2 card-elevated">
               <div className="px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
                 <h3 className="font-semibold text-sm flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                   <TrendingUp className="w-4 h-4" style={{ color: '#EF4444' }} />
@@ -296,7 +290,7 @@ export default function EpidemicIntelligencePage() {
             </div>
 
             {/* Geographic Heatmap Mini */}
-            <div className="col-span-2 card-elevated">
+            <div className="lg:col-span-2 card-elevated">
               <div className="px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
                 <h3 className="font-semibold text-sm flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                   <MapPin className="w-4 h-4" style={{ color: '#FB923C' }} />
@@ -304,7 +298,7 @@ export default function EpidemicIntelligencePage() {
                 </h3>
               </div>
               <div className="p-4">
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {STATES_GRID.flat().map((state, i) => {
                     if (!state) return <div key={i} />;
                     const spread = geographicSpread.find(g => g.state === state);
@@ -342,7 +336,7 @@ export default function EpidemicIntelligencePage() {
             <div className="card-elevated">
               <div className="px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
                 <h3 className="font-semibold text-sm flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-                  <FileText className="w-4 h-4" style={{ color: '#2B6FE0' }} />
+                  <FileText className="w-4 h-4" style={{ color: '#0077D7' }} />
                   IDSR Summary
                 </h3>
               </div>
@@ -681,14 +675,14 @@ export default function EpidemicIntelligencePage() {
         {/* IDSR TAB */}
         {activeTab === 'idsr' && (
           <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="card-elevated p-4">
                 <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Reporting Week</p>
                 <p className="text-2xl font-bold font-mono" style={{ color: 'var(--text-primary)' }}>{idsrReport.reportingWeek}</p>
               </div>
               <div className="card-elevated p-4">
                 <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Facilities Reporting</p>
-                <p className="text-2xl font-bold" style={{ color: '#2B6FE0' }}>{idsrReport.totalFacilitiesReporting}</p>
+                <p className="text-2xl font-bold" style={{ color: '#0077D7' }}>{idsrReport.totalFacilitiesReporting}</p>
               </div>
               <div className="card-elevated p-4">
                 <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Completeness</p>
@@ -702,7 +696,7 @@ export default function EpidemicIntelligencePage() {
             <div className="card-elevated overflow-hidden">
               <div className="px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
                 <h3 className="font-semibold text-sm flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-                  <FileText className="w-4 h-4" style={{ color: '#2B6FE0' }} />
+                  <FileText className="w-4 h-4" style={{ color: '#0077D7' }} />
                   IDSR Weekly Disease Report
                 </h3>
               </div>
@@ -760,7 +754,7 @@ export default function EpidemicIntelligencePage() {
         {/* EWARS ALERTS TAB */}
         {activeTab === 'alerts' && (
           <div>
-            <div className="grid grid-cols-4 gap-3 mb-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
               {['critical', 'high', 'medium', 'low'].map(sev => {
                 const count = ewarsAlerts.filter(a => a.severity === sev).length;
                 const colors = severityColors[sev];

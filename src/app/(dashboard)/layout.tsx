@@ -6,6 +6,8 @@ import { useApp } from '@/lib/context';
 import Sidebar from '@/components/Sidebar';
 import AssistantChat from '@/components/AssistantChat';
 import RoleGuard from '@/components/RoleGuard';
+import KeyboardShortcuts from '@/components/KeyboardShortcuts';
+import Breadcrumbs from '@/components/Breadcrumbs';
 import { Loader2 } from 'lucide-react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -33,7 +35,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             filter: 'drop-shadow(0 4px 12px rgba(10, 61, 107, 0.3))',
           }} />
           <div className="flex items-center gap-2">
-            <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#2B6FE0' }} />
+            <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#0077D7' }} />
             <p className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>Loading Taban...</p>
           </div>
         </div>
@@ -56,10 +58,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           }
         `}</style>
         <div className="dashboard-content-area flex-1 flex flex-col min-w-0 overflow-hidden pt-3">
+          <Breadcrumbs />
           <RoleGuard>{children}</RoleGuard>
         </div>
       </div>
       <AssistantChat />
+      <KeyboardShortcuts />
     </div>
   );
 }

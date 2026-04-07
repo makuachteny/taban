@@ -39,7 +39,7 @@ export default function OrgSettingsPage() {
   };
 
   const statusColors: Record<string, string> = {
-    active: '#2B6FE0',
+    active: '#0077D7',
     trial: '#F59E0B',
     suspended: '#E52E42',
     cancelled: '#6B7280',
@@ -69,7 +69,7 @@ export default function OrgSettingsPage() {
     <div className="flex-1 flex flex-col">
       <TopBar title="Organization Settings" />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-5 page-enter">
+      <div className="page-container page-enter">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: `${brandColor}15` }}>
@@ -107,7 +107,7 @@ export default function OrgSettingsPage() {
                 label="Status"
                 value={org?.isActive ? 'Active' : 'Inactive'}
                 badge
-                badgeColor={org?.isActive ? '#2B6FE0' : '#E52E42'}
+                badgeColor={org?.isActive ? '#0077D7' : '#E52E42'}
               />
             </div>
           </div>
@@ -169,7 +169,7 @@ export default function OrgSettingsPage() {
                   >
                     <div className="pt-0.5">
                       {enabled ? (
-                        <CheckCircle className="w-5 h-5" style={{ color: '#2B6FE0' }} />
+                        <CheckCircle className="w-5 h-5" style={{ color: '#0077D7' }} />
                       ) : (
                         <XCircle className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
                       )}

@@ -2,57 +2,53 @@
 
 import TopBar from '@/components/TopBar';
 import { useDataQuality } from '@/lib/hooks/useDataQuality';
-import { Database, Wifi, Users, TrendingUp, BarChart3 } from 'lucide-react';
+import { Database, Wifi, Users, TrendingUp, BarChart3, Clock, CheckCircle2, Activity } from 'lucide-react';
 
 export default function DataQualityPage() {
   const { data, loading } = useDataQuality();
 
-  if (loading || !data) return <><TopBar title="Data Quality" /><main className="flex-1 p-6 flex items-center justify-center"><p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading data quality metrics...</p></main></>;
+  if (loading || !data) return <><TopBar title="Data Quality" /><main className="page-container flex items-center justify-center"><p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading data quality metrics...</p></main></>;
 
-  const scoreColor = (score: number) => score >= 70 ? '#2B6FE0' : score >= 50 ? '#FCD34D' : '#E52E42';
+  const scoreColor = (score: number) => score >= 70 ? '#0077D7' : score >= 50 ? '#FCD34D' : '#E52E42';
   const scoreBg = (score: number) => score >= 70 ? 'rgba(43,111,224,0.12)' : score >= 50 ? 'rgba(252,211,77,0.12)' : 'rgba(229,46,66,0.12)';
 
   return (
     <>
       <TopBar title="Data Quality" />
-      <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
+      <main className="page-container page-enter">
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-1">
-            <Database className="w-6 h-6" style={{ color: '#2B6FE0' }} />
+            <Database className="w-6 h-6" style={{ color: '#0077D7' }} />
             <h1 className="text-xl font-semibold">Data Quality & Completeness</h1>
           </div>
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>National HIS data quality monitoring — WHO assessment framework</p>
         </div>
 
         {/* National summary cards */}
-        <div className="grid grid-cols-4 gap-3 mb-6">
-          <div className="card-elevated p-4">
-            <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Avg Completeness</p>
-            <p className="text-2xl font-bold" style={{ color: scoreColor(data.avgCompleteness) }}>{data.avgCompleteness}%</p>
-            <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>WHO target: ≥80%</p>
-          </div>
-          <div className="card-elevated p-4">
-            <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Avg Timeliness</p>
-            <p className="text-2xl font-bold" style={{ color: scoreColor(data.avgTimeliness) }}>{data.avgTimeliness}%</p>
-            <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>Reports submitted on time</p>
-          </div>
-          <div className="card-elevated p-4">
-            <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Avg Data Quality</p>
-            <p className="text-2xl font-bold" style={{ color: scoreColor(data.avgQuality) }}>{data.avgQuality}%</p>
-            <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>Accuracy & consistency</p>
-          </div>
-          <div className="card-elevated p-4">
-            <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>DHIS2 Adoption</p>
-            <p className="text-2xl font-bold" style={{ color: scoreColor(data.dhis2Adoption) }}>{data.dhis2Adoption}%</p>
-            <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>{data.facilitiesReporting} of {data.totalFacilities} facilities assessed</p>
-          </div>
+        <div className="kpi-grid mb-6">
+          {[
+            { label: 'Avg Completeness', value: `${data.avgCompleteness}%`, icon: CheckCircle2, color: scoreColor(data.avgCompleteness), bg: scoreBg(data.avgCompleteness) },
+            { label: 'Avg Timeliness', value: `${data.avgTimeliness}%`, icon: Clock, color: scoreColor(data.avgTimeliness), bg: scoreBg(data.avgTimeliness) },
+            { label: 'Avg Data Quality', value: `${data.avgQuality}%`, icon: Activity, color: scoreColor(data.avgQuality), bg: scoreBg(data.avgQuality) },
+            { label: 'DHIS2 Adoption', value: `${data.dhis2Adoption}%`, icon: Wifi, color: scoreColor(data.dhis2Adoption), bg: scoreBg(data.dhis2Adoption) },
+          ].map(stat => (
+            <div key={stat.label} className="kpi">
+              <div className="kpi__icon" style={{ background: stat.bg }}>
+                <stat.icon style={{ color: stat.color }} />
+              </div>
+              <div className="kpi__body">
+                <div className="kpi__value">{stat.value}</div>
+                <div className="kpi__label">{stat.label}</div>
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* National indicators */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           <div className="card-elevated p-4">
             <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" style={{ color: '#2B6FE0' }} />
+              <TrendingUp className="w-4 h-4" style={{ color: '#0077D7' }} />
               National Data Quality Indicators
             </h3>
             <div className="space-y-3">
@@ -81,13 +77,13 @@ export default function DataQualityPage() {
 
           <div className="card-elevated p-4">
             <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
-              <Users className="w-4 h-4" style={{ color: '#2B6FE0' }} />
+              <Users className="w-4 h-4" style={{ color: '#0077D7' }} />
               HIS Workforce
             </h3>
             <div className="space-y-4">
               <div className="p-3 rounded-lg" style={{ background: 'var(--overlay-subtle)' }}>
                 <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Total HIS Staff</p>
-                <p className="text-3xl font-bold" style={{ color: '#2B6FE0' }}>{data.totalHISStaff}</p>
+                <p className="text-3xl font-bold" style={{ color: '#0077D7' }}>{data.totalHISStaff}</p>
                 <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>Across {data.facilitiesWithTrainedStaff} facilities with trained staff</p>
               </div>
               <div className="p-3 rounded-lg" style={{ background: 'var(--overlay-subtle)' }}>
@@ -114,11 +110,11 @@ export default function DataQualityPage() {
         <div className="card-elevated overflow-hidden">
           <div className="px-3 py-2 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-light)' }}>
             <h3 className="font-semibold text-sm flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" style={{ color: '#2B6FE0' }} />
+              <BarChart3 className="w-4 h-4" style={{ color: '#0077D7' }} />
               Facility-Level Data Quality
             </h3>
             <div className="flex items-center gap-3 text-[10px]">
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ background: '#2B6FE0' }} /> ≥70%</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ background: '#0077D7' }} /> ≥70%</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ background: '#FCD34D' }} /> 50–69%</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ background: '#E52E42' }} /> &lt;50%</span>
             </div>

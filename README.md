@@ -370,6 +370,15 @@ DATABASE_URL=postgresql://user:password@localhost:5432/taban
 
 # Authentication
 JWT_SECRET=your-secret-key
+
+# Demo Request Emails (required for production demo form)
+DEMO_FROM_EMAIL=demo@yourdomain.com
+DEMO_FROM_NAME=Taban Demo
+DEMO_NOTIFY_EMAIL=tenymakuach@gmail.com
+DEMO_SCHEDULING_URL=https://calendly.com/your-handle/taban-demo
+RESEND_API_KEY=your-resend-key
+# Or use SendGrid instead of Resend:
+# SENDGRID_API_KEY=your-sendgrid-key
 ```
 
 ---

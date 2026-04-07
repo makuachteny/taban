@@ -1,14 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
 import { useApp } from '@/lib/context';
 import { useOrganizations } from '@/lib/hooks/useOrganizations';
 import {
-  Building2, Users, HeartPulse, CreditCard, ChevronRight,
-  TrendingUp, Shield, Activity, Settings, BarChart3
+  Building2, Users, HeartPulse, CreditCard, ChevronRight, ChevronLeft,
+  TrendingUp, Shield, Activity, Settings, BarChart3,
+  Search, Clock, Database, RefreshCw,
 } from 'lucide-react';
+import type { AuditLogDoc } from '@/lib/db-types';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -17,6 +19,19 @@ export default function AdminDashboardPage() {
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalPatients, setTotalPatients] = useState(0);
   const [countsLoading, setCountsLoading] = useState(true);
+
+  // Audit log state
+  const [auditLogs, setAuditLogs] = useState<AuditLogDoc[]>([]);
+  const [auditLoading, setAuditLoading] = useState(true);
+  const [auditSearch, setAuditSearch] = useState('');
+  const [auditPage, setAuditPage] = useState(0);
+  const AUDIT_PAGE_SIZE = 20;
+
+  // System health state
+  const [dbStats, setDbStats] = useState<Array<{ name: string; docCount: number }>>([]);
+  const [dbStatsLoading, setDbStatsLoading] = useState(true);
+  const [lastBackupTime, setLastBackupTime] = useState<string | null>(null);
+  const [syncStatuses, setSyncStatuses] = useState<Array<{ org: string; status: string }>>([]);
 
   // Access control: only super_admin
   useEffect(() => {
@@ -43,6 +58,98 @@ export default function AdminDashboardPage() {
     loadCounts();
   }, []);
 
+  // Load audit logs
+  useEffect(() => {
+    const loadAudit = async () => {
+      try {
+        const { getRecentAuditLogs } = await import('@/lib/services/audit-service');
+        const logs = await getRecentAuditLogs(200);
+        setAuditLogs(logs);
+      } catch (err) {
+        console.error('Failed to load audit logs:', err);
+      } finally {
+        setAuditLoading(false);
+      }
+    };
+    loadAudit();
+  }, []);
+
+  // Load system health: DB stats, sync status, backup time
+  useEffect(() => {
+    const loadHealth = async () => {
+      try {
+        const { getDB } = await import('@/lib/db');
+        const dbNames = [
+          { key: 'taban_users', label: 'Users' },
+          { key: 'taban_patients', label: 'Patients' },
+          { key: 'taban_hospitals', label: 'Hospitals' },
+          { key: 'taban_medical_records', label: 'Medical Records' },
+          { key: 'taban_referrals', label: 'Referrals' },
+          { key: 'taban_lab_results', label: 'Lab Results' },
+          { key: 'taban_disease_alerts', label: 'Disease Alerts' },
+          { key: 'taban_prescriptions', label: 'Prescriptions' },
+          { key: 'taban_audit_log', label: 'Audit Log' },
+          { key: 'taban_organizations', label: 'Organizations' },
+          { key: 'taban_immunizations', label: 'Immunizations' },
+          { key: 'taban_births', label: 'Births' },
+          { key: 'taban_deaths', label: 'Deaths' },
+        ];
+        const stats: Array<{ name: string; docCount: number }> = [];
+        for (const { key, label } of dbNames) {
+          try {
+            const db = getDB(key);
+            const info = await db.info();
+            stats.push({ name: label, docCount: info.doc_count });
+          } catch {
+            stats.push({ name: label, docCount: 0 });
+          }
+        }
+        setDbStats(stats);
+
+        // Check last backup from localStorage
+        const backup = typeof window !== 'undefined' ? localStorage.getItem('safeguard_last_backup') : null;
+        setLastBackupTime(backup);
+
+        // Derive sync statuses from organizations
+      } catch (err) {
+        console.error('Failed to load health stats:', err);
+      } finally {
+        setDbStatsLoading(false);
+      }
+    };
+    loadHealth();
+  }, []);
+
+  // Derive org sync statuses once orgs are loaded
+  useEffect(() => {
+    if (!orgsLoading && organizations.length > 0) {
+      setSyncStatuses(organizations.map(o => ({
+        org: o.name,
+        status: o.isActive ? 'synced' : 'inactive',
+      })));
+    }
+  }, [organizations, orgsLoading]);
+
+  // Filtered & paginated audit logs
+  const filteredAuditLogs = useMemo(() => {
+    if (!auditSearch.trim()) return auditLogs;
+    const q = auditSearch.toLowerCase();
+    return auditLogs.filter(log =>
+      (log.username?.toLowerCase().includes(q)) ||
+      (log.action?.toLowerCase().includes(q)) ||
+      (log.details?.toLowerCase().includes(q))
+    );
+  }, [auditLogs, auditSearch]);
+
+  const totalAuditPages = Math.ceil(filteredAuditLogs.length / AUDIT_PAGE_SIZE);
+  const paginatedLogs = filteredAuditLogs.slice(auditPage * AUDIT_PAGE_SIZE, (auditPage + 1) * AUDIT_PAGE_SIZE);
+
+  // System health indicators
+  const totalDocs = dbStats.reduce((s, d) => s + d.docCount, 0);
+  const dbHealth = totalDocs > 0 ? 'healthy' : 'empty';
+  const backupAge = lastBackupTime ? Math.floor((Date.now() - new Date(lastBackupTime).getTime()) / 3600000) : null;
+  const backupHealth = backupAge === null ? 'unknown' : backupAge < 24 ? 'healthy' : backupAge < 72 ? 'warning' : 'critical';
+
   if (!currentUser || currentUser.role !== 'super_admin') return null;
 
   const activeOrgs = organizations.filter(o => o.isActive);
@@ -68,10 +175,35 @@ export default function AdminDashboardPage() {
     { label: 'Analytics', icon: BarChart3, href: '/admin/analytics', color: '#059669' },
   ];
 
+  const healthColor = (status: string) => {
+    switch (status) {
+      case 'healthy': case 'synced': return '#10B981';
+      case 'warning': return '#F59E0B';
+      case 'critical': case 'inactive': return '#EF4444';
+      default: return '#94A3B8';
+    }
+  };
+
+  const healthLabel = (status: string) => {
+    switch (status) {
+      case 'healthy': return 'Healthy';
+      case 'synced': return 'Synced';
+      case 'warning': return 'Warning';
+      case 'critical': return 'Critical';
+      case 'inactive': return 'Inactive';
+      default: return 'Unknown';
+    }
+  };
+
+  const formatTimestamp = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
   return (
     <>
       <TopBar title="Super Admin" />
-      <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
+      <main className="page-container page-enter">
 
         {/* Header */}
         <div className="mb-6">
@@ -89,7 +221,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* KPI Stat Cards */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {[
             {
               label: 'Total Organizations',
@@ -137,10 +269,97 @@ export default function AdminDashboardPage() {
           ))}
         </div>
 
-        <div className="grid grid-cols-3 gap-6">
+        {/* SYSTEM HEALTH DASHBOARD */}
+        <div className="rounded-2xl p-5 mb-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+          <div className="flex items-center gap-2 mb-4">
+            <Activity className="w-5 h-5" style={{ color: '#10B981' }} />
+            <h2 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>System Health Dashboard</h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            {/* Database Health */}
+            <div className="p-4 rounded-xl" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Database</span>
+                <span className="w-2.5 h-2.5 rounded-full" style={{ background: healthColor(dbHealth) }} />
+              </div>
+              <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{dbStatsLoading ? '...' : totalDocs.toLocaleString()}</p>
+              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Total documents across {dbStats.length} databases</p>
+            </div>
+
+            {/* Sync Status */}
+            <div className="p-4 rounded-xl" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Sync Status</span>
+                <RefreshCw className="w-4 h-4" style={{ color: '#10B981' }} />
+              </div>
+              <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                {syncStatuses.filter(s => s.status === 'synced').length}/{syncStatuses.length}
+              </p>
+              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Organizations synced</p>
+            </div>
+
+            {/* Last Backup */}
+            <div className="p-4 rounded-xl" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Last Backup</span>
+                <span className="w-2.5 h-2.5 rounded-full" style={{ background: healthColor(backupHealth) }} />
+              </div>
+              <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                {lastBackupTime ? formatTimestamp(lastBackupTime) : 'No backup'}
+              </p>
+              <p className="text-[10px]" style={{ color: healthColor(backupHealth) }}>
+                {backupHealth === 'healthy' ? 'Recent' : backupHealth === 'warning' ? 'Over 24h ago' : backupHealth === 'critical' ? 'Over 72h ago' : 'Not configured'}
+              </p>
+            </div>
+
+            {/* Overall Platform */}
+            <div className="p-4 rounded-xl" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Platform</span>
+                <span className="w-2.5 h-2.5 rounded-full" style={{ background: '#10B981' }} />
+              </div>
+              <p className="text-lg font-bold" style={{ color: '#10B981' }}>Operational</p>
+              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>All systems running</p>
+            </div>
+          </div>
+
+          {/* DB Size per database */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+            {dbStats.slice(0, 12).map(db => (
+              <div key={db.name} className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+                <div className="flex items-center gap-1.5">
+                  <Database className="w-3 h-3" style={{ color: db.docCount > 0 ? '#7C3AED' : 'var(--text-muted)' }} />
+                  <span className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>{db.name}</span>
+                </div>
+                <span className="text-[10px] font-bold font-mono" style={{ color: db.docCount > 0 ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                  {db.docCount}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Org Sync Statuses */}
+          {syncStatuses.length > 0 && (
+            <div className="mt-4">
+              <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Organization Sync</p>
+              <div className="flex flex-wrap gap-2">
+                {syncStatuses.map(s => (
+                  <span key={s.org} className="flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+                    <span className="w-2 h-2 rounded-full" style={{ background: healthColor(s.status) }} />
+                    <span style={{ color: 'var(--text-secondary)' }}>{s.org}</span>
+                    <span className="font-semibold" style={{ color: healthColor(s.status) }}>{healthLabel(s.status)}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
 
           {/* Recent Organizations Table */}
-          <div className="col-span-2 rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+          <div className="lg:col-span-2 rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
             <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--border-light)' }}>
               <div className="flex items-center gap-2">
                 <Building2 className="w-4 h-4" style={{ color: '#DC2626' }} />
@@ -256,30 +475,117 @@ export default function AdminDashboardPage() {
                 ))}
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* Platform Health */}
-            <div className="rounded-xl p-4" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
-              <div className="flex items-center gap-2 mb-3">
-                <Activity className="w-4 h-4" style={{ color: '#10B981' }} />
-                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Platform Health</span>
-              </div>
-              <div className="space-y-2.5">
-                {[
-                  { label: 'Platform', value: 'Operational', dot: '#10B981' },
-                  { label: 'Database', value: 'Healthy', dot: '#10B981' },
-                  { label: 'Sync Engine', value: 'Running', dot: '#10B981' },
-                ].map(item => (
-                  <div key={item.label} className="flex items-center justify-between">
-                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{item.label}</span>
-                    <span className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: item.dot }}>
-                      <span className="w-2 h-2 rounded-full" style={{ background: item.dot }} />
-                      {item.value}
-                    </span>
-                  </div>
-                ))}
+        {/* AUDIT LOG VIEWER */}
+        <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+          <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--border-light)' }}>
+            <div className="flex items-center gap-2">
+              <Shield className="w-4 h-4" style={{ color: '#DC2626' }} />
+              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Audit Log</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(220,38,38,0.1)', color: '#DC2626' }}>
+                {filteredAuditLogs.length} entries
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                <input
+                  type="text"
+                  value={auditSearch}
+                  onChange={e => { setAuditSearch(e.target.value); setAuditPage(0); }}
+                  placeholder="Search user or action..."
+                  className="text-xs pl-8 pr-3 py-2 rounded-lg outline-none"
+                  style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)', color: 'var(--text-primary)', width: '200px' }}
+                />
               </div>
             </div>
           </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="w-full">
+              <thead>
+                <tr>
+                  {['Timestamp', 'User', 'Action', 'Details', 'Status'].map(h => (
+                    <th key={h} className="text-left px-4 py-3 text-xs uppercase tracking-wider" style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border-light)' }}>
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {auditLoading ? (
+                  <tr><td colSpan={5} className="px-4 py-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>Loading audit log...</td></tr>
+                ) : paginatedLogs.length === 0 ? (
+                  <tr><td colSpan={5} className="px-4 py-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+                    {auditSearch ? 'No matching entries' : 'No audit entries yet'}
+                  </td></tr>
+                ) : paginatedLogs.map(log => (
+                  <tr key={log._id} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                    <td className="px-4 py-3">
+                      <span className="text-xs flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
+                        <Clock className="w-3 h-3" />
+                        {formatTimestamp(log.createdAt)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{log.username || 'System'}</td>
+                    <td className="px-4 py-3">
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded" style={{ background: 'rgba(124,58,237,0.08)', color: '#7C3AED' }}>
+                        {log.action}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-xs max-w-[200px] truncate" style={{ color: 'var(--text-secondary)' }}>
+                      {log.details}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{
+                        background: log.success ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
+                        color: log.success ? '#10B981' : '#EF4444',
+                      }}>
+                        {log.success ? 'Success' : 'Failed'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {/* Pagination */}
+          {totalAuditPages > 1 && (
+            <div className="flex items-center justify-between px-5 py-3" style={{ borderTop: '1px solid var(--border-light)' }}>
+              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                Page {auditPage + 1} of {totalAuditPages}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setAuditPage(p => Math.max(0, p - 1))}
+                  disabled={auditPage === 0}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                  style={{
+                    background: 'var(--overlay-subtle)',
+                    border: '1px solid var(--border-light)',
+                    color: auditPage === 0 ? 'var(--text-muted)' : 'var(--text-primary)',
+                    opacity: auditPage === 0 ? 0.5 : 1,
+                  }}
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" /> Prev
+                </button>
+                <button
+                  onClick={() => setAuditPage(p => Math.min(totalAuditPages - 1, p + 1))}
+                  disabled={auditPage >= totalAuditPages - 1}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                  style={{
+                    background: 'var(--overlay-subtle)',
+                    border: '1px solid var(--border-light)',
+                    color: auditPage >= totalAuditPages - 1 ? 'var(--text-muted)' : 'var(--text-primary)',
+                    opacity: auditPage >= totalAuditPages - 1 ? 0.5 : 1,
+                  }}
+                >
+                  Next <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </>

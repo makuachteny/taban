@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
-import { Check, Camera, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Check, Camera, ArrowLeft, ArrowRight, Users } from 'lucide-react';
 import { statesAndCounties, states, tribes, languages, bloodTypes } from '@/data/mock';
 import { usePatients } from '@/lib/hooks/usePatients';
 import { useApp } from '@/lib/context';
@@ -138,14 +138,17 @@ export default function NewPatientPage() {
   return (
     <>
       <TopBar title="Register New Patient" />
-      <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
+      <main className="page-container page-enter">
           <button onClick={() => router.push('/patients')} className="flex items-center gap-1.5 text-sm mb-4" style={{ color: 'var(--taban-blue)' }}>
             <ArrowLeft className="w-4 h-4" /> Back to Patients
           </button>
 
-          <h1 className="text-xl font-semibold mb-6">
-            Patient Registration
-          </h1>
+          <div className="page-header mb-6">
+            <div className="page-header__top">
+              <div className="page-header__icon"><Users size={18} /></div>
+              <h1 className="page-header__title">Patient Registration</h1>
+            </div>
+          </div>
 
           {/* Step Indicator */}
           <div className="flex items-center gap-0 mb-8">
@@ -170,7 +173,7 @@ export default function NewPatientPage() {
               <div className="space-y-5">
                 <h3 className="text-base font-semibold mb-4">Patient Demographics</h3>
                 <div className="flex gap-3 items-start">
-                  <div className="w-28 h-28 rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer hover:border-[var(--taban-blue)] transition-colors" style={{ borderColor: 'var(--border-medium)', background: 'var(--overlay-subtle)' }}>
+                  <div className="w-28 h-28 rounded-md border-2 border-dashed flex flex-col items-center justify-center cursor-pointer hover:border-[var(--taban-blue)] transition-colors" style={{ borderColor: 'var(--border-medium)', background: 'var(--overlay-subtle)' }}>
                     <Camera className="w-6 h-6 mb-1" style={{ color: 'var(--text-muted)' }} />
                     <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Add Photo</span>
                   </div>

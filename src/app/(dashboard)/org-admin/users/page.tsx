@@ -182,13 +182,13 @@ export default function OrgUsersPage() {
     const map: Record<string, string> = {
       super_admin: '#DC2626',
       org_admin: '#7C3AED',
-      doctor: '#2B6FE0',
+      doctor: '#0077D7',
       clinical_officer: '#8B5CF6',
       nurse: '#EC4899',
       lab_tech: '#06B6D4',
       pharmacist: '#F59E0B',
       front_desk: '#14B8A6',
-      government: '#2B6FE0',
+      government: '#0077D7',
       boma_health_worker: '#059669',
       payam_supervisor: '#D97706',
     };
@@ -227,10 +227,10 @@ export default function OrgUsersPage() {
     <div className="flex-1 flex flex-col">
       <TopBar title="User Management" />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-5 page-enter">
+      <div className="page-container page-enter">
         {/* Success/Error banners */}
         {success && (
-          <div className="mb-4 p-3 rounded-lg text-sm font-medium" style={{ background: 'rgba(43,111,224,0.1)', color: '#2B6FE0', border: '1px solid rgba(43,111,224,0.2)' }}>
+          <div className="mb-4 p-3 rounded-lg text-sm font-medium" style={{ background: 'rgba(43,111,224,0.1)', color: '#0077D7', border: '1px solid rgba(43,111,224,0.2)' }}>
             {success}
           </div>
         )}
@@ -357,7 +357,7 @@ export default function OrgUsersPage() {
                         className="text-xs font-medium px-2 py-0.5 rounded-full"
                         style={{
                           background: user.isActive ? 'rgba(43,111,224,0.1)' : 'rgba(229,46,66,0.1)',
-                          color: user.isActive ? '#2B6FE0' : '#E52E42',
+                          color: user.isActive ? '#0077D7' : '#E52E42',
                         }}
                       >
                         {user.isActive ? 'Active' : 'Inactive'}

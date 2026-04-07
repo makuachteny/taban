@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TopBar from '@/components/TopBar';
 import {
   ArrowRightLeft, Plus, Send, Eye, CheckCircle2, Clock,
   AlertTriangle, ChevronDown, ChevronUp, X, Building2,
   Stethoscope, Search, Package, FileText, Image as ImageIcon,
-  User, Activity, FlaskConical, Paperclip
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  User, Activity, FlaskConical, Paperclip, XCircle, MessageSquarePlus,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  ClipboardCheck, Bell,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useReferrals } from '@/lib/hooks/useReferrals';
@@ -31,7 +34,7 @@ const departments = [
 
 export default function ReferralsPage() {
   const router = useRouter();
-  const { referrals, createWithTransfer, accept } = useReferrals();
+  const { referrals, createWithTransfer, accept, updateStatus, updateNotes } = useReferrals();
   const { showToast } = useToast();
   const { hospitals } = useHospitals();
   const { patients } = usePatients();
@@ -53,6 +56,19 @@ export default function ReferralsPage() {
   const [formAttachments, setFormAttachments] = useState<Attachment[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
+  // Modal state for decline, complete, and add note
+  const [declineModalId, setDeclineModalId] = useState<string | null>(null);
+  const [declineReason, setDeclineReason] = useState('');
+  const [completeModalId, setCompleteModalId] = useState<string | null>(null);
+  const [completeOutcome, setCompleteOutcome] = useState('');
+  const [noteModalId, setNoteModalId] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState('');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [actionSubmitting, setActionSubmitting] = useState(false);
+
+  // Track viewed referrals for notification badge
+  const [viewedReferralIds, setViewedReferralIds] = useState<Set<string>>(new Set());
+
   // Transfer package viewer state
   const [expandedRecords, setExpandedRecords] = useState<Set<string>>(new Set());
   const [previewAttachment, setPreviewAttachment] = useState<Attachment | null>(null);
@@ -61,6 +77,22 @@ export default function ReferralsPage() {
   const incomingReferrals = referrals.filter(r => r.toHospitalId === OUR_HOSPITAL_ID);
   const outgoingReferrals = referrals.filter(r => r.fromHospitalId === OUR_HOSPITAL_ID);
   const activeReferrals = activeTab === 'incoming' ? incomingReferrals : outgoingReferrals;
+
+  // New incoming referrals (status 'sent') for notification badge
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const newIncomingCount = incomingReferrals.filter(r => r.status === 'sent' && !viewedReferralIds.has(r._id)).length;
+
+  // Auto-mark as 'received' when user expands an incoming referral with status 'sent'
+  useEffect(() => {
+    if (expandedReferral && activeTab === 'incoming') {
+      const ref = incomingReferrals.find(r => r._id === expandedReferral && r.status === 'sent');
+      if (ref) {
+        setViewedReferralIds(prev => new Set(prev).add(ref._id));
+        updateStatus(ref._id, 'received').catch(() => {});
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expandedReferral]);
 
   // Search filtering
   const combinedSearch = `${search} ${globalSearch}`.toLowerCase().trim();
@@ -89,10 +121,10 @@ export default function ReferralsPage() {
   ).length;
 
   const stats = [
-    { label: 'Total Referrals', value: totalReferrals, icon: ArrowRightLeft, color: '#2B6FE0', bg: 'rgba(43,111,224,0.12)' },
+    { label: 'Total Referrals', value: totalReferrals, icon: ArrowRightLeft, color: '#0077D7', bg: 'rgba(43,111,224,0.12)' },
     { label: 'Pending', value: pendingCount, icon: Clock, color: '#FCD34D', bg: 'rgba(252,211,77,0.10)' },
     { label: 'In Progress', value: inProgressCount, icon: Stethoscope, color: '#38BDF8', bg: 'rgba(43,111,224,0.10)' },
-    { label: 'Completed', value: completedCount, icon: CheckCircle2, color: '#2B6FE0', bg: 'rgba(43,111,224,0.12)' },
+    { label: 'Completed', value: completedCount, icon: CheckCircle2, color: '#0077D7', bg: 'rgba(43,111,224,0.12)' },
   ];
 
   const getStatusLabel = (status: string) => {
@@ -159,6 +191,68 @@ export default function ReferralsPage() {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleDecline = async () => {
+    if (!declineModalId || !declineReason.trim()) return;
+    try {
+      setActionSubmitting(true);
+      const ref = referrals.find(r => r._id === declineModalId);
+      const existingNotes = ref?.notes || '';
+      const declineNote = `[${new Date().toISOString().split('T')[0]} ${currentUser?.name || 'Unknown'}] DECLINED: ${declineReason.trim()}`;
+      const updatedNotes = existingNotes ? `${existingNotes}\n\n${declineNote}` : declineNote;
+      await updateStatus(declineModalId, 'cancelled');
+      await updateNotes(declineModalId, updatedNotes);
+      showToast('Referral declined', 'success');
+      setDeclineModalId(null);
+      setDeclineReason('');
+    } catch {
+      showToast('Failed to decline referral', 'error');
+    } finally {
+      setActionSubmitting(false);
+    }
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleComplete = async () => {
+    if (!completeModalId || !completeOutcome.trim()) return;
+    try {
+      setActionSubmitting(true);
+      const ref = referrals.find(r => r._id === completeModalId);
+      const existingNotes = ref?.notes || '';
+      const outcomeNote = `[${new Date().toISOString().split('T')[0]} ${currentUser?.name || 'Unknown'}] OUTCOME: ${completeOutcome.trim()}`;
+      const updatedNotes = existingNotes ? `${existingNotes}\n\n${outcomeNote}` : outcomeNote;
+      await updateStatus(completeModalId, 'completed');
+      await updateNotes(completeModalId, updatedNotes);
+      showToast('Referral completed \u2014 outcome recorded', 'success');
+      setCompleteModalId(null);
+      setCompleteOutcome('');
+    } catch {
+      showToast('Failed to complete referral', 'error');
+    } finally {
+      setActionSubmitting(false);
+    }
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleAddNote = async () => {
+    if (!noteModalId || !noteText.trim()) return;
+    try {
+      setActionSubmitting(true);
+      const ref = referrals.find(r => r._id === noteModalId);
+      const existingNotes = ref?.notes || '';
+      const newNote = `[${new Date().toISOString().split('T')[0]} ${currentUser?.name || 'Unknown'}] ${noteText.trim()}`;
+      const updatedNotes = existingNotes ? `${existingNotes}\n\n${newNote}` : newNote;
+      await updateNotes(noteModalId, updatedNotes);
+      showToast('Note added to referral', 'success');
+      setNoteModalId(null);
+      setNoteText('');
+    } catch {
+      showToast('Failed to add note', 'error');
+    } finally {
+      setActionSubmitting(false);
+    }
+  };
+
   // Hierarchical referral destinations based on facility level
   // Boma(PHCU) → Payam(PHCC), Payam(PHCC) → County/State/National,
   // County → State/National, State → National, National → National/State
@@ -201,7 +295,7 @@ export default function ReferralsPage() {
               <Paperclip className="w-4 h-4" style={{ color: 'var(--taban-blue)' }} />
               <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Referral Attachments ({refAttachments.length})</span>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {refAttachments.map(att => (
                 <button key={att.id} onClick={() => setPreviewAttachment(att)} className="flex items-center gap-2 p-2 rounded-lg text-left transition-colors" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
                   {isImage(att.mimeType) ? (
@@ -226,7 +320,7 @@ export default function ReferralsPage() {
             <User className="w-4 h-4" style={{ color: 'var(--taban-blue)' }} />
             <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Patient Demographics</span>
           </div>
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               { l: 'Name', v: `${demo.firstName} ${demo.middleName} ${demo.surname}` },
               { l: 'Hospital #', v: demo.hospitalNumber },
@@ -310,7 +404,7 @@ export default function ReferralsPage() {
                           </div>
                         )}
                         {rec.vitalSigns && (
-                          <div className="grid grid-cols-4 gap-2 text-xs">
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                             <span>Temp: {rec.vitalSigns.temperature}°C</span>
                             <span>BP: {rec.vitalSigns.systolic}/{rec.vitalSigns.diastolic}</span>
                             <span>Pulse: {rec.vitalSigns.pulse}</span>
@@ -388,7 +482,7 @@ export default function ReferralsPage() {
               <ImageIcon className="w-4 h-4" style={{ color: 'var(--taban-blue)' }} />
               <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Patient Attachments ({pkg.attachments.length})</span>
             </div>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {pkg.attachments.map(att => (
                 <button key={att.id} onClick={() => setPreviewAttachment(att)} className="flex flex-col items-center gap-1 p-3 rounded-lg text-center transition-colors" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
                   {isImage(att.mimeType) ? (
@@ -425,16 +519,15 @@ export default function ReferralsPage() {
   return (
     <>
       <TopBar title="Referrals" />
-      <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
+      <main className="page-container page-enter">
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
-            <div>
-              <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
-                Referral Management
-              </h1>
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-                Manage incoming and outgoing patient referrals
-              </p>
+            <div className="page-header">
+              <div className="page-header__top">
+                <div className="page-header__icon"><ArrowRightLeft size={18} /></div>
+                <h1 className="page-header__title">Referral Management</h1>
+              </div>
+              <p className="page-header__subtitle">Manage incoming and outgoing patient referrals</p>
             </div>
             <button
               onClick={() => setShowNewReferral(!showNewReferral)}
@@ -449,24 +542,18 @@ export default function ReferralsPage() {
           </div>
 
           {/* Summary Stats */}
-          <div className="grid grid-cols-4 gap-3 mb-6">
+          <div className="kpi-grid mb-6">
             {stats.map(stat => (
-              <div key={stat.label} className="card-elevated p-5 cursor-pointer" onClick={() => {
+              <div key={stat.label} className="kpi cursor-pointer" onClick={() => {
                 const tabMap: Record<string, 'incoming' | 'outgoing'> = { 'Pending': 'incoming', 'In Progress': 'incoming', 'Completed': 'outgoing' };
                 if (tabMap[stat.label]) setActiveTab(tabMap[stat.label]);
               }}>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>
-                      {stat.label}
-                    </p>
-                    <p className="text-3xl font-bold" style={{ color: stat.color }}>
-                      {stat.value}
-                    </p>
-                  </div>
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: stat.bg }}>
-                    <stat.icon className="w-5 h-5" style={{ color: stat.color }} />
-                  </div>
+                <div className="kpi__icon" style={{ background: stat.bg }}>
+                  <stat.icon style={{ color: stat.color }} />
+                </div>
+                <div className="kpi__body">
+                  <div className="kpi__value">{stat.value}</div>
+                  <div className="kpi__label">{stat.label}</div>
                 </div>
               </div>
             ))}
@@ -626,6 +713,19 @@ export default function ReferralsPage() {
                 >
                   {incomingReferrals.length}
                 </span>
+                {newIncomingCount > 0 && (
+                  <span
+                    className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                    style={{
+                      background: '#EF4444',
+                      color: '#fff',
+                      animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }}
+                  >
+                    <Bell className="w-3 h-3" />
+                    {newIncomingCount} new
+                  </span>
+                )}
               </span>
             </button>
             <button
@@ -682,7 +782,7 @@ export default function ReferralsPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
-                          <span className="text-sm font-semibold cursor-pointer hover:underline" style={{ color: '#2B6FE0' }} onClick={(e) => { e.stopPropagation(); if (ref.patientId) router.push(`/patients/${ref.patientId}`); }}>{ref.patientName}</span>
+                          <span className="text-sm font-semibold cursor-pointer hover:underline" style={{ color: '#0077D7' }} onClick={(e) => { e.stopPropagation(); if (ref.patientId) router.push(`/patients/${ref.patientId}`); }}>{ref.patientName}</span>
                           <span className="font-mono text-[10px]" style={{ color: 'var(--text-muted)' }}>{ref.patientId}</span>
                         </div>
                         <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
@@ -716,21 +816,54 @@ export default function ReferralsPage() {
                           {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                         </button>
                         {activeTab === 'incoming' && (ref.status === 'sent' || ref.status === 'received') && (
+                          <>
+                            <button
+                              className="btn btn-success btn-sm"
+                              title="Accept referral and transfer patient to this hospital"
+                              style={{ padding: '5px 10px' }}
+                              onClick={async () => {
+                                try {
+                                  await accept(ref._id);
+                                  showToast(`Referral accepted \u2014 ${ref.patientName} transferred to your hospital`, 'success');
+                                } catch {
+                                  showToast('Failed to accept referral', 'error');
+                                }
+                              }}
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              Accept
+                            </button>
+                            <button
+                              className="btn btn-sm"
+                              title="Decline this referral"
+                              style={{ padding: '5px 10px', background: 'rgba(239,68,68,0.12)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.25)' }}
+                              onClick={() => { setDeclineModalId(ref._id); setDeclineReason(''); }}
+                            >
+                              <XCircle className="w-3.5 h-3.5" />
+                              Decline
+                            </button>
+                          </>
+                        )}
+                        {activeTab === 'incoming' && ref.status === 'seen' && (
                           <button
-                            className="btn btn-success btn-sm"
-                            title="Accept referral and transfer patient to this hospital"
-                            style={{ padding: '5px 10px' }}
-                            onClick={async () => {
-                              try {
-                                await accept(ref._id);
-                                showToast(`Referral accepted — ${ref.patientName} transferred to your hospital`, 'success');
-                              } catch {
-                                showToast('Failed to accept referral', 'error');
-                              }
-                            }}
+                            className="btn btn-sm"
+                            title="Mark referral as completed with outcome notes"
+                            style={{ padding: '5px 10px', background: 'rgba(34,197,94,0.12)', color: '#16A34A', border: '1px solid rgba(34,197,94,0.25)' }}
+                            onClick={() => { setCompleteModalId(ref._id); setCompleteOutcome(''); }}
                           >
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            Accept
+                            <ClipboardCheck className="w-3.5 h-3.5" />
+                            Mark Complete
+                          </button>
+                        )}
+                        {ref.status !== 'cancelled' && (
+                          <button
+                            className="btn btn-secondary btn-sm"
+                            title="Add a note to this referral"
+                            style={{ padding: '5px 10px' }}
+                            onClick={() => { setNoteModalId(ref._id); setNoteText(''); }}
+                          >
+                            <MessageSquarePlus className="w-3.5 h-3.5" />
+                            Add Note
                           </button>
                         )}
                       </div>

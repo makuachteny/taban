@@ -10,7 +10,7 @@ const ROLE_ROUTES: Record<string, { allowed: string[]; defaultDashboard: string 
       '/surveillance', '/reports', '/hospitals', '/settings',
       '/epidemic-intelligence', '/mch-analytics', '/government',
       '/vital-statistics', '/facility-assessments', '/data-quality',
-      '/dhis2-export', '/public-stats',
+      '/dhis2-export', '/public-stats', '/appointments', '/telehealth',
     ],
     defaultDashboard: '/admin',
   },
@@ -19,19 +19,20 @@ const ROLE_ROUTES: Record<string, { allowed: string[]; defaultDashboard: string 
       '/org-admin', '/dashboard', '/patients', '/consultation', '/referrals', '/messages',
       '/lab', '/pharmacy', '/immunizations', '/anc', '/births', '/deaths',
       '/surveillance', '/reports', '/hospitals', '/settings', '/my-facility',
+      '/appointments', '/telehealth',
     ],
     defaultDashboard: '/org-admin',
   },
   doctor: {
-    allowed: ['/dashboard', '/patients', '/consultation', '/referrals', '/messages', '/lab', '/pharmacy', '/immunizations', '/anc', '/births', '/deaths', '/surveillance', '/reports', '/hospitals', '/settings', '/epidemic-intelligence', '/mch-analytics', '/my-facility'],
+    allowed: ['/dashboard', '/patients', '/consultation', '/referrals', '/messages', '/lab', '/pharmacy', '/immunizations', '/anc', '/births', '/deaths', '/surveillance', '/reports', '/hospitals', '/settings', '/epidemic-intelligence', '/mch-analytics', '/my-facility', '/appointments', '/telehealth'],
     defaultDashboard: '/dashboard',
   },
   clinical_officer: {
-    allowed: ['/dashboard', '/patients', '/consultation', '/referrals', '/messages', '/lab', '/pharmacy', '/immunizations', '/anc', '/births', '/deaths', '/surveillance', '/reports', '/hospitals', '/settings', '/epidemic-intelligence', '/mch-analytics', '/my-facility'],
+    allowed: ['/dashboard', '/patients', '/consultation', '/referrals', '/messages', '/lab', '/pharmacy', '/immunizations', '/anc', '/births', '/deaths', '/surveillance', '/reports', '/hospitals', '/settings', '/epidemic-intelligence', '/mch-analytics', '/my-facility', '/appointments', '/telehealth'],
     defaultDashboard: '/dashboard',
   },
   nurse: {
-    allowed: ['/dashboard/nurse', '/patients', '/messages', '/lab', '/immunizations', '/anc', '/births', '/settings', '/my-facility'],
+    allowed: ['/dashboard/nurse', '/patients', '/messages', '/lab', '/immunizations', '/anc', '/births', '/settings', '/my-facility', '/appointments'],
     defaultDashboard: '/dashboard/nurse',
   },
   lab_tech: {
@@ -43,7 +44,7 @@ const ROLE_ROUTES: Record<string, { allowed: string[]; defaultDashboard: string 
     defaultDashboard: '/dashboard/pharmacy',
   },
   front_desk: {
-    allowed: ['/dashboard/front-desk', '/patients', '/referrals', '/messages', '/settings', '/my-facility'],
+    allowed: ['/dashboard/front-desk', '/patients', '/referrals', '/messages', '/settings', '/my-facility', '/appointments'],
     defaultDashboard: '/dashboard/front-desk',
   },
   boma_health_worker: {
@@ -51,11 +52,11 @@ const ROLE_ROUTES: Record<string, { allowed: string[]; defaultDashboard: string 
     defaultDashboard: '/dashboard/boma',
   },
   payam_supervisor: {
-    allowed: ['/dashboard/payam', '/dashboard/boma', '/patients', '/consultation', '/referrals', '/messages', '/lab', '/pharmacy', '/immunizations', '/anc', '/births', '/deaths', '/surveillance', '/reports', '/facility-assessments', '/data-quality', '/settings'],
+    allowed: ['/dashboard/payam', '/dashboard/boma', '/patients', '/consultation', '/referrals', '/messages', '/lab', '/pharmacy', '/immunizations', '/anc', '/births', '/deaths', '/surveillance', '/reports', '/facility-assessments', '/data-quality', '/settings', '/appointments'],
     defaultDashboard: '/dashboard/payam',
   },
   government: {
-    allowed: ['/government', '/hospitals', '/vital-statistics', '/immunizations', '/anc', '/births', '/deaths', '/facility-assessments', '/data-quality', '/surveillance', '/reports', '/dhis2-export', '/public-stats', '/settings', '/epidemic-intelligence', '/mch-analytics'],
+    allowed: ['/government', '/hospitals', '/vital-statistics', '/immunizations', '/anc', '/births', '/deaths', '/facility-assessments', '/data-quality', '/surveillance', '/reports', '/dhis2-export', '/public-stats', '/settings', '/epidemic-intelligence', '/mch-analytics', '/appointments'],
     defaultDashboard: '/government',
   },
 };
@@ -75,6 +76,7 @@ export async function middleware(request: NextRequest) {
   if (
     pathname === '/' ||
     pathname === '/login' ||
+    pathname.startsWith('/patient-portal') ||
     pathname === '/api/auth/login' ||
     pathname === '/api/auth/logout' ||
     pathname === '/api/auth/me' ||

@@ -17,7 +17,7 @@ import {
 
 // Chart colors
 const COLORS = {
-  malaria: '#2B6FE0',
+  malaria: '#0077D7',
   cholera: '#E52E42',
   measles: '#FCD34D',
   pneumonia: '#38BDF8',
@@ -123,7 +123,7 @@ export default function SurveillancePage() {
   const reportingWeek = 'W6 2026 (Feb 3-9)';
 
   const summaryCards = [
-    { label: 'Total Alerts', value: totalAlerts.toString(), icon: Bell, color: '#2B6FE0', bg: 'rgba(43,111,224,0.12)' },
+    { label: 'Total Alerts', value: totalAlerts.toString(), icon: Bell, color: '#0077D7', bg: 'rgba(43,111,224,0.12)' },
     { label: 'Emergencies', value: emergencies.toString(), icon: AlertTriangle, color: '#E52E42', bg: 'rgba(229,46,66,0.10)' },
     { label: 'Warnings', value: warnings.toString(), icon: Shield, color: '#FCD34D', bg: 'rgba(252,211,77,0.10)' },
     { label: 'Watch Items', value: watchItems.toString(), icon: Eye, color: '#38BDF8', bg: 'rgba(43,111,224,0.10)' },
@@ -132,7 +132,7 @@ export default function SurveillancePage() {
   return (
     <>
       <TopBar title="Disease Surveillance" />
-      <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
+      <main className="page-container page-enter">
           {/* Page Header */}
           <div className="flex items-start justify-between mb-6">
             <div>
@@ -156,17 +156,15 @@ export default function SurveillancePage() {
           </div>
 
           {/* Summary Cards */}
-          <div className="grid grid-cols-4 gap-3 mb-6">
+          <div className="kpi-grid mb-6">
             {summaryCards.map(stat => (
-              <div key={stat.label} className="card-elevated p-5 cursor-pointer" onClick={() => setSelectedDisease('all')}>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs font-medium uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>{stat.label}</p>
-                    <p className="text-3xl font-bold" style={{ color: stat.color }}>{stat.value}</p>
-                  </div>
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: stat.bg }}>
-                    <stat.icon className="w-5 h-5" style={{ color: stat.color }} />
-                  </div>
+              <div key={stat.label} className="kpi cursor-pointer" onClick={() => setSelectedDisease('all')}>
+                <div className="kpi__icon" style={{ background: stat.bg }}>
+                  <stat.icon style={{ color: stat.color }} />
+                </div>
+                <div className="kpi__body">
+                  <div className="kpi__value">{stat.value}</div>
+                  <div className="kpi__label">{stat.label}</div>
                 </div>
               </div>
             ))}
@@ -203,9 +201,9 @@ export default function SurveillancePage() {
           </div>
 
           {/* Main Grid */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Left Column - 2/3 width */}
-            <div className="col-span-2 space-y-4">
+            <div className="lg:col-span-2 space-y-4">
 
               {/* Map Placeholder */}
               <div className="card-elevated">
@@ -456,7 +454,7 @@ export default function SurveillancePage() {
                     <FileText className="w-4 h-4" style={{ color: 'var(--taban-blue)' }} />
                     IDSR Weekly Summary
                   </h3>
-                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ background: 'rgba(43,111,224,0.12)', color: '#2B6FE0' }}>
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ background: 'rgba(43,111,224,0.12)', color: '#0077D7' }}>
                     {reportingWeek}
                   </span>
                 </div>

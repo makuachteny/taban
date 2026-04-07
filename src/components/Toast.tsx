@@ -40,12 +40,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map(toast => (
           <div
             key={toast.id}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg animate-fadeInUp"
+            className="flex items-center gap-3 px-4 py-3 shadow-lg animate-fadeInUp"
             style={{
-              background: toast.type === 'success' ? 'rgba(62,207,142,0.95)' : 'rgba(229,46,66,0.95)',
+              background: toast.type === 'success' ? 'var(--color-success)' : 'var(--color-danger)',
               backdropFilter: 'blur(12px)',
               color: 'white',
-              border: `1px solid ${toast.type === 'success' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.15)'}`,
+              border: `1px solid rgba(255,255,255,0.15)`,
+              borderRadius: 'var(--card-radius)',
             }}
           >
             {toast.type === 'success' ? (

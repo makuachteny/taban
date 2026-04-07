@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
 import { useApp } from '@/lib/context';
 import { usePlatformConfig } from '@/lib/hooks/usePlatformConfig';
+import { useOrganizations } from '@/lib/hooks/useOrganizations';
 import {
   Settings, Save, Database, ToggleLeft, ToggleRight,
-  Shield, AlertTriangle, Server, HardDrive
+  Shield, AlertTriangle, Server, HardDrive, Activity,
+  RefreshCw, Clock,
 } from 'lucide-react';
 
 interface DBStats {
@@ -19,18 +21,20 @@ export default function AdminSystemPage() {
   const router = useRouter();
   const { currentUser } = useApp();
   const { config, loading, update } = usePlatformConfig();
+  const { organizations, loading: orgsLoading } = useOrganizations();
 
   const [platformName, setPlatformName] = useState('');
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [signupsEnabled, setSignupsEnabled] = useState(true);
   const [trialDays, setTrialDays] = useState(30);
   const [maxOrganizations, setMaxOrganizations] = useState(100);
-  const [defaultPrimaryColor, setDefaultPrimaryColor] = useState('#2B6FE0');
+  const [defaultPrimaryColor, setDefaultPrimaryColor] = useState('#0077D7');
   const [defaultSecondaryColor, setDefaultSecondaryColor] = useState('#0F47AF');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [dbStats, setDbStats] = useState<DBStats[]>([]);
   const [dbStatsLoading, setDbStatsLoading] = useState(true);
+  const [lastBackupTime, setLastBackupTime] = useState<string | null>(null);
 
   // Access control
   useEffect(() => {
@@ -88,6 +92,10 @@ export default function AdminSystemPage() {
           }
         }
         setDbStats(stats);
+
+        // Check last backup from localStorage
+        const backup = typeof window !== 'undefined' ? localStorage.getItem('safeguard_last_backup') : null;
+        setLastBackupTime(backup);
       } catch (err) {
         console.error('Failed to load DB stats:', err);
       } finally {
@@ -135,15 +143,111 @@ export default function AdminSystemPage() {
 
   const totalDocs = dbStats.reduce((sum, s) => sum + s.docCount, 0);
 
+  // Health indicators
+  const backupAge = lastBackupTime ? Math.floor((Date.now() - new Date(lastBackupTime).getTime()) / 3600000) : null;
+  const backupHealth = backupAge === null ? 'unknown' : backupAge < 24 ? 'healthy' : backupAge < 72 ? 'warning' : 'critical';
+
+  const healthColor = (status: string) => {
+    switch (status) {
+      case 'healthy': case 'synced': return '#10B981';
+      case 'warning': return '#F59E0B';
+      case 'critical': return '#EF4444';
+      default: return '#94A3B8';
+    }
+  };
+
+  const syncStatuses = !orgsLoading ? organizations.map(o => ({
+    org: o.name,
+    status: o.isActive ? 'synced' as const : 'inactive' as const,
+  })) : [];
+
+  const formatTimestamp = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
   return (
     <>
       <TopBar title="System Configuration" />
-      <main className="flex-1 p-4 sm:p-5 overflow-auto page-enter">
+      <main className="page-container page-enter">
 
-        <div className="grid grid-cols-3 gap-6">
+        {/* SYSTEM HEALTH DASHBOARD */}
+        <div className="rounded-2xl p-5 mb-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+          <div className="flex items-center gap-2 mb-4">
+            <Activity className="w-5 h-5" style={{ color: '#10B981' }} />
+            <h2 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>System Health</h2>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            {/* Database */}
+            <div className="p-3 rounded-xl" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Database</span>
+                <span className="w-2 h-2 rounded-full" style={{ background: totalDocs > 0 ? '#10B981' : '#94A3B8' }} />
+              </div>
+              <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{dbStatsLoading ? '...' : totalDocs.toLocaleString()}</p>
+              <p className="text-[9px]" style={{ color: 'var(--text-muted)' }}>{dbStats.length} databases</p>
+            </div>
+
+            {/* Sync */}
+            <div className="p-3 rounded-xl" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Org Sync</span>
+                <RefreshCw className="w-3.5 h-3.5" style={{ color: '#10B981' }} />
+              </div>
+              <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
+                {syncStatuses.filter(s => s.status === 'synced').length}/{syncStatuses.length}
+              </p>
+              <p className="text-[9px]" style={{ color: 'var(--text-muted)' }}>Active orgs synced</p>
+            </div>
+
+            {/* Backup */}
+            <div className="p-3 rounded-xl" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Backup</span>
+                <span className="w-2 h-2 rounded-full" style={{ background: healthColor(backupHealth) }} />
+              </div>
+              <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+                {lastBackupTime ? (
+                  <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatTimestamp(lastBackupTime)}</span>
+                ) : 'No backup'}
+              </p>
+              <p className="text-[9px]" style={{ color: healthColor(backupHealth) }}>
+                {backupHealth === 'healthy' ? 'Recent' : backupHealth === 'warning' ? '>24h ago' : backupHealth === 'critical' ? '>72h ago' : 'Not set'}
+              </p>
+            </div>
+
+            {/* Platform */}
+            <div className="p-3 rounded-xl" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Platform</span>
+                <span className="w-2 h-2 rounded-full" style={{ background: maintenanceMode ? '#F59E0B' : '#10B981' }} />
+              </div>
+              <p className="text-lg font-bold" style={{ color: maintenanceMode ? '#F59E0B' : '#10B981' }}>
+                {maintenanceMode ? 'Maintenance' : 'Operational'}
+              </p>
+              <p className="text-[9px]" style={{ color: 'var(--text-muted)' }}>
+                {maintenanceMode ? 'Admin-only access' : 'All systems go'}
+              </p>
+            </div>
+          </div>
+
+          {/* Org Sync List */}
+          {syncStatuses.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {syncStatuses.map(s => (
+                <span key={s.org} className="flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.status === 'synced' ? '#10B981' : '#EF4444' }} />
+                  <span style={{ color: 'var(--text-secondary)' }}>{s.org}</span>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* Left: Configuration Form */}
-          <div className="col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-6">
 
             {/* Platform Settings */}
             <div className="rounded-2xl p-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>

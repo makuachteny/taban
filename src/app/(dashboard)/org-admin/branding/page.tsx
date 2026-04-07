@@ -21,7 +21,7 @@ export default function OrgBrandingPage() {
   const [orgName, setOrgName] = useState('');
   const [primaryColor, setPrimaryColor] = useState('#7C3AED');
   const [secondaryColor, setSecondaryColor] = useState('#0F47AF');
-  const [accentColor, setAccentColor] = useState('#2B6FE0');
+  const [accentColor, setAccentColor] = useState('#0077D7');
   const [logoUrl, setLogoUrl] = useState<string | undefined>(undefined);
 
   const brandColor = primaryColor || '#7C3AED';
@@ -37,7 +37,7 @@ export default function OrgBrandingPage() {
           setOrgName(o.name);
           setPrimaryColor(o.primaryColor || '#7C3AED');
           setSecondaryColor(o.secondaryColor || '#0F47AF');
-          setAccentColor(o.accentColor || '#2B6FE0');
+          setAccentColor(o.accentColor || '#0077D7');
           setLogoUrl(o.logoUrl);
         }
       } catch (err) {
@@ -118,7 +118,7 @@ export default function OrgBrandingPage() {
     setOrgName(org.name);
     setPrimaryColor(org.primaryColor || '#7C3AED');
     setSecondaryColor(org.secondaryColor || '#0F47AF');
-    setAccentColor(org.accentColor || '#2B6FE0');
+    setAccentColor(org.accentColor || '#0077D7');
     setLogoUrl(org.logoUrl);
   };
 
@@ -148,10 +148,10 @@ export default function OrgBrandingPage() {
     <div className="flex-1 flex flex-col">
       <TopBar title="Branding" />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-5 page-enter">
+      <div className="page-container page-enter">
         {/* Banners */}
         {success && (
-          <div className="mb-4 p-3 rounded-lg text-sm font-medium" style={{ background: 'rgba(43,111,224,0.1)', color: '#2B6FE0', border: '1px solid rgba(43,111,224,0.2)' }}>
+          <div className="mb-4 p-3 rounded-lg text-sm font-medium" style={{ background: 'rgba(43,111,224,0.1)', color: '#0077D7', border: '1px solid rgba(43,111,224,0.2)' }}>
             {success}
           </div>
         )}
@@ -421,7 +421,7 @@ export default function OrgBrandingPage() {
                     {/* Content preview */}
                     <div className="flex-1 p-3 space-y-2">
                       {/* Mini stat cards */}
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         <div className="p-2 rounded-lg" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
                           <div className="w-5 h-5 rounded mb-1 flex items-center justify-center" style={{ background: `${primaryColor}20` }}>
                             <Users className="w-3 h-3" style={{ color: primaryColor }} />

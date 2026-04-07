@@ -1,5 +1,5 @@
-import { patientsDB } from '../db';
-import type { PatientDoc } from '../db-types';
+import { patientsDB, hospitalsDB } from '../db';
+import type { PatientDoc, HospitalDoc } from '../db-types';
 import type { DataScope } from './data-scope';
 import { filterByScope } from './data-scope';
 import { v4 as uuidv4 } from 'uuid';
@@ -34,8 +34,8 @@ export async function getPatientById(id: string): Promise<PatientDoc | null> {
   }
 }
 
-export async function searchPatients(query: string): Promise<PatientDoc[]> {
-  const all = await getAllPatients();
+export async function searchPatients(query: string, scope?: DataScope): Promise<PatientDoc[]> {
+  const all = await getAllPatients(scope);
   const q = query.toLowerCase();
   return all.filter(p =>
     `${p.firstName} ${p.middleName || ''} ${p.surname}`.toLowerCase().includes(q) ||
@@ -62,6 +62,17 @@ function getHospitalPrefix(hospitalId?: string): string {
   return 'TAB';
 }
 
+async function inferOrgIdFromHospital(hospitalId?: string): Promise<string | undefined> {
+  if (!hospitalId) return undefined;
+  try {
+    const hdb = hospitalsDB();
+    const hosp = await hdb.get(hospitalId) as HospitalDoc;
+    return hosp.orgId;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function createPatient(data: Omit<PatientDoc, '_id' | '_rev' | 'type' | 'createdAt' | 'updatedAt'>): Promise<PatientDoc> {
   const errors = validatePatientData(data as unknown as Record<string, unknown>);
   if (Object.keys(errors).length > 0) {
@@ -72,10 +83,12 @@ export async function createPatient(data: Omit<PatientDoc, '_id' | '_rev' | 'typ
   const id = `pat-${uuidv4().slice(0, 8)}`;
   const count = (await db.allDocs()).total_rows;
   const prefix = getHospitalPrefix(data.registrationHospital);
+  const orgId = data.orgId || await inferOrgIdFromHospital(data.registrationHospital);
   const doc: PatientDoc = {
     _id: id,
     type: 'patient',
     ...data,
+    orgId,
     hospitalNumber: data.hospitalNumber || `${prefix}-${String(count + 1).padStart(6, '0')}`,
     createdAt: now,
     updatedAt: now,
@@ -89,9 +102,11 @@ export async function createPatient(data: Omit<PatientDoc, '_id' | '_rev' | 'typ
 export async function updatePatient(id: string, data: Partial<PatientDoc>): Promise<PatientDoc | null> {
   const db = patientsDB();
   const existing = await db.get(id) as PatientDoc;
+  const inferredOrg = data.orgId || existing.orgId || await inferOrgIdFromHospital(data.registrationHospital || existing.registrationHospital);
   const updated = {
     ...existing,
     ...data,
+    orgId: inferredOrg,
     _id: existing._id,
     _rev: existing._rev,
     updatedAt: new Date().toISOString(),
