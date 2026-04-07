@@ -34,7 +34,7 @@ type OrgFormData = {
 
 const emptyForm: OrgFormData = {
   name: '', slug: '', orgType: 'public', contactEmail: '', country: 'South Sudan',
-  primaryColor: '#0077D7', secondaryColor: '#0F47AF', accentColor: '#F59E0B',
+  primaryColor: 'var(--accent-primary)', secondaryColor: '#0F47AF', accentColor: '#F59E0B',
   subscriptionPlan: 'professional', subscriptionStatus: 'trial',
   maxUsers: 50, maxHospitals: 10,
   epidemicIntelligence: true, mchAnalytics: true, dhis2Export: false,

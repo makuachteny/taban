@@ -21,7 +21,7 @@ import {
 import { evaluatePatient, type PatientInput } from '@/lib/ai/diagnosis-engine';
 import type { AIEvaluation } from '@/lib/db-types';
 
-const ACCENT = '#0077D7';
+const ACCENT = 'var(--accent-primary)';
 
 // Quick Visit Templates
 const VISIT_TEMPLATES = [
@@ -369,7 +369,7 @@ export default function BomaDashboardPage() {
         {/* KPI CARDS */}
         <div className="kpi-grid mb-3">
           {[
-            { label: 'Households', value: stats?.uniqueHouseholds.toString() || '40', icon: Home, color: '#0077D7', bg: 'rgba(0,119,215,0.12)' },
+            { label: 'Households', value: stats?.uniqueHouseholds.toString() || '40', icon: Home, color: 'var(--accent-primary)', bg: 'rgba(0,119,215,0.12)' },
             { label: 'Seen Today', value: todaysVisits.length.toString(), icon: Users, color: '#3B82F6', bg: 'rgba(59,130,246,0.12)' },
             { label: 'Follow-Ups', value: pendingFollowUps.length.toString(), icon: Clock, color: '#F59E0B', bg: 'rgba(245,158,11,0.12)' },
             { label: 'Referrals', value: todayReferred.toString(), icon: ArrowRight, color: '#EF4444', bg: 'rgba(239,68,68,0.12)' },

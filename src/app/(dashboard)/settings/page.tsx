@@ -250,7 +250,7 @@ export default function SettingsPage() {
     backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center',
   };
   const btnPrimary: React.CSSProperties = {
-    background: '#0077D7', color: 'white',
+    background: 'var(--accent-primary)', color: 'white',
     border: 'none', borderRadius: '10px', padding: '10px 20px',
     fontSize: '14px', fontWeight: 600, cursor: 'pointer',
     display: 'flex', alignItems: 'center', gap: '8px',
@@ -363,7 +363,7 @@ export default function SettingsPage() {
                         <td className="px-4 py-3">
                           <span className="text-xs font-semibold px-2 py-1 rounded-full" style={{
                             background: u.role === 'government' ? 'rgba(0,119,215,0.12)' : 'rgba(0,119,215,0.12)',
-                            color: u.role === 'government' ? '#0077D7' : '#0077D7',
+                            color: u.role === 'government' ? '#0077D7' : 'var(--accent-primary)',
                           }}>{roleLabel(u.role)}</span>
                         </td>
                         <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-secondary)' }}>
@@ -390,7 +390,7 @@ export default function SettingsPage() {
                             </button>
                             <button onClick={() => handleToggleActive(u._id, u.isActive)} title={u.isActive ? 'Deactivate' : 'Activate'}
                               className="p-1.5 rounded-lg transition-colors" style={{
-                                color: u.isActive ? '#E52E42' : '#0077D7',
+                                color: u.isActive ? '#E52E42' : 'var(--accent-primary)',
                               }}>
                               {u.isActive ? <UserX className="w-3.5 h-3.5" /> : <UserCheck className="w-3.5 h-3.5" />}
                             </button>
@@ -455,7 +455,7 @@ export default function SettingsPage() {
                         <td className="px-4 py-3">
                           <span className="text-xs font-semibold px-2 py-1 rounded-full" style={{
                             background: h.facilityType === 'national_referral' ? 'rgba(0,119,215,0.12)' : h.facilityType === 'state_hospital' ? 'rgba(0,119,215,0.12)' : 'rgba(0,119,215,0.12)',
-                            color: h.facilityType === 'national_referral' ? '#0077D7' : h.facilityType === 'state_hospital' ? '#0077D7' : '#0077D7',
+                            color: h.facilityType === 'national_referral' ? '#0077D7' : h.facilityType === 'state_hospital' ? '#0077D7' : 'var(--accent-primary)',
                           }}>
                             {FACILITY_TYPES.find(f => f.value === h.facilityType)?.label || h.facilityType}
                           </span>
@@ -535,7 +535,7 @@ export default function SettingsPage() {
                     </button>
                   </div>
                   {showPassword && userForm.password && (
-                    <div className="mt-2 p-3 rounded-lg" style={{ background: 'rgba(0,119,215,0.08)', border: '1px solid rgba(0,119,215,0.15)' }}>
+                    <div className="mt-2 p-3 rounded-lg" style={{ background: 'var(--accent-light)', border: '1px solid var(--accent-border)' }}>
                       <p className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Share this password with the staff member:</p>
                       <p className="text-sm font-mono font-bold mt-1" style={{ color: 'var(--text-primary)', userSelect: 'all' }}>{userForm.password}</p>
                     </div>
@@ -637,7 +637,7 @@ export default function SettingsPage() {
             <div className="space-y-5">
               {/* Basic Info */}
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#0077D7' }}>Basic Information</h4>
+                <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--accent-primary)' }}>Basic Information</h4>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="sm:col-span-2">
                     <label style={labelStyle}>Hospital Name</label>
@@ -673,7 +673,7 @@ export default function SettingsPage() {
 
               {/* Beds */}
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#0077D7' }}>Bed Capacity</h4>
+                <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--accent-primary)' }}>Bed Capacity</h4>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
                     { key: 'totalBeds', label: 'Total Beds' },
@@ -694,7 +694,7 @@ export default function SettingsPage() {
 
               {/* Staff */}
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#0077D7' }}>Staff Numbers</h4>
+                <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--accent-primary)' }}>Staff Numbers</h4>
                 <div className="grid grid-cols-5 gap-3">
                   {[
                     { key: 'doctors', label: 'Doctors' },
@@ -716,7 +716,7 @@ export default function SettingsPage() {
 
               {/* Infrastructure */}
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#0077D7' }}>Infrastructure</h4>
+                <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--accent-primary)' }}>Infrastructure</h4>
                 <div className="grid grid-cols-2 gap-x-6 gap-y-3">
                   {[
                     { key: 'hasElectricity', label: 'Has Electricity' },
@@ -757,7 +757,7 @@ export default function SettingsPage() {
 
               {/* Services */}
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#0077D7' }}>Services Offered</h4>
+                <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--accent-primary)' }}>Services Offered</h4>
                 <div className="flex flex-wrap gap-2">
                   {ALL_SERVICES.map(svc => (
                     <button key={svc} type="button" onClick={() => toggleService(svc)}
@@ -776,7 +776,7 @@ export default function SettingsPage() {
 
               {/* Coordinates */}
               <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: '#0077D7' }}>Location Coordinates</h4>
+                <h4 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--accent-primary)' }}>Location Coordinates</h4>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label style={labelStyle}>Latitude</label>

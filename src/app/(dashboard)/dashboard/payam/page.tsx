@@ -258,7 +258,7 @@ export default function PayamSupervisorDashboard() {
             <p className="text-[11px] font-medium mb-2" style={{ color: 'var(--text-muted)' }}>Total Admitted Patients</p>
             <div className="flex items-end gap-2 mb-2">
               <span className="text-2xl font-bold leading-none" style={{ color: 'var(--text-primary)' }}>{patients.length || 0}</span>
-              <span className="text-[10px] font-semibold flex items-center gap-0.5 mb-0.5" style={{ color: '#0077D7' }}>
+              <span className="text-[10px] font-semibold flex items-center gap-0.5 mb-0.5" style={{ color: 'var(--accent-primary)' }}>
                 <TrendingUp className="w-3 h-3" /> 2%
               </span>
             </div>
@@ -308,7 +308,7 @@ export default function PayamSupervisorDashboard() {
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <UserCheck className="w-3.5 h-3.5" style={{ color: '#0077D7' }} />
+                  <UserCheck className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
                   <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>Nursing</span>
                 </div>
                 <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{totalNurses}</span>
@@ -389,9 +389,9 @@ export default function PayamSupervisorDashboard() {
                 ))}
               </div>
             </div>
-            <div className="mt-2 p-1.5 rounded-lg text-center" style={{ background: 'rgba(43,111,224,0.08)', border: '1px solid rgba(43,111,224,0.15)' }}>
+            <div className="mt-2 p-1.5 rounded-lg text-center" style={{ background: 'var(--accent-light)', border: '1px solid var(--accent-border)' }}>
               <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Patient Satisfaction Rate</span>
-              <span className="text-xl font-bold ml-2" style={{ color: '#0077D7' }}>{satisfactionRate}%</span>
+              <span className="text-xl font-bold ml-2" style={{ color: 'var(--accent-primary)' }}>{satisfactionRate}%</span>
             </div>
           </div>
         </div>
@@ -407,7 +407,7 @@ export default function PayamSupervisorDashboard() {
                   {incomingBomaTransfers.length}
                 </span>
               </div>
-              <button onClick={() => router.push('/referrals')} className="text-[11px] font-medium flex items-center gap-0.5" style={{ color: '#0077D7' }}>
+              <button onClick={() => router.push('/referrals')} className="text-[11px] font-medium flex items-center gap-0.5" style={{ color: 'var(--accent-primary)' }}>
                 All Referrals <ChevronRight className="w-3 h-3" />
               </button>
             </div>
@@ -475,7 +475,7 @@ export default function PayamSupervisorDashboard() {
                 <span className="w-2 h-2 rounded-full" style={{ background: '#E52E42' }} />
                 <span style={{ color: 'var(--text-muted)' }}>Critical</span>
               </span>
-              <button onClick={() => router.push('/patients')} className="text-[11px] font-medium flex items-center gap-0.5" style={{ color: '#0077D7' }}>
+              <button onClick={() => router.push('/patients')} className="text-[11px] font-medium flex items-center gap-0.5" style={{ color: 'var(--accent-primary)' }}>
                 Details <ChevronRight className="w-3 h-3" />
               </button>
             </div>
@@ -530,7 +530,7 @@ export default function PayamSupervisorDashboard() {
           <div className="glass-section">
             <div className="glass-section-header">
               <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Disease Distribution</span>
-              <button onClick={() => router.push('/surveillance')} className="text-[10px] font-medium flex items-center gap-0.5" style={{ color: '#0077D7' }}>
+              <button onClick={() => router.push('/surveillance')} className="text-[10px] font-medium flex items-center gap-0.5" style={{ color: 'var(--accent-primary)' }}>
                 Details <ChevronRight className="w-3 h-3" />
               </button>
             </div>
@@ -626,8 +626,8 @@ export default function PayamSupervisorDashboard() {
           <p className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>Quick Actions</p>
           <div className="grid grid-cols-3 sm:grid-cols-7 gap-2">
             {[
-              { label: 'New Patient', icon: Users, href: '/patients/new', color: '#0077D7' },
-              { label: 'Consultation', icon: FileText, href: '/consultation', color: '#0077D7' },
+              { label: 'New Patient', icon: Users, href: '/patients/new', color: 'var(--accent-primary)' },
+              { label: 'Consultation', icon: FileText, href: '/consultation', color: 'var(--accent-primary)' },
               { label: 'Referral', icon: ArrowRightLeft, href: '/referrals', color: ACCENT },
               { label: 'Immunization', icon: Syringe, href: '/immunizations', color: '#A855F7' },
               { label: 'ANC Visit', icon: HeartPulse, href: '/anc', color: '#EC4899' },

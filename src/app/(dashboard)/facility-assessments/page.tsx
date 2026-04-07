@@ -31,7 +31,7 @@ export default function FacilityAssessmentsPage() {
             {/* Summary cards */}
             <div className="kpi-grid mb-6">
               {[
-                { label: 'Facilities Assessed', value: summary.facilitiesAssessed, icon: Building2, color: '#0077D7', bg: 'rgba(43,111,224,0.12)' },
+                { label: 'Facilities Assessed', value: summary.facilitiesAssessed, icon: Building2, color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)' },
                 { label: 'Avg Overall Score', value: `${summary.avgOverallScore}%`, icon: ClipboardCheck, color: scoreColor(summary.avgOverallScore), bg: scoreBg(summary.avgOverallScore) },
                 { label: 'DHIS2 Adoption', value: `${summary.withDHIS2}/${summary.facilitiesAssessed}`, icon: Wifi, color: scoreColor(summary.facilitiesAssessed ? (summary.withDHIS2 / summary.facilitiesAssessed * 100) : 0), bg: scoreBg(summary.facilitiesAssessed ? (summary.withDHIS2 / summary.facilitiesAssessed * 100) : 0) },
                 { label: 'Avg Reporting Completeness', value: `${summary.avgReportingCompleteness}%`, icon: Activity, color: scoreColor(summary.avgReportingCompleteness), bg: scoreBg(summary.avgReportingCompleteness) },
@@ -100,7 +100,7 @@ export default function FacilityAssessmentsPage() {
             <tbody>
               {(assessments || []).map(a => (
                 <tr key={a._id} className="cursor-pointer hover:bg-[var(--table-row-hover)]" onClick={() => setExpandedAssessment(expandedAssessment === a._id ? null : a._id)}>
-                  <td className="font-medium text-sm" style={{ color: '#0077D7' }}>{a.facilityName.replace(' Hospital', '').replace(' Teaching', '')}</td>
+                  <td className="font-medium text-sm" style={{ color: 'var(--accent-primary)' }}>{a.facilityName.replace(' Hospital', '').replace(' Teaching', '')}</td>
                   <td className="text-xs">{a.state}</td>
                   <td><span className="px-2 py-0.5 rounded-full text-xs font-bold" style={{ background: scoreBg(a.overallScore), color: scoreColor(a.overallScore) }}>{a.overallScore}%</span></td>
                   <td className="text-xs" style={{ color: scoreColor(a.generalEquipmentScore) }}>{a.generalEquipmentScore}%</td>
@@ -111,7 +111,7 @@ export default function FacilityAssessmentsPage() {
                   <td className="text-xs" style={{ color: scoreColor(a.dataQualityScore) }}>{a.dataQualityScore}%</td>
                   <td>{a.hasDHIS2Reporting ? <span className="badge badge-normal text-[10px]">Yes</span> : <span className="badge badge-warning text-[10px]">No</span>}</td>
                   <td className="text-sm text-center">{a.hisStaffCount} ({a.hisStaffTrained})</td>
-                  <td>{a.hasCleanWater ? <Droplets className="w-3.5 h-3.5" style={{ color: '#0077D7' }} /> : <span className="text-xs" style={{ color: '#E52E42' }}>No</span>}</td>
+                  <td>{a.hasCleanWater ? <Droplets className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} /> : <span className="text-xs" style={{ color: '#E52E42' }}>No</span>}</td>
                   <td className="text-xs font-mono">
                     <div className="flex items-center gap-1">
                       {a.assessmentDate}
@@ -149,7 +149,7 @@ export default function FacilityAssessmentsPage() {
                           ))}
                         </div>
                         {a.recommendations && (
-                          <div className="p-3 rounded-lg" style={{ background: 'rgba(43,111,224,0.06)', border: '1px solid rgba(43,111,224,0.15)' }}>
+                          <div className="p-3 rounded-lg" style={{ background: 'rgba(43,111,224,0.06)', border: '1px solid var(--accent-border)' }}>
                             <p className="text-xs font-semibold mb-1" style={{ color: 'var(--text-muted)' }}>Recommendations</p>
                             <p className="text-xs">{a.recommendations}</p>
                           </div>

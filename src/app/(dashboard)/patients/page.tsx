@@ -119,7 +119,7 @@ export default function PatientsPage() {
                         <td className="col-patient">
                           <div className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                              style={{ background: '#0077D7' }}>
+                              style={{ background: 'var(--accent-primary)' }}>
                               {(patient.firstName || '?')[0]}{(patient.surname || '?')[0]}
                             </div>
                             <div className="min-w-0">
@@ -128,7 +128,7 @@ export default function PatientsPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="col-hospital"><span className="font-mono text-xs whitespace-nowrap" style={{ color: '#0077D7' }}>{patient.hospitalNumber}</span></td>
+                        <td className="col-hospital"><span className="font-mono text-xs whitespace-nowrap" style={{ color: 'var(--accent-primary)' }}>{patient.hospitalNumber}</span></td>
                         <td className="col-age whitespace-nowrap">{age}y · {patient.gender[0]}</td>
                         <td className="col-state text-xs">{patient.state}</td>
                         <td className="col-phone hide-mobile font-mono text-xs">{patient.phone}</td>

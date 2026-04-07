@@ -322,7 +322,7 @@ export default function MCHAnalyticsPage() {
               </div>
               <div className="p-4 space-y-3">
                 {[
-                  { label: 'Total Births', value: birthOutcomes.totalBirths, color: '#0077D7' },
+                  { label: 'Total Births', value: birthOutcomes.totalBirths, color: 'var(--accent-primary)' },
                   { label: 'Facility Delivery', value: `${birthOutcomes.facilityDeliveryRate}%`, color: scoreColor(birthOutcomes.facilityDeliveryRate, 50) },
                   { label: 'Caesarean Rate', value: `${birthOutcomes.caesareanRate}%`, color: birthOutcomes.caesareanRate > 5 && birthOutcomes.caesareanRate < 15 ? '#4ADE80' : '#FBBF24' },
                   { label: 'Low Birth Weight', value: `${birthOutcomes.lowBirthWeightRate}%`, color: birthOutcomes.lowBirthWeightRate > 15 ? '#F87171' : '#FBBF24' },
@@ -428,7 +428,7 @@ export default function MCHAnalyticsPage() {
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {[
-                { label: 'Total Births', value: birthOutcomes.totalBirths, color: '#0077D7' },
+                { label: 'Total Births', value: birthOutcomes.totalBirths, color: 'var(--accent-primary)' },
                 { label: 'Facility Delivery', value: `${birthOutcomes.facilityDeliveryRate}%`, color: scoreColor(birthOutcomes.facilityDeliveryRate, 50) },
                 { label: 'Caesarean Rate', value: `${birthOutcomes.caesareanRate}%`, color: '#A855F7' },
                 { label: 'Low Birth Weight', value: `${birthOutcomes.lowBirthWeightRate}%`, sub: `${birthOutcomes.lowBirthWeight} babies`, color: birthOutcomes.lowBirthWeightRate > 15 ? '#F87171' : '#FBBF24' },
@@ -445,7 +445,7 @@ export default function MCHAnalyticsPage() {
               {/* Delivery Type */}
               <div className="card-elevated p-4">
                 <h3 className="font-semibold text-sm mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-                  <Baby className="w-4 h-4" style={{ color: '#0077D7' }} />
+                  <Baby className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
                   By Delivery Type
                 </h3>
                 <div className="space-y-3">
@@ -470,7 +470,7 @@ export default function MCHAnalyticsPage() {
               {/* Birth Attendant */}
               <div className="card-elevated p-4">
                 <h3 className="font-semibold text-sm mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-                  <Users className="w-4 h-4" style={{ color: '#0077D7' }} />
+                  <Users className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
                   By Birth Attendant
                 </h3>
                 <div className="space-y-3">
@@ -849,7 +849,7 @@ export default function MCHAnalyticsPage() {
               </div>
               <div className="card-elevated p-4">
                 <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Total Tracked</p>
-                <p className="text-2xl font-bold" style={{ color: '#0077D7' }}>
+                <p className="text-2xl font-bold" style={{ color: 'var(--accent-primary)' }}>
                   {highRiskPregnancies.length}
                 </p>
               </div>

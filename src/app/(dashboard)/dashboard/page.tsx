@@ -100,7 +100,7 @@ const SOAP_TEMPLATES: SOAPTemplate[] = [
     id: 'general',
     name: 'General Consultation',
     icon: 'clipboard',
-    color: '#0077D7',
+    color: 'var(--accent-primary)',
     subjective: '',
     objective: 'Temp: ___ C, HR: ___ bpm, BP: ___/___ mmHg, RR: ___/min, SpO2: ___%.\nGeneral appearance: \nHEENT: \nChest/Lungs: \nCardiovascular: \nAbdomen: \nExtremities: \nNeurological: ',
     assessment: '',
@@ -594,11 +594,11 @@ export default function DashboardPage() {
                 {overdueImmunizations.length > 0 && (
                   <div
                     className="flex items-center gap-3 p-2.5 rounded-xl"
-                    style={{ background: 'rgba(43,111,224,0.06)', border: '1px solid rgba(43,111,224,0.15)' }}
+                    style={{ background: 'rgba(43,111,224,0.06)', border: '1px solid var(--accent-border)' }}
                   >
-                    <Syringe className="w-4 h-4 flex-shrink-0" style={{ color: '#0077D7' }} />
+                    <Syringe className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--accent-primary)' }} />
                     <div className="flex-1 min-w-0">
-                      <span className="text-[11px] font-semibold" style={{ color: '#0077D7' }}>INFO</span>
+                      <span className="text-[11px] font-semibold" style={{ color: 'var(--accent-primary)' }}>INFO</span>
                       <p className="text-[12px]" style={{ color: 'var(--text-primary)' }}>
                         {overdueImmunizations.length} patient(s) with overdue immunizations
                       </p>
@@ -606,7 +606,7 @@ export default function DashboardPage() {
                     <button
                       onClick={(e) => { e.stopPropagation(); router.push('/immunizations'); }}
                       className="text-[10px] font-medium flex-shrink-0 px-2 py-1 rounded-lg"
-                      style={{ background: 'rgba(43,111,224,0.1)', color: '#0077D7' }}
+                      style={{ background: 'var(--accent-light)', color: 'var(--accent-primary)' }}
                     >
                       View
                     </button>
@@ -741,7 +741,7 @@ export default function DashboardPage() {
                 <span className="w-2 h-2 rounded-full" style={{ background: '#E52E42' }} />
                 <span style={{ color: 'var(--text-muted)' }}>Critical</span>
               </span>
-              <button onClick={() => router.push('/patients')} className="text-[11px] font-medium flex items-center gap-0.5" style={{ color: '#0077D7' }}>
+              <button onClick={() => router.push('/patients')} className="text-[11px] font-medium flex items-center gap-0.5" style={{ color: 'var(--accent-primary)' }}>
                 Details <ChevronRight className="w-3 h-3" />
               </button>
             </div>
@@ -796,7 +796,7 @@ export default function DashboardPage() {
           <div className="glass-section">
             <div className="glass-section-header">
               <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Disease Distribution</span>
-              <button onClick={() => router.push('/surveillance')} className="text-[10px] font-medium flex items-center gap-0.5" style={{ color: '#0077D7' }}>
+              <button onClick={() => router.push('/surveillance')} className="text-[10px] font-medium flex items-center gap-0.5" style={{ color: 'var(--accent-primary)' }}>
                 Details <ChevronRight className="w-3 h-3" />
               </button>
             </div>
@@ -849,7 +849,7 @@ export default function DashboardPage() {
                 <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Bed Occupancy</span>
                 <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>({bedOccupancy}/{bedTotal})</span>
               </div>
-              <button onClick={() => router.push('/hospitals')} className="text-[10px] font-medium flex items-center gap-0.5" style={{ color: '#0077D7' }}>
+              <button onClick={() => router.push('/hospitals')} className="text-[10px] font-medium flex items-center gap-0.5" style={{ color: 'var(--accent-primary)' }}>
                 Details <ChevronRight className="w-3 h-3" />
               </button>
             </div>
@@ -910,7 +910,7 @@ export default function DashboardPage() {
             <p className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>Quick Actions</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[
-                { label: 'New Patient', icon: Users, action: () => router.push('/patients/new'), color: '#0077D7' },
+                { label: 'New Patient', icon: Users, action: () => router.push('/patients/new'), color: 'var(--accent-primary)' },
                 { label: 'New Consultation', icon: ClipboardList, action: () => setSoapModalOpen(true), color: '#3ECF8E' },
                 { label: 'Quick Prescribe', icon: Pill, action: () => setPrescribeModalOpen(true), color: '#A855F7' },
                 { label: 'Quick Lab Order', icon: TestTube, action: () => setLabModalOpen(true), color: '#F59E0B' },
@@ -936,10 +936,10 @@ export default function DashboardPage() {
           <div className="card-elevated p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Globe className="w-4 h-4" style={{ color: '#0077D7' }} />
+                <Globe className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
                 <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>DHIS2 Status</p>
               </div>
-              <button onClick={() => router.push('/dhis2-export')} className="text-[10px] font-medium flex items-center gap-0.5" style={{ color: '#0077D7' }}>
+              <button onClick={() => router.push('/dhis2-export')} className="text-[10px] font-medium flex items-center gap-0.5" style={{ color: 'var(--accent-primary)' }}>
                 Open <ArrowUpRight className="w-3 h-3" />
               </button>
             </div>
@@ -953,7 +953,7 @@ export default function DashboardPage() {
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Data Sync</span>
-                <span className="text-xs font-bold" style={{ color: '#0077D7' }}>8/10 Elements</span>
+                <span className="text-xs font-bold" style={{ color: 'var(--accent-primary)' }}>8/10 Elements</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Last Sync</span>
@@ -1053,7 +1053,7 @@ export default function DashboardPage() {
             <button
               onClick={handleSoapSave}
               className="px-4 py-2 rounded-xl text-[12px] font-semibold text-white"
-              style={{ background: '#0077D7' }}
+              style={{ background: 'var(--accent-primary)' }}
             >
               Save SOAP Note
             </button>
@@ -1136,7 +1136,7 @@ export default function DashboardPage() {
                         <div className="flex-1">
                           <p className="text-[12px] font-semibold" style={{ color: 'var(--text-primary)' }}>{item.medication}</p>
                           <div className="flex flex-wrap gap-2 mt-1">
-                            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(43,111,224,0.08)', color: '#0077D7' }}>{item.dose}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'var(--accent-light)', color: 'var(--accent-primary)' }}>{item.dose}</span>
                             <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(62,207,142,0.08)', color: '#3ECF8E' }}>{item.route}</span>
                             <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(168,85,247,0.08)', color: '#A855F7' }}>{item.frequency}</span>
                             <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(245,158,11,0.08)', color: '#F59E0B' }}>{item.duration}</span>
@@ -1235,7 +1235,7 @@ export default function DashboardPage() {
                           <p className="text-[12px] font-medium" style={{ color: 'var(--text-primary)' }}>{test.name}</p>
                           <div className="flex items-center gap-2">
                             <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>{test.specimen}</span>
-                            <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(43,111,224,0.06)', color: '#0077D7' }}>
+                            <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(43,111,224,0.06)', color: 'var(--accent-primary)' }}>
                               {test.category}
                             </span>
                           </div>
@@ -1249,7 +1249,7 @@ export default function DashboardPage() {
               {/* Selected summary */}
               {selectedLabTests.size > 0 && (
                 <div className="mb-4 p-3 rounded-xl" style={{ background: 'rgba(43,111,224,0.04)', border: '1px solid rgba(43,111,224,0.12)' }}>
-                  <p className="text-[11px] font-medium mb-1" style={{ color: '#0077D7' }}>
+                  <p className="text-[11px] font-medium mb-1" style={{ color: 'var(--accent-primary)' }}>
                     {selectedLabTests.size} test(s) selected:
                   </p>
                   <p className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>

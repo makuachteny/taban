@@ -76,7 +76,7 @@ export default function NutritionDashboard() {
             { label: 'MAM Cases', value: stats.mam, icon: TrendingDown, color: '#D97706' },
             { label: 'At Risk', value: stats.atRisk, icon: Activity, color: '#F59E0B' },
             { label: 'Normal', value: stats.normal, icon: CheckCircle2, color: '#059669' },
-            { label: 'Children <5', value: stats.children, icon: Baby, color: '#0077D7' },
+            { label: 'Children <5', value: stats.children, icon: Baby, color: 'var(--accent-primary)' },
             { label: 'ANC Mothers', value: stats.anc, icon: HeartPulse, color: '#EC4899' },
             { label: 'Supply Alerts', value: stats.criticalSupply, icon: Droplets, color: stats.criticalSupply > 0 ? '#DC2626' : '#059669' },
           ].map(k => (

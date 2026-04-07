@@ -17,7 +17,7 @@ import {
 
 // Chart colors
 const COLORS = {
-  malaria: '#0077D7',
+  malaria: 'var(--accent-primary)',
   cholera: '#E52E42',
   measles: '#FCD34D',
   pneumonia: '#38BDF8',
@@ -123,7 +123,7 @@ export default function SurveillancePage() {
   const reportingWeek = 'W6 2026 (Feb 3-9)';
 
   const summaryCards = [
-    { label: 'Total Alerts', value: totalAlerts.toString(), icon: Bell, color: '#0077D7', bg: 'rgba(43,111,224,0.12)' },
+    { label: 'Total Alerts', value: totalAlerts.toString(), icon: Bell, color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)' },
     { label: 'Emergencies', value: emergencies.toString(), icon: AlertTriangle, color: '#E52E42', bg: 'rgba(229,46,66,0.10)' },
     { label: 'Warnings', value: warnings.toString(), icon: Shield, color: '#FCD34D', bg: 'rgba(252,211,77,0.10)' },
     { label: 'Watch Items', value: watchItems.toString(), icon: Eye, color: '#38BDF8', bg: 'rgba(43,111,224,0.10)' },
@@ -454,7 +454,7 @@ export default function SurveillancePage() {
                     <FileText className="w-4 h-4" style={{ color: 'var(--taban-blue)' }} />
                     IDSR Weekly Summary
                   </h3>
-                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ background: 'rgba(43,111,224,0.12)', color: '#0077D7' }}>
+                  <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ background: 'var(--accent-light)', color: 'var(--accent-primary)' }}>
                     {reportingWeek}
                   </span>
                 </div>

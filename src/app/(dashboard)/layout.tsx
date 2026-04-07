@@ -35,7 +35,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             filter: 'drop-shadow(0 4px 12px rgba(10, 61, 107, 0.3))',
           }} />
           <div className="flex items-center gap-2">
-            <Loader2 className="w-4 h-4 animate-spin" style={{ color: '#0077D7' }} />
+            <Loader2 className="w-4 h-4 animate-spin" style={{ color: 'var(--accent-primary)' }} />
             <p className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>Loading Taban...</p>
           </div>
         </div>

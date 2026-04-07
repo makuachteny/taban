@@ -60,7 +60,7 @@ export default function RadiologyDashboard() {
           {[
             { label: 'Total Studies', value: stats.total, icon: Scan, color: ACCENT },
             { label: 'Pending', value: stats.pending, icon: Clock, color: '#D97706' },
-            { label: 'In Progress', value: stats.inProgress, icon: Activity, color: '#0077D7' },
+            { label: 'In Progress', value: stats.inProgress, icon: Activity, color: 'var(--accent-primary)' },
             { label: 'Completed', value: stats.completed, icon: CheckCircle2, color: '#059669' },
             { label: 'Urgent/Emergency', value: stats.urgent, icon: AlertTriangle, color: '#DC2626' },
             { label: 'X-Rays', value: stats.xray, icon: Image, color: '#0891B2' },
@@ -204,7 +204,7 @@ export default function RadiologyDashboard() {
             <div className="glass-section">
               <div className="glass-section-header">
                 <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4" style={{ color: '#0077D7' }} />
+                  <FileText className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
                   <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Body Regions</span>
                 </div>
               </div>

@@ -63,9 +63,9 @@ export default function BirthsPage() {
         {stats && (
           <div className="kpi-grid mb-6">
             {[
-              { label: 'Total Registered', value: stats.total, icon: Baby, color: '#0077D7', bg: 'rgba(43,111,224,0.12)' },
-              { label: 'This Month', value: stats.thisMonth, icon: Calendar, color: '#0077D7', bg: 'rgba(43,111,224,0.12)' },
-              { label: 'Male / Female', value: <><span style={{ color: '#0077D7' }}>{stats.byGender.male}</span><span style={{ color: 'var(--text-muted)' }}> / </span><span style={{ color: '#E52E42' }}>{stats.byGender.female}</span></>, icon: Users, color: '#0077D7', bg: 'rgba(43,111,224,0.12)' },
+              { label: 'Total Registered', value: stats.total, icon: Baby, color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)' },
+              { label: 'This Month', value: stats.thisMonth, icon: Calendar, color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)' },
+              { label: 'Male / Female', value: <><span style={{ color: 'var(--accent-primary)' }}>{stats.byGender.male}</span><span style={{ color: 'var(--text-muted)' }}> / </span><span style={{ color: '#E52E42' }}>{stats.byGender.female}</span></>, icon: Users, color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)' },
               { label: 'Caesarean Rate', value: `${stats.total ? Math.round(stats.byDeliveryType.caesarean / stats.total * 100) : 0}%`, icon: Activity, color: '#FCD34D', bg: 'rgba(252,211,77,0.12)' },
             ].map(stat => (
               <div key={stat.label} className="kpi">
@@ -162,7 +162,7 @@ export default function BirthsPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
             <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
               <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: 'var(--border-light)' }}>
-                <div className="flex items-center gap-2"><Baby className="w-5 h-5" style={{ color: '#0077D7' }} /><h2 className="font-semibold">Register New Birth</h2></div>
+                <div className="flex items-center gap-2"><Baby className="w-5 h-5" style={{ color: 'var(--accent-primary)' }} /><h2 className="font-semibold">Register New Birth</h2></div>
                 <button onClick={() => setShowForm(false)}><X className="w-5 h-5" style={{ color: 'var(--text-muted)' }} /></button>
               </div>
               <div className="p-4 space-y-4">

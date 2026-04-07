@@ -90,11 +90,11 @@ export default function DeathsPage() {
             </div>
             <div className="card-elevated p-4">
               <p className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>With ICD-11 Code</p>
-              <p className="text-2xl font-bold" style={{ color: '#0077D7' }}>{stats.withICD11Code}/{stats.total}</p>
+              <p className="text-2xl font-bold" style={{ color: 'var(--accent-primary)' }}>{stats.withICD11Code}/{stats.total}</p>
             </div>
             <div className="card-elevated p-4">
               <p className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Registered</p>
-              <p className="text-2xl font-bold" style={{ color: '#0077D7' }}>{stats.registered}/{stats.total}</p>
+              <p className="text-2xl font-bold" style={{ color: 'var(--accent-primary)' }}>{stats.registered}/{stats.total}</p>
             </div>
           </div>
         )}

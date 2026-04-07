@@ -190,14 +190,14 @@ export default function OrgAdminDashboard() {
       label: 'Hospitals',
       value: stats.hospitalCount,
       icon: Building2,
-      color: '#0077D7',
+      color: 'var(--accent-primary)',
       bgOpacity: '15',
     },
     {
       label: 'Patients',
       value: stats.patientCount,
       icon: UserCheck,
-      color: '#0077D7',
+      color: 'var(--accent-primary)',
       bgOpacity: '15',
     },
     {
@@ -352,7 +352,7 @@ export default function OrgAdminDashboard() {
             <div className="p-4 rounded-xl" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Consultations</span>
-                <Activity className="w-4 h-4" style={{ color: '#0077D7' }} />
+                <Activity className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
               </div>
               <p className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{thisMonthConsultations}</p>
               <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>This month</p>
@@ -524,8 +524,8 @@ export default function OrgAdminDashboard() {
                   </span>
                   {flag.enabled ? (
                     <div className="flex items-center gap-1.5">
-                      <CheckCircle className="w-4 h-4" style={{ color: '#0077D7' }} />
-                      <span className="text-xs font-medium" style={{ color: '#0077D7' }}>Enabled</span>
+                      <CheckCircle className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
+                      <span className="text-xs font-medium" style={{ color: 'var(--accent-primary)' }}>Enabled</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-1.5">
@@ -549,7 +549,7 @@ export default function OrgAdminDashboard() {
         <div className="rounded-xl overflow-hidden mb-6" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
           <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--border-light)' }}>
             <div className="flex items-center gap-2">
-              <Activity className="w-4 h-4" style={{ color: '#0077D7' }} />
+              <Activity className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
               <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>User Activity Log</span>
             </div>
             {inactiveUsers.length > 0 && (

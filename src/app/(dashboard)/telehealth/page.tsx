@@ -18,7 +18,7 @@ import type { TelehealthType, TelehealthStatus, TelehealthSessionDoc } from '@/l
 
 /* ─── Config ─── */
 const statusConfig: Record<TelehealthStatus, { color: string; bg: string; label: string; icon: typeof Video }> = {
-  scheduled: { color: '#0077D7', bg: 'rgba(0,119,215,0.08)', label: 'Scheduled', icon: Calendar },
+  scheduled: { color: 'var(--accent-primary)', bg: 'rgba(0,119,215,0.08)', label: 'Scheduled', icon: Calendar },
   waiting_room: { color: '#D97706', bg: 'rgba(217,119,6,0.08)', label: 'Waiting', icon: Clock },
   in_session: { color: '#059669', bg: 'rgba(5,150,105,0.08)', label: 'In Session', icon: Video },
   completed: { color: '#10B981', bg: 'rgba(16,185,129,0.08)', label: 'Completed', icon: CheckCircle2 },
@@ -37,7 +37,7 @@ const paymentLabels: Record<string, { color: string; label: string }> = {
   pending: { color: '#D97706', label: 'Pending' },
   paid: { color: '#10B981', label: 'Paid' },
   waived: { color: '#6B7280', label: 'Waived' },
-  insurance: { color: '#0077D7', label: 'Insurance' },
+  insurance: { color: 'var(--accent-primary)', label: 'Insurance' },
 };
 
 const timeSlots = Array.from({ length: 24 }, (_, h) =>
@@ -220,7 +220,7 @@ export default function TelehealthPage() {
         {stats && (
           <div className="kpi-grid" style={{ marginBottom: 16 }}>
             {[
-              { label: 'Today', value: stats.todayTotal, icon: Calendar, color: '#0077D7' },
+              { label: 'Today', value: stats.todayTotal, icon: Calendar, color: 'var(--accent-primary)' },
               { label: 'Active', value: stats.todayActive, icon: Video, color: '#059669' },
               { label: 'Completed', value: stats.completedTotal, icon: CheckCircle2, color: '#10B981' },
               { label: 'Avg Duration', value: `${stats.avgDuration}m`, icon: Clock, color: '#D97706' },
@@ -299,7 +299,7 @@ export default function TelehealthPage() {
                     {ev && (
                       <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
                         {ev.telehealth > 0 && <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#059669' }} />}
-                        {ev.appointments > 0 && <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#0077D7' }} />}
+                        {ev.appointments > 0 && <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--accent-primary)' }} />}
                         {ev.active > 0 && <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#F59E0B' }} />}
                         <span style={{ fontSize: 9, color: 'var(--text-muted)', fontWeight: 600 }}>{ev.telehealth + ev.appointments}</span>
                       </div>
@@ -309,7 +309,7 @@ export default function TelehealthPage() {
               })}
             </div>
             <div style={{ display: 'flex', gap: 14, padding: '8px 16px', borderTop: '1px solid var(--border-medium)' }}>
-              {[{ c: '#059669', l: 'Telehealth' }, { c: '#0077D7', l: 'Appointments' }, { c: '#F59E0B', l: 'Active' }].map(x => (
+              {[{ c: '#059669', l: 'Telehealth' }, { c: 'var(--accent-primary)', l: 'Appointments' }, { c: '#F59E0B', l: 'Active' }].map(x => (
                 <span key={x.l} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--text-muted)' }}>
                   <span style={{ width: 5, height: 5, borderRadius: '50%', background: x.c }} />{x.l}
                 </span>
@@ -337,7 +337,7 @@ export default function TelehealthPage() {
             {filteredAppts.map(a => (
               <div key={a._id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0', borderTop: '1px solid var(--border-medium)' }}>
                 <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', minWidth: 44 }}>{a.appointmentTime}</span>
-                <Calendar size={13} style={{ color: '#0077D7' }} />
+                <Calendar size={13} style={{ color: 'var(--accent-primary)' }} />
                 <span style={{ fontSize: 12, color: 'var(--text-primary)', flex: 1 }}>{a.patientName}</span>
                 <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{a.department}</span>
               </div>

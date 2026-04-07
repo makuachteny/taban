@@ -313,14 +313,14 @@ export default function DataEntryDashboard() {
             <div className="glass-section">
               <div className="glass-section-header">
                 <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4" style={{ color: '#0077D7' }} />
+                  <Users className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
                   <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Patient Census</span>
                 </div>
                 <span className="text-[10px] font-semibold" style={{ color: 'var(--text-muted)' }}>{latest.date}</span>
               </div>
               <div className="p-4 space-y-2">
                 {[
-                  { label: 'Inpatients', value: latest.inpatientsTotal, color: '#0077D7' },
+                  { label: 'Inpatients', value: latest.inpatientsTotal, color: 'var(--accent-primary)' },
                   { label: 'OPD Visits', value: latest.opdVisitsToday, color: '#059669' },
                   { label: 'Emergency', value: latest.emergencyVisits, color: '#DC2626' },
                   { label: 'Maternity', value: latest.maternityAdmissions, color: '#EC4899' },
@@ -347,7 +347,7 @@ export default function DataEntryDashboard() {
               </div>
               <div className="p-4 space-y-3">
                 {[
-                  { label: 'General Beds', occupied: latest.occupiedBeds, total: latest.totalBeds, color: '#0077D7' },
+                  { label: 'General Beds', occupied: latest.occupiedBeds, total: latest.totalBeds, color: 'var(--accent-primary)' },
                   { label: 'ICU', occupied: latest.icuOccupied, total: latest.icuBeds, color: '#DC2626' },
                   { label: 'Maternity', occupied: latest.maternityOccupied, total: latest.maternityBeds, color: '#EC4899' },
                   { label: 'Pediatric', occupied: latest.pediatricOccupied, total: latest.pediatricBeds, color: '#2563EB' },
@@ -414,7 +414,7 @@ export default function DataEntryDashboard() {
                 <div style={{ borderTop: '1px solid var(--border-medium)', paddingTop: 8, marginTop: 4 }}>
                   {[
                     { label: 'Medicine Availability', pct: medAvailability, color: '#059669' },
-                    { label: 'Handwash Stations', pct: handwashRate, color: '#0077D7' },
+                    { label: 'Handwash Stations', pct: handwashRate, color: 'var(--accent-primary)' },
                   ].map(m => (
                     <div key={m.label} className="mb-2">
                       <div className="flex justify-between mb-1">

@@ -30,7 +30,7 @@ export default function MessagesPage() {
 
   const statusIcon = (status: string) => {
     switch (status) {
-      case 'delivered': return <CheckCircle2 className="w-3.5 h-3.5" style={{ color: '#0077D7' }} />;
+      case 'delivered': return <CheckCircle2 className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />;
       case 'sent': return <Clock className="w-3.5 h-3.5" style={{ color: '#FCD34D' }} />;
       case 'failed': return <XCircle className="w-3.5 h-3.5" style={{ color: '#E52E42' }} />;
       default: return null;

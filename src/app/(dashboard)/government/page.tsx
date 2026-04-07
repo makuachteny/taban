@@ -350,11 +350,11 @@ export default function GovernmentDashboardPage() {
         {/* KPI STRIP */}
         <div className="kpi-grid mb-4">
           {[
-            { label: 'Hospitals', value: totalHospitals.toString(), icon: Building2, color: '#0077D7', bg: 'rgba(0,119,215,0.10)', href: '/hospitals' },
-            { label: 'Patients', value: totalPatients.toLocaleString(), icon: Users, color: '#0077D7', bg: 'rgba(0,119,215,0.10)', href: '/hospitals' },
+            { label: 'Hospitals', value: totalHospitals.toString(), icon: Building2, color: 'var(--accent-primary)', bg: 'rgba(0,119,215,0.10)', href: '/hospitals' },
+            { label: 'Patients', value: totalPatients.toLocaleString(), icon: Users, color: 'var(--accent-primary)', bg: 'rgba(0,119,215,0.10)', href: '/hospitals' },
             { label: 'Beds', value: totalBeds.toLocaleString(), icon: BedDouble, color: '#FCD34D', bg: 'rgba(252,211,77,0.10)', href: '/hospitals' },
             { label: 'Staff', value: totalStaff.toLocaleString(), icon: Stethoscope, color: '#38BDF8', bg: 'rgba(56,189,248,0.10)', href: '/hospitals' },
-            { label: 'Online', value: onlineHospitals.toString(), icon: Wifi, color: '#0077D7', bg: 'rgba(0,119,215,0.10)', href: '/hospitals' },
+            { label: 'Online', value: onlineHospitals.toString(), icon: Wifi, color: 'var(--accent-primary)', bg: 'rgba(0,119,215,0.10)', href: '/hospitals' },
             { label: 'Offline', value: offlineHospitals.toString(), icon: WifiOff, color: '#94A3B8', bg: 'rgba(100,116,139,0.10)', href: '/hospitals' },
             { label: 'Alerts', value: activeAlerts.toString(), icon: AlertTriangle, color: '#E52E42', bg: 'rgba(229,46,66,0.08)', href: '/surveillance' },
             { label: 'Referrals', value: pendingReferrals.toString(), icon: ArrowRightLeft, color: '#FCD34D', bg: 'rgba(252,211,77,0.10)' },
@@ -556,7 +556,7 @@ export default function GovernmentDashboardPage() {
         <div className="card-elevated overflow-hidden mb-4">
           <div className="flex items-center justify-between p-4 pb-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
             <h3 className="font-semibold text-sm flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-              <Building2 className="w-4 h-4" style={{ color: '#0077D7' }} />
+              <Building2 className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
               Hospital Performance by State
             </h3>
             <div className="flex items-center gap-2">
@@ -568,7 +568,7 @@ export default function GovernmentDashboardPage() {
                 <ArrowUpDown className="w-3 h-3" />
                 Sort: {tableSortBy === 'quality' ? 'Data Quality' : 'Name'}
               </button>
-              <button onClick={() => router.push('/hospitals')} className="text-xs font-medium" style={{ color: '#0077D7' }}>View All</button>
+              <button onClick={() => router.push('/hospitals')} className="text-xs font-medium" style={{ color: 'var(--accent-primary)' }}>View All</button>
             </div>
           </div>
           <div style={{ overflowX: 'auto' }}>
@@ -604,7 +604,7 @@ export default function GovernmentDashboardPage() {
                         <td>
                           <div className="flex items-center gap-2">
                             {isExpanded ? (
-                              <ChevronDown className="w-4 h-4 flex-shrink-0" style={{ color: '#0077D7' }} />
+                              <ChevronDown className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--accent-primary)' }} />
                             ) : (
                               <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
                             )}
@@ -627,8 +627,8 @@ export default function GovernmentDashboardPage() {
                         <tr key={h._id} className="cursor-pointer" onClick={() => router.push('/hospitals')}>
                           <td>
                             <div className="flex items-center gap-2 pl-6">
-                              <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(0,119,215,0.1)' }}>
-                                <Building2 className="w-3.5 h-3.5" style={{ color: '#0077D7' }} />
+                              <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--accent-light)' }}>
+                                <Building2 className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
                               </div>
                               <div>
                                 <p className="font-medium text-sm">{h.name}</p>
@@ -783,7 +783,7 @@ export default function GovernmentDashboardPage() {
                 <AlertTriangle className="w-4 h-4" style={{ color: '#E52E42' }} />
                 <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Disease Alerts</span>
               </div>
-              <button onClick={() => router.push('/surveillance')} className="text-[10px] font-medium" style={{ color: '#0077D7' }}>View All</button>
+              <button onClick={() => router.push('/surveillance')} className="text-[10px] font-medium" style={{ color: 'var(--accent-primary)' }}>View All</button>
             </div>
             <div className="p-3 space-y-2" style={{ maxHeight: '280px', overflowY: 'auto' }}>
               {sortedAlerts.slice(0, 5).map(alert => (
@@ -826,7 +826,7 @@ export default function GovernmentDashboardPage() {
                 <ArrowRightLeft className="w-4 h-4" style={{ color: '#FCD34D' }} />
                 <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Recent Referrals</span>
               </div>
-              <button onClick={() => router.push('/referrals')} className="text-[10px] font-medium" style={{ color: '#0077D7' }}>View All</button>
+              <button onClick={() => router.push('/referrals')} className="text-[10px] font-medium" style={{ color: 'var(--accent-primary)' }}>View All</button>
             </div>
             <div className="p-3 space-y-2">
               {referrals.slice(0, 4).map(ref => (
@@ -835,7 +835,7 @@ export default function GovernmentDashboardPage() {
                     <span className="text-[11px] font-semibold" style={{ color: 'var(--text-primary)' }}>{ref.patientName}</span>
                     <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{
                       background: ref.urgency === 'emergency' ? 'rgba(229,46,66,0.12)' : ref.urgency === 'urgent' ? 'rgba(252,211,77,0.12)' : 'rgba(0,119,215,0.12)',
-                      color: ref.urgency === 'emergency' ? '#E52E42' : ref.urgency === 'urgent' ? '#FBBF24' : '#0077D7',
+                      color: ref.urgency === 'emergency' ? '#E52E42' : ref.urgency === 'urgent' ? '#FBBF24' : 'var(--accent-primary)',
                     }}>{ref.urgency}</span>
                   </div>
                   <p className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>{ref.fromHospital} → {ref.toHospital}</p>

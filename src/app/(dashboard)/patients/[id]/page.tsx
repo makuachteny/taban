@@ -77,7 +77,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                   <h1 className="text-xl font-semibold">
                     {patient.firstName} {patient.middleName} {patient.surname}
                   </h1>
-                  <span className="font-mono text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(0,119,215,0.12)', color: 'var(--taban-blue)' }}>
+                  <span className="font-mono text-xs px-2 py-0.5 rounded" style={{ background: 'var(--accent-light)', color: 'var(--taban-blue)' }}>
                     {patient.hospitalNumber}
                   </span>
                 </div>
@@ -183,7 +183,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">
                           {(rec.diagnoses || []).map((d, i) => (
-                            <span key={i} className="text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(0,119,215,0.12)', color: 'var(--taban-blue)' }}>
+                            <span key={i} className="text-xs px-2 py-0.5 rounded" style={{ background: 'var(--accent-light)', color: 'var(--taban-blue)' }}>
                               {d.icd10Code} {d.name}
                             </span>
                           ))}
@@ -333,7 +333,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                       <p className="text-xs mb-2" style={{ color: 'var(--text-secondary)' }}>{rec.historyOfPresentIllness.slice(0, 150)}...</p>
                       <div className="flex flex-wrap gap-1.5 mb-2">
                         {(rec.diagnoses || []).map((d, j) => (
-                          <span key={j} className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(0,119,215,0.12)', color: 'var(--taban-blue)' }}>
+                          <span key={j} className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'var(--accent-light)', color: 'var(--taban-blue)' }}>
                             {d.icd10Code} {d.name}
                           </span>
                         ))}
@@ -538,7 +538,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                             {ref.status === 'sent' ? 'Sent' : ref.status === 'received' ? 'Received' : ref.status === 'seen' ? 'Being Seen' : ref.status === 'completed' ? 'Completed' : 'Cancelled'}
                           </span>
                           {tp && (
-                            <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(0,119,215,0.12)', color: 'var(--taban-blue)', border: '1px solid rgba(0,119,215,0.2)' }}>
+                            <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'var(--accent-light)', color: 'var(--taban-blue)', border: '1px solid var(--accent-border)' }}>
                               <Package className="w-3 h-3" /> Data Package
                             </span>
                           )}

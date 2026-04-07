@@ -17,19 +17,19 @@ export default function VitalStatisticsPage() {
       <main className="page-container page-enter">
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-1">
-            <Activity className="w-6 h-6" style={{ color: '#0077D7' }} />
+            <Activity className="w-6 h-6" style={{ color: 'var(--accent-primary)' }} />
             <h1 className="text-xl font-semibold">National Vital Statistics</h1>
           </div>
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Civil Registration and Vital Statistics (CRVS) — Republic of South Sudan</p>
         </div>
 
         {/* Birth Statistics */}
-        <h2 className="font-semibold text-sm flex items-center gap-2 mb-3"><Baby className="w-4 h-4" style={{ color: '#0077D7' }} /> Birth Statistics</h2>
+        <h2 className="font-semibold text-sm flex items-center gap-2 mb-3"><Baby className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} /> Birth Statistics</h2>
         <div className="kpi-grid mb-6">
           {[
-            { label: 'Total Births', value: birthStats.total, icon: Baby, color: '#0077D7', bg: 'rgba(43,111,224,0.12)' },
-            { label: 'This Month', value: birthStats.thisMonth, icon: Activity, color: '#0077D7', bg: 'rgba(43,111,224,0.12)' },
-            { label: 'Male Births', value: birthStats.byGender.male, icon: Baby, color: '#0077D7', bg: 'rgba(43,111,224,0.12)' },
+            { label: 'Total Births', value: birthStats.total, icon: Baby, color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)' },
+            { label: 'This Month', value: birthStats.thisMonth, icon: Activity, color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)' },
+            { label: 'Male Births', value: birthStats.byGender.male, icon: Baby, color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)' },
             { label: 'Female Births', value: birthStats.byGender.female, icon: Baby, color: '#E52E42', bg: 'rgba(229,46,66,0.12)' },
             { label: 'Caesarean Rate', value: `${birthStats.total ? Math.round(birthStats.byDeliveryType.caesarean / birthStats.total * 100) : 0}%`, icon: Activity, color: '#FCD34D', bg: 'rgba(252,211,77,0.12)' },
           ].map(stat => (
@@ -54,7 +54,7 @@ export default function VitalStatisticsPage() {
                 <div key={state} className="flex items-center gap-3">
                   <span className="text-xs w-48 truncate" style={{ color: 'var(--text-secondary)' }}>{state}</span>
                   <div className="flex-1 h-2 rounded-full" style={{ background: 'var(--overlay-light)' }}>
-                    <div className="h-full rounded-full" style={{ width: `${birthStats.total > 0 ? (count / birthStats.total) * 100 : 0}%`, background: '#0077D7' }} />
+                    <div className="h-full rounded-full" style={{ width: `${birthStats.total > 0 ? (count / birthStats.total) * 100 : 0}%`, background: 'var(--accent-primary)' }} />
                   </div>
                   <span className="text-sm font-bold w-8 text-right">{count}</span>
                 </div>
@@ -71,7 +71,7 @@ export default function VitalStatisticsPage() {
             { label: 'Maternal Deaths', value: deathStats.maternalDeaths, icon: Skull, color: '#E52E42', bg: 'rgba(229,46,66,0.12)' },
             { label: 'Under-5 Deaths', value: deathStats.under5Deaths, icon: AlertTriangle, color: '#FCD34D', bg: 'rgba(252,211,77,0.12)' },
             { label: 'Neonatal Deaths', value: deathStats.neonatalDeaths, icon: AlertTriangle, color: '#FCD34D', bg: 'rgba(252,211,77,0.12)' },
-            { label: 'ICD-11 Coded', value: `${deathStats.total ? Math.round(deathStats.withICD11Code / deathStats.total * 100) : 0}%`, icon: Activity, color: '#0077D7', bg: 'rgba(43,111,224,0.12)' },
+            { label: 'ICD-11 Coded', value: `${deathStats.total ? Math.round(deathStats.withICD11Code / deathStats.total * 100) : 0}%`, icon: Activity, color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)' },
           ].map(stat => (
             <div key={stat.label} className="kpi">
               <div className="kpi__icon" style={{ background: stat.bg }}>
@@ -100,7 +100,7 @@ export default function VitalStatisticsPage() {
               </div>
               <div>
                 <div className="flex justify-between text-xs mb-1"><span style={{ color: 'var(--text-secondary)' }}>ICD-11 Coding Rate</span><span className="font-bold">{deathStats.total ? Math.round(deathStats.withICD11Code / deathStats.total * 100) : 0}%</span></div>
-                <div className="w-full h-2 rounded-full" style={{ background: 'var(--overlay-light)' }}><div className="h-full rounded-full" style={{ width: `${deathStats.total ? (deathStats.withICD11Code / deathStats.total) * 100 : 0}%`, background: '#0077D7' }} /></div>
+                <div className="w-full h-2 rounded-full" style={{ background: 'var(--overlay-light)' }}><div className="h-full rounded-full" style={{ width: `${deathStats.total ? (deathStats.withICD11Code / deathStats.total) * 100 : 0}%`, background: 'var(--accent-primary)' }} /></div>
               </div>
             </div>
           </div>

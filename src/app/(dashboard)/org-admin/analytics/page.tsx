@@ -142,7 +142,7 @@ export default function OrgAnalyticsPage() {
       label: 'Facilities',
       value: hospitals.length,
       icon: Building2,
-      color: '#0077D7',
+      color: 'var(--accent-primary)',
       trend: 'Across org',
       trendUp: true,
     },
@@ -273,7 +273,7 @@ export default function OrgAnalyticsPage() {
             {/* Top Hospitals by Activity */}
             <div className="p-5 rounded-xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
               <div className="flex items-center gap-2 mb-4">
-                <Building2 className="w-5 h-5" style={{ color: '#0077D7' }} />
+                <Building2 className="w-5 h-5" style={{ color: 'var(--accent-primary)' }} />
                 <h2 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
                   Top Facilities (Today)
                 </h2>
@@ -347,9 +347,9 @@ export default function OrgAnalyticsPage() {
                   referrals.slice(0, 10).map(ref => {
                     const statusColor: Record<string, string> = {
                       sent: '#F59E0B',
-                      received: '#0077D7',
+                      received: 'var(--accent-primary)',
                       seen: '#8B5CF6',
-                      completed: '#0077D7',
+                      completed: 'var(--accent-primary)',
                       cancelled: '#6B7280',
                     };
                     return (

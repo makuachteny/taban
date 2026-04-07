@@ -188,13 +188,13 @@ export default function OrgUsersPage() {
     const map: Record<string, string> = {
       super_admin: '#DC2626',
       org_admin: '#7C3AED',
-      doctor: '#0077D7',
+      doctor: 'var(--accent-primary)',
       clinical_officer: '#8B5CF6',
       nurse: '#EC4899',
       lab_tech: '#06B6D4',
       pharmacist: '#F59E0B',
       front_desk: '#14B8A6',
-      government: '#0077D7',
+      government: 'var(--accent-primary)',
       boma_health_worker: '#059669',
       payam_supervisor: '#D97706',
       data_entry_clerk: '#0891B2',
@@ -242,7 +242,7 @@ export default function OrgUsersPage() {
       <div className="page-container page-enter">
         {/* Success/Error banners */}
         {success && (
-          <div className="mb-4 p-3 rounded-lg text-sm font-medium" style={{ background: 'rgba(43,111,224,0.1)', color: '#0077D7', border: '1px solid rgba(43,111,224,0.2)' }}>
+          <div className="mb-4 p-3 rounded-lg text-sm font-medium" style={{ background: 'var(--accent-light)', color: 'var(--accent-primary)', border: '1px solid var(--accent-border)' }}>
             {success}
           </div>
         )}

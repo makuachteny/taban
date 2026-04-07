@@ -187,16 +187,16 @@ export default function MyFacilityPage() {
         <div className="card-elevated p-5 mb-4">
           <div className="flex items-start justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-md flex items-center justify-center" style={{ background: 'rgba(0,119,215,0.12)' }}>
-                <Building2 className="w-6 h-6" style={{ color: '#0077D7' }} />
+              <div className="w-12 h-12 rounded-md flex items-center justify-center" style={{ background: 'var(--accent-light)' }}>
+                <Building2 className="w-6 h-6" style={{ color: 'var(--accent-primary)' }} />
               </div>
               <div>
                 <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{hospital?.name || 'Unknown Facility'}</h2>
                 <div className="flex items-center gap-2 mt-0.5">
                   <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{hospital?.state}</span>
                   <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{
-                    background: 'rgba(0,119,215,0.08)',
-                    color: '#0077D7',
+                    background: 'var(--accent-light)',
+                    color: 'var(--accent-primary)',
                   }}>
                     {hospital?.facilityType?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
                   </span>
@@ -235,7 +235,7 @@ export default function MyFacilityPage() {
 
           {/* Operational Status */}
           <div className={sectionClass}>
-            {sectionTitle(<Activity className="w-4 h-4" style={{ color: '#0077D7' }} />, 'Operational Status')}
+            {sectionTitle(<Activity className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />, 'Operational Status')}
             <div>
               <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Current Status</label>
               <select

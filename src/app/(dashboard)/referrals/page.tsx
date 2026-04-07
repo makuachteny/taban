@@ -121,10 +121,10 @@ export default function ReferralsPage() {
   ).length;
 
   const stats = [
-    { label: 'Total Referrals', value: totalReferrals, icon: ArrowRightLeft, color: '#0077D7', bg: 'rgba(43,111,224,0.12)' },
+    { label: 'Total Referrals', value: totalReferrals, icon: ArrowRightLeft, color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)' },
     { label: 'Pending', value: pendingCount, icon: Clock, color: '#FCD34D', bg: 'rgba(252,211,77,0.10)' },
     { label: 'In Progress', value: inProgressCount, icon: Stethoscope, color: '#38BDF8', bg: 'rgba(43,111,224,0.10)' },
-    { label: 'Completed', value: completedCount, icon: CheckCircle2, color: '#0077D7', bg: 'rgba(43,111,224,0.12)' },
+    { label: 'Completed', value: completedCount, icon: CheckCircle2, color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)' },
   ];
 
   const getStatusLabel = (status: string) => {
@@ -396,7 +396,7 @@ export default function ReferralsPage() {
                             <p className="text-[10px] font-semibold uppercase mb-1" style={{ color: 'var(--text-muted)' }}>Diagnoses</p>
                             <div className="flex flex-wrap gap-1">
                               {rec.diagnoses.map((d, i) => (
-                                <span key={i} className="text-[10px] px-2 py-0.5 rounded" style={{ background: 'rgba(43,111,224,0.12)', color: 'var(--taban-blue)' }}>
+                                <span key={i} className="text-[10px] px-2 py-0.5 rounded" style={{ background: 'var(--accent-light)', color: 'var(--taban-blue)' }}>
                                   {d.icd10Code} {d.name}
                                 </span>
                               ))}
@@ -500,7 +500,7 @@ export default function ReferralsPage() {
         )}
 
         {/* Package Metadata */}
-        <div className="flex items-center gap-3 p-3 rounded-lg text-xs" style={{ background: 'rgba(43,111,224,0.06)', border: '1px solid rgba(43,111,224,0.15)' }}>
+        <div className="flex items-center gap-3 p-3 rounded-lg text-xs" style={{ background: 'rgba(43,111,224,0.06)', border: '1px solid var(--accent-border)' }}>
           <Package className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--taban-blue)' }} />
           <span style={{ color: 'var(--text-muted)' }}>
             Packaged by <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{pkg.packagedBy}</span> on {new Date(pkg.packagedAt).toLocaleDateString()} at {new Date(pkg.packagedAt).toLocaleTimeString()}
@@ -567,7 +567,7 @@ export default function ReferralsPage() {
                 <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
                   Create New Referral
                 </h2>
-                <span className="text-xs px-2 py-1 rounded-full" style={{ background: 'rgba(43,111,224,0.12)', color: 'var(--taban-blue)' }}>
+                <span className="text-xs px-2 py-1 rounded-full" style={{ background: 'var(--accent-light)', color: 'var(--taban-blue)' }}>
                   Auto-packages patient data
                 </span>
               </div>
@@ -782,7 +782,7 @@ export default function ReferralsPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
-                          <span className="text-sm font-semibold cursor-pointer hover:underline" style={{ color: '#0077D7' }} onClick={(e) => { e.stopPropagation(); if (ref.patientId) router.push(`/patients/${ref.patientId}`); }}>{ref.patientName}</span>
+                          <span className="text-sm font-semibold cursor-pointer hover:underline" style={{ color: 'var(--accent-primary)' }} onClick={(e) => { e.stopPropagation(); if (ref.patientId) router.push(`/patients/${ref.patientId}`); }}>{ref.patientName}</span>
                           <span className="font-mono text-[10px]" style={{ color: 'var(--text-muted)' }}>{ref.patientId}</span>
                         </div>
                         <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
@@ -801,7 +801,7 @@ export default function ReferralsPage() {
                           {getStatusLabel(ref.status)}
                         </span>
                         {tp && (
-                          <span className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full font-medium" style={{ background: 'rgba(43,111,224,0.12)', color: 'var(--taban-blue)', border: '1px solid rgba(43,111,224,0.2)' }}>
+                          <span className="flex items-center gap-1 text-[10px] px-2 py-1 rounded-full font-medium" style={{ background: 'var(--accent-light)', color: 'var(--taban-blue)', border: '1px solid var(--accent-border)' }}>
                             <Package className="w-3 h-3" /> Data Package
                           </span>
                         )}

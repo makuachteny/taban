@@ -39,7 +39,7 @@ export default function OrgSettingsPage() {
   };
 
   const statusColors: Record<string, string> = {
-    active: '#0077D7',
+    active: 'var(--accent-primary)',
     trial: '#F59E0B',
     suspended: '#E52E42',
     cancelled: '#6B7280',
@@ -169,7 +169,7 @@ export default function OrgSettingsPage() {
                   >
                     <div className="pt-0.5">
                       {enabled ? (
-                        <CheckCircle className="w-5 h-5" style={{ color: '#0077D7' }} />
+                        <CheckCircle className="w-5 h-5" style={{ color: 'var(--accent-primary)' }} />
                       ) : (
                         <XCircle className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
                       )}

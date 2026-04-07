@@ -16,7 +16,7 @@ interface FacilityLevel {
 const FACILITY_LEVELS: FacilityLevel[] = [
   { id: 'boma', shortLabel: 'Boma', icon: Home, color: '#059669', prefixes: ['boma-'] },
   { id: 'phcu', shortLabel: 'PHCU', icon: Building2, color: '#0891B2', prefixes: ['phcu-'] },
-  { id: 'phcc', shortLabel: 'PHCC', icon: Building2, color: '#0077D7', prefixes: ['phcc-'] },
+  { id: 'phcc', shortLabel: 'PHCC', icon: Building2, color: 'var(--accent-primary)', prefixes: ['phcc-'] },
   { id: 'county', shortLabel: 'County', icon: Building2, color: '#7C3AED', prefixes: ['county-'] },
   { id: 'state', shortLabel: 'State', icon: Building2, color: '#D97706', prefixes: ['hosp-'] },
   { id: 'national', shortLabel: 'National', icon: Activity, color: '#DC2626', prefixes: ['nat-'] },
@@ -91,7 +91,7 @@ export default function ReferralChainTracker({ referrals, currentFacilityId, com
       }}>
         <div className="flex items-center justify-between px-4 py-2.5 border-b" style={{ borderColor: 'var(--border-light)' }}>
           <div className="flex items-center gap-2">
-            <Activity className="w-4 h-4" style={{ color: '#0077D7' }} />
+            <Activity className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
             <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Referral Chain</span>
           </div>
           <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>
@@ -156,12 +156,12 @@ export default function ReferralChainTracker({ referrals, currentFacilityId, com
                         return (
                           <div className="flex flex-col items-center">
                             <ArrowRight className="w-3.5 h-3.5" style={{
-                              color: flow ? (flow.urgent > 0 ? '#EF4444' : '#0077D7') : 'var(--border-light)',
+                              color: flow ? (flow.urgent > 0 ? '#EF4444' : 'var(--accent-primary)') : 'var(--border-light)',
                               opacity: flow ? 1 : 0.3,
                             }} />
                             {flow && flow.count > 0 && (
                               <span className="text-[8px] font-bold" style={{
-                                color: flow.urgent > 0 ? '#EF4444' : '#0077D7',
+                                color: flow.urgent > 0 ? '#EF4444' : 'var(--accent-primary)',
                               }}>{flow.count}</span>
                             )}
                           </div>
@@ -183,7 +183,7 @@ export default function ReferralChainTracker({ referrals, currentFacilityId, com
         }}>
           <div className="flex items-center justify-between px-4 py-2.5 border-b" style={{ borderColor: 'var(--border-light)' }}>
             <span className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>Active Referrals</span>
-            <button onClick={() => router.push('/referrals')} className="text-[10px] font-medium" style={{ color: '#0077D7' }}>View all →</button>
+            <button onClick={() => router.push('/referrals')} className="text-[10px] font-medium" style={{ color: 'var(--accent-primary)' }}>View all →</button>
           </div>
           <div className="p-3 space-y-1.5">
             {recentReferrals.map(ref => (
@@ -194,7 +194,7 @@ export default function ReferralChainTracker({ referrals, currentFacilityId, com
                   border: `1px solid ${ref.urgency === 'emergency' ? 'rgba(239,68,68,0.2)' : 'var(--border-light)'}`,
                 }}>
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
-                  style={{ background: ref.urgency === 'emergency' ? '#EF4444' : ref.urgency === 'urgent' ? '#F59E0B' : '#0077D7' }}>
+                  style={{ background: ref.urgency === 'emergency' ? '#EF4444' : ref.urgency === 'urgent' ? '#F59E0B' : 'var(--accent-primary)' }}>
                   {(ref.patientName || '??').split(' ').map(n => n[0]).join('').slice(0, 2)}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -206,7 +206,7 @@ export default function ReferralChainTracker({ referrals, currentFacilityId, com
                 <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
                   <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{
                     background: ref.status === 'seen' ? 'rgba(74,222,128,0.12)' : 'rgba(43,111,224,0.12)',
-                    color: ref.status === 'seen' ? '#4ADE80' : '#0077D7',
+                    color: ref.status === 'seen' ? '#4ADE80' : 'var(--accent-primary)',
                   }}>{ref.status.toUpperCase()}</span>
                   {ref.urgency && ref.urgency !== 'routine' && (
                     <div className="flex items-center gap-0.5">

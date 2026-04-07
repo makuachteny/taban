@@ -39,8 +39,8 @@ export default function LabPage() {
           <div className="kpi-grid mb-4">
             {[
               { label: 'Pending Orders', value: pending, icon: Clock, color: '#FCD34D', bg: 'rgba(252,211,77,0.10)' },
-              { label: 'In Progress', value: inProgress, icon: FlaskConical, color: '#0077D7', bg: 'rgba(43,111,224,0.10)' },
-              { label: 'Completed Today', value: completed, icon: CheckCircle2, color: '#0077D7', bg: 'rgba(43,111,224,0.12)' },
+              { label: 'In Progress', value: inProgress, icon: FlaskConical, color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.10)' },
+              { label: 'Completed Today', value: completed, icon: CheckCircle2, color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)' },
               { label: 'Abnormal Results', value: abnormal, icon: AlertTriangle, color: '#E52E42', bg: 'rgba(229,46,66,0.10)' },
             ].map(s => (
               <div key={s.label} className="kpi cursor-pointer" onClick={() => {
@@ -106,7 +106,7 @@ export default function LabPage() {
                   <tr key={order._id} className="cursor-pointer hover:bg-white/[0.03]" onClick={() => { if (order.patientId) router.push(`/patients/${order.patientId}`); }}>
                     <td>
                       <p className="font-medium text-sm">{order.patientName}</p>
-                      <p className="text-xs font-mono" style={{ color: '#0077D7' }}>{order.hospitalNumber}</p>
+                      <p className="text-xs font-mono" style={{ color: 'var(--accent-primary)' }}>{order.hospitalNumber}</p>
                     </td>
                     <td className="font-medium text-sm">{order.testName}</td>
                     <td className="text-xs" style={{ color: 'var(--text-secondary)' }}>{order.specimen}</td>
@@ -143,7 +143,7 @@ export default function LabPage() {
                             onClick={() => updateLabResult(order._id, { status: 'in_progress' })}>Accept</button>
                         )}
                         {order.status === 'in_progress' && (
-                          <button className="btn btn-primary btn-sm" style={{ padding: '4px 12px', fontSize: '0.75rem', background: '#0077D7' }}
+                          <button className="btn btn-primary btn-sm" style={{ padding: '4px 12px', fontSize: '0.75rem', background: 'var(--accent-primary)' }}
                             onClick={() => {
                               const result = prompt('Enter lab result:');
                               if (result) {

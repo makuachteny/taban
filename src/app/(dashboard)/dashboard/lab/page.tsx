@@ -11,7 +11,7 @@ import {
   X, Save, Table, List, BarChart3, Timer, Bell, BellOff,
 } from 'lucide-react';
 
-const ACCENT = '#0077D7';
+const ACCENT = 'var(--accent-primary)';
 
 // ===== Reference Ranges for Auto-Flagging =====
 interface ReferenceRange {
@@ -82,7 +82,7 @@ const LAB_EVENT_TYPES = [
   { label: 'CBC Analysis Running', color: '#60A5FA', icon: Activity },
   { label: 'Urinalysis Complete', color: '#FBBF24', icon: Beaker },
   { label: 'Blood Culture Incubated', color: '#EC4899', icon: Thermometer },
-  { label: 'Result Validated', color: '#0077D7', icon: CheckCircle2 },
+  { label: 'Result Validated', color: 'var(--accent-primary)', icon: CheckCircle2 },
   { label: 'Specimen Rejected - Hemolyzed', color: '#EF4444', icon: AlertTriangle },
   { label: 'Glucose Result Ready', color: '#38BDF8', icon: FlaskConical },
 ];
@@ -483,7 +483,7 @@ export default function LabDashboardPage() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{
-              background: '#0077D7',
+              background: 'var(--accent-primary)',
             }}>
               <FlaskConical className="w-5 h-5 text-white" />
             </div>
@@ -955,7 +955,7 @@ export default function LabDashboardPage() {
 
                       {/* Reference Range Display */}
                       {currentRefRange && (
-                        <div className="p-3 rounded-xl" style={{ background: 'rgba(43,111,224,0.06)', border: '1px solid rgba(43,111,224,0.15)' }}>
+                        <div className="p-3 rounded-xl" style={{ background: 'rgba(43,111,224,0.06)', border: '1px solid var(--accent-border)' }}>
                           <p className="text-[9px] font-semibold uppercase tracking-wider mb-1" style={{ color: ACCENT }}>Reference Range</p>
                           <p className="text-[12px] font-medium" style={{ color: 'var(--text-primary)' }}>
                             {currentRefRange.referenceStr}
@@ -1079,7 +1079,7 @@ export default function LabDashboardPage() {
                   {batchTestType && (() => {
                     const ref = getRefRange(batchTestType);
                     return ref ? (
-                      <div className="p-2.5 rounded-xl" style={{ background: 'rgba(43,111,224,0.06)', border: '1px solid rgba(43,111,224,0.15)' }}>
+                      <div className="p-2.5 rounded-xl" style={{ background: 'rgba(43,111,224,0.06)', border: '1px solid var(--accent-border)' }}>
                         <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: ACCENT }}>
                           Reference: {ref.referenceStr}
                           {ref.criticalLow !== undefined && ` | Critical: <${ref.criticalLow}`}

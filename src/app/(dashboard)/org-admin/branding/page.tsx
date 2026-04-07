@@ -151,7 +151,7 @@ export default function OrgBrandingPage() {
       <div className="page-container page-enter">
         {/* Banners */}
         {success && (
-          <div className="mb-4 p-3 rounded-lg text-sm font-medium" style={{ background: 'rgba(43,111,224,0.1)', color: '#0077D7', border: '1px solid rgba(43,111,224,0.2)' }}>
+          <div className="mb-4 p-3 rounded-lg text-sm font-medium" style={{ background: 'var(--accent-light)', color: 'var(--accent-primary)', border: '1px solid var(--accent-border)' }}>
             {success}
           </div>
         )}

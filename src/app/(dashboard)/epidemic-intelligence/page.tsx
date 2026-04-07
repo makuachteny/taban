@@ -336,7 +336,7 @@ export default function EpidemicIntelligencePage() {
             <div className="card-elevated">
               <div className="px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
                 <h3 className="font-semibold text-sm flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-                  <FileText className="w-4 h-4" style={{ color: '#0077D7' }} />
+                  <FileText className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
                   IDSR Summary
                 </h3>
               </div>
@@ -682,7 +682,7 @@ export default function EpidemicIntelligencePage() {
               </div>
               <div className="card-elevated p-4">
                 <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Facilities Reporting</p>
-                <p className="text-2xl font-bold" style={{ color: '#0077D7' }}>{idsrReport.totalFacilitiesReporting}</p>
+                <p className="text-2xl font-bold" style={{ color: 'var(--accent-primary)' }}>{idsrReport.totalFacilitiesReporting}</p>
               </div>
               <div className="card-elevated p-4">
                 <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Completeness</p>
@@ -696,7 +696,7 @@ export default function EpidemicIntelligencePage() {
             <div className="card-elevated overflow-hidden">
               <div className="px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
                 <h3 className="font-semibold text-sm flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-                  <FileText className="w-4 h-4" style={{ color: '#0077D7' }} />
+                  <FileText className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
                   IDSR Weekly Disease Report
                 </h3>
               </div>

@@ -97,7 +97,7 @@ interface LiveEvent {
   isNew: boolean;
 }
 
-const ACCENT = '#0077D7';
+const ACCENT = 'var(--accent-primary)';
 
 // ============================================================
 // Helper: Flag abnormal vitals
@@ -369,7 +369,7 @@ export default function NurseDashboardPage() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{
-              background: '#0077D7',
+              background: 'var(--accent-primary)',
             }}>
               <Shield className="w-5 h-5 text-white" />
             </div>
@@ -388,7 +388,7 @@ export default function NurseDashboardPage() {
               onClick={() => setHandoffOpen(true)}
               className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold transition-all"
               style={{
-                background: 'rgba(43,111,224,0.1)',
+                background: 'var(--accent-light)',
                 color: ACCENT,
                 border: `1px solid rgba(43,111,224,0.2)`,
               }}
@@ -475,9 +475,9 @@ export default function NurseDashboardPage() {
                     <BedDouble className="w-4 h-4" style={{ color: ACCENT }} />
                     <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Ward Patients</span>
                     <span className="px-2 py-0.5 rounded text-[9px] font-bold tracking-wider" style={{
-                      background: 'rgba(43,111,224,0.1)',
+                      background: 'var(--accent-light)',
                       color: ACCENT,
-                      border: '1px solid rgba(43,111,224,0.2)',
+                      border: '1px solid var(--accent-border)',
                     }}>LIVE</span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -528,7 +528,7 @@ export default function NurseDashboardPage() {
                           }} />
                         )}
                         <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
-                          style={{ background: '#0077D7' }}>
+                          style={{ background: 'var(--accent-primary)' }}>
                           {(patient.firstName || '?')[0]}{(patient.surname || '?')[0]}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -952,9 +952,9 @@ export default function NurseDashboardPage() {
               <FileText className="w-4 h-4" style={{ color: ACCENT }} />
               <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Care Documentation Log</span>
               <span className="px-2 py-0.5 rounded text-[9px] font-bold tracking-wider" style={{
-                background: 'rgba(43,111,224,0.1)',
+                background: 'var(--accent-light)',
                 color: ACCENT,
-                border: '1px solid rgba(43,111,224,0.2)',
+                border: '1px solid var(--accent-border)',
               }}>TODAY</span>
             </div>
             <div className="flex items-center gap-2">
@@ -1255,7 +1255,7 @@ export default function NurseDashboardPage() {
                 <button
                   onClick={() => window.print()}
                   className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold transition-all"
-                  style={{ background: 'rgba(43,111,224,0.1)', color: ACCENT, border: '1px solid rgba(43,111,224,0.2)' }}
+                  style={{ background: 'var(--accent-light)', color: ACCENT, border: '1px solid var(--accent-border)' }}
                 >
                   <Printer className="w-3 h-3" />
                   Print

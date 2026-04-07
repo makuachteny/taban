@@ -154,7 +154,7 @@ export default function FileUpload({ attachments, onAdd, onRemove, uploaderName,
               <button
                 onClick={(e) => { e.stopPropagation(); setPreviewAttachment(att); }}
                 className="p-1.5 rounded transition-colors flex-shrink-0"
-                style={{ background: 'rgba(43,111,224,0.12)' }}
+                style={{ background: 'var(--accent-light)' }}
                 title="Preview"
               >
                 <Eye className="w-3.5 h-3.5" style={{ color: 'var(--taban-blue)' }} />

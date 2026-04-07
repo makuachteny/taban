@@ -172,8 +172,8 @@ export default function Sidebar() {
                   {isAdminLevel ? roleConfig?.label : 'Current Facility'}
                 </p>
                 <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{
-                  background: `${roleConfig?.color || '#0077D7'}15`,
-                  color: roleConfig?.color || '#0077D7',
+                  background: `${roleConfig?.color || 'var(--accent-primary)'}15`,
+                  color: roleConfig?.color || 'var(--accent-primary)',
                 }}>{roleConfig?.badgeLabel}</span>
               </div>
               <p className="text-[12px] font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
@@ -357,7 +357,7 @@ export default function Sidebar() {
         >
           <div
             className="absolute right-0 top-1/2 -translate-y-1/2 w-[3px] h-10 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-            style={{ background: roleConfig?.color || '#0077D7' }}
+            style={{ background: roleConfig?.color || 'var(--accent-primary)' }}
           />
         </div>
       </aside>

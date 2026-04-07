@@ -53,7 +53,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  functional: '#0077D7',
+  functional: 'var(--accent-primary)',
   partially_functional: '#F59E0B',
   non_functional: '#EF4444',
   closed: '#94A3B8',
@@ -471,8 +471,8 @@ function FacilityProfile({ hospital, onClose }: {
 
       {/* Quick stats row */}
       <div className="kpi-grid" style={{ marginBottom: 16 }}>
-        <div className="kpi"><div className="kpi__icon" style={{ background: 'rgba(0,119,215,0.08)' }}><Users style={{ color: '#0077D7' }} /></div><div className="kpi__body"><div className="kpi__value">{hospital.patientCount.toLocaleString()}</div><div className="kpi__label">Patients</div></div></div>
-        <div className="kpi"><div className="kpi__icon" style={{ background: 'rgba(0,119,215,0.08)' }}><Activity style={{ color: '#0077D7' }} /></div><div className="kpi__body"><div className="kpi__value">{hospital.todayVisits}</div><div className="kpi__label">Today</div></div></div>
+        <div className="kpi"><div className="kpi__icon" style={{ background: 'var(--accent-light)' }}><Users style={{ color: 'var(--accent-primary)' }} /></div><div className="kpi__body"><div className="kpi__value">{hospital.patientCount.toLocaleString()}</div><div className="kpi__label">Patients</div></div></div>
+        <div className="kpi"><div className="kpi__icon" style={{ background: 'var(--accent-light)' }}><Activity style={{ color: 'var(--accent-primary)' }} /></div><div className="kpi__body"><div className="kpi__value">{hospital.todayVisits}</div><div className="kpi__label">Today</div></div></div>
         <div className="kpi"><div className="kpi__icon" style={{ background: 'rgba(252,211,77,0.08)' }}><BedDouble style={{ color: '#FCD34D' }} /></div><div className="kpi__body"><div className="kpi__value">{hospital.totalBeds}</div><div className="kpi__label">Beds</div></div></div>
         <div className="kpi"><div className="kpi__icon" style={{ background: 'rgba(168,85,247,0.08)' }}><Stethoscope style={{ color: '#A78BFA' }} /></div><div className="kpi__body"><div className="kpi__value">{totalStaff}</div><div className="kpi__label">Staff</div></div></div>
       </div>
@@ -517,7 +517,7 @@ function FacilityProfile({ hospital, onClose }: {
               </LineChart>
             </ResponsiveContainer>
             <div style={{ display: 'flex', gap: 12, marginTop: 4 }}>
-              <span style={{ fontSize: 10, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 2, borderRadius: 1, background: '#0077D7' }} />OPD</span>
+              <span style={{ fontSize: 10, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 2, borderRadius: 1, background: 'var(--accent-primary)' }} />OPD</span>
               <span style={{ fontSize: 10, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}><span style={{ width: 8, height: 2, borderRadius: 1, background: '#10B981' }} />Reporting</span>
             </div>
           </div>
@@ -551,7 +551,7 @@ function FacilityProfile({ hospital, onClose }: {
           <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8 }}>Staff ({totalStaff})</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
             {[
-              { label: 'Doctors', value: hospital.doctors, color: '#0077D7' },
+              { label: 'Doctors', value: hospital.doctors, color: 'var(--accent-primary)' },
               { label: 'Clinical Officers', value: hospital.clinicalOfficers, color: '#A78BFA' },
               { label: 'Nurses', value: hospital.nurses, color: '#EC4899' },
               { label: 'Lab Tech', value: hospital.labTechnicians, color: '#FCD34D' },

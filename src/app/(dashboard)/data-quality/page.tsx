@@ -18,7 +18,7 @@ export default function DataQualityPage() {
       <main className="page-container page-enter">
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-1">
-            <Database className="w-6 h-6" style={{ color: '#0077D7' }} />
+            <Database className="w-6 h-6" style={{ color: 'var(--accent-primary)' }} />
             <h1 className="text-xl font-semibold">Data Quality & Completeness</h1>
           </div>
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>National HIS data quality monitoring — WHO assessment framework</p>
@@ -48,7 +48,7 @@ export default function DataQualityPage() {
         <div className="grid grid-cols-2 gap-3 mb-6">
           <div className="card-elevated p-4">
             <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" style={{ color: '#0077D7' }} />
+              <TrendingUp className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
               National Data Quality Indicators
             </h3>
             <div className="space-y-3">
@@ -77,13 +77,13 @@ export default function DataQualityPage() {
 
           <div className="card-elevated p-4">
             <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
-              <Users className="w-4 h-4" style={{ color: '#0077D7' }} />
+              <Users className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
               HIS Workforce
             </h3>
             <div className="space-y-4">
               <div className="p-3 rounded-lg" style={{ background: 'var(--overlay-subtle)' }}>
                 <p className="text-xs uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Total HIS Staff</p>
-                <p className="text-3xl font-bold" style={{ color: '#0077D7' }}>{data.totalHISStaff}</p>
+                <p className="text-3xl font-bold" style={{ color: 'var(--accent-primary)' }}>{data.totalHISStaff}</p>
                 <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>Across {data.facilitiesWithTrainedStaff} facilities with trained staff</p>
               </div>
               <div className="p-3 rounded-lg" style={{ background: 'var(--overlay-subtle)' }}>
@@ -110,11 +110,11 @@ export default function DataQualityPage() {
         <div className="card-elevated overflow-hidden">
           <div className="px-3 py-2 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-light)' }}>
             <h3 className="font-semibold text-sm flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" style={{ color: '#0077D7' }} />
+              <BarChart3 className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
               Facility-Level Data Quality
             </h3>
             <div className="flex items-center gap-3 text-[10px]">
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ background: '#0077D7' }} /> ≥70%</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ background: 'var(--accent-primary)' }} /> ≥70%</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ background: '#FCD34D' }} /> 50–69%</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ background: '#E52E42' }} /> &lt;50%</span>
             </div>

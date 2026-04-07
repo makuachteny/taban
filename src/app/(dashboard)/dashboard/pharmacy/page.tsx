@@ -12,7 +12,7 @@ import {
   ShoppingCart, FileText,
 } from 'lucide-react';
 
-const ACCENT = '#0077D7';
+const ACCENT = 'var(--accent-primary)';
 
 const EVENT_TYPES = [
   { type: 'rx_received', label: 'Prescription Received', color: '#60A5FA', icon: ClipboardList },
@@ -527,7 +527,7 @@ export default function PharmacyDashboardPage() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{
-              background: '#0077D7',
+              background: 'var(--accent-primary)',
             }}>
               <Pill className="w-5 h-5 text-white" />
             </div>
@@ -600,7 +600,7 @@ export default function PharmacyDashboardPage() {
                   border: `1px solid ${rx.priority === 'urgent' ? `${ACCENT}25` : 'var(--border-light)'}`,
                 }}>
                   <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0" style={{
-                    background: '#0077D7',
+                    background: 'var(--accent-primary)',
                   }}>
                     {rx.patient.split(' ').slice(0, 2).map(n => n[0]).join('')}
                   </div>

@@ -14,7 +14,7 @@ import {
   Eye, EyeOff, CheckCircle, AlertTriangle, Zap
 } from 'lucide-react';
 
-const ACCENT = '#0077D7';
+const ACCENT = 'var(--accent-primary)';
 
 const EVENT_TYPES = [
   { type: 'arrival', label: 'Patient Arrived', color: '#14B8A6', icon: LogIn },
@@ -314,7 +314,7 @@ export default function FrontDeskDashboardPage() {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{
-              background: '#0077D7',
+              background: 'var(--accent-primary)',
             }}>
               <Shield className="w-5 h-5 text-white" />
             </div>
@@ -736,7 +736,7 @@ export default function FrontDeskDashboardPage() {
                       borderLeft: `3px solid ${pColor}`,
                     }}>
                     <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
-                      style={{ background: '#0077D7' }}>
+                      style={{ background: 'var(--accent-primary)' }}>
                       {item.name.split(' ').map(n => n[0]).join('')}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -886,7 +886,7 @@ export default function FrontDeskDashboardPage() {
                       <td className="px-4 py-2.5">
                         <div className="flex items-center gap-2">
                           <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0"
-                            style={{ background: '#0077D7' }}>
+                            style={{ background: 'var(--accent-primary)' }}>
                             {(patient.firstName || '?')[0]}{(patient.surname || '?')[0]}
                           </div>
                           <span className="text-[11px] font-medium" style={{ color: 'var(--text-primary)' }}>

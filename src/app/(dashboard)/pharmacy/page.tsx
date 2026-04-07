@@ -91,7 +91,7 @@ export default function PharmacyPage() {
           <div className="kpi-grid mb-4">
             {[
               { label: 'Pending Prescriptions', value: pendingRx, icon: Pill, color: '#FCD34D', bg: 'rgba(252,211,77,0.10)' },
-              { label: 'Dispensed Today', value: dispensedRx, icon: CheckCircle2, color: '#0077D7', bg: 'rgba(0,119,215,0.12)' },
+              { label: 'Dispensed Today', value: dispensedRx, icon: CheckCircle2, color: 'var(--accent-primary)', bg: 'rgba(0,119,215,0.12)' },
               { label: 'Low Stock Items', value: lowStock, icon: TrendingDown, color: '#E52E42', bg: 'rgba(229,46,66,0.10)' },
               { label: 'Expired Items', value: expiredItems, icon: AlertTriangle, color: '#F87171', bg: 'rgba(229,46,66,0.12)' },
             ].map(s => (
@@ -152,7 +152,7 @@ export default function PharmacyPage() {
                     </tr>
                   ) : filteredQueue.map(rx => (
                     <tr key={rx._id} className="cursor-pointer hover:bg-[var(--table-row-hover)]" onClick={() => { if (rx.patientId) router.push(`/patients/${rx.patientId}`); }}>
-                      <td className="font-medium text-sm" style={{ color: '#0077D7' }}>{rx.patientName}</td>
+                      <td className="font-medium text-sm" style={{ color: 'var(--accent-primary)' }}>{rx.patientName}</td>
                       <td className="text-sm">{rx.medication}</td>
                       <td className="text-xs font-mono" style={{ color: 'var(--text-secondary)' }}>
                         {rx.dose} {rx.frequency} {rx.duration ? `x ${rx.duration}` : ''}

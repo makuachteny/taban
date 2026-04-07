@@ -97,7 +97,7 @@ export default function DHIS2ExportPage() {
 
   // Aggregate summary from real patient data
   const summaryData = [
-    { label: 'OPD Visits', value: patients.length, icon: BarChart3, color: '#0077D7' },
+    { label: 'OPD Visits', value: patients.length, icon: BarChart3, color: 'var(--accent-primary)' },
     { label: 'Malaria Cases', value: diseaseAlerts.filter(a => a.disease?.toLowerCase().includes('malaria')).length || Math.floor(patients.length * 0.35), icon: AlertTriangle, color: '#E52E42' },
     { label: 'Active Surveillance Alerts', value: diseaseAlerts.length, icon: AlertTriangle, color: '#F59E0B' },
     { label: 'ANC Visits', value: ancStats?.totalVisits || 0, icon: FileText, color: '#EC4899' },
@@ -122,7 +122,7 @@ export default function DHIS2ExportPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <Globe className="w-6 h-6" style={{ color: '#0077D7' }} />
+              <Globe className="w-6 h-6" style={{ color: 'var(--accent-primary)' }} />
               <h1 className="text-xl font-semibold">DHIS2 Integration</h1>
             </div>
             <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
@@ -150,7 +150,7 @@ export default function DHIS2ExportPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {[
             { label: 'Connection', value: 'Active', icon: Wifi, color: '#10B944', sub: 'hmis.southsudan.health' },
-            { label: 'Data Elements', value: `${syncedCount}/${DHIS2_DATA_ELEMENTS.length}`, icon: Database, color: '#0077D7', sub: 'Synced' },
+            { label: 'Data Elements', value: `${syncedCount}/${DHIS2_DATA_ELEMENTS.length}`, icon: Database, color: 'var(--accent-primary)', sub: 'Synced' },
             { label: 'Reports Due', value: String(DHIS2_REPORTS.filter(r => r.status !== 'submitted').length), icon: FileText, color: '#F59E0B', sub: 'Pending completion' },
             { label: 'Last Sync', value: '08:00 Today', icon: Clock, color: '#0D9488', sub: 'Feb 22, 2026' },
           ].map((stat) => (
@@ -242,7 +242,7 @@ export default function DHIS2ExportPage() {
                     'badge-muted'
                   }`} style={
                     report.status === 'submitted' ? {} :
-                    report.status === 'draft' ? { background: 'rgba(43,111,224,0.1)', color: '#0077D7' } :
+                    report.status === 'draft' ? { background: 'var(--accent-light)', color: 'var(--accent-primary)' } :
                     { background: 'var(--overlay-subtle)', color: 'var(--text-muted)' }
                   }>
                     {report.status.replace('_', ' ')}
@@ -265,9 +265,9 @@ export default function DHIS2ExportPage() {
                 {report.status !== 'submitted' && (
                   <div className="flex items-center gap-2 mt-3">
                     <button className="text-xs font-medium flex items-center gap-1 px-3 py-1.5 rounded-lg transition-colors" style={{
-                      background: 'rgba(43,111,224,0.08)',
-                      color: '#0077D7',
-                      border: '1px solid rgba(43,111,224,0.15)',
+                      background: 'var(--accent-light)',
+                      color: 'var(--accent-primary)',
+                      border: '1px solid var(--accent-border)',
                     }}>
                       <FileText className="w-3 h-3" /> Edit Report
                     </button>
@@ -297,8 +297,8 @@ export default function DHIS2ExportPage() {
                   <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>February 2026 · {hospitalName}</p>
                 </div>
                 <span className="text-[10px] font-bold uppercase px-2 py-1 rounded-md" style={{
-                  background: 'rgba(43,111,224,0.08)',
-                  color: '#0077D7',
+                  background: 'var(--accent-light)',
+                  color: 'var(--accent-primary)',
                 }}>Live Data</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -360,7 +360,7 @@ export default function DHIS2ExportPage() {
                       'Per-facility births, deaths, and immunizations',
                     ].map(item => (
                       <div key={item} className="flex items-center gap-2">
-                        <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#0077D7' }} />
+                        <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--accent-primary)' }} />
                         <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{item}</span>
                       </div>
                     ))}
@@ -379,11 +379,11 @@ export default function DHIS2ExportPage() {
                   style={{ borderColor: 'var(--border-light)', background: 'var(--overlay-subtle)' }}
                 >
                   <div className="flex items-center gap-3 mb-2">
-                    <FileJson className="w-5 h-5" style={{ color: '#0077D7' }} />
+                    <FileJson className="w-5 h-5" style={{ color: 'var(--accent-primary)' }} />
                     <span className="font-semibold text-sm">JSON</span>
                   </div>
                   <p className="text-xs" style={{ color: 'var(--text-muted)' }}>DHIS2-compatible JSON for API import</p>
-                  <div className="mt-3 flex items-center gap-2 text-xs font-medium" style={{ color: '#0077D7' }}>
+                  <div className="mt-3 flex items-center gap-2 text-xs font-medium" style={{ color: 'var(--accent-primary)' }}>
                     {exporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                     Download .json
                   </div>
@@ -408,10 +408,10 @@ export default function DHIS2ExportPage() {
             </div>
 
             {exportResult && (
-              <div className="card-elevated p-4" style={{ background: 'rgba(43,111,224,0.06)', border: '1px solid rgba(43,111,224,0.15)' }}>
+              <div className="card-elevated p-4" style={{ background: 'rgba(43,111,224,0.06)', border: '1px solid var(--accent-border)' }}>
                 <div className="flex items-center gap-2 mb-1">
-                  <CheckCircle className="w-4 h-4" style={{ color: '#0077D7' }} />
-                  <span className="font-semibold text-sm" style={{ color: '#0077D7' }}>Export Successful</span>
+                  <CheckCircle className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
+                  <span className="font-semibold text-sm" style={{ color: 'var(--accent-primary)' }}>Export Successful</span>
                 </div>
                 <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
                   Exported {exportResult.rows} data values in {exportResult.format} format · Period: {period} · {exportResult.date}
@@ -434,7 +434,7 @@ export default function DHIS2ExportPage() {
                 }}
               >
                 <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{
-                  background: log.status === 'success' ? '#10B944' : log.status === 'error' ? '#E52E42' : '#0077D7',
+                  background: log.status === 'success' ? '#10B944' : log.status === 'error' ? '#E52E42' : 'var(--accent-primary)',
                 }} />
                 <span className="text-xs font-mono flex-shrink-0" style={{ color: 'var(--text-muted)', minWidth: '110px' }}>{log.time}</span>
                 <span className="text-sm" style={{

@@ -416,7 +416,7 @@ export default function ReportsPage() {
             <span className="text-sm font-medium">{title}</span>
             <span
               className="text-xs px-2 py-0.5 rounded-full"
-              style={{ background: 'rgba(43,111,224,0.12)', color: 'var(--taban-blue)' }}
+              style={{ background: 'var(--accent-light)', color: 'var(--taban-blue)' }}
             >
               {rows.length} {rows.length === 1 ? 'row' : 'rows'}
             </span>
@@ -559,7 +559,7 @@ export default function ReportsPage() {
                       >
                         <div
                           className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-                          style={{ background: 'rgba(43,111,224,0.12)' }}
+                          style={{ background: 'var(--accent-light)' }}
                         >
                           <FileText className="w-5 h-5" style={{ color: 'var(--taban-blue)' }} />
                         </div>

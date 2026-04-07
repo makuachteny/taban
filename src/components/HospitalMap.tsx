@@ -285,7 +285,7 @@ export default function MapView({
                     fontWeight: 600,
                     padding: '1px 5px',
                     borderRadius: '3px',
-                    background: 'rgba(43,111,224,0.12)',
+                    background: 'var(--accent-light)',
                     color: '#3B82F6',
                   }}>
                     {TYPE_LABELS[hospital.facilityType] || hospital.facilityType}
