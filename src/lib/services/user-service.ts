@@ -3,7 +3,7 @@ import type { UserDoc, UserRole } from '../db-types';
 import type { DataScope } from './data-scope';
 import { filterByScope } from './data-scope';
 
-const VALID_ROLES: UserRole[] = ['super_admin', 'org_admin', 'doctor', 'clinical_officer', 'nurse', 'lab_tech', 'pharmacist', 'front_desk', 'government', 'boma_health_worker', 'payam_supervisor', 'data_entry_clerk'];
+const VALID_ROLES: UserRole[] = ['super_admin', 'org_admin', 'doctor', 'clinical_officer', 'nurse', 'lab_tech', 'pharmacist', 'front_desk', 'government', 'boma_health_worker', 'payam_supervisor', 'data_entry_clerk', 'medical_superintendent', 'hrio', 'community_health_volunteer', 'nutritionist', 'radiologist'];
 
 export async function getAllUsers(scope?: DataScope): Promise<UserDoc[]> {
   const db = usersDB();

@@ -107,6 +107,11 @@ export default function LoginPage() {
     { role: 'Payam Supervisor', user: 'sup.mary', pass: 'Sup.Mary@KJ2026', desc: 'Kajo-keji PHCC', color: '#D97706', hospital: 'phcc-001' },
     { role: 'Boma Health Worker', user: 'bhw.akol', pass: 'BHW.Akol@KJ2026', desc: 'Kajo-keji Boma PHCU', color: '#059669', hospital: 'phcu-001' },
     { role: 'Data Entry Clerk', user: 'data.ayen', pass: 'Data.Ayen@JTH2026', desc: 'Juba Teaching Hospital', color: '#0891B2', hospital: 'hosp-001' },
+    { role: 'Med. Superintendent', user: 'supt.lado', pass: 'Supt.Lado@JTH2026', desc: 'Juba Teaching Hospital', color: '#1E40AF', hospital: 'hosp-001' },
+    { role: 'Health Records (HRIO)', user: 'hrio.dut', pass: 'HRIO.Dut@JTH2026', desc: 'Juba Teaching Hospital', color: '#0F766E', hospital: 'hosp-001' },
+    { role: 'CHV (Community)', user: 'chv.ajak', pass: 'CHV.Ajak@KJ2026', desc: 'Kajo-keji Boma PHCU', color: '#16A34A', hospital: 'phcu-001' },
+    { role: 'Nutritionist', user: 'nutr.nyabol', pass: 'Nutr.Nyabol@JTH2026', desc: 'Juba Teaching Hospital', color: '#EA580C', hospital: 'hosp-001' },
+    { role: 'Radiologist', user: 'rad.taban', pass: 'Rad.Taban@JTH2026', desc: 'Juba Teaching Hospital', color: '#7C3AED', hospital: 'hosp-001' },
   ];
 
   const inputLabelStyle: React.CSSProperties = {
@@ -326,7 +331,7 @@ export default function LoginPage() {
                   <button
                     key={acc.user}
                     type="button"
-                    onClick={() => { setUsername(acc.user); setPassword(acc.pass); if (acc.hospital) setHospitalId(acc.hospital); }}
+                    onClick={() => { setUsername(acc.user); setPassword(acc.pass); setHospitalId(acc.hospital || 'hosp-001'); }}
                     className="w-full flex items-center gap-3 px-5 py-3 text-left transition-colors"
                     style={{
                       borderBottom: i < demoAccounts.length - 1 ? '1px solid var(--border-medium)' : 'none',

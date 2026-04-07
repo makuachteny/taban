@@ -23,6 +23,11 @@ const ROLE_LABELS: Record<UserRole, string> = {
   boma_health_worker: 'Boma Health Worker',
   payam_supervisor: 'Payam Supervisor',
   data_entry_clerk: 'Data Entry Clerk',
+  medical_superintendent: 'Medical Superintendent',
+  hrio: 'Health Records Officer',
+  community_health_volunteer: 'Community Health Volunteer',
+  nutritionist: 'Nutritionist',
+  radiologist: 'Radiologist',
 };
 
 const ROLE_COLORS: Record<string, string> = {
@@ -38,6 +43,11 @@ const ROLE_COLORS: Record<string, string> = {
   boma_health_worker: '#F97316',
   payam_supervisor: '#8B5CF6',
   data_entry_clerk: '#0891B2',
+  medical_superintendent: '#1E40AF',
+  hrio: '#0F766E',
+  community_health_volunteer: '#16A34A',
+  nutritionist: '#EA580C',
+  radiologist: '#7C3AED',
 };
 
 export default function AdminUsersPage() {

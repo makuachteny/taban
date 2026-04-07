@@ -12,11 +12,11 @@ const MIDDLEWARE_ROLE_ROUTES: Record<string, { allowed: string[]; defaultDashboa
     defaultDashboard: '/dashboard',
   },
   clinical_officer: {
-    allowed: ['/dashboard', '/patients', '/consultation', '/referrals', '/messages', '/lab', '/pharmacy', '/immunizations', '/anc', '/births', '/deaths', '/surveillance', '/reports', '/hospitals', '/settings', '/epidemic-intelligence', '/mch-analytics', '/my-facility', '/appointments', '/telehealth'],
+    allowed: ['/dashboard', '/patients', '/consultation', '/referrals', '/messages', '/lab', '/pharmacy', '/immunizations', '/anc', '/births', '/deaths', '/surveillance', '/settings', '/my-facility', '/appointments'],
     defaultDashboard: '/dashboard',
   },
   nurse: {
-    allowed: ['/dashboard/nurse', '/patients', '/messages', '/lab', '/immunizations', '/anc', '/births', '/settings', '/my-facility', '/appointments'],
+    allowed: ['/dashboard/nurse', '/patients', '/messages', '/lab', '/immunizations', '/anc', '/births', '/deaths', '/settings', '/my-facility', '/appointments'],
     defaultDashboard: '/dashboard/nurse',
   },
   lab_tech: {
@@ -36,12 +36,32 @@ const MIDDLEWARE_ROLE_ROUTES: Record<string, { allowed: string[]; defaultDashboa
     defaultDashboard: '/government',
   },
   data_entry_clerk: {
-    allowed: ['/dashboard/data-entry', '/facility-assessments', '/data-quality', '/hospitals', '/immunizations', '/anc', '/births', '/deaths', '/vital-statistics', '/messages', '/settings', '/my-facility'],
+    allowed: ['/dashboard/data-entry', '/facility-assessments', '/data-quality', '/immunizations', '/anc', '/births', '/deaths', '/vital-statistics', '/messages', '/settings', '/my-facility'],
     defaultDashboard: '/dashboard/data-entry',
+  },
+  medical_superintendent: {
+    allowed: ['/dashboard', '/patients', '/consultation', '/referrals', '/messages', '/lab', '/pharmacy', '/immunizations', '/anc', '/births', '/deaths', '/surveillance', '/reports', '/hospitals', '/settings', '/epidemic-intelligence', '/mch-analytics', '/my-facility', '/appointments', '/telehealth', '/facility-assessments', '/data-quality'],
+    defaultDashboard: '/dashboard',
+  },
+  hrio: {
+    allowed: ['/dashboard/data-entry', '/patients', '/facility-assessments', '/data-quality', '/reports', '/vital-statistics', '/immunizations', '/anc', '/births', '/deaths', '/hospitals', '/messages', '/settings', '/my-facility'],
+    defaultDashboard: '/dashboard/data-entry',
+  },
+  community_health_volunteer: {
+    allowed: ['/dashboard/boma', '/patients', '/messages', '/immunizations', '/anc', '/births', '/deaths'],
+    defaultDashboard: '/dashboard/boma',
+  },
+  nutritionist: {
+    allowed: ['/dashboard', '/patients', '/messages', '/anc', '/immunizations', '/mch-analytics', '/settings', '/my-facility'],
+    defaultDashboard: '/dashboard',
+  },
+  radiologist: {
+    allowed: ['/dashboard', '/patients', '/lab', '/messages', '/settings', '/my-facility'],
+    defaultDashboard: '/dashboard',
   },
 };
 
-const ALL_ROLES: UserRole[] = ['doctor', 'clinical_officer', 'nurse', 'lab_tech', 'pharmacist', 'front_desk', 'government', 'data_entry_clerk'];
+const ALL_ROLES: UserRole[] = ['doctor', 'clinical_officer', 'nurse', 'lab_tech', 'pharmacist', 'front_desk', 'government', 'data_entry_clerk', 'medical_superintendent', 'hrio', 'community_health_volunteer', 'nutritionist', 'radiologist'];
 
 describe('middleware-routes sync with permissions', () => {
   test.each(ALL_ROLES)('defaultDashboard matches for role: %s', (role) => {

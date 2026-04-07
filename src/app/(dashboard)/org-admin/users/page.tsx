@@ -175,6 +175,11 @@ export default function OrgUsersPage() {
       boma_health_worker: 'BHW',
       payam_supervisor: 'Payam Supervisor',
       data_entry_clerk: 'Data Entry Clerk',
+      medical_superintendent: 'Med. Superintendent',
+      hrio: 'Health Records Officer',
+      community_health_volunteer: 'CHV',
+      nutritionist: 'Nutritionist',
+      radiologist: 'Radiologist',
     };
     return map[role] || role;
   };
@@ -193,6 +198,11 @@ export default function OrgUsersPage() {
       boma_health_worker: '#059669',
       payam_supervisor: '#D97706',
       data_entry_clerk: '#0891B2',
+      medical_superintendent: '#1E40AF',
+      hrio: '#0F766E',
+      community_health_volunteer: '#16A34A',
+      nutritionist: '#EA580C',
+      radiologist: '#7C3AED',
     };
     return map[role] || '#6B7280';
   };

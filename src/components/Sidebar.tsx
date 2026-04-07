@@ -28,25 +28,17 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { logout, currentUser, sidebarOpen, setSidebarOpen, sidebarCollapsed, setSidebarCollapsed } = useApp();
 
-  const isSuperAdmin = currentUser?.role === 'super_admin';
-  const isOrgAdmin = currentUser?.role === 'org_admin';
-  const isGovernment = currentUser?.role === 'government';
+  const role = currentUser?.role;
+  const isAdminLevel = role === 'super_admin' || role === 'org_admin' || role === 'government';
   const roleConfig = currentUser ? getRoleConfig(currentUser.role) : null;
   const navItems = roleConfig?.navItems || [];
   const groups = groupBySection(navItems);
   const hasSections = navItems.some(i => i.section);
 
   const branding = currentUser?.branding;
-  const brandName = isSuperAdmin ? 'TABAN' : (branding?.name || 'TABAN');
+  const brandName = role === 'super_admin' ? 'TABAN' : (branding?.name || 'TABAN');
   const brandLogo = branding?.logoUrl;
-
-  const subtitle = isSuperAdmin
-    ? 'Platform Admin'
-    : isOrgAdmin
-    ? 'Organization Admin'
-    : isGovernment
-    ? 'Ministry of Health'
-    : 'Digital Health Records';
+  const subtitle = roleConfig?.label || 'Digital Health Records';
 
   const handleNavClick = () => {
     setSidebarOpen(false);
@@ -141,7 +133,7 @@ export default function Sidebar() {
               <h1 className="font-extrabold text-[15px] leading-tight tracking-wide" style={{ color: 'var(--text-primary)' }}>
                 {brandName.length > 12 ? brandName.slice(0, 12) : brandName}
               </h1>
-              <p className="text-[9px] uppercase tracking-[0.18em] font-semibold" style={{ color: '#0077D7' }}>
+              <p className="text-[9px] uppercase tracking-[0.18em] font-semibold" style={{ color: roleConfig?.color || '#0077D7' }}>
                 {subtitle}
               </p>
             </div>
@@ -159,52 +151,45 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Facility badge */}
+      {/* Role & facility badge */}
       {currentUser && !collapsed && (
         <div className="mx-4 mb-3 p-3 rounded-2xl" style={{
           background: 'var(--overlay-subtle)',
-          border: '1px solid var(--border-glass)',
+          border: '1px solid var(--border-medium)',
         }}>
           <div className="flex items-center gap-2.5">
-            {(isSuperAdmin || isOrgAdmin || isGovernment) ? (
-              <div className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ background: 'var(--overlay-light)' }}>
-                <Globe className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
+            <div className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0" style={{
+              background: `${roleConfig?.color || '#0077D7'}18`,
+            }}>
+              {isAdminLevel
+                ? <Globe className="w-3.5 h-3.5" style={{ color: roleConfig?.color || 'var(--text-muted)' }} />
+                : <Building2 className="w-3.5 h-3.5" style={{ color: roleConfig?.color || 'var(--text-muted)' }} />
+              }
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <p className="text-[9px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>
+                  {isAdminLevel ? roleConfig?.label : 'Current Facility'}
+                </p>
+                <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{
+                  background: `${roleConfig?.color || '#0077D7'}15`,
+                  color: roleConfig?.color || '#0077D7',
+                }}>{roleConfig?.badgeLabel}</span>
               </div>
-            ) : null}
-            <div style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}>
-              {isSuperAdmin ? (
-                <>
-                  <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Super Admin</p>
-                  <p className="text-[12px] font-semibold" style={{ color: 'var(--text-primary)' }}>All Organizations</p>
-                </>
-              ) : isOrgAdmin ? (
-                <>
-                  <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Organization</p>
-                  <p className="text-[12px] font-semibold" style={{ color: 'var(--text-primary)' }}>{currentUser.organization?.name || 'My Organization'}</p>
-                </>
-              ) : isGovernment ? (
-                <>
-                  <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Government Admin</p>
-                  <p className="text-[12px] font-semibold" style={{ color: 'var(--text-primary)' }}>Republic of South Sudan</p>
-                </>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between mb-0.5">
-                    <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Current Facility</p>
-                    <span className="text-[8px] font-bold px-2 py-0.5 rounded-full" style={{
-                      background: 'rgba(43, 111, 224, 0.12)',
-                      color: '#0077D7',
-                    }}>{roleConfig?.badgeLabel}</span>
-                  </div>
-                  <p className="text-[12px] font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{currentUser.hospital?.name || currentUser.hospitalName}</p>
-                  <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{currentUser.hospital?.state}</p>
-                </>
+              <p className="text-[12px] font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+                {role === 'super_admin' ? 'All Organizations'
+                  : role === 'government' ? 'Republic of South Sudan'
+                  : role === 'org_admin' ? (currentUser.organization?.name || 'My Organization')
+                  : (currentUser.hospital?.name || currentUser.hospitalName || 'Unassigned')}
+              </p>
+              {!isAdminLevel && currentUser.hospital?.state && (
+                <p className="text-[10px] truncate" style={{ color: 'var(--text-muted)' }}>{currentUser.hospital.state}</p>
               )}
             </div>
           </div>
-          {!isSuperAdmin && !isOrgAdmin && !isGovernment && currentUser.organization && (
-            <div className="flex items-center gap-1.5 mt-2 pt-2" style={{ borderTop: '1px solid var(--border-glass)' }}>
-              <Building2 className="w-3 h-3 flex-shrink-0" style={{ color: '#0077D7' }} />
+          {!isAdminLevel && currentUser.organization && (
+            <div className="flex items-center gap-1.5 mt-2 pt-2" style={{ borderTop: '1px solid var(--border-medium)' }}>
+              <Building2 className="w-3 h-3 flex-shrink-0" style={{ color: roleConfig?.color || '#0077D7' }} />
               <p className="text-[9px] font-medium truncate" style={{ color: 'var(--text-muted)' }}>{currentUser.organization.name}</p>
             </div>
           )}
@@ -222,7 +207,7 @@ export default function Sidebar() {
                 </p>
               )}
               {group.section && collapsed && (
-                <div className="w-6 h-px mx-auto my-2" style={{ background: 'var(--border-glass)' }} />
+                <div className="w-6 h-px mx-auto my-2" style={{ background: 'var(--border-medium)' }} />
               )}
               <div className="space-y-1">
                 {group.items.map(item => {
@@ -310,12 +295,12 @@ export default function Sidebar() {
       {currentUser && !collapsed && (
         <div className="mx-3 mb-3 p-3 rounded-2xl" style={{
           background: 'var(--overlay-subtle)',
-          border: '1px solid var(--border-glass)',
+          border: '1px solid var(--border-medium)',
         }}>
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0" style={{
-              background: 'linear-gradient(135deg, #0077D7 0%, #005FBC 100%)',
-              boxShadow: '0 2px 8px rgba(43, 111, 224, 0.3)',
+              background: `linear-gradient(135deg, ${roleConfig?.gradientFrom || '#0077D7'}, ${roleConfig?.gradientTo || '#005FBC'})`,
+              boxShadow: `0 2px 8px ${roleConfig?.color || '#0077D7'}40`,
             }}>
               {(currentUser.name || '').split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2) || '?'}
             </div>
@@ -331,8 +316,8 @@ export default function Sidebar() {
       {currentUser && collapsed && (
         <div className="flex justify-center mb-3">
           <div className="w-8 h-8 rounded-xl flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0" style={{
-            background: 'linear-gradient(135deg, #0077D7 0%, #005FBC 100%)',
-            boxShadow: '0 2px 8px rgba(43, 111, 224, 0.3)',
+            background: `linear-gradient(135deg, ${roleConfig?.gradientFrom || '#0077D7'}, ${roleConfig?.gradientTo || '#005FBC'})`,
+            boxShadow: `0 2px 8px ${roleConfig?.color || '#0077D7'}40`,
           }}
           title={currentUser.name}
           >
@@ -358,7 +343,7 @@ export default function Sidebar() {
           backdropFilter: `blur(var(--sidebar-blur))`,
           WebkitBackdropFilter: `blur(var(--sidebar-blur))`,
           borderRadius: '10px',
-          border: '1px solid var(--border-glass)',
+          border: '1px solid var(--border-medium)',
           boxShadow: 'var(--glass-shadow)',
         }}
       >
@@ -372,7 +357,7 @@ export default function Sidebar() {
         >
           <div
             className="absolute right-0 top-1/2 -translate-y-1/2 w-[3px] h-10 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-            style={{ background: '#0077D7' }}
+            style={{ background: roleConfig?.color || '#0077D7' }}
           />
         </div>
       </aside>
@@ -399,7 +384,7 @@ export default function Sidebar() {
           backdropFilter: `blur(var(--sidebar-blur))`,
           WebkitBackdropFilter: `blur(var(--sidebar-blur))`,
           borderRadius: '10px',
-          border: '1px solid var(--border-glass)',
+          border: '1px solid var(--border-medium)',
           boxShadow: sidebarOpen ? 'var(--card-shadow-xl)' : 'none',
         }}
       >

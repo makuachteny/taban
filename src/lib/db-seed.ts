@@ -80,6 +80,11 @@ const defaultUsers = [
   { username: 'bhw.akol', password: 'BHW.Akol@KJ2026', name: 'Akol Deng Mading', role: 'boma_health_worker' as const, hospitalId: 'phcu-001', hospitalName: 'Kajo-keji Boma PHCU', orgId: PUBLIC_ORG_ID },
   { username: 'sup.mary', password: 'Sup.Mary@KJ2026', name: 'Mary Lado Kenyi', role: 'payam_supervisor' as const, hospitalId: 'phcc-001', hospitalName: 'Kajo-keji PHCC', orgId: PUBLIC_ORG_ID },
   { username: 'data.ayen', password: 'Data.Ayen@JTH2026', name: 'Ayen Dut Malual', role: 'data_entry_clerk' as const, hospitalId: 'hosp-001', hospitalName: 'Juba Teaching Hospital', orgId: PUBLIC_ORG_ID },
+  { username: 'supt.lado', password: 'Supt.Lado@JTH2026', name: 'Dr. Lado Tombe Kenyi', role: 'medical_superintendent' as const, hospitalId: 'hosp-001', hospitalName: 'Juba Teaching Hospital', orgId: PUBLIC_ORG_ID },
+  { username: 'hrio.dut', password: 'HRIO.Dut@JTH2026', name: 'Dut Machar Kuol', role: 'hrio' as const, hospitalId: 'hosp-001', hospitalName: 'Juba Teaching Hospital', orgId: PUBLIC_ORG_ID },
+  { username: 'chv.ajak', password: 'CHV.Ajak@KJ2026', name: 'Ajak Deng Mawien', role: 'community_health_volunteer' as const, hospitalId: 'phcu-001', hospitalName: 'Kajo-keji Boma PHCU', orgId: PUBLIC_ORG_ID },
+  { username: 'nutr.nyabol', password: 'Nutr.Nyabol@JTH2026', name: 'Nyabol Koang Jal', role: 'nutritionist' as const, hospitalId: 'hosp-001', hospitalName: 'Juba Teaching Hospital', orgId: PUBLIC_ORG_ID },
+  { username: 'rad.taban', password: 'Rad.Taban@JTH2026', name: 'Taban Ladu Soro', role: 'radiologist' as const, hospitalId: 'hosp-001', hospitalName: 'Juba Teaching Hospital', orgId: PUBLIC_ORG_ID },
   // Private org admin (Mercy Hospital Group)
   { username: 'org.admin', password: 'OrgAdmin@Mercy2026', name: 'Mercy Org Administrator', role: 'org_admin' as const, hospitalId: undefined, hospitalName: undefined, orgId: PRIVATE_ORG_ID },
   { username: 'dr.mercy', password: 'Dr.Mercy@2026!', name: 'Dr. Grace Lado', role: 'doctor' as const, hospitalId: 'hosp-001', hospitalName: 'Juba Teaching Hospital', orgId: PRIVATE_ORG_ID },

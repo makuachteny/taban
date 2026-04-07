@@ -8,7 +8,7 @@ export interface BaseDoc {
   createdBy?: string;
 }
 
-export type UserRole = 'super_admin' | 'org_admin' | 'doctor' | 'clinical_officer' | 'nurse' | 'lab_tech' | 'pharmacist' | 'front_desk' | 'government' | 'boma_health_worker' | 'payam_supervisor' | 'data_entry_clerk';
+export type UserRole = 'super_admin' | 'org_admin' | 'doctor' | 'clinical_officer' | 'nurse' | 'lab_tech' | 'pharmacist' | 'front_desk' | 'government' | 'boma_health_worker' | 'payam_supervisor' | 'data_entry_clerk' | 'medical_superintendent' | 'hrio' | 'community_health_volunteer' | 'nutritionist' | 'radiologist';
 
 export interface UserDoc extends BaseDoc {
   type: 'user';

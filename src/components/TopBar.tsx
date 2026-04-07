@@ -1,14 +1,16 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import { Bell, Search, Moon, Sun, Globe, Shield, Menu } from 'lucide-react';
+import { Bell, Search, Moon, Sun, Menu } from 'lucide-react';
 import { useApp } from '@/lib/context';
+import { getRoleConfig } from '@/lib/permissions';
 import SyncStatus from './SyncStatus';
 
 export default function TopBar({ hideSearch }: { title?: string; hideSearch?: boolean }) {
   const { currentUser, theme, toggleTheme, globalSearch, setGlobalSearch, setSidebarOpen } = useApp();
   const [localSearch, setLocalSearch] = useState(globalSearch);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const roleConfig = currentUser ? getRoleConfig(currentUser.role) : null;
 
   const handleSearch = useCallback((value: string) => {
     setLocalSearch(value);
@@ -16,18 +18,12 @@ export default function TopBar({ hideSearch }: { title?: string; hideSearch?: bo
     debounceRef.current = setTimeout(() => setGlobalSearch(value), 300);
   }, [setGlobalSearch]);
 
-  const isSuperAdmin = currentUser?.role === 'super_admin';
-  const isOrgAdmin = currentUser?.role === 'org_admin';
-  const isGovernment = currentUser?.role === 'government';
-
   return (
     <header
       className="h-[52px] flex items-center justify-between px-4 sm:px-5 z-30 mx-3 flex-shrink-0"
       style={{
-        background: 'var(--bg-card)',
-        backdropFilter: 'blur(24px)',
-        WebkitBackdropFilter: 'blur(24px)',
-        border: '1px solid var(--border-glass)',
+        background: 'var(--bg-card-solid)',
+        border: '1px solid var(--border-medium)',
         borderRadius: 'var(--card-radius)',
         boxShadow: 'var(--card-shadow)',
       }}
@@ -39,7 +35,7 @@ export default function TopBar({ hideSearch }: { title?: string; hideSearch?: bo
           className="lg:hidden p-2 -ml-1 rounded-md transition-all hover:scale-105"
           style={{
             background: 'var(--overlay-subtle)',
-            border: '1px solid var(--border-glass)',
+            border: '1px solid var(--border-medium)',
           }}
         >
           <Menu className="w-5 h-5" style={{ color: 'var(--text-secondary)' }} />
@@ -57,7 +53,7 @@ export default function TopBar({ hideSearch }: { title?: string; hideSearch?: bo
               className="search-icon-input pr-4 py-2.5 text-sm"
               style={{
                 width: '260px',
-                border: '1px solid var(--border-glass)',
+                border: '1px solid var(--border-medium)',
                 background: 'var(--overlay-subtle)',
                 backdropFilter: 'blur(8px)',
                 fontSize: '0.82rem',
@@ -77,7 +73,7 @@ export default function TopBar({ hideSearch }: { title?: string; hideSearch?: bo
             className="sm:hidden p-2.5 rounded-md transition-all"
             style={{
               background: 'var(--overlay-subtle)',
-              border: '1px solid var(--border-glass)',
+              border: '1px solid var(--border-medium)',
             }}
             onClick={() => {
               const val = prompt('Search patients, records...');
@@ -96,7 +92,7 @@ export default function TopBar({ hideSearch }: { title?: string; hideSearch?: bo
           className="p-2.5 rounded-md transition-all hover:scale-105"
           style={{
             background: 'var(--overlay-subtle)',
-            border: '1px solid var(--border-glass)',
+            border: '1px solid var(--border-medium)',
           }}
           title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
         >
@@ -115,7 +111,7 @@ export default function TopBar({ hideSearch }: { title?: string; hideSearch?: bo
         {/* Notifications */}
         <button className="relative p-2.5 rounded-md transition-all hover:scale-105" style={{
           background: 'var(--overlay-subtle)',
-          border: '1px solid var(--border-glass)',
+          border: '1px solid var(--border-medium)',
         }}>
           <Bell className="w-4 h-4" style={{ color: 'var(--text-secondary)' }} />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full" style={{
@@ -124,51 +120,23 @@ export default function TopBar({ hideSearch }: { title?: string; hideSearch?: bo
           }} />
         </button>
 
-        {/* Super Admin badge */}
-        {isSuperAdmin && (
-          <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold" style={{
-            background: 'rgba(239, 68, 68, 0.08)',
-            color: '#ef4444',
-            border: '1px solid rgba(239, 68, 68, 0.15)',
+        {/* Role badge */}
+        {roleConfig && (
+          <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-bold" style={{
+            background: `${roleConfig.color}12`,
+            color: roleConfig.color,
+            border: `1px solid ${roleConfig.color}20`,
           }}>
-            <Shield className="w-3.5 h-3.5" />
-            <span>Super Admin</span>
-          </div>
-        )}
-
-        {/* Org Admin badge */}
-        {isOrgAdmin && (
-          <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold" style={{
-            background: 'rgba(43, 111, 224, 0.08)',
-            color: '#0077D7',
-            border: '1px solid rgba(43, 111, 224, 0.15)',
-          }}>
-            <Globe className="w-3.5 h-3.5" />
-            <span>{currentUser?.organization?.name || 'Org Admin'}</span>
-          </div>
-        )}
-
-        {/* Government badge */}
-        {isGovernment && (
-          <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold" style={{
-            background: 'rgba(43, 111, 224, 0.08)',
-            color: '#0077D7',
-            border: '1px solid rgba(43, 111, 224, 0.15)',
-          }}>
-            <Globe className="w-3.5 h-3.5" />
-            <span>Ministry of Health</span>
+            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: roleConfig.color }} />
+            <span>{roleConfig.badgeLabel}</span>
           </div>
         )}
 
         {/* User avatar */}
         {currentUser && (
           <div className="w-9 h-9 rounded-md flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{
-            background: isSuperAdmin
-              ? 'linear-gradient(135deg, #dc2626, #ef4444)'
-              : isGovernment
-              ? 'linear-gradient(135deg, #0077D7, #005FBC)'
-              : 'linear-gradient(135deg, #0077D7, #005FBC)',
-            boxShadow: '0 2px 8px rgba(43, 111, 224, 0.25)',
+            background: `linear-gradient(135deg, ${roleConfig?.gradientFrom || '#0077D7'}, ${roleConfig?.gradientTo || '#005FBC'})`,
+            boxShadow: `0 2px 8px ${roleConfig?.color || '#0077D7'}30`,
           }}>
             {currentUser.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
           </div>
