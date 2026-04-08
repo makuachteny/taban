@@ -905,18 +905,11 @@ function PatientDashboard({ patient, onLogout }: { patient: PatientDoc; onLogout
 
       {/* Booking Modal */}
       {showBooking && (
-        <div onClick={e => { if (e.target === e.currentTarget) setShowBooking(false); }} style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)',
-          zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
-        }}>
-          <div style={{
-            background: 'var(--bg-card-solid)', borderRadius: 8, padding: 24,
-            width: '100%', maxWidth: 'min(460px, calc(100vw - 32px))', maxHeight: '90vh', overflow: 'auto',
-            boxShadow: '0 24px 64px rgba(0,0,0,0.25), 0 8px 24px rgba(0,0,0,0.1)', border: '1px solid rgba(0,0,0,0.08)',
-          }}>
+        <div className="modal-backdrop" onClick={e => { if (e.target === e.currentTarget) setShowBooking(false); }}>
+          <div className="modal-panel modal-panel--md">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>Request Appointment</h3>
-              <button onClick={() => setShowBooking(false)} style={{ width: 28, height: 28, borderRadius: 'var(--card-radius)', background: 'var(--overlay-subtle)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}><X size={14} /></button>
+              <button onClick={() => setShowBooking(false)} style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--overlay-subtle)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}><X size={14} /></button>
             </div>
             <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 14 }}>Submit a request and the facility will confirm within 24 hours.</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

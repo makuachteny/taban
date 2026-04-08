@@ -489,7 +489,7 @@ export default function LandingPage() {
               <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center", marginBottom: 28 }}>
                 {["Personalized walkthrough", "Offline demo", "Custom facility setup", "No commitment"].map((p, i) => (
                   <span key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "rgba(255,255,255,0.7)" }}>
-                    <Check size={14} style={{ color: "#10B981" }} /> {p}
+                    <Check size={14} /> {p}
                   </span>
                 ))}
               </div>
@@ -669,57 +669,57 @@ function SectionIn({ children }: { children: React.ReactNode }) {
 // ═══════════════════════════════════════════════════════════════════
 
 const PROBLEM_STATS = [
-  { value: 67, suffix: "%", prefix: "", label: "Facilities Non-Reporting", desc: "Two-thirds of health facilities submit zero data to the national DHIS2 system.", color: "#E5484D" },
-  { value: 0, suffix: "", prefix: "", label: "National ID System", desc: "No government identification system exists. Patients can't be tracked across facilities.", color: "#F76B15" },
-  { value: 11, suffix: ".4M", prefix: "", label: "People Unserved", desc: "11.4 million South Sudanese with no reliable digital health records whatsoever.", color: "#0071EB" },
-  { value: 60, suffix: "+", prefix: "", label: "Languages Spoken", desc: "No single lingua franca. Existing tools require literacy most health workers don't have.", color: "#30A46C" },
+  { value: 67, suffix: "%", prefix: "", label: "Facilities Non-Reporting", desc: "Two-thirds of health facilities submit zero data to the national DHIS2 system.", color: "#0077D7" },
+  { value: 0, suffix: "", prefix: "", label: "National ID System", desc: "No government identification system exists. Patients can't be tracked across facilities.", color: "#0A5FC2" },
+  { value: 11, suffix: ".4M", prefix: "", label: "People Unserved", desc: "11.4 million South Sudanese with no reliable digital health records whatsoever.", color: "#0077D7" },
+  { value: 60, suffix: "+", prefix: "", label: "Languages Spoken", desc: "No single lingua franca. Existing tools require literacy most health workers don't have.", color: "#0A3D6B" },
 ];
 
 const FEATURES: { title: string; icon: typeof Shield; desc: string; bullets: string[]; color: string; mockRows: string[] }[] = [
   {
-    title: "Patient Records", icon: Users, color: "#0071EB",
+    title: "Patient Records", icon: Users, color: "#0077D7",
     desc: "Complete electronic health records with geocode-based patient identification. No national ID needed — BOMA-{code}-HH{number} tracks patients by village and household.",
     bullets: ["Photo-based patient identification", "Geocode IDs for populations without national IDs", "Full medical history, vitals, and diagnoses", "Cross-facility record sharing via sync"],
     mockRows: ["Ayen Makuei — ANC", "Deng Ajak — Hypertension", "Nyabol Garang — Malaria", "Akech Deng — Immunization"],
   },
   {
-    title: "Offline-First", icon: WifiOff, color: "#0091FF",
+    title: "Offline-First", icon: WifiOff, color: "#0A5FC2",
     desc: "Works 100% without internet. Every feature, every dashboard, every record — available offline. Data syncs automatically when connectivity returns. Zero data loss.",
     bullets: ["PouchDB local storage — full function offline", "Automatic background sync via CouchDB", "Conflict resolution for multi-site editing", "Service worker for instant page loads"],
     mockRows: ["Last sync: 2m ago", "Local records: 1,247", "Pending sync: 3 docs", "Connection: Offline"],
   },
   {
-    title: "AI Diagnosis", icon: Brain, color: "#7C3AED",
+    title: "AI Diagnosis", icon: Brain, color: "#0A3D6B",
     desc: "Rule-based clinical decision support running entirely in the browser. WHO/IMCI guideline-aligned. Suggests diagnoses, treatments, and lab orders — no internet required.",
     bullets: ["15+ priority diseases covered", "ICD-10/ICD-11 coding", "Severity assessment and triage", "Suggested treatments per WHO guidelines"],
     mockRows: ["Malaria — 87% conf.", "Pneumonia — 42% conf.", "Suggested: RDT, FBC", "Severity: Moderate"],
   },
   {
-    title: "Surveillance", icon: Activity, color: "#E5484D",
+    title: "Surveillance", icon: Activity, color: "#0077D7",
     desc: "Real-time disease surveillance and epidemic intelligence. IDSR-aligned weekly reporting. Outbreak detection at the boma level before it reaches the county.",
     bullets: ["Automated outbreak alert thresholds", "Geographic cluster detection", "IDSR weekly report generation", "State and national aggregate views"],
     mockRows: ["Cholera — Jonglei: WARNING", "Measles — WBeG: WATCH", "Malaria — C.Eq: NORMAL", "IDSR Week 12: Submitted"],
   },
   {
-    title: "Appointments", icon: Calendar, color: "#12A594",
+    title: "Appointments", icon: Calendar, color: "#0A5FC2",
     desc: "Patient appointment booking from payam level and above. Schedule, confirm, check in, and track across departments. Recurring appointments for chronic care.",
     bullets: ["Scheduling conflict detection", "SMS appointment reminders", "Recurring follow-up support", "No-show and completion tracking"],
     mockRows: ["09:00 — Dr. Wani — General", "10:30 — ANC Follow-up", "14:00 — Lab Collection", "15:30 — Specialist Ref."],
   },
   {
-    title: "Telehealth", icon: Video, color: "#0091FF",
+    title: "Telehealth", icon: Video, color: "#0A3D6B",
     desc: "Virtual consultations for private sector facilities. Video, audio, and chat sessions with clinical documentation, consent tracking, and billing — ISO 13131 compliant.",
     bullets: ["Video, audio, and chat sessions", "Patient consent and quality monitoring", "Clinical notes with ICD-10 coding", "Consultation fee and payment tracking"],
     mockRows: ["Session: taban-a3f9...", "Type: Video Call", "Duration: 24 min", "Rating: 4.8/5"],
   },
   {
-    title: "Birth & Death (CRVS)", icon: Baby, color: "#D6409F",
+    title: "Birth & Death (CRVS)", icon: Baby, color: "#0077D7",
     desc: "WHO-compliant civil registration and vital statistics. Birth certificates, death certificates with ICD-11 cause-of-death coding. Maternal death linkage for MMR tracking.",
     bullets: ["WHO medical certificate format", "ICD-11 cause-of-death coding", "Maternal mortality linkage", "Delivery attendant classification"],
     mockRows: ["Births this month: 47", "Deaths registered: 12", "MMR tracking: Active", "Certificates: 59 issued"],
   },
   {
-    title: "DHIS2 Export", icon: Download, color: "#30A46C",
+    title: "DHIS2 Export", icon: Download, color: "#0A5FC2",
     desc: "We don't replace the national health information system — we feed it. Automated data aggregation and export to DHIS2 for government reporting and donor accountability.",
     bullets: ["Automated monthly aggregation", "DHIS2 data element mapping", "Facility and district level reports", "Donor reporting templates"],
     mockRows: ["Export: March 2026", "Facilities: 5/5 ready", "Data elements: 142", "Status: Ready to submit"],
@@ -727,27 +727,27 @@ const FEATURES: { title: string; icon: typeof Shield; desc: string; bullets: str
 ];
 
 const HOW_STEPS = [
-  { title: "Assess & Configure", desc: "We assess your facility's needs, configure role-based dashboards, and set up organization branding. Your system is tailored before day one.", time: "Week 1", icon: ClipboardCheck, color: "#0071EB" },
-  { title: "Train Your Team", desc: "On-site training for every role — from front desk to doctors. Icon-based guides for low-literacy health workers. Facility champions are designated.", time: "Week 2", icon: GraduationCap, color: "#0091FF" },
-  { title: "Deploy & Go Live", desc: "Tablets deployed, data migrated, system live. Full offline function from minute one. No internet dependency for any clinical workflow.", time: "Week 3", icon: Zap, color: "#12A594" },
-  { title: "Support & Scale", desc: "Ongoing remote support, bug fixes, and feature updates. Expand to additional facilities as your organization grows.", time: "Ongoing", icon: BarChart3, color: "#30A46C" },
+  { title: "Assess & Configure", desc: "We assess your facility's needs, configure role-based dashboards, and set up organization branding. Your system is tailored before day one.", time: "Week 1", icon: ClipboardCheck, color: "#0077D7" },
+  { title: "Train Your Team", desc: "On-site training for every role — from front desk to doctors. Icon-based guides for low-literacy health workers. Facility champions are designated.", time: "Week 2", icon: GraduationCap, color: "#0A5FC2" },
+  { title: "Deploy & Go Live", desc: "Tablets deployed, data migrated, system live. Full offline function from minute one. No internet dependency for any clinical workflow.", time: "Week 3", icon: Zap, color: "#0A3D6B" },
+  { title: "Support & Scale", desc: "Ongoing remote support, bug fixes, and feature updates. Expand to additional facilities as your organization grows.", time: "Ongoing", icon: BarChart3, color: "#0077D7" },
 ];
 
 const SOLUTIONS = [
   {
-    title: "Private Hospitals", icon: Building2, color: "#0071EB",
+    title: "Private Hospitals", icon: Building2, color: "#0077D7",
     desc: "Full-featured EHR with telehealth, appointment booking, AI diagnosis, and billing. Professional and Enterprise tiers with multi-facility admin.",
     features: ["Telehealth video consultations", "Appointment scheduling", "Lab, pharmacy, and referral management", "AI-assisted diagnosis", "Patient billing integration", "Custom organization branding"],
     price: "$200/facility/mo",
   },
   {
-    title: "Government & MOH", icon: Globe, color: "#30A46C",
+    title: "Government & MOH", icon: Globe, color: "#0A5FC2",
     desc: "National health system integration with DHIS2 export, disease surveillance, and facility performance monitoring. Donor-subsidized pricing available.",
     features: ["National surveillance dashboard", "DHIS2 automated export", "Facility assessment scoring", "Data quality monitoring", "10-state coverage", "Government role-based access"],
     price: "$75/facility/mo",
   },
   {
-    title: "NGOs & INGOs", icon: HeartPulse, color: "#E5484D",
+    title: "NGOs & INGOs", icon: HeartPulse, color: "#0A3D6B",
     desc: "Program-specific deployments for health interventions. Immunization campaigns, ANC tracking, community health worker management, and donor reporting.",
     features: ["Community health worker dashboards", "Immunization defaulter tracking", "MCH analytics and reporting", "Boma-level household visits", "Donor-ready reports", "Multi-program support"],
     price: "$100/facility/mo",
@@ -762,12 +762,12 @@ const IMPACT_METRICS = [
 ];
 
 const CHALLENGES: { challenge: string; solution: string; icon: typeof Shield; color: string }[] = [
-  { challenge: "Security Breaches", solution: "JWT authentication, bcrypt password hashing, rate limiting, audit logging, HTTP-only cookies, and Content Security Policy headers. Data stays on-device until sync.", icon: Lock, color: "#E5484D" },
-  { challenge: "Data Storage Limitations", solution: "PouchDB local-first architecture stores all data on-device. CouchDB bidirectional sync handles replication. PostgreSQL for server-side analytics. Scales to thousands of facilities.", icon: Database, color: "#0071EB" },
-  { challenge: "Data Inconsistencies", solution: "Typed TypeScript interfaces enforce data integrity. Validation at entry. Last-write-wins conflict resolution with timestamps. ICD-10/ICD-11 standardized coding throughout.", icon: ClipboardCheck, color: "#F76B15" },
-  { challenge: "Interoperability", solution: "DHIS2 export feeds the national system. ISO 13606 health record communication standard. Referral transfer packages move complete patient data between facilities.", icon: Server, color: "#30A46C" },
-  { challenge: "Implementation Cost", solution: "Offline-first = minimal server infrastructure. No per-user cloud fees. Tablets from $200. Total Tier 1 deployment for 5 facilities: $10,000 including hardware, training, and 6 months of support.", icon: DollarSign, color: "#0091FF" },
-  { challenge: "Training & Adoption", solution: "Icon-driven interfaces for low-literacy workers. Photo-based patient IDs. 2-day on-site training. Facility champion stipends. Designed so simple a primary school child can use it.", icon: GraduationCap, color: "#7C3AED" },
+  { challenge: "Security Breaches", solution: "JWT authentication, bcrypt password hashing, rate limiting, audit logging, HTTP-only cookies, and Content Security Policy headers. Data stays on-device until sync.", icon: Lock, color: "#0077D7" },
+  { challenge: "Data Storage Limitations", solution: "PouchDB local-first architecture stores all data on-device. CouchDB bidirectional sync handles replication. PostgreSQL for server-side analytics. Scales to thousands of facilities.", icon: Database, color: "#0A5FC2" },
+  { challenge: "Data Inconsistencies", solution: "Typed TypeScript interfaces enforce data integrity. Validation at entry. Last-write-wins conflict resolution with timestamps. ICD-10/ICD-11 standardized coding throughout.", icon: ClipboardCheck, color: "#0A3D6B" },
+  { challenge: "Interoperability", solution: "DHIS2 export feeds the national system. ISO 13606 health record communication standard. Referral transfer packages move complete patient data between facilities.", icon: Server, color: "#0077D7" },
+  { challenge: "Implementation Cost", solution: "Offline-first = minimal server infrastructure. No per-user cloud fees. Tablets from $200. Total Tier 1 deployment for 5 facilities: $10,000 including hardware, training, and 6 months of support.", icon: DollarSign, color: "#0A5FC2" },
+  { challenge: "Training & Adoption", solution: "Icon-driven interfaces for low-literacy workers. Photo-based patient IDs. 2-day on-site training. Facility champion stipends. Designed so simple a primary school child can use it.", icon: GraduationCap, color: "#0A3D6B" },
 ];
 
 const PRICING = [
@@ -805,13 +805,10 @@ const globalCSS = `
 :root {
   --blue: #0077D7;
   --blue-hover: #005FBC;
+  --blue-dark: #0A3D6B;
+  --blue-mid: #0A5FC2;
   --blue-light: #DFF2FF;
   --blue-pale: #F7FBFF;
-  --teal: #2DA45D;
-  --green: #2DA45D;
-  --red: #DA1230;
-  --orange: #DC820F;
-  --purple: #502D7F;
 
   --text: #1D1D1D;
   --text-secondary: #666666;
@@ -887,7 +884,7 @@ a { color: inherit; text-decoration: none; }
 .tb-heading--light { color: #fff; }
 .tb-heading--light em { color: rgba(255,255,255,0.6); }
 .tb-lead { font-size: 17px; line-height: 1.8; color: var(--text-secondary); max-width: 640px; margin: 0 auto; font-weight: 400; }
-.tb-check { color: var(--green); flex-shrink: 0; }
+.tb-check { color: var(--blue); flex-shrink: 0; }
 
 /* ── Buttons — ModMed style: sharp, clean, 2px radius ── */
 .tb-btn {
@@ -979,11 +976,11 @@ a { color: inherit; text-decoration: none; }
 .tb-hero {
   position: relative; min-height: 100vh; display: flex; align-items: center;
   padding: 140px 0 100px; overflow: hidden;
-  background: #0A5FC2;
+  background: var(--blue);
 }
 .tb-hero__mesh {
   position: absolute; inset: 0;
-  background: linear-gradient(160deg, rgba(0,0,0,0.06) 0%, rgba(0,0,0,0.12) 100%);
+  background: linear-gradient(160deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.1) 100%);
 }
 .tb-hero__layout {
   position: relative; z-index: 2;
@@ -1031,7 +1028,7 @@ a { color: inherit; text-decoration: none; }
 }
 .tb-hero__stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.18); }
 .tb-hero__stat-icon {
-  color: #0A5FC2;
+  color: var(--blue);
   width: 28px;
   height: 28px;
   flex-shrink: 0;
@@ -1041,7 +1038,7 @@ a { color: inherit; text-decoration: none; }
   font-size: 20px;
   font-weight: 800;
   line-height: 1;
-  color: #0A5FC2;
+  color: var(--blue);
   margin-bottom: 2px;
 }
 .tb-hero__stat-label {
@@ -1335,7 +1332,7 @@ a { color: inherit; text-decoration: none; }
 .tb-demo__desc { font-size: 16px; line-height: 1.75; color: rgba(255,255,255,0.55); margin-bottom: 32px; }
 .tb-demo__perks { display: flex; flex-direction: column; gap: 14px; }
 .tb-demo__perk { display: flex; align-items: center; gap: 10px; font-size: 15px; color: rgba(255,255,255,0.75); }
-.tb-demo__perk svg { color: var(--teal); flex-shrink: 0; }
+.tb-demo__perk svg { color: var(--blue); flex-shrink: 0; }
 .tb-demo__form-wrap {
   background: #fff; border-radius: var(--radius-lg); padding: 36px;
   box-shadow: 0 16px 48px rgba(0,0,0,0.2);
@@ -1346,7 +1343,7 @@ a { color: inherit; text-decoration: none; }
 .tb-demo__success { text-align: center; padding: 40px 20px; }
 .tb-demo__success-icon {
   width: 56px; height: 56px; border-radius: 50%;
-  background: rgba(48,164,108,0.1); color: var(--green);
+  background: rgba(0,119,215,0.08); color: var(--blue);
   display: flex; align-items: center; justify-content: center;
   margin: 0 auto 20px;
 }
@@ -1363,8 +1360,8 @@ a { color: inherit; text-decoration: none; }
   padding: 10px 12px;
   border-radius: 6px;
   font-size: 13px;
-  color: #B91C1C;
-  background: rgba(248,113,113,0.12);
+  color: var(--blue-dark);
+  background: rgba(10,61,107,0.08);
   border: 1px solid rgba(248,113,113,0.3);
 }
 .tb-field__label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
@@ -1375,8 +1372,8 @@ a { color: inherit; text-decoration: none; }
   background: #fff; transition: border-color 0.2s; outline: none;
 }
 .tb-field__input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0,119,215,0.1); }
-.tb-field__input--error { border-color: var(--red); }
-.tb-field__error { font-size: 12px; color: var(--red); margin-top: 4px; display: block; }
+.tb-field__input--error { border-color: var(--blue-dark); }
+.tb-field__error { font-size: 12px; color: var(--blue-dark); margin-top: 4px; display: block; }
 select.tb-field__input { cursor: pointer; }
 textarea.tb-field__input { resize: vertical; }
 @media (max-width: 800px) { .tb-demo__layout { grid-template-columns: 1fr; } }
@@ -1402,7 +1399,7 @@ textarea.tb-field__input { resize: vertical; }
 /* ── CTA ── */
 .tb-cta {
   padding: 120px 0;
-  background: #0A5FC2;
+  background: var(--blue);
   text-align: center;
 }
 .tb-cta__title {
@@ -1420,7 +1417,7 @@ textarea.tb-field__input { resize: vertical; }
 .tb-footer { background: #0F172A; padding: 64px 0 32px; color: rgba(255,255,255,0.5); }
 .tb-footer__grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 48px; }
 .tb-footer__tagline { font-size: 14px; line-height: 1.65; margin-bottom: 12px; }
-.tb-footer__built { font-size: 13px; font-weight: 600; color: var(--teal); }
+.tb-footer__built { font-size: 13px; font-weight: 600; color: var(--blue); }
 .tb-footer__col h4 {
   font-family: var(--font-display); font-size: 13px; font-weight: 700;
   text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.8); margin-bottom: 16px;

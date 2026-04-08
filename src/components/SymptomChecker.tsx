@@ -384,7 +384,7 @@ export default function SymptomChecker({
               <div className="flex flex-wrap gap-1.5">
                 {evaluation.recommendedTests.map(test => (
                   <span key={test} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium"
-                    style={{ background: 'rgba(59,130,246,0.1)', color: '#3B82F6', border: '1px solid rgba(59,130,246,0.2)' }}>
+                    style={{ background: 'rgba(59,130,246,0.1)', color: 'var(--accent-primary)', border: '1px solid rgba(59,130,246,0.2)' }}>
                     <FlaskConical className="w-3 h-3" />
                     {test}
                   </span>
@@ -433,7 +433,7 @@ export default function SymptomChecker({
             background: 'rgba(59,130,246,0.05)',
             border: '1px solid rgba(59,130,246,0.15)',
           }}>
-            <p className="text-xs font-bold mb-2 flex items-center gap-1.5" style={{ color: '#3B82F6' }}>
+            <p className="text-xs font-bold mb-2 flex items-center gap-1.5" style={{ color: 'var(--accent-primary)' }}>
               <FlaskConical className="w-3 h-3" /> Learn More
             </p>
             <div className="space-y-1.5">
@@ -448,7 +448,7 @@ export default function SymptomChecker({
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium"
-                        style={{ background: 'rgba(59,130,246,0.1)', color: '#3B82F6' }}
+                        style={{ background: 'rgba(59,130,246,0.1)', color: 'var(--accent-primary)' }}
                       >
                         WHO Guidelines
                       </a>
@@ -466,7 +466,7 @@ export default function SymptomChecker({
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium"
-                        style={{ background: 'rgba(139,92,246,0.1)', color: '#8B5CF6' }}
+                        style={{ background: 'rgba(139,92,246,0.1)', color: 'var(--accent-primary)' }}
                       >
                         ICD-11: {dx.icd10Code}
                       </a>

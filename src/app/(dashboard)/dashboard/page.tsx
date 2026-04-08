@@ -238,11 +238,8 @@ function ModalOverlay({ open, onClose, title, children }: {
 }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.5)' }}>
-      <div
-        className="w-full max-w-3xl max-h-[85vh] overflow-auto rounded-2xl shadow-2xl"
-        style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}
-      >
+    <div className="modal-backdrop">
+      <div className="modal-panel modal-panel--lg">
         <div className="flex items-center justify-between p-4 sticky top-0 z-10" style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border-light)' }}>
           <h2 className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>{title}</h2>
           <button onClick={onClose} className="p-1.5 rounded-lg transition-colors hover:opacity-80" style={{ background: 'var(--bg-secondary)' }}>

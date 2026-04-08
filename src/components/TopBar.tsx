@@ -44,13 +44,13 @@ export default function TopBar({ hideSearch }: { title?: string; hideSearch?: bo
           className={`lg:hidden ${iconBtn} -ml-1`}
           style={{ background: 'var(--overlay-subtle)' }}
         >
-          <Menu className="w-5 h-5" style={{ color: 'var(--text-primary)' }} />
+          <Menu className="w-5 h-5" />
         </button>
 
         {/* Search */}
         {!hideSearch && (
           <div className="relative hidden sm:block">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" />
             <input
               type="search"
               placeholder="Search by name, ID, or record..."
@@ -84,7 +84,7 @@ export default function TopBar({ hideSearch }: { title?: string; hideSearch?: bo
               if (val !== null) handleSearch(val);
             }}
           >
-            <Search className="w-[18px] h-[18px]" style={{ color: 'var(--text-primary)' }} />
+            <Search className="w-[18px] h-[18px]" />
           </button>
         )}
       </div>
@@ -98,9 +98,9 @@ export default function TopBar({ hideSearch }: { title?: string; hideSearch?: bo
           style={{ background: 'transparent' }}
         >
           {theme === 'light' ? (
-            <Moon className="w-[18px] h-[18px]" style={{ color: 'var(--text-secondary)' }} />
+            <Moon className="w-[18px] h-[18px]" />
           ) : (
-            <Sun className="w-[18px] h-[18px]" style={{ color: 'var(--text-secondary)' }} />
+            <Sun className="w-[18px] h-[18px]" />
           )}
         </button>
 
@@ -132,7 +132,7 @@ export default function TopBar({ hideSearch }: { title?: string; hideSearch?: bo
           className={`relative ${iconBtn}`}
           style={{ background: 'transparent' }}
         >
-          <Bell className="w-[18px] h-[18px]" style={{ color: 'var(--text-secondary)' }} />
+          <Bell className="w-[18px] h-[18px]" />
           <span className="absolute top-1 right-1 w-2 h-2 rounded-full" aria-hidden="true" style={{
             background: 'var(--accent-primary)',
             boxShadow: '0 0 4px var(--accent-light)',

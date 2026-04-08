@@ -291,7 +291,7 @@ export default function ClinicalScribe({ onApply, onClose }: ClinicalScribeProps
                   return val ? (
                     <div key={key} className="p-2 rounded-lg" style={{ background: 'rgba(96,165,250,0.08)', border: '1px solid rgba(96,165,250,0.15)' }}>
                       <p className="text-[9px] uppercase tracking-wider font-bold" style={{ color: 'var(--text-muted)' }}>{label}</p>
-                      <p className="text-sm font-bold" style={{ color: '#60A5FA' }}>{val} <span className="text-[10px] font-normal">{unit}</span></p>
+                      <p className="text-sm font-bold" style={{ color: 'var(--accent-primary)' }}>{val} <span className="text-[10px] font-normal">{unit}</span></p>
                     </div>
                   ) : null;
                 })}
@@ -308,7 +308,7 @@ export default function ClinicalScribe({ onApply, onClose }: ClinicalScribeProps
               <div className="space-y-1.5">
                 {scribe.extraction.examFindings.map((f, i) => (
                   <div key={i} className="flex gap-2">
-                    <span className="text-[9px] uppercase tracking-wider font-bold w-20 flex-shrink-0 pt-0.5" style={{ color: '#A855F7' }}>
+                    <span className="text-[9px] uppercase tracking-wider font-bold w-20 flex-shrink-0 pt-0.5" style={{ color: 'var(--accent-primary)' }}>
                       {f.system}
                     </span>
                     <span className="text-xs" style={{ color: 'var(--text-primary)' }}>{f.finding}</span>
@@ -352,7 +352,7 @@ export default function ClinicalScribe({ onApply, onClose }: ClinicalScribeProps
               <div className="space-y-1.5">
                 {scribe.extraction.medications.map((med, i) => (
                   <div key={i} className="p-2 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
-                    <p className="text-xs font-semibold" style={{ color: '#EC4899' }}>{med.name}</p>
+                    <p className="text-xs font-semibold" style={{ color: 'var(--accent-primary)' }}>{med.name}</p>
                     <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-secondary)' }}>
                       {[med.dose, med.frequency, med.route, med.duration].filter(Boolean).join(' · ') || 'Details not captured'}
                     </p>
@@ -371,7 +371,7 @@ export default function ClinicalScribe({ onApply, onClose }: ClinicalScribeProps
               <div className="flex flex-wrap gap-1.5">
                 {scribe.extraction.allergies.map((a, i) => (
                   <span key={i} className="text-xs px-2 py-1 rounded-full" style={{
-                    background: 'rgba(229,46,66,0.12)', color: '#F87171', border: '1px solid rgba(229,46,66,0.2)',
+                    background: 'rgba(229,46,66,0.12)', color: 'var(--color-danger)', border: '1px solid rgba(229,46,66,0.2)',
                   }}>
                     {a.allergen}{a.reaction ? ` → ${a.reaction}` : ''}
                   </span>
@@ -389,7 +389,7 @@ export default function ClinicalScribe({ onApply, onClose }: ClinicalScribeProps
               <div className="flex flex-wrap gap-1.5">
                 {scribe.extraction.labOrders.map((lab, i) => (
                   <span key={i} className="text-xs px-2 py-1 rounded-lg font-medium" style={{
-                    background: 'rgba(6,182,212,0.10)', color: '#06B6D4', border: '1px solid rgba(6,182,212,0.2)',
+                    background: 'rgba(6,182,212,0.10)', color: 'var(--accent-primary)', border: '1px solid rgba(6,182,212,0.2)',
                   }}>
                     {lab}
                   </span>
@@ -442,8 +442,8 @@ export default function ClinicalScribe({ onApply, onClose }: ClinicalScribeProps
             {scribe.extraction.uncertainItems.length > 0 && (
               <div className="p-3 rounded-lg" style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)' }}>
                 <div className="flex items-center gap-2 mb-2">
-                  <AlertCircle className="w-3.5 h-3.5" style={{ color: '#8B5CF6' }} />
-                  <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: '#8B5CF6' }}>Items to Confirm</span>
+                  <AlertCircle className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
+                  <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--accent-primary)' }}>Items to Confirm</span>
                 </div>
                 {scribe.extraction.uncertainItems.map((u, i) => (
                   <p key={i} className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>{u}</p>

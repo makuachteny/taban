@@ -63,7 +63,6 @@ export default function ReferralsPage() {
   const [completeOutcome, setCompleteOutcome] = useState('');
   const [noteModalId, setNoteModalId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [actionSubmitting, setActionSubmitting] = useState(false);
 
   // Track viewed referrals for notification badge
@@ -191,7 +190,6 @@ export default function ReferralsPage() {
     }
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleDecline = async () => {
     if (!declineModalId || !declineReason.trim()) return;
     try {
@@ -212,7 +210,6 @@ export default function ReferralsPage() {
     }
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleComplete = async () => {
     if (!completeModalId || !completeOutcome.trim()) return;
     try {
@@ -233,7 +230,6 @@ export default function ReferralsPage() {
     }
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleAddNote = async () => {
     if (!noteModalId || !noteText.trim()) return;
     try {
@@ -897,6 +893,99 @@ export default function ReferralsPage() {
               })
             )}
           </div>
+
+          {/* Add Note Modal */}
+          {noteModalId && (
+            <div className="modal-backdrop" onClick={() => setNoteModalId(null)}>
+              <div className="modal-panel modal-panel--sm" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>Add Note</h3>
+                  <button onClick={() => setNoteModalId(null)} className="p-1.5 rounded-lg" style={{ background: 'var(--overlay-subtle)' }}>
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>
+                  Add a progress note to this referral. Notes are timestamped and visible to both facilities.
+                </p>
+                <textarea
+                  value={noteText}
+                  onChange={e => setNoteText(e.target.value)}
+                  rows={4}
+                  placeholder="Enter your note..."
+                  className="w-full mb-4 resize-none"
+                  style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: 13 }}
+                />
+                <div className="flex gap-2">
+                  <button onClick={() => setNoteModalId(null)} className="btn btn-secondary flex-1">Cancel</button>
+                  <button onClick={handleAddNote} disabled={!noteText.trim() || actionSubmitting} className="btn btn-primary flex-1" style={{ opacity: !noteText.trim() ? 0.5 : 1 }}>
+                    {actionSubmitting ? 'Saving...' : 'Add Note'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Decline Modal */}
+          {declineModalId && (
+            <div className="modal-backdrop" onClick={() => setDeclineModalId(null)}>
+              <div className="modal-panel modal-panel--sm" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>Decline Referral</h3>
+                  <button onClick={() => setDeclineModalId(null)} className="p-1.5 rounded-lg" style={{ background: 'var(--overlay-subtle)' }}>
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>
+                  Please provide a reason for declining this referral. The referring facility will be notified.
+                </p>
+                <textarea
+                  value={declineReason}
+                  onChange={e => setDeclineReason(e.target.value)}
+                  rows={3}
+                  placeholder="Reason for declining (e.g., no capacity, incorrect specialty...)"
+                  className="w-full mb-4 resize-none"
+                  style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: 13 }}
+                />
+                <div className="flex gap-2">
+                  <button onClick={() => setDeclineModalId(null)} className="btn btn-secondary flex-1">Cancel</button>
+                  <button onClick={handleDecline} disabled={!declineReason.trim() || actionSubmitting} className="btn btn-primary flex-1" style={{ opacity: !declineReason.trim() ? 0.5 : 1, background: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}>
+                    {actionSubmitting ? 'Declining...' : 'Confirm Decline'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Complete Modal */}
+          {completeModalId && (
+            <div className="modal-backdrop" onClick={() => setCompleteModalId(null)}>
+              <div className="modal-panel modal-panel--sm" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>Complete Referral</h3>
+                  <button onClick={() => setCompleteModalId(null)} className="p-1.5 rounded-lg" style={{ background: 'var(--overlay-subtle)' }}>
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>
+                  Record the outcome of this referral. This will close the referral and notify the referring facility.
+                </p>
+                <textarea
+                  value={completeOutcome}
+                  onChange={e => setCompleteOutcome(e.target.value)}
+                  rows={4}
+                  placeholder="Patient outcome (e.g., treated and discharged, admitted for further care...)"
+                  className="w-full mb-4 resize-none"
+                  style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: 13 }}
+                />
+                <div className="flex gap-2">
+                  <button onClick={() => setCompleteModalId(null)} className="btn btn-secondary flex-1">Cancel</button>
+                  <button onClick={handleComplete} disabled={!completeOutcome.trim() || actionSubmitting} className="btn btn-primary flex-1" style={{ opacity: !completeOutcome.trim() ? 0.5 : 1, background: 'var(--color-success)', borderColor: 'var(--color-success)' }}>
+                    {actionSubmitting ? 'Completing...' : 'Mark Complete'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Preview Modal for attachments */}
           {previewAttachment && (

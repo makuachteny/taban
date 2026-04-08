@@ -264,17 +264,17 @@ export default function TelehealthPage() {
         {/* ═══ Calendar ═══ */}
         {view === 'calendar' && (
           <div className="card-elevated" style={{ overflow: 'hidden', marginBottom: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid var(--border-medium)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid var(--border-medium)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <button onClick={prevMonth} style={calBtn}><ChevronLeft size={16} /></button>
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', minWidth: 150, textAlign: 'center' }}>{MONTHS[calMonth]} {calYear}</h3>
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', minWidth: 160, textAlign: 'center' }}>{MONTHS[calMonth]} {calYear}</h3>
                 <button onClick={nextMonth} style={calBtn}><ChevronRight size={16} /></button>
               </div>
               <button onClick={goToday} className="btn btn-secondary btn-sm">Today</button>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
               {WEEKDAYS.map(d => (
-                <div key={d} style={{ padding: '6px 0', textAlign: 'center', fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '1px solid var(--border-medium)' }}>{d}</div>
+                <div key={d} style={{ padding: '8px 0', textAlign: 'center', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '1px solid var(--border-medium)' }}>{d}</div>
               ))}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
@@ -283,7 +283,7 @@ export default function TelehealthPage() {
                 const isSel = selectedDate === day.date;
                 return (
                   <button key={i} onClick={() => setSelectedDate(isSel ? null : day.date)} style={{
-                    padding: '6px 4px', minHeight: 64, border: 'none', cursor: 'pointer',
+                    padding: '8px 4px', minHeight: 72, border: 'none', cursor: 'pointer',
                     background: isSel ? 'var(--accent-light)' : day.isToday ? 'rgba(5,150,105,0.04)' : 'transparent',
                     borderRight: (i + 1) % 7 !== 0 ? '1px solid var(--border-medium)' : 'none',
                     borderBottom: '1px solid var(--border-medium)',
@@ -291,9 +291,9 @@ export default function TelehealthPage() {
                     opacity: day.isCurrent ? 1 : 0.3, transition: 'background 0.15s',
                   }}>
                     <span style={{
-                      fontSize: 12, fontWeight: day.isToday ? 700 : 500,
+                      fontSize: 13, fontWeight: day.isToday ? 700 : 500,
                       color: day.isToday ? '#fff' : isSel ? 'var(--accent-primary)' : 'var(--text-primary)',
-                      width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
                       background: day.isToday ? 'var(--color-success)' : 'transparent',
                     }}>{day.day}</span>
                     {ev && (
@@ -308,7 +308,7 @@ export default function TelehealthPage() {
                 );
               })}
             </div>
-            <div style={{ display: 'flex', gap: 14, padding: '8px 16px', borderTop: '1px solid var(--border-medium)' }}>
+            <div style={{ display: 'flex', gap: 16, padding: '10px 20px', borderTop: '1px solid var(--border-medium)' }}>
               {[{ c: 'var(--color-success)', l: 'Telehealth' }, { c: 'var(--accent-primary)', l: 'Appointments' }, { c: 'var(--color-warning)', l: 'Active' }].map(x => (
                 <span key={x.l} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: 'var(--text-muted)' }}>
                   <span style={{ width: 5, height: 5, borderRadius: '50%', background: x.c }} />{x.l}
@@ -367,16 +367,16 @@ export default function TelehealthPage() {
                     borderLeftColor: session.status === 'in_session' ? 'var(--color-success)' : sc.color,
                   }}>
                     <div onClick={() => setExpandedId(isExp ? null : session._id)} style={{
-                      display: 'flex', alignItems: 'center', padding: '10px 14px', cursor: 'pointer', gap: 10, flexWrap: 'wrap',
+                      display: 'flex', alignItems: 'center', padding: '12px 16px', cursor: 'pointer', gap: 12, flexWrap: 'wrap',
                     }}>
-                      <div style={{ minWidth: 48, textAlign: 'center' }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{session.scheduledTime}</div>
+                      <div style={{ minWidth: 52, textAlign: 'center' }}>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>{session.scheduledTime}</div>
                         {!selectedDate && <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>{session.scheduledDate}</div>}
                       </div>
-                      <div style={{ width: 32, height: 32, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', background: sc.bg, flexShrink: 0 }}>
-                        <tc.icon size={15} style={{ color: sc.color }} />
+                      <div style={{ width: 34, height: 34, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: sc.bg, flexShrink: 0 }}>
+                        <tc.icon size={16} style={{ color: sc.color }} />
                       </div>
-                      <div style={{ flex: 1, minWidth: 100 }}>
+                      <div style={{ flex: 1, minWidth: 120 }}>
                         <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 13 }}>{session.patientName}</div>
                         <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{tc.label} &middot; {session.chiefComplaint.slice(0, 40)}{session.chiefComplaint.length > 40 ? '...' : ''}</div>
                       </div>
@@ -387,8 +387,8 @@ export default function TelehealthPage() {
                     </div>
 
                     {isExp && (
-                      <div style={{ padding: '0 14px 14px', borderTop: '1px solid var(--border-medium)', paddingTop: 12 }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 12 }}>
+                      <div style={{ padding: '0 16px 16px', borderTop: '1px solid var(--border-medium)', paddingTop: 12 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 12 }}>
                           <Detail l="Complaint" v={session.chiefComplaint} />
                           <Detail l="Provider" v={`${session.providerName} (${session.providerRole})`} />
                           <Detail l="Room" v={session.roomId} mono />
@@ -491,14 +491,11 @@ export default function TelehealthPage() {
 /* ─── Helpers ─── */
 function Modal({ children, title, onClose, sm }: { children: React.ReactNode; title: string; onClose: () => void; sm?: boolean }) {
   return (
-    <div onClick={e => { if (e.target === e.currentTarget) onClose(); }} style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
-      zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
-    }}>
-      <div style={{ background: 'var(--bg-card-solid)', borderRadius: 'var(--card-radius)', width: '100%', maxWidth: `min(${sm ? 380 : 500}px, calc(100vw - 32px))`, maxHeight: '90vh', overflow: 'auto', padding: 'clamp(18px, 4vw, 24px)', boxShadow: 'var(--card-shadow-xl)', border: '1px solid var(--border-glass)', position: 'relative' }}>
+    <div className="modal-backdrop" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className={`modal-panel ${sm ? 'modal-panel--sm' : 'modal-panel--md'}`}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
           <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)' }}>{title}</h3>
-          <button onClick={onClose} style={{ width: 28, height: 28, borderRadius: 'var(--card-radius)', background: 'var(--overlay-subtle)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}><X size={14} /></button>
+          <button onClick={onClose} style={{ width: 28, height: 28, borderRadius: 8, background: 'var(--overlay-subtle)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}><X size={14} /></button>
         </div>
         {children}
       </div>

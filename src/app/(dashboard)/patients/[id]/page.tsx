@@ -66,7 +66,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
           </button>
 
           {/* Patient Header */}
-          <div className="card-elevated p-5 mb-4">
+          <div className="card-elevated p-5 mb-5">
             <div className="flex items-start gap-5">
               <div className="w-16 h-16 rounded-md flex items-center justify-center text-xl font-bold text-white flex-shrink-0"
                 style={{ background: patient.gender === 'Male' ? 'var(--taban-blue)' : 'var(--taban-sky)' }}>
@@ -113,7 +113,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-0 border-b mb-4" style={{ borderColor: 'var(--border-light)' }}>
+          <div className="flex gap-0 border-b mb-5" style={{ borderColor: 'var(--border-light)' }}>
             {tabs.map(tab => (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${activeTab === tab.id ? 'tab-active' : ''}`}
@@ -126,33 +126,37 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
 
           {/* Overview Tab */}
           {activeTab === 'overview' && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div className="lg:col-span-2 space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              <div className="lg:col-span-2 space-y-5">
                 {/* Latest Vitals */}
-                <div className="card-elevated p-5">
-                  <h3 className="font-semibold text-sm mb-4">Latest Vital Signs</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    {latestVitals && [
-                      { label: 'Temperature', value: `${latestVitals.temperature}°C`, warn: latestVitals.temperature > 37.5 },
-                      { label: 'Blood Pressure', value: `${latestVitals.systolic}/${latestVitals.diastolic}`, warn: latestVitals.systolic > 140 },
-                      { label: 'Pulse', value: `${latestVitals.pulse} bpm`, warn: latestVitals.pulse > 100 },
-                      { label: 'Resp. Rate', value: `${latestVitals.respiratoryRate}/min`, warn: latestVitals.respiratoryRate > 20 },
-                      { label: 'SpO₂', value: `${latestVitals.oxygenSaturation}%`, warn: latestVitals.oxygenSaturation < 95 },
-                      { label: 'Weight', value: `${latestVitals.weight} kg`, warn: false },
-                      { label: 'Height', value: `${latestVitals.height} cm`, warn: false },
-                      { label: 'BMI', value: latestVitals.bmi.toString(), warn: latestVitals.bmi > 30 || latestVitals.bmi < 18.5 },
-                    ].map(v => (
-                      <div key={v.label} className="p-3 rounded-lg" style={{ background: v.warn ? 'rgba(229,46,66,0.14)' : 'var(--overlay-subtle)' }}>
-                        <p className="text-[10px] font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>{v.label}</p>
-                        <p className="text-lg font-bold" style={{ color: v.warn ? 'var(--taban-red)' : 'var(--text-primary)' }}>{v.value}</p>
-                      </div>
-                    ))}
+                <div className="card-elevated">
+                  <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
+                    <h3 className="font-semibold text-sm">Latest Vital Signs</h3>
+                  </div>
+                  <div className="p-5">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {latestVitals && [
+                        { label: 'Temperature', value: `${latestVitals.temperature}°C`, warn: latestVitals.temperature > 37.5 },
+                        { label: 'Blood Pressure', value: `${latestVitals.systolic}/${latestVitals.diastolic}`, warn: latestVitals.systolic > 140 },
+                        { label: 'Pulse', value: `${latestVitals.pulse} bpm`, warn: latestVitals.pulse > 100 },
+                        { label: 'Resp. Rate', value: `${latestVitals.respiratoryRate}/min`, warn: latestVitals.respiratoryRate > 20 },
+                        { label: 'SpO₂', value: `${latestVitals.oxygenSaturation}%`, warn: latestVitals.oxygenSaturation < 95 },
+                        { label: 'Weight', value: `${latestVitals.weight} kg`, warn: false },
+                        { label: 'Height', value: `${latestVitals.height} cm`, warn: false },
+                        { label: 'BMI', value: latestVitals.bmi.toString(), warn: latestVitals.bmi > 30 || latestVitals.bmi < 18.5 },
+                      ].map(v => (
+                        <div key={v.label} className="p-3 rounded-lg" style={{ background: v.warn ? 'rgba(229,46,66,0.14)' : 'var(--overlay-subtle)' }}>
+                          <p className="text-[10px] font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>{v.label}</p>
+                          <p className="text-lg font-bold" style={{ color: v.warn ? 'var(--taban-red)' : 'var(--text-primary)' }}>{v.value}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
                 {/* Recent Visits */}
                 <div className="card-elevated">
-                  <div className="px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
+                  <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
                     <h3 className="font-semibold text-sm">Recent Encounters</h3>
                   </div>
                   <div className="divide-y" style={{ borderColor: 'var(--table-row-border)' }}>
@@ -160,7 +164,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                       const ai = (rec as unknown as Record<string, unknown>).aiEvaluation as { suggestedDiagnoses: { icd10Code: string; name: string; confidence: number; reasoning: string; severity: string; suggestedTreatment?: string }[]; vitalSignAlerts: string[]; recommendedTests: string[]; severityAssessment: string; clinicalNotes: string; evaluatedAt: string } | undefined;
                       const isAIExpanded = expandedAI.has(rec._id);
                       return (
-                      <div key={rec._id} className="p-4 hover:bg-white/[0.03]">
+                      <div key={rec._id} className="px-5 py-4 hover:bg-white/[0.03]">
                         <div className="flex items-start justify-between mb-2">
                           <div>
                             <div className="flex items-center gap-2">
@@ -237,10 +241,12 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
               </div>
 
               {/* Sidebar info */}
-              <div className="space-y-4">
-                <div className="card-elevated p-4">
-                  <h3 className="font-semibold text-sm mb-3">Demographics</h3>
-                  <div className="space-y-2.5">
+              <div className="space-y-5">
+                <div className="card-elevated">
+                  <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
+                    <h3 className="font-semibold text-sm">Demographics</h3>
+                  </div>
+                  <div className="p-5 space-y-3">
                     {[
                       { l: 'Tribe', v: patient.tribe },
                       { l: 'Language', v: patient.primaryLanguage },
@@ -257,12 +263,12 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                   </div>
                 </div>
 
-                <div className="card-elevated p-4">
-                  <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                <div className="card-elevated">
+                  <div className="px-5 py-3 border-b flex items-center gap-2" style={{ borderColor: 'var(--border-light)' }}>
                     <AlertTriangle className="w-4 h-4" style={{ color: 'var(--taban-red)' }} />
-                    Allergies
-                  </h3>
-                  <div className="space-y-1.5">
+                    <h3 className="font-semibold text-sm">Allergies</h3>
+                  </div>
+                  <div className="p-5 space-y-2">
                     {(patient.allergies || ['None known']).map(a => (
                       <div key={a} className="px-3 py-2 rounded-lg text-sm font-medium"
                         style={{ background: a === 'None known' ? 'var(--overlay-subtle)' : 'rgba(229,46,66,0.14)', color: a === 'None known' ? 'var(--text-secondary)' : '#F87171' }}>
@@ -272,9 +278,11 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                   </div>
                 </div>
 
-                <div className="card-elevated p-4">
-                  <h3 className="font-semibold text-sm mb-3">Chronic Conditions</h3>
-                  <div className="space-y-1.5">
+                <div className="card-elevated">
+                  <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
+                    <h3 className="font-semibold text-sm">Chronic Conditions</h3>
+                  </div>
+                  <div className="p-5 space-y-2">
                     {(patient.chronicConditions || ['None']).map(c => (
                       <div key={c} className="px-3 py-2 rounded-lg text-sm"
                         style={{ background: c === 'None' ? 'var(--overlay-subtle)' : 'rgba(252,211,77,0.14)', color: c === 'None' ? 'var(--text-secondary)' : 'var(--color-warning)' }}>
@@ -284,14 +292,18 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                   </div>
                 </div>
 
-                <div className="card-elevated p-4">
-                  <h3 className="font-semibold text-sm mb-3">Current Medications</h3>
-                  {records[0]?.prescriptions?.map((p, i) => (
-                    <div key={i} className="mb-2 last:mb-0 p-2 rounded" style={{ background: 'var(--overlay-subtle)' }}>
-                      <p className="text-sm font-medium">{p.drugName}</p>
-                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{p.dose} · {p.route} · {p.frequency}</p>
-                    </div>
-                  ))}
+                <div className="card-elevated">
+                  <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
+                    <h3 className="font-semibold text-sm">Current Medications</h3>
+                  </div>
+                  <div className="p-5 space-y-2">
+                    {records[0]?.prescriptions?.map((p, i) => (
+                      <div key={i} className="px-3 py-2.5 rounded-lg" style={{ background: 'var(--overlay-subtle)' }}>
+                        <p className="text-sm font-medium">{p.drugName}</p>
+                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{p.dose} · {p.route} · {p.frequency}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -300,7 +312,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
           {/* Medical History Tab */}
           {activeTab === 'history' && (
             <div className="card-elevated">
-              <div className="px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
+              <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
                 <h3 className="font-semibold text-sm">Complete Medical History Timeline</h3>
               </div>
               <div className="relative pl-8">
@@ -389,7 +401,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
           {/* Labs Tab */}
           {activeTab === 'labs' && (
             <div className="card-elevated overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-2.5 border-b" style={{ borderColor: 'var(--border-light)' }}>
+              <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
                 <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Lab Results</span>
                 <button onClick={() => router.push('/lab')} className="text-xs font-medium flex items-center gap-1" style={{ color: 'var(--taban-blue)' }}>
                   View in Lab Module <ChevronRight className="w-3.5 h-3.5" />
@@ -435,7 +447,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
           {/* Prescriptions Tab */}
           {activeTab === 'prescriptions' && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between px-1">
+              <div className="flex items-center justify-between px-1 mb-1">
                 <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Prescriptions</span>
                 <button onClick={() => router.push('/pharmacy')} className="text-xs font-medium flex items-center gap-1" style={{ color: 'var(--taban-blue)' }}>
                   View in Pharmacy <ChevronRight className="w-3.5 h-3.5" />
@@ -443,7 +455,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
               </div>
               {records.map(rec => (
                 <div key={rec._id} className="card-elevated">
-                  <div className="px-3 py-2 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-light)' }}>
+                  <div className="px-5 py-3 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-light)' }}>
                     <div>
                       <span className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>{rec.visitDate}</span>
                       <span className="text-xs ml-2" style={{ color: 'var(--text-secondary)' }}>{rec.hospitalName}</span>
@@ -452,7 +464,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                   </div>
                   <div className="divide-y" style={{ borderColor: 'var(--table-row-border)' }}>
                     {(rec.prescriptions || []).map((rx, i) => (
-                      <div key={i} className="px-4 py-3 flex items-center gap-4">
+                      <div key={i} className="px-5 py-3 flex items-center gap-4">
                         <Pill className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--taban-blue)' }} />
                         <div className="flex-1">
                           <p className="text-sm font-medium">{rx.drugName}</p>
@@ -511,7 +523,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
           {/* Referrals Tab */}
           {activeTab === 'referrals' && (
             <div className="space-y-3">
-              <div className="flex items-center justify-between px-1">
+              <div className="flex items-center justify-between px-1 mb-1">
                 <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Referral History</span>
                 <button onClick={() => router.push('/referrals')} className="text-xs font-medium flex items-center gap-1" style={{ color: 'var(--taban-blue)' }}>
                   View in Referrals <ChevronRight className="w-3.5 h-3.5" />
@@ -527,7 +539,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                   const tp = ref.transferPackage as { medicalRecords?: unknown[]; labResults?: unknown[]; attachments?: unknown[]; packageSizeBytes?: number } | undefined;
                   const refAtts = ref.referralAttachments as unknown[] | undefined;
                   return (
-                    <div key={ref._id} className="card-elevated p-4">
+                    <div key={ref._id} className="card-elevated px-5 py-4">
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className={`badge urgency-${ref.urgency} text-[10px]`}>

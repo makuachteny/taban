@@ -161,8 +161,8 @@ export default function Sidebar() {
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--accent-light)' }}>
               {isAdminLevel
-                ? <Globe className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
-                : <Building2 className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
+                ? <Globe className="w-3.5 h-3.5" />
+                : <Building2 className="w-3.5 h-3.5" />
               }
             </div>
             <div className="flex-1 min-w-0">
@@ -207,7 +207,7 @@ export default function Sidebar() {
                       title={collapsed ? item.label : undefined}
                       className={`nav-item ${isActive ? 'nav-item-active' : ''} ${collapsed ? 'justify-center !px-0' : ''}`}
                     >
-                      <item.icon className="w-[17px] h-[17px] flex-shrink-0" style={{ opacity: isActive ? 1 : 0.6 }} />
+                      <item.icon className="w-[17px] h-[17px] flex-shrink-0" style={{ opacity: isActive ? 1 : 0.7 }} />
                       {!collapsed && <span className="font-medium text-[13px]">{item.label}</span>}
                     </Link>
                   );
@@ -227,7 +227,7 @@ export default function Sidebar() {
                   title={collapsed ? item.label : undefined}
                   className={`nav-item ${isActive ? 'nav-item-active' : ''} ${collapsed ? 'justify-center !px-0' : ''}`}
                 >
-                  <item.icon className="w-[17px] h-[17px] flex-shrink-0" style={{ opacity: isActive ? 1 : 0.6 }} />
+                  <item.icon className="w-[17px] h-[17px] flex-shrink-0" style={{ opacity: isActive ? 1 : 0.7 }} />
                   {!collapsed && <span className="font-medium text-[13px]">{item.label}</span>}
                 </Link>
               );
@@ -262,7 +262,7 @@ export default function Sidebar() {
             title={collapsed ? 'Settings' : undefined}
             className={`nav-item ${pathname === '/settings' ? 'nav-item-active' : ''} ${collapsed ? 'justify-center !px-0' : ''}`}
           >
-            <Settings className="w-[17px] h-[17px]" style={{ opacity: pathname === '/settings' ? 1 : 0.6 }} />
+            <Settings className="w-[17px] h-[17px]" style={{ opacity: pathname === '/settings' ? 1 : 0.7 }} />
             {!collapsed && <span className="font-medium text-[13px]">Settings</span>}
           </Link>
         )}

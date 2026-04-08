@@ -15,9 +15,9 @@ interface FacilityLevel {
 
 const FACILITY_LEVELS: FacilityLevel[] = [
   { id: 'boma', shortLabel: 'Boma', icon: Home, color: 'var(--color-success)', prefixes: ['boma-'] },
-  { id: 'phcu', shortLabel: 'PHCU', icon: Building2, color: '#0891B2', prefixes: ['phcu-'] },
+  { id: 'phcu', shortLabel: 'PHCU', icon: Building2, color: 'var(--accent-primary)', prefixes: ['phcu-'] },
   { id: 'phcc', shortLabel: 'PHCC', icon: Building2, color: 'var(--accent-primary)', prefixes: ['phcc-'] },
-  { id: 'county', shortLabel: 'County', icon: Building2, color: '#7C3AED', prefixes: ['county-'] },
+  { id: 'county', shortLabel: 'County', icon: Building2, color: 'var(--accent-primary)', prefixes: ['county-'] },
   { id: 'state', shortLabel: 'State', icon: Building2, color: 'var(--color-warning)', prefixes: ['hosp-'] },
   { id: 'national', shortLabel: 'National', icon: Activity, color: 'var(--color-danger)', prefixes: ['nat-'] },
 ];
