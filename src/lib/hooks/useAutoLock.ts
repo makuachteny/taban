@@ -19,10 +19,22 @@ const DEFAULT_TIMEOUT_MS = 60_000; // 1 minute
 const ACTIVITY_EVENTS = ['mousedown', 'keydown', 'touchstart', 'scroll'] as const;
 
 async function hashPin(pin: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(pin + 'taban-salt-2026');
-  const buffer = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+  const salted = pin + 'taban-salt-2026';
+  // Use crypto.subtle when available (HTTPS / localhost)
+  if (typeof globalThis.crypto !== 'undefined' && globalThis.crypto.subtle) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(salted);
+    const buffer = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+  // Fallback for non-secure contexts (HTTP on LAN) — simple hash
+  let hash = 0;
+  for (let i = 0; i < salted.length; i++) {
+    const char = salted.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit int
+  }
+  return 'fb-' + Math.abs(hash).toString(16).padStart(8, '0');
 }
 
 export function useAutoLock(isAuthenticated: boolean, orgLockTimeoutMinutes?: number) {

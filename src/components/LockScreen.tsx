@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Lock, LogOut, ShieldCheck } from 'lucide-react';
 
 interface LockScreenProps {
@@ -14,95 +14,81 @@ interface LockScreenProps {
 
 export default function LockScreen({ userName, hasPin, onVerifyPin, onSetPin, onUnlock, onLogout }: LockScreenProps) {
   const [pin, setPin] = useState('');
-  const [confirmPin, setConfirmPin] = useState('');
+  const [setupPin, setSetupPin] = useState(''); // stores first entry during setup
   const [error, setError] = useState('');
   const [shake, setShake] = useState(false);
   const [mode, setMode] = useState<'unlock' | 'setup' | 'confirm'>(hasPin ? 'unlock' : 'setup');
-  const [submitting, setSubmitting] = useState(false);
-  const resetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Clear state when mode changes
-  useEffect(() => {
-    setPin('');
-    setConfirmPin('');
-    setError('');
-  }, [mode]);
+  const [busy, setBusy] = useState(false);
+  const autoRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const triggerShake = () => {
     setShake(true);
     setTimeout(() => setShake(false), 500);
   };
 
-  const handleVerify = async (enteredPin: string) => {
-    if (submitting) return;
-    setSubmitting(true);
-    const valid = await onVerifyPin(enteredPin);
-    if (valid) {
-      onUnlock();
-    } else {
-      setError('Incorrect PIN');
-      setPin('');
-      triggerShake();
-    }
-    setSubmitting(false);
-  };
-
-  const handleSetup = async (enteredPin: string) => {
-    if (mode === 'setup') {
-      setConfirmPin(enteredPin);
-      setMode('confirm');
-      return;
-    }
-    // confirm mode
-    if (enteredPin !== confirmPin) {
-      setError('PINs do not match. Try again.');
-      setPin('');
-      setMode('setup');
-      triggerShake();
-      return;
-    }
-    setSubmitting(true);
-    await onSetPin(enteredPin);
-    onUnlock();
-    setSubmitting(false);
-  };
-
-  const handleKeyPress = (digit: string) => {
-    if (pin.length >= 6) return;
-    const newPin = pin + digit;
-    setPin(newPin);
+  const handleDigit = useCallback((digit: string) => {
+    if (busy) return;
     setError('');
 
-    // Auto-submit at 4 digits
-    if (newPin.length === 4) {
-      // Small delay for visual feedback
-      if (resetRef.current) clearTimeout(resetRef.current);
-      resetRef.current = setTimeout(() => {
-        if (mode === 'unlock') {
-          handleVerify(newPin);
-        } else {
-          handleSetup(newPin);
-        }
-      }, 200);
-    }
-  };
+    setPin(prev => {
+      if (prev.length >= 4) return prev; // max 4 digits
+      const next = prev + digit;
 
-  const handleBackspace = () => {
+      // Auto-submit when 4th digit entered
+      if (next.length === 4) {
+        if (autoRef.current) clearTimeout(autoRef.current);
+        autoRef.current = setTimeout(async () => {
+          setBusy(true);
+
+          if (mode === 'unlock') {
+            // Verify PIN
+            const valid = await onVerifyPin(next);
+            if (valid) {
+              onUnlock();
+            } else {
+              setError('Incorrect PIN');
+              setPin('');
+              triggerShake();
+            }
+          } else if (mode === 'setup') {
+            // Store first entry, move to confirm
+            setSetupPin(next);
+            setPin('');
+            setMode('confirm');
+          } else {
+            // Confirm mode — check match
+            if (next === setupPin) {
+              await onSetPin(next);
+              onUnlock();
+            } else {
+              setError('PINs do not match. Try again.');
+              setPin('');
+              setSetupPin('');
+              setMode('setup');
+              triggerShake();
+            }
+          }
+
+          setBusy(false);
+        }, 250);
+      }
+
+      return next;
+    });
+  }, [busy, mode, setupPin, onVerifyPin, onSetPin, onUnlock]);
+
+  const handleBackspace = useCallback(() => {
     setPin(prev => prev.slice(0, -1));
     setError('');
-  };
+  }, []);
 
-  const title = mode === 'unlock'
-    ? 'Session Locked'
-    : mode === 'setup'
-      ? 'Set a PIN'
-      : 'Confirm PIN';
+  const title = mode === 'unlock' ? 'Session Locked'
+    : mode === 'setup' ? 'Set a PIN'
+    : 'Confirm PIN';
 
-  const subtitle = mode === 'unlock'
-    ? 'Enter your PIN to unlock'
-    : mode === 'setup'
-      ? 'Choose a 4-digit PIN for quick unlock'
-      : 'Enter the same PIN again';
+  const subtitle = mode === 'unlock' ? 'Enter your PIN to unlock'
+    : mode === 'setup' ? 'Choose a 4-digit PIN for quick unlock'
+    : 'Enter the same PIN again';
 
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center" style={{ background: 'var(--bg-primary)' }}>
@@ -149,10 +135,10 @@ export default function LockScreen({ userName, hasPin, onVerifyPin, onSetPin, on
               <button
                 key={key || 'empty'}
                 type="button"
-                disabled={!key || submitting}
+                disabled={!key || busy}
                 onClick={() => {
                   if (key === 'del') handleBackspace();
-                  else if (key) handleKeyPress(key);
+                  else if (key) handleDigit(key);
                 }}
                 className="h-14 rounded-xl text-lg font-semibold transition-all duration-100 flex items-center justify-center active:scale-95"
                 style={{
@@ -162,7 +148,7 @@ export default function LockScreen({ userName, hasPin, onVerifyPin, onSetPin, on
                   cursor: !key ? 'default' : 'pointer',
                   minWidth: 48,
                   minHeight: 48,
-                  opacity: submitting ? 0.5 : 1,
+                  opacity: busy ? 0.5 : 1,
                 }}
               >
                 {key === 'del' ? '⌫' : key}
@@ -171,7 +157,7 @@ export default function LockScreen({ userName, hasPin, onVerifyPin, onSetPin, on
           </div>
         </div>
 
-        {/* Switch user / logout */}
+        {/* Switch user */}
         <button
           onClick={onLogout}
           className="flex items-center gap-2 text-xs font-medium mt-1 px-4 py-2.5 rounded-lg transition-colors"
@@ -182,7 +168,6 @@ export default function LockScreen({ userName, hasPin, onVerifyPin, onSetPin, on
         </button>
       </div>
 
-      {/* Shake animation */}
       <style>{`
         @keyframes shake {
           0%, 100% { transform: translateX(0); }
