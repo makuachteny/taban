@@ -21,7 +21,7 @@ export default function TopBar({ hideSearch }: { title?: string; hideSearch?: bo
   const syncState = syncStatus?.state || (isOnline ? 'disabled' : 'offline');
   const SyncIcon = syncState === 'offline' ? WifiOff : syncState === 'disabled' ? CloudOff : Wifi;
   const syncLabel = syncState === 'offline' ? 'Offline' : syncState === 'disabled' ? 'Local Only' : syncState === 'syncing' ? 'Syncing' : syncState === 'error' ? 'Sync Error' : 'Online';
-  const syncColor = syncState === 'offline' ? 'var(--color-warning)' : syncState === 'error' ? 'var(--color-danger)' : syncState === 'syncing' ? '#60A5FA' : syncState === 'disabled' ? 'var(--text-muted)' : 'var(--color-success)';
+  const syncColor = syncState === 'offline' ? 'var(--color-warning)' : syncState === 'error' ? 'var(--color-danger)' : syncState === 'syncing' ? 'var(--accent-primary)' : syncState === 'disabled' ? 'var(--text-muted)' : 'var(--color-success)';
 
   // Shared icon-button style
   const iconBtn = "w-9 h-9 rounded-lg flex items-center justify-center transition-colors relative";
@@ -100,7 +100,7 @@ export default function TopBar({ hideSearch }: { title?: string; hideSearch?: bo
           {theme === 'light' ? (
             <Moon className="w-[18px] h-[18px]" style={{ color: 'var(--text-secondary)' }} />
           ) : (
-            <Sun className="w-[18px] h-[18px]" style={{ color: '#fbbf24' }} />
+            <Sun className="w-[18px] h-[18px]" style={{ color: 'var(--text-secondary)' }} />
           )}
         </button>
 

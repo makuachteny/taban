@@ -60,7 +60,7 @@ const SOAP_TEMPLATES: SOAPTemplate[] = [
     id: 'pneumonia',
     name: 'Pneumonia',
     icon: 'wind',
-    color: '#60A5FA',
+    color: 'var(--accent-primary)',
     subjective: 'Patient reports productive cough with yellowish sputum for 5 days, associated with fever, chest pain (pleuritic, worse on deep breathing), and shortness of breath on exertion. Reports night sweats and decreased appetite. No hemoptysis. No known TB contact.',
     objective: 'Temp: 38.5 C, HR: 96 bpm, BP: 120/80 mmHg, RR: 26/min, SpO2: 94% on room air.\nGeneral: Appears unwell, mildly tachypneic.\nChest: Reduced air entry right lower zone, dullness to percussion, bronchial breathing and coarse crackles right base.\nNo peripheral edema. No lymphadenopathy.',
     assessment: 'Community-Acquired Pneumonia, right lower lobe (ICD-11: CA40).',
@@ -70,7 +70,7 @@ const SOAP_TEMPLATES: SOAPTemplate[] = [
     id: 'anc',
     name: 'ANC Visit',
     icon: 'heart',
-    color: '#EC4899',
+    color: 'var(--accent-primary)',
     subjective: 'Pregnant woman presents for routine antenatal visit. Reports fetal movements present and regular. No vaginal bleeding or discharge. No headache, visual disturbances, or epigastric pain. Reports mild ankle swelling in the evenings. No dysuria. Taking iron-folate supplements as prescribed.',
     objective: 'BP: 118/72 mmHg, Weight: 65 kg (gain 1.5kg since last visit), Temp: 36.6 C.\nFundal height: Corresponds to dates.\nFetal heart rate: 144 bpm, regular.\nPresentation: Cephalic.\nUrine dipstick: Protein negative, Glucose negative.\nHb: 11.2 g/dL.\nNo pedal edema.',
     assessment: 'Normal intrauterine pregnancy, appropriate for gestational age. Low-risk pregnancy (ICD-11: QA00).',
@@ -90,7 +90,7 @@ const SOAP_TEMPLATES: SOAPTemplate[] = [
     id: 'respiratory',
     name: 'Respiratory Infection',
     icon: 'thermometer',
-    color: '#A855F7',
+    color: 'var(--accent-primary)',
     subjective: 'Patient presents with dry cough for 3 days, sore throat, nasal congestion, and mild headache. Low-grade fever reported. No shortness of breath or chest pain. No known sick contacts with TB. No significant past medical history.',
     objective: 'Temp: 37.6 C, HR: 82 bpm, BP: 120/76 mmHg, RR: 18/min, SpO2: 98%.\nGeneral: Appears well, not in distress.\nENT: Pharyngeal erythema, no exudates, no tonsillar enlargement. Nasal mucosa congested.\nChest: Clear breath sounds bilaterally, no crackles or wheezes.\nNo lymphadenopathy.',
     assessment: 'Acute Upper Respiratory Tract Infection (ICD-11: CA02).',
@@ -139,7 +139,7 @@ const PRESCRIPTION_PRESETS: PrescriptionPreset[] = [
   {
     id: 'malaria-child',
     name: 'Malaria Child',
-    color: '#EC4899',
+    color: 'var(--accent-primary)',
     items: [
       { medication: 'ACT Suspension (Artemether-Lumefantrine)', dose: 'Weight-based dosing', route: 'Oral', frequency: 'BD (twice daily)', duration: '3 days' },
       { medication: 'Paracetamol Syrup', dose: '10-15mg/kg', route: 'Oral', frequency: 'TDS (three times daily)', duration: '3 days' },
@@ -148,7 +148,7 @@ const PRESCRIPTION_PRESETS: PrescriptionPreset[] = [
   {
     id: 'pneumonia-adult',
     name: 'Pneumonia Adult',
-    color: '#60A5FA',
+    color: 'var(--accent-primary)',
     items: [
       { medication: 'Amoxicillin', dose: '500mg', route: 'Oral', frequency: 'TDS (three times daily)', duration: '5 days' },
     ],
@@ -156,7 +156,7 @@ const PRESCRIPTION_PRESETS: PrescriptionPreset[] = [
   {
     id: 'pneumonia-child',
     name: 'Pneumonia Child',
-    color: '#38BDF8',
+    color: 'var(--accent-primary)',
     items: [
       { medication: 'Amoxicillin Suspension', dose: '25-50mg/kg/day divided', route: 'Oral', frequency: 'TDS (three times daily)', duration: '5 days' },
       { medication: 'Paracetamol Syrup', dose: '10-15mg/kg', route: 'Oral', frequency: 'TDS (three times daily)', duration: '3 days' },
@@ -174,7 +174,7 @@ const PRESCRIPTION_PRESETS: PrescriptionPreset[] = [
   {
     id: 'uti',
     name: 'UTI',
-    color: '#A855F7',
+    color: 'var(--accent-primary)',
     items: [
       { medication: 'Ciprofloxacin', dose: '500mg', route: 'Oral', frequency: 'BD (twice daily)', duration: '5 days' },
     ],
@@ -655,8 +655,8 @@ export default function DashboardPage() {
             <div className="stat-value" style={{ fontSize: 32, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1, marginBottom: 16 }}>{totalDoctors + totalNurses}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {[
-                { Icon: Stethoscope, label: 'Doctors', count: totalDoctors, color: '#60A5FA' },
-                { Icon: UserCheck, label: 'Nursing', count: totalNurses, color: '#A78BFA' },
+                { Icon: Stethoscope, label: 'Doctors', count: totalDoctors, color: 'var(--accent-primary)' },
+                { Icon: UserCheck, label: 'Nursing', count: totalNurses, color: 'var(--accent-primary)' },
               ].map(r => (
                 <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{ width: 30, height: 30, borderRadius: 8, background: `${r.color}12`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
