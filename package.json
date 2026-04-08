@@ -24,7 +24,8 @@
     "react-dom": "^18",
     "react-leaflet": "^4.2.1",
     "recharts": "^3.7.0",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "vercel": "^50.42.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
