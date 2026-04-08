@@ -292,9 +292,74 @@ async function safePut(db: PouchDB.Database, doc: Record<string, unknown>): Prom
   }
 }
 
+const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE !== 'false';
+
+/**
+ * Production seed: creates only the initial super admin user and a default organization.
+ * No demo patients, no sample records — a clean slate for real hospital data.
+ */
+async function seedProduction(): Promise<void> {
+  await resetAllDatabases();
+  const now = new Date().toISOString();
+
+  // Create default organization
+  const orgDB = organizationsDB();
+  await safePut(orgDB, {
+    _id: 'org-default',
+    type: 'organization',
+    name: process.env.NEXT_PUBLIC_ORG_NAME || 'My Organization',
+    slug: 'default',
+    primaryColor: '#0077D7',
+    secondaryColor: '#005FBC',
+    accentColor: '#0077D7',
+    subscriptionStatus: 'active',
+    subscriptionPlan: 'enterprise',
+    maxUsers: 500,
+    maxHospitals: 100,
+    featureFlags: {
+      epidemicIntelligence: true,
+      mchAnalytics: true,
+      dhis2Export: true,
+      aiClinicalSupport: true,
+      communityHealth: true,
+      facilityAssessments: true,
+    },
+    orgType: 'public',
+    contactEmail: process.env.NEXT_PUBLIC_ORG_EMAIL || 'admin@organization.org',
+    country: process.env.NEXT_PUBLIC_ORG_COUNTRY || 'South Sudan',
+    isActive: true,
+    createdAt: now,
+    updatedAt: now,
+  });
+
+  // Create initial super admin
+  const db = usersDB();
+  const adminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'Admin@Taban2026!';
+  const hash = await hashPassword(adminPassword);
+  await safePut(db, {
+    _id: 'user-admin',
+    type: 'user',
+    username: 'admin',
+    passwordHash: hash,
+    name: process.env.NEXT_PUBLIC_ADMIN_NAME || 'System Administrator',
+    role: 'super_admin',
+    isActive: true,
+    createdAt: now,
+    updatedAt: now,
+  });
+}
+
 export async function seedDatabase(): Promise<void> {
   if (await isSeeded()) return;
 
+  // Production mode: only create initial admin + organization
+  if (!IS_DEMO) {
+    await seedProduction();
+    await markSeeded();
+    return;
+  }
+
+  // Demo mode: full seed with sample data
   // Stale or missing seed — wipe all databases and re-seed fresh
   await resetAllDatabases();
 

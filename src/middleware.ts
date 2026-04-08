@@ -91,14 +91,8 @@ function isPathAllowed(role: string, pathname: string): boolean {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow public routes
+  // Static assets — always public
   if (
-    pathname === '/' ||
-    pathname === '/login' ||
-    pathname.startsWith('/patient-portal') ||
-    pathname === '/api/auth/login' ||
-    pathname === '/api/auth/logout' ||
-    pathname === '/api/auth/me' ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/assets') ||
     pathname.startsWith('/icons') ||
@@ -109,10 +103,46 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check for auth token on protected routes
+  // Auth API routes — always public (needed for login/logout flow)
+  if (
+    pathname === '/api/auth/login' ||
+    pathname === '/api/auth/logout' ||
+    pathname === '/api/auth/me'
+  ) {
+    return NextResponse.next();
+  }
+
+  // Login page — always public
+  if (pathname === '/login') {
+    return NextResponse.next();
+  }
+
+  // Landing page — redirect to login (no public marketing in production)
+  if (pathname === '/') {
+    const token = request.cookies.get('taban-token')?.value;
+    if (!token) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+    // Authenticated users on "/" get redirected to their dashboard
+    const payload = await verifyToken(token);
+    if (!payload) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+    const config = ROLE_ROUTES[payload.role];
+    if (config) {
+      return NextResponse.redirect(new URL(config.defaultDashboard, request.url));
+    }
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
+  // All other routes require authentication
   const token = request.cookies.get('taban-token')?.value;
 
   if (!token) {
+    // API routes return 401, page routes redirect to login
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     return NextResponse.redirect(new URL('/login', request.url));
   }
 

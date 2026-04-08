@@ -305,7 +305,8 @@ export default function LoginPage() {
             </form>
           </div>
 
-          {/* Demo accounts */}
+          {/* Demo accounts — hidden in production */}
+          {process.env.NEXT_PUBLIC_DEMO_MODE !== 'false' && (
           <div className="mt-4">
             <button
               type="button"
@@ -361,6 +362,7 @@ export default function LoginPage() {
               </div>
             )}
           </div>
+          )}
 
           {/* Footer stats */}
           <div className="mt-8 text-center">
