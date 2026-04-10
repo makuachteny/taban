@@ -55,6 +55,41 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
   const { records } = useMedicalRecords(patient?._id);
   const { referrals: patientReferrals } = usePatientReferrals(patient?._id);
 
+  // ── Filtered Full History ──────────────────────────────────────────────
+  const filteredHistory = useMemo(() => {
+    const now = Date.now();
+    const cutoff = historyRange === '30d'
+      ? now - 30 * 86400_000
+      : historyRange === '90d'
+      ? now - 90 * 86400_000
+      : historyRange === '1y'
+      ? now - 365 * 86400_000
+      : 0;
+    const q = historySearch.trim().toLowerCase();
+    return records.filter(r => {
+      // Time filter
+      if (cutoff > 0) {
+        const ts = new Date(r.consultedAt || r.visitDate).getTime();
+        if (Number.isNaN(ts) || ts < cutoff) return false;
+      }
+      // Visit type filter
+      if (historyVisitType !== 'all' && r.visitType !== historyVisitType) return false;
+      // Search across complaint, history, diagnoses, provider, department
+      if (q) {
+        const haystack = [
+          r.chiefComplaint,
+          r.historyOfPresentIllness,
+          r.providerName,
+          r.department,
+          r.hospitalName,
+          ...(r.diagnoses || []).map(d => `${d.icd10Code} ${d.name}`),
+        ].join(' ').toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [records, historyRange, historyVisitType, historySearch]);
+
   if (loading || !patient) {
     return (
       <>
@@ -93,41 +128,6 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
     || latestRecord?.visitDate
     || patient.lastVisitDate;
   const lastConsultedDisplay = formatDateTime(lastConsultedRaw);
-
-  // ── Filtered Full History ──────────────────────────────────────────────
-  const filteredHistory = useMemo(() => {
-    const now = Date.now();
-    const cutoff = historyRange === '30d'
-      ? now - 30 * 86400_000
-      : historyRange === '90d'
-      ? now - 90 * 86400_000
-      : historyRange === '1y'
-      ? now - 365 * 86400_000
-      : 0;
-    const q = historySearch.trim().toLowerCase();
-    return records.filter(r => {
-      // Time filter
-      if (cutoff > 0) {
-        const ts = new Date(r.consultedAt || r.visitDate).getTime();
-        if (Number.isNaN(ts) || ts < cutoff) return false;
-      }
-      // Visit type filter
-      if (historyVisitType !== 'all' && r.visitType !== historyVisitType) return false;
-      // Search across complaint, history, diagnoses, provider, department
-      if (q) {
-        const haystack = [
-          r.chiefComplaint,
-          r.historyOfPresentIllness,
-          r.providerName,
-          r.department,
-          r.hospitalName,
-          ...(r.diagnoses || []).map(d => `${d.icd10Code} ${d.name}`),
-        ].join(' ').toLowerCase();
-        if (!haystack.includes(q)) return false;
-      }
-      return true;
-    });
-  }, [records, historyRange, historyVisitType, historySearch]);
 
   return (
     <>

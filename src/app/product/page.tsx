@@ -298,11 +298,6 @@ export default function ProductPage() {
         <section className="p-hero">
           <div className="p-hero__bg" />
           <div className="p-container">
-            <Reveal>
-              <span className="p-hero__tag">
-                <Shield size={12} /> Purpose-built for South Sudan
-              </span>
-            </Reveal>
             <Reveal delay={0.05}>
               <h1 className="p-hero__title">
                 The digital health record<br />
