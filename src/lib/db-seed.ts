@@ -486,7 +486,7 @@ export async function seedDatabase(): Promise<void> {
   // Seed some medical records for patients (all public org)
   const mrDB = medicalRecordsDB();
   for (const p of patients.slice(0, 15)) {
-    const records = generateMedicalRecords(p.id, 3);
+    const records = generateMedicalRecords(p.id, 6);
     for (const r of records) {
       const doc: MedicalRecordDoc = {
         _id: r.id,

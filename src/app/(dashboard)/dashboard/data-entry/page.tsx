@@ -284,14 +284,14 @@ export default function DataEntryDashboard() {
           <h3 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>Data Collection</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {[
-              { label: 'Daily Census', icon: ClipboardCheck, color: ACCENT, action: () => setShowForm(true) },
-              { label: 'Facility Assessment', icon: Building2, color: '#7C3AED', action: () => router.push('/facility-assessments') },
-              { label: 'Data Quality', icon: Database, color: 'var(--color-warning)', action: () => router.push('/data-quality') },
-              { label: 'Vital Statistics', icon: Heart, color: 'var(--color-danger)', action: () => router.push('/vital-statistics') },
-              { label: 'Immunizations', icon: Syringe, color: 'var(--color-success)', action: () => router.push('/immunizations') },
-              { label: 'Antenatal Care', icon: HeartPulse, color: '#EC4899', action: () => router.push('/anc') },
-              { label: 'Births', icon: Baby, color: '#2563EB', action: () => router.push('/births') },
-              { label: 'Deaths', icon: Skull, color: 'var(--color-danger)', action: () => router.push('/deaths') },
+              { label: 'Daily Census', icon: ClipboardCheck, color: 'var(--accent-primary)', action: () => setShowForm(true) },
+              { label: 'Facility Assessment', icon: Building2, color: 'var(--accent-primary)', action: () => router.push('/facility-assessments') },
+              { label: 'Data Quality', icon: Database, color: 'var(--accent-primary)', action: () => router.push('/data-quality') },
+              { label: 'Vital Statistics', icon: Heart, color: 'var(--accent-primary)', action: () => router.push('/vital-statistics') },
+              { label: 'Immunizations', icon: Syringe, color: 'var(--accent-primary)', action: () => router.push('/immunizations') },
+              { label: 'Antenatal Care', icon: HeartPulse, color: 'var(--accent-primary)', action: () => router.push('/anc') },
+              { label: 'Births', icon: Baby, color: 'var(--accent-primary)', action: () => router.push('/births') },
+              { label: 'Deaths', icon: Skull, color: 'var(--accent-primary)', action: () => router.push('/deaths') },
             ].map(a => (
               <button key={a.label} onClick={a.action}
                 className="flex flex-col items-center gap-2 p-3 rounded-lg transition-all active:scale-95"
@@ -321,13 +321,13 @@ export default function DataEntryDashboard() {
               <div className="p-4 space-y-2">
                 {[
                   { label: 'Inpatients', value: latest.inpatientsTotal, color: 'var(--accent-primary)' },
-                  { label: 'OPD Visits', value: latest.opdVisitsToday, color: 'var(--color-success)' },
+                  { label: 'OPD Visits', value: latest.opdVisitsToday, color: 'var(--accent-primary)' },
                   { label: 'Emergency', value: latest.emergencyVisits, color: 'var(--color-danger)' },
-                  { label: 'Maternity', value: latest.maternityAdmissions, color: '#EC4899' },
-                  { label: 'Newborns', value: latest.newborns, color: '#2563EB' },
-                  { label: 'Discharges', value: latest.discharges, color: 'var(--color-success)' },
+                  { label: 'Maternity', value: latest.maternityAdmissions, color: 'var(--accent-primary)' },
+                  { label: 'Newborns', value: latest.newborns, color: 'var(--accent-primary)' },
+                  { label: 'Discharges', value: latest.discharges, color: 'var(--accent-primary)' },
                   { label: 'Deaths', value: latest.deaths, color: 'var(--color-danger)' },
-                  { label: 'Referrals Out', value: latest.referralsOut, color: 'var(--color-warning)' },
+                  { label: 'Referrals Out', value: latest.referralsOut, color: 'var(--accent-primary)' },
                 ].map(row => (
                   <div key={row.label} className="flex items-center justify-between py-1" style={{ borderBottom: '1px solid var(--border-light)' }}>
                     <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{row.label}</span>
@@ -341,7 +341,7 @@ export default function DataEntryDashboard() {
             <div className="glass-section">
               <div className="glass-section-header">
                 <div className="flex items-center gap-2">
-                  <BedDouble className="w-4 h-4" style={{ color: '#7C3AED' }} />
+                  <BedDouble className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
                   <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Beds & Staff</span>
                 </div>
               </div>

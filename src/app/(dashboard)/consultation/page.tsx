@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import TopBar from '@/components/TopBar';
 import {
   ArrowLeft, Save, ChevronDown, ChevronUp, Search,
@@ -57,6 +57,7 @@ const frequencyOptions = ['OD (Once daily)', 'BD (Twice daily)', 'TDS (Three tim
 
 export default function ConsultationPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { showToast } = useToast();
 
   // PouchDB hooks
@@ -80,8 +81,20 @@ export default function ConsultationPage() {
 
   // Patient selector
   const [patientSearch, setPatientSearch] = useState('');
-  const [selectedPatient, setSelectedPatient] = useState<string | null>(null);
+  const [selectedPatient, setSelectedPatient] = useState<string | null>(
+    () => searchParams?.get('patientId') ?? null
+  );
   const [showPatientDropdown, setShowPatientDropdown] = useState(false);
+
+  // Pre-select patient from URL (?patientId=...) once patients load.
+  useEffect(() => {
+    const queryPatientId = searchParams?.get('patientId');
+    if (!queryPatientId) return;
+    if (selectedPatient === queryPatientId) return;
+    if (patients.some(p => p._id === queryPatientId)) {
+      setSelectedPatient(queryPatientId);
+    }
+  }, [searchParams, patients, selectedPatient]);
 
   // Chief Complaint
   const [chiefComplaint, setChiefComplaint] = useState('');
@@ -141,6 +154,10 @@ export default function ConsultationPage() {
 
   // Medical records hook
   const { create: createRecord } = useMedicalRecords(selectedPatient || undefined);
+
+  // Timestamp captured when this consultation session was started (first mount).
+  // Stable across renders so we can record the true start time on save.
+  const [consultationStartedAt] = useState(() => new Date().toISOString());
 
   // Only doctors and clinical officers can create consultations
   if (currentUser && currentUser.role !== 'doctor' && currentUser.role !== 'clinical_officer') {
@@ -326,6 +343,8 @@ export default function ConsultationPage() {
         hospitalId,
         hospitalName,
         visitDate: now.split('T')[0],
+        consultedAt: now,
+        startedAt: consultationStartedAt,
         visitType: 'outpatient',
         providerName: currentUser?.name || '',
         providerRole: currentUser?.role || 'doctor',
@@ -362,8 +381,23 @@ export default function ConsultationPage() {
         syncStatus: 'pending',
         aiEvaluation: aiEvaluation || undefined,
       });
+
+      // 5. Update the patient's last-consultation timestamp so the dashboard
+      //    and patient profile header reflect the most recent visit immediately.
+      try {
+        const { updatePatient } = await import('@/lib/services/patient-service');
+        await updatePatient(selectedPatient, {
+          lastVisitDate: now.split('T')[0],
+          lastVisitHospital: hospitalId,
+          lastConsultedAt: now,
+          lastConsultedBy: currentUser?.name || '',
+        });
+      } catch (e) {
+        console.warn('Could not update patient lastConsultedAt', e);
+      }
+
       showToast('Consultation saved successfully!', 'success');
-      router.push('/patients');
+      router.push(`/patients/${selectedPatient}`);
     } catch (err) {
       console.error('Failed to save consultation:', err);
       showToast('Failed to save consultation. Please try again.', 'error');

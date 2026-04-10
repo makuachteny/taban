@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
 import SendMessageModal from '@/components/SendMessageModal';
@@ -8,7 +8,9 @@ import {
   ArrowLeft, Stethoscope, ArrowRightLeft,
   Heart, AlertTriangle, FileText, FlaskConical,
   Pill, Activity, Brain, ChevronDown, ChevronUp,
-  ShieldAlert, TestTubes, MessageSquare, ChevronRight
+  ShieldAlert, TestTubes, MessageSquare, ChevronRight,
+  CalendarClock, UserPlus, TrendingUp as TrendingUpIcon, ClipboardList,
+  User as UserIcon, Building2, Search, X,
 } from 'lucide-react';
 import { usePatients } from '@/lib/hooks/usePatients';
 import { useMedicalRecords } from '@/lib/hooks/useMedicalRecords';
@@ -16,6 +18,21 @@ import { useHospitals } from '@/lib/hooks/useHospitals';
 import { usePatientReferrals } from '@/lib/hooks/useReferrals';
 import { Package, Clock, Building2 as Building2Icon } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import VitalsTrends from '@/components/VitalsTrends';
+
+/** Format an ISO timestamp as "Mon DD, YYYY at HH:mm". Falls back to the raw
+ *  string if parsing fails. If only a date (no time) is provided, returns the
+ *  date alone. */
+function formatDateTime(iso?: string): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const hasTime = /T\d{2}:\d{2}/.test(iso);
+  const dateStr = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  if (!hasTime) return dateStr;
+  const timeStr = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  return `${dateStr} at ${timeStr}`;
+}
 
 export default function PatientDetailPage({ params }: { params: { id: string } }) {
   const { id } = params;
@@ -23,6 +40,12 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
   const [activeTab, setActiveTab] = useState('overview');
   const [expandedAI, setExpandedAI] = useState<Set<string>>(new Set());
   const [showMessageModal, setShowMessageModal] = useState(false);
+
+  // Full History filters & expansion
+  const [historySearch, setHistorySearch] = useState('');
+  const [historyRange, setHistoryRange] = useState<'all' | '30d' | '90d' | '1y'>('all');
+  const [historyVisitType, setHistoryVisitType] = useState<'all' | 'outpatient' | 'inpatient' | 'emergency'>('all');
+  const [expandedEncounters, setExpandedEncounters] = useState<Set<string>>(new Set());
 
   const { t } = useTranslation();
   const { patients, loading } = usePatients();
@@ -50,14 +73,61 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
 
   const tabs = [
     { id: 'overview', label: t('tab.overview'), icon: Heart },
-    { id: 'history', label: t('tab.medicalHistory'), icon: FileText },
+    { id: 'trends', label: 'Trends', icon: TrendingUpIcon },
+    { id: 'history', label: 'Full History', icon: FileText },
     { id: 'vitals', label: t('tab.vitals'), icon: Activity },
     { id: 'labs', label: t('tab.labResults'), icon: FlaskConical },
     { id: 'prescriptions', label: t('tab.prescriptions'), icon: Pill },
     { id: 'referrals', label: t('tab.referrals'), icon: ArrowRightLeft },
   ];
 
-  const latestVitals = records[0]?.vitalSigns;
+  // records[] is sorted newest-first by the service layer.
+  const latestRecord = records[0];
+  const latestVitals = latestRecord?.vitalSigns;
+  const latestDiagnosis = latestRecord?.diagnoses?.[0];
+
+  // Prefer explicit timestamp fields, fall back to legacy date-only values.
+  const registeredAtDisplay = formatDateTime(patient.registeredAt || patient.registrationDate);
+  const lastConsultedRaw = patient.lastConsultedAt
+    || latestRecord?.consultedAt
+    || latestRecord?.visitDate
+    || patient.lastVisitDate;
+  const lastConsultedDisplay = formatDateTime(lastConsultedRaw);
+
+  // ── Filtered Full History ──────────────────────────────────────────────
+  const filteredHistory = useMemo(() => {
+    const now = Date.now();
+    const cutoff = historyRange === '30d'
+      ? now - 30 * 86400_000
+      : historyRange === '90d'
+      ? now - 90 * 86400_000
+      : historyRange === '1y'
+      ? now - 365 * 86400_000
+      : 0;
+    const q = historySearch.trim().toLowerCase();
+    return records.filter(r => {
+      // Time filter
+      if (cutoff > 0) {
+        const ts = new Date(r.consultedAt || r.visitDate).getTime();
+        if (Number.isNaN(ts) || ts < cutoff) return false;
+      }
+      // Visit type filter
+      if (historyVisitType !== 'all' && r.visitType !== historyVisitType) return false;
+      // Search across complaint, history, diagnoses, provider, department
+      if (q) {
+        const haystack = [
+          r.chiefComplaint,
+          r.historyOfPresentIllness,
+          r.providerName,
+          r.department,
+          r.hospitalName,
+          ...(r.diagnoses || []).map(d => `${d.icd10Code} ${d.name}`),
+        ].join(' ').toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [records, historyRange, historyVisitType, historySearch]);
 
   return (
     <>
@@ -91,9 +161,21 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                 <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>
                   {age} years · {patient.gender}
                 </p>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                  <span className="flex items-center gap-1">
+                    <UserPlus className="w-3 h-3" />
+                    <span>Registered: <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>{registeredAtDisplay}</span></span>
+                    {patient.registeredBy && <span className="opacity-70">by {patient.registeredBy}</span>}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <CalendarClock className="w-3 h-3" />
+                    <span>Last consultation: <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>{lastConsultedDisplay}</span></span>
+                    {patient.lastConsultedBy && <span className="opacity-70">by {patient.lastConsultedBy}</span>}
+                  </span>
+                </div>
               </div>
               <div className="flex gap-2 flex-shrink-0">
-                <button onClick={() => router.push('/consultation')} className="btn btn-primary btn-sm">
+                <button onClick={() => router.push(`/consultation?patientId=${patient._id}`)} className="btn btn-primary btn-sm">
                   <Stethoscope className="w-4 h-4" /> {t('action.newConsultation')}
                 </button>
                 <button onClick={() => setShowMessageModal(true)} className="btn btn-secondary btn-sm">
@@ -122,10 +204,236 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
           {activeTab === 'overview' && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
               <div className="lg:col-span-2 space-y-5">
+                {/* Most Recent Record — hero card, first thing the doctor sees */}
+                <div
+                  className="card-elevated overflow-hidden relative"
+                  style={{
+                    boxShadow: '0 8px 32px -12px rgba(43,111,224,0.18), 0 2px 8px rgba(0,0,0,0.04)',
+                  }}
+                >
+                  {/* Decorative gradient corner */}
+                  <div
+                    aria-hidden
+                    style={{
+                      position: 'absolute', top: 0, right: 0,
+                      width: 200, height: 160, pointerEvents: 'none',
+                      background: 'radial-gradient(ellipse at top right, rgba(43,111,224,0.08), transparent 70%)',
+                    }}
+                  />
+
+                  {/* Header: title + date + CTA */}
+                  <div
+                    className="px-5 py-3 border-b flex items-center justify-between flex-wrap gap-2 relative"
+                    style={{ borderColor: 'var(--border-light)' }}
+                  >
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div
+                        className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={{ background: 'var(--accent-light)' }}
+                      >
+                        <ClipboardList className="w-3.5 h-3.5" style={{ color: 'var(--taban-blue)' }} />
+                      </div>
+                      <h3 className="font-semibold text-sm">Most Recent Record</h3>
+                      {latestRecord && (
+                        <span
+                          className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full"
+                          style={{ background: 'var(--accent-light)', color: 'var(--taban-blue)' }}
+                        >
+                          <CalendarClock className="w-3 h-3" />
+                          {formatDateTime(latestRecord.consultedAt || latestRecord.visitDate)}
+                        </span>
+                      )}
+                      {latestRecord?.visitType && (
+                        <span
+                          className={`badge text-[10px] ${
+                            latestRecord.visitType === 'emergency'
+                              ? 'badge-emergency'
+                              : latestRecord.visitType === 'inpatient'
+                              ? 'badge-warning'
+                              : 'badge-normal'
+                          }`}
+                        >
+                          {latestRecord.visitType}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setActiveTab('history')}
+                      className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full transition-colors hover:bg-[var(--accent-light)]"
+                      style={{ color: 'var(--taban-blue)', border: '1px solid var(--accent-border)' }}
+                    >
+                      View Full History <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  {latestRecord ? (
+                    <div className="p-5 space-y-4 relative">
+                      {/* Hero: chief complaint + diagnosis pill */}
+                      <div
+                        className="rounded-xl p-4"
+                        style={{
+                          background: 'linear-gradient(135deg, var(--accent-light) 0%, transparent 100%)',
+                          border: '1px solid var(--accent-border)',
+                        }}
+                      >
+                        <p
+                          className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 flex items-center gap-1"
+                          style={{ color: 'var(--taban-blue)' }}
+                        >
+                          <Stethoscope className="w-3 h-3" /> Chief complaint
+                        </p>
+                        <p className="text-base font-semibold leading-snug mb-3" style={{ color: 'var(--text-primary)' }}>
+                          {latestRecord.chiefComplaint || '—'}
+                        </p>
+                        {latestDiagnosis && (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>
+                              Diagnosis
+                            </span>
+                            <span
+                              className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
+                              style={{
+                                background: 'var(--bg-card)',
+                                color: 'var(--taban-blue)',
+                                border: '1px solid var(--accent-border)',
+                                boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                              }}
+                            >
+                              <span
+                                className="font-mono text-[10px] px-1.5 py-0.5 rounded"
+                                style={{ background: 'var(--accent-light)' }}
+                              >
+                                {latestDiagnosis.icd10Code}
+                              </span>
+                              {latestDiagnosis.name}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Provider / metadata chip row */}
+                      <div className="flex items-center gap-2 flex-wrap text-[11px]">
+                        {latestRecord.providerName && (
+                          <span
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                            style={{ background: 'var(--overlay-subtle)', color: 'var(--text-secondary)' }}
+                          >
+                            <UserIcon className="w-3 h-3" style={{ color: 'var(--text-muted)' }} />
+                            <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                              {latestRecord.providerName}
+                            </span>
+                          </span>
+                        )}
+                        {latestRecord.department && (
+                          <span
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                            style={{ background: 'var(--overlay-subtle)', color: 'var(--text-secondary)' }}
+                          >
+                            <Activity className="w-3 h-3" style={{ color: 'var(--text-muted)' }} />
+                            {latestRecord.department}
+                          </span>
+                        )}
+                        {latestRecord.hospitalName && (
+                          <span
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                            style={{ background: 'var(--overlay-subtle)', color: 'var(--text-secondary)' }}
+                          >
+                            <Building2 className="w-3 h-3" style={{ color: 'var(--text-muted)' }} />
+                            {latestRecord.hospitalName}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Clinical blocks: medications + treatment plan */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div
+                          className="rounded-xl p-3.5"
+                          style={{
+                            background: 'var(--overlay-subtle)',
+                            border: '1px solid var(--border-light)',
+                          }}
+                        >
+                          <p
+                            className="text-[10px] font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5"
+                            style={{ color: 'var(--text-muted)' }}
+                          >
+                            <Pill className="w-3 h-3" style={{ color: 'var(--taban-blue)' }} />
+                            Current medications
+                          </p>
+                          {(latestRecord.prescriptions || []).length > 0 ? (
+                            <ul className="space-y-1.5">
+                              {(latestRecord.prescriptions || []).slice(0, 4).map((p, i) => (
+                                <li key={i} className="flex items-start gap-1.5 text-xs">
+                                  <span
+                                    className="w-1 h-1 rounded-full mt-1.5 flex-shrink-0"
+                                    style={{ background: 'var(--taban-blue)' }}
+                                  />
+                                  <span>
+                                    <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                                      {p.drugName}
+                                    </span>{' '}
+                                    <span style={{ color: 'var(--text-muted)' }}>
+                                      · {p.dose} · {p.frequency}
+                                    </span>
+                                  </span>
+                                </li>
+                              ))}
+                              {(latestRecord.prescriptions || []).length > 4 && (
+                                <li className="text-[10px] pl-2.5" style={{ color: 'var(--text-muted)' }}>
+                                  +{(latestRecord.prescriptions || []).length - 4} more
+                                </li>
+                              )}
+                            </ul>
+                          ) : (
+                            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>None prescribed</p>
+                          )}
+                        </div>
+
+                        <div
+                          className="rounded-xl p-3.5"
+                          style={{
+                            background: 'var(--overlay-subtle)',
+                            border: '1px solid var(--border-light)',
+                          }}
+                        >
+                          <p
+                            className="text-[10px] font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5"
+                            style={{ color: 'var(--text-muted)' }}
+                          >
+                            <ClipboardList className="w-3 h-3" style={{ color: 'var(--taban-blue)' }} />
+                            Treatment plan
+                          </p>
+                          {latestRecord.treatmentPlan ? (
+                            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                              {latestRecord.treatmentPlan}
+                            </p>
+                          ) : (
+                            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>No plan recorded</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center relative">
+                      <FileText className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--text-muted)', opacity: 0.3 }} />
+                      <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                        No consultations recorded yet for this patient.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
                 {/* Latest Vitals */}
                 <div className="card-elevated">
-                  <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
+                  <div className="px-5 py-3 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-light)' }}>
                     <h3 className="font-semibold text-sm">{t('vitals.title')}</h3>
+                    <button
+                      onClick={() => setActiveTab('trends')}
+                      className="text-xs font-medium flex items-center gap-1"
+                      style={{ color: 'var(--taban-blue)' }}
+                    >
+                      <TrendingUpIcon className="w-3.5 h-3.5" /> View Trends
+                    </button>
                   </div>
                   <div className="p-5">
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -175,7 +483,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                             <p className="text-sm mt-1">{rec.chiefComplaint}</p>
                           </div>
                           <div className="text-right flex-shrink-0">
-                            <p className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{rec.visitDate}</p>
+                            <p className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{formatDateTime(rec.consultedAt || rec.visitDate)}</p>
                             <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{rec.hospitalName}</p>
                           </div>
                         </div>
@@ -247,7 +555,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                       { l: t('patient.location'), v: `${patient.county}, ${patient.state}` },
                       { l: t('patient.tribe'), v: patient.tribe },
                       { l: t('patient.language'), v: patient.primaryLanguage },
-                      { l: t('patient.registered'), v: patient.registrationDate },
+                      { l: t('patient.registered'), v: registeredAtDisplay },
                       { l: t('patient.facility'), v: regHospital?.name || 'N/A' },
                       { l: t('patient.nextOfKin'), v: `${patient.nokName} (${patient.nokRelationship})` },
                       { l: t('patient.nokPhone'), v: patient.nokPhone },
@@ -306,28 +614,237 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
             </div>
           )}
 
+          {/* Trends Tab */}
+          {activeTab === 'trends' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between px-1">
+                <div>
+                  <h3 className="text-sm font-semibold flex items-center gap-2">
+                    <TrendingUpIcon className="w-4 h-4" style={{ color: 'var(--taban-blue)' }} />
+                    Vital Sign Trends
+                  </h3>
+                  <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                    Chronological trends across all recorded visits. Colored badges flag
+                    readings outside the normal range or moving quickly.
+                  </p>
+                </div>
+              </div>
+              <VitalsTrends records={records} />
+            </div>
+          )}
+
           {/* Medical History Tab */}
           {activeTab === 'history' && (
             <div className="card-elevated">
-              <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
-                <h3 className="font-semibold text-sm">{t('encounters.history')}</h3>
+              <div className="px-5 py-4 border-b flex items-center justify-between flex-wrap gap-2" style={{ borderColor: 'var(--border-light)' }}>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ background: 'var(--accent-light)' }}
+                  >
+                    <FileText className="w-4 h-4" style={{ color: 'var(--taban-blue)' }} />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-sm">{t('encounters.history')}</h3>
+                    <p className="text-[11px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                      Showing {filteredHistory.length} of {records.length} encounter{records.length === 1 ? '' : 's'}, most recent first
+                    </p>
+                  </div>
+                </div>
+                {records.length > 0 && (
+                  <span
+                    className="inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-full"
+                    style={{ background: 'var(--overlay-subtle)', color: 'var(--text-secondary)' }}
+                  >
+                    <CalendarClock className="w-3 h-3" />
+                    First visit: {formatDateTime(records[records.length - 1]?.consultedAt || records[records.length - 1]?.visitDate)}
+                  </span>
+                )}
               </div>
-              <div className="relative pl-8">
-                {records.map((rec, i) => {
+
+              {/* Filter bar */}
+              {records.length > 0 && (
+                <div
+                  className="px-5 py-3 border-b flex items-center gap-2 flex-wrap"
+                  style={{ borderColor: 'var(--border-light)', background: 'var(--overlay-subtle)' }}
+                >
+                  {/* Search */}
+                  <div
+                    className="flex items-center gap-2 flex-1 min-w-[220px] px-3 py-1.5 rounded-lg"
+                    style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}
+                  >
+                    <Search className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
+                    <input
+                      type="text"
+                      placeholder="Search by complaint, diagnosis, ICD-10, or provider…"
+                      value={historySearch}
+                      onChange={e => setHistorySearch(e.target.value)}
+                      className="flex-1 bg-transparent text-xs outline-none"
+                      style={{ color: 'var(--text-primary)' }}
+                    />
+                    {historySearch && (
+                      <button
+                        onClick={() => setHistorySearch('')}
+                        className="flex-shrink-0"
+                        title="Clear search"
+                      >
+                        <X className="w-3 h-3" style={{ color: 'var(--text-muted)' }} />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Time range */}
+                  <div className="flex items-center gap-1 p-0.5 rounded-lg" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+                    {([
+                      { v: 'all', l: 'All time' },
+                      { v: '1y', l: 'Past year' },
+                      { v: '90d', l: '90 days' },
+                      { v: '30d', l: '30 days' },
+                    ] as const).map(opt => (
+                      <button
+                        key={opt.v}
+                        onClick={() => setHistoryRange(opt.v)}
+                        className="text-[10px] font-semibold px-2.5 py-1 rounded-md transition-colors"
+                        style={{
+                          background: historyRange === opt.v ? 'var(--accent-light)' : 'transparent',
+                          color: historyRange === opt.v ? 'var(--taban-blue)' : 'var(--text-muted)',
+                        }}
+                      >
+                        {opt.l}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Visit type */}
+                  <select
+                    value={historyVisitType}
+                    onChange={e => setHistoryVisitType(e.target.value as typeof historyVisitType)}
+                    className="text-[11px] font-medium px-2.5 py-1.5 rounded-lg outline-none"
+                    style={{
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border-light)',
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    <option value="all">All visit types</option>
+                    <option value="outpatient">Outpatient</option>
+                    <option value="inpatient">Inpatient</option>
+                    <option value="emergency">Emergency</option>
+                  </select>
+
+                  {(historySearch || historyRange !== 'all' || historyVisitType !== 'all') && (
+                    <button
+                      onClick={() => { setHistorySearch(''); setHistoryRange('all'); setHistoryVisitType('all'); }}
+                      className="text-[10px] font-semibold px-2.5 py-1 rounded-md transition-colors"
+                      style={{ color: 'var(--text-muted)' }}
+                    >
+                      Clear filters
+                    </button>
+                  )}
+                </div>
+              )}
+              {records.length === 0 ? (
+                <div className="p-10 text-center">
+                  <FileText className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--text-muted)', opacity: 0.3 }} />
+                  <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No encounters recorded yet.</p>
+                </div>
+              ) : filteredHistory.length === 0 ? (
+                <div className="p-10 text-center">
+                  <Search className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--text-muted)', opacity: 0.3 }} />
+                  <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No encounters match the current filters.</p>
+                  <button
+                    onClick={() => { setHistorySearch(''); setHistoryRange('all'); setHistoryVisitType('all'); }}
+                    className="text-xs font-semibold mt-2"
+                    style={{ color: 'var(--taban-blue)' }}
+                  >
+                    Clear filters
+                  </button>
+                </div>
+              ) : (
+              <div className="relative px-6 py-5" style={{ paddingLeft: 56 }}>
+                {/* Vertical spine */}
+                <div
+                  className="absolute top-5 bottom-5 w-0.5"
+                  style={{
+                    left: 32,
+                    background: 'linear-gradient(180deg, var(--accent-border) 0%, var(--border-light) 100%)',
+                  }}
+                />
+                {filteredHistory.map((rec) => {
                   const ai = (rec as unknown as Record<string, unknown>).aiEvaluation as { suggestedDiagnoses: { icd10Code: string; name: string; confidence: number; reasoning: string; severity: string; suggestedTreatment?: string }[]; vitalSignAlerts: string[]; recommendedTests: string[]; severityAssessment: string; clinicalNotes: string; evaluatedAt: string } | undefined;
                   const isAIExpanded = expandedAI.has(rec._id + '-history');
+                  const isExpanded = expandedEncounters.has(rec._id);
+                  const isEmergency = rec.visitType === 'emergency';
+                  const isInpatient = rec.visitType === 'inpatient';
+                  const markerColor = isEmergency ? 'var(--taban-red)' : isInpatient ? 'var(--color-warning)' : 'var(--taban-blue)';
+                  const labCount = (rec.labResults || []).length;
+                  const rxCount = (rec.prescriptions || []).length;
+                  const toggleExpand = () => setExpandedEncounters(prev => {
+                    const next = new Set(prev);
+                    if (next.has(rec._id)) next.delete(rec._id); else next.add(rec._id);
+                    return next;
+                  });
                   return (
-                  <div key={rec._id} className="relative pb-6 last:pb-4">
-                    {i < records.length - 1 && <div className="absolute left-[-20px] top-6 bottom-0 w-0.5" style={{ background: 'var(--border-light)' }} />}
-                    <div className="absolute left-[-24px] top-1 w-2.5 h-2.5 rounded-full border-2" style={{
-                      background: rec.visitType === 'emergency' ? 'var(--taban-red)' : 'var(--taban-blue)',
-                      borderColor: 'var(--bg-card)'
-                    }} />
-                    <div className="p-4 rounded-lg border ml-2" style={{ borderColor: 'var(--border-light)' }}>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>{rec.visitDate}</span>
-                          <span className={`badge text-[10px] ${rec.visitType === 'emergency' ? 'badge-emergency' : rec.visitType === 'inpatient' ? 'badge-warning' : 'badge-normal'}`}>
+                  <div key={rec._id} className="relative pb-5 last:pb-0">
+                    {/* Timeline marker */}
+                    <button
+                      onClick={toggleExpand}
+                      className="absolute flex items-center justify-center"
+                      style={{
+                        left: -30,
+                        top: 14,
+                        width: 20,
+                        height: 20,
+                        borderRadius: '50%',
+                        background: 'var(--bg-card)',
+                        border: `2px solid ${markerColor}`,
+                        boxShadow: `0 0 0 4px var(--bg-card), 0 2px 8px ${markerColor}33`,
+                        cursor: 'pointer',
+                      }}
+                      aria-label={isExpanded ? 'Collapse encounter' : 'Expand encounter'}
+                    >
+                      <div
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          background: markerColor,
+                        }}
+                      />
+                    </button>
+
+                    {/* Encounter card */}
+                    <div
+                      className="rounded-xl transition-all hover:shadow-md"
+                      style={{
+                        border: '1px solid var(--border-light)',
+                        background: 'var(--bg-card)',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {/* Header strip — clickable to expand */}
+                      <div
+                        role="button"
+                        tabIndex={0}
+                        onClick={toggleExpand}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(); } }}
+                        className="px-4 py-2.5 flex items-center justify-between flex-wrap gap-2 cursor-pointer hover:bg-[var(--accent-light)] transition-colors"
+                        style={{
+                          background: 'var(--overlay-subtle)',
+                          borderBottom: '1px solid var(--border-light)',
+                        }}
+                        title={isExpanded ? 'Collapse details' : 'Click to view full record details'}
+                      >
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span
+                            className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full font-mono"
+                            style={{ background: 'var(--bg-card)', color: 'var(--text-primary)', border: '1px solid var(--border-light)' }}
+                          >
+                            <CalendarClock className="w-3 h-3" style={{ color: markerColor }} />
+                            {formatDateTime(rec.consultedAt || rec.visitDate)}
+                          </span>
+                          <span className={`badge text-[10px] ${isEmergency ? 'badge-emergency' : isInpatient ? 'badge-warning' : 'badge-normal'}`}>
                             {rec.visitType}
                           </span>
                           {ai && (
@@ -336,18 +853,150 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                             </span>
                           )}
                         </div>
-                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{rec.hospitalName}</span>
+                        <div className="flex items-center gap-1.5 text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                          {labCount > 0 && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded" style={{ background: 'var(--accent-light)', color: 'var(--taban-blue)' }}>
+                              <FlaskConical className="w-2.5 h-2.5" /> {labCount} lab{labCount === 1 ? '' : 's'}
+                            </span>
+                          )}
+                          {rxCount > 0 && (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded" style={{ background: 'var(--accent-light)', color: 'var(--taban-blue)' }}>
+                              <Pill className="w-2.5 h-2.5" /> {rxCount} rx
+                            </span>
+                          )}
+                          {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                        </div>
                       </div>
-                      <p className="text-sm font-medium mb-1">{rec.chiefComplaint}</p>
-                      <p className="text-xs mb-2" style={{ color: 'var(--text-secondary)' }}>{rec.historyOfPresentIllness.slice(0, 150)}...</p>
-                      <div className="flex flex-wrap gap-1.5 mb-2">
-                        {(rec.diagnoses || []).map((d, j) => (
-                          <span key={j} className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'var(--accent-light)', color: 'var(--taban-blue)' }}>
-                            {d.icd10Code} {d.name}
+
+                      {/* Body */}
+                      <div className="p-4">
+                        <p className="text-sm font-semibold leading-snug mb-1" style={{ color: 'var(--text-primary)' }}>
+                          {rec.chiefComplaint}
+                        </p>
+                        <p className="text-xs mb-3 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                          {isExpanded
+                            ? rec.historyOfPresentIllness
+                            : `${rec.historyOfPresentIllness.slice(0, 180)}${rec.historyOfPresentIllness.length > 180 ? '…' : ''}`}
+                        </p>
+                        {(rec.diagnoses || []).length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mb-3">
+                            {(rec.diagnoses || []).map((d, j) => (
+                              <span
+                                key={j}
+                                className="inline-flex items-center gap-1.5 text-[10px] font-medium px-2 py-0.5 rounded-full"
+                                style={{
+                                  background: 'var(--bg-card)',
+                                  color: 'var(--taban-blue)',
+                                  border: '1px solid var(--accent-border)',
+                                }}
+                              >
+                                <span className="font-mono text-[9px] px-1 py-0.5 rounded" style={{ background: 'var(--accent-light)' }}>
+                                  {d.icd10Code}
+                                </span>
+                                {d.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 flex-wrap text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                          <span className="inline-flex items-center gap-1">
+                            <UserIcon className="w-3 h-3" />
+                            <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>{rec.providerName}</span>
                           </span>
-                        ))}
-                      </div>
-                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{rec.providerName} · {rec.department}</p>
+                          <span>·</span>
+                          <span className="inline-flex items-center gap-1">
+                            <Activity className="w-3 h-3" />
+                            {rec.department}
+                          </span>
+                          {rec.hospitalName && (
+                            <>
+                              <span>·</span>
+                              <span className="inline-flex items-center gap-1">
+                                <Building2 className="w-3 h-3" />
+                                {rec.hospitalName}
+                              </span>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Expanded details: vitals, treatment plan, prescriptions, labs */}
+                        {isExpanded && (
+                          <div className="mt-4 pt-4 space-y-3" style={{ borderTop: '1px dashed var(--border-light)' }}>
+                            {rec.vitalSigns && (
+                              <div>
+                                <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>
+                                  Vital signs at this visit
+                                </p>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                  {[
+                                    { l: 'Temp', v: `${rec.vitalSigns.temperature}°C` },
+                                    { l: 'BP', v: `${rec.vitalSigns.systolic}/${rec.vitalSigns.diastolic}` },
+                                    { l: 'Pulse', v: `${rec.vitalSigns.pulse} bpm` },
+                                    { l: 'SpO₂', v: `${rec.vitalSigns.oxygenSaturation}%` },
+                                  ].map(v => (
+                                    <div key={v.l} className="px-2 py-1.5 rounded-lg" style={{ background: 'var(--overlay-subtle)' }}>
+                                      <p className="text-[9px] uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{v.l}</p>
+                                      <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>{v.v}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {rec.treatmentPlan && (
+                              <div>
+                                <p className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>
+                                  <ClipboardList className="w-3 h-3" style={{ color: 'var(--taban-blue)' }} />
+                                  Treatment plan
+                                </p>
+                                <p className="text-xs leading-relaxed p-2.5 rounded-lg" style={{ background: 'var(--overlay-subtle)', color: 'var(--text-secondary)' }}>
+                                  {rec.treatmentPlan}
+                                </p>
+                              </div>
+                            )}
+                            {(rec.prescriptions || []).length > 0 && (
+                              <div>
+                                <p className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>
+                                  <Pill className="w-3 h-3" style={{ color: 'var(--taban-blue)' }} />
+                                  Prescriptions ({rec.prescriptions!.length})
+                                </p>
+                                <ul className="space-y-1">
+                                  {rec.prescriptions!.map((rx, k) => (
+                                    <li key={k} className="text-xs flex items-start gap-2 p-2 rounded-lg" style={{ background: 'var(--overlay-subtle)' }}>
+                                      <span className="w-1 h-1 rounded-full mt-1.5 flex-shrink-0" style={{ background: 'var(--taban-blue)' }} />
+                                      <span>
+                                        <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{rx.drugName}</span>{' '}
+                                        <span style={{ color: 'var(--text-muted)' }}>· {rx.dose} · {rx.route} · {rx.frequency} · {rx.duration}</span>
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            {(rec.labResults || []).length > 0 && (
+                              <div>
+                                <p className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>
+                                  <FlaskConical className="w-3 h-3" style={{ color: 'var(--taban-blue)' }} />
+                                  Lab results ({rec.labResults!.length})
+                                </p>
+                                <ul className="space-y-1">
+                                  {rec.labResults!.map((lab, k) => (
+                                    <li key={k} className="text-xs flex items-center gap-2 p-2 rounded-lg" style={{ background: 'var(--overlay-subtle)' }}>
+                                      <span className="font-medium flex-1" style={{ color: 'var(--text-primary)' }}>{lab.testName}</span>
+                                      <span className={lab.abnormal ? 'font-semibold' : ''} style={{ color: lab.abnormal ? (lab.critical ? 'var(--color-danger)' : 'var(--color-warning)') : 'var(--text-secondary)' }}>
+                                        {lab.result} {lab.unit}
+                                      </span>
+                                      {lab.abnormal && (
+                                        <span className={`badge text-[9px] ${lab.critical ? 'badge-emergency' : 'badge-warning'}`}>
+                                          {lab.critical ? 'CRIT' : 'ABN'}
+                                        </span>
+                                      )}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       {ai && (
                         <>
                           <button
@@ -388,10 +1037,12 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                           )}
                         </>
                       )}
+                      </div>
                     </div>
                   </div>
                 );})}
               </div>
+              )}
             </div>
           )}
 

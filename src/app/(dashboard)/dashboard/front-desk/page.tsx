@@ -16,6 +16,18 @@ import {
 
 const ACCENT = 'var(--accent-primary)';
 
+/** Format an ISO timestamp as a compact "Mon DD · HH:mm" or just "Mon DD" if no time. */
+function formatAdmittedAt(iso?: string): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const hasTime = /T\d{2}:\d{2}/.test(iso);
+  if (!hasTime) return dateStr;
+  const timeStr = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  return `${dateStr} · ${timeStr}`;
+}
+
 const EVENT_TYPES = [
   { type: 'arrival', label: 'Patient Arrived', color: '#14B8A6', icon: LogIn },
   { type: 'registered', label: 'Patient Registered', color: '#60A5FA', icon: UserPlus },
@@ -275,11 +287,18 @@ export default function FrontDeskDashboardPage() {
   const todayDate = new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   const pendingReferrals = referrals.filter(r => r.status === 'sent' || r.status === 'received');
 
-  const recentPatients = patients.slice(0, 8).filter(p =>
-    !globalSearch ||
-    `${p.firstName} ${p.surname}`.toLowerCase().includes(globalSearch.toLowerCase()) ||
-    p.hospitalNumber.toLowerCase().includes(globalSearch.toLowerCase())
-  );
+  const recentPatients = [...patients]
+    .sort((a, b) => {
+      const ta = new Date(a.registeredAt || a.registrationDate || 0).getTime();
+      const tb = new Date(b.registeredAt || b.registrationDate || 0).getTime();
+      return tb - ta;
+    })
+    .filter(p =>
+      !globalSearch ||
+      `${p.firstName} ${p.surname}`.toLowerCase().includes(globalSearch.toLowerCase()) ||
+      p.hospitalNumber.toLowerCase().includes(globalSearch.toLowerCase())
+    )
+    .slice(0, 8);
 
   // Simulated queue data (kept for KPI strip compatibility)
   const waitingQueue = SAMPLE_PATIENTS.slice(0, 5).map((name, i) => ({
@@ -359,9 +378,8 @@ export default function FrontDeskDashboardPage() {
                 border: '1px solid var(--border-light)',
                 boxShadow: 'var(--card-shadow)',
               }}>
-              <div className="absolute top-0 left-0 w-full h-[2px]" style={{ background: kpi.color }} />
               <div className="flex items-center gap-1.5 mb-1">
-                <kpi.icon className="w-3 h-3" style={{ color: kpi.color }} />
+                <kpi.icon className="w-3 h-3" style={{ color: 'var(--accent-primary)' }} />
                 <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{kpi.label}</span>
               </div>
               <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{kpi.value}</p>
@@ -871,18 +889,23 @@ export default function FrontDeskDashboardPage() {
               <table className="w-full">
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
-                    {['Patient', 'ID', 'Gender', 'Age', 'Last Visit', 'Status'].map(h => (
+                    {['Patient', 'ID', 'Gender', 'Age', 'Registered', 'Status'].map(h => (
                       <th key={h} className="px-4 py-2 text-left text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {recentPatients.map(patient => (
-                    <tr key={patient._id} className="cursor-pointer transition-all"
+                    <tr key={patient._id}
+                      role="button"
+                      tabIndex={0}
+                      className="cursor-pointer transition-all"
                       onClick={() => router.push(`/patients/${patient._id}`)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/patients/${patient._id}`); } }}
                       style={{ borderBottom: '1px solid var(--border-light)' }}
                       onMouseEnter={e => (e.currentTarget.style.background = 'var(--overlay-subtle)')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                      title="View patient record">
                       <td className="px-4 py-2.5">
                         <div className="flex items-center gap-2">
                           <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0"
@@ -899,7 +922,12 @@ export default function FrontDeskDashboardPage() {
                       <td className="px-4 py-2.5 text-[10px]" style={{ color: 'var(--text-muted)' }}>
                         {patient.estimatedAge || (patient.dateOfBirth ? new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear() : 0)}y
                       </td>
-                      <td className="px-4 py-2.5 text-[10px]" style={{ color: 'var(--text-muted)' }}>{patient.lastVisitDate}</td>
+                      <td className="px-4 py-2.5 text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>
+                        <span className="inline-flex items-center gap-1">
+                          <Clock className="w-3 h-3" style={{ color: 'var(--accent-primary)' }} />
+                          {formatAdmittedAt(patient.registeredAt || patient.registrationDate)}
+                        </span>
+                      </td>
                       <td className="px-4 py-2.5">
                         <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{
                           background: 'rgba(20,184,166,0.1)',

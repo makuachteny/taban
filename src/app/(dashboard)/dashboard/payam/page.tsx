@@ -32,6 +32,18 @@ const DOCTORS = ['Dr. Wani James', 'Dr. Akol Deng', 'Dr. Ladu Morris', 'Dr. Acho
 const NURSES = ['Nurse Ayen', 'Nurse Nyamal', 'Nurse Rose', 'Nurse Abuk', 'Nurse Dorothy'];
 const ACCENT = 'var(--color-warning)';
 
+/** Format an ISO timestamp as a compact "Mon DD · HH:mm" or just "Mon DD" if no time. */
+function formatAdmittedAt(iso?: string): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const hasTime = /T\d{2}:\d{2}/.test(iso);
+  if (!hasTime) return dateStr;
+  const timeStr = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  return `${dateStr} · ${timeStr}`;
+}
+
 function ChartTooltip({ active, payload, label }: {
   active?: boolean;
   payload?: Array<{ name: string; value: number; color: string }>;
@@ -167,11 +179,18 @@ export default function PayamSupervisorDashboard() {
       (r.status === 'sent' || r.status === 'received')
   );
 
-  const recentPatients = patients.slice(0, 6).filter(p =>
-    !globalSearch ||
-    `${p.firstName} ${p.surname}`.toLowerCase().includes(globalSearch.toLowerCase()) ||
-    p.hospitalNumber.toLowerCase().includes(globalSearch.toLowerCase())
-  );
+  const recentPatients = [...patients]
+    .sort((a, b) => {
+      const ta = new Date(a.registeredAt || a.registrationDate || 0).getTime();
+      const tb = new Date(b.registeredAt || b.registrationDate || 0).getTime();
+      return tb - ta;
+    })
+    .filter(p =>
+      !globalSearch ||
+      `${p.firstName} ${p.surname}`.toLowerCase().includes(globalSearch.toLowerCase()) ||
+      p.hospitalNumber.toLowerCase().includes(globalSearch.toLowerCase())
+    )
+    .slice(0, 6);
   const activeAlerts = diseaseAlerts.filter(a => a.alertLevel === 'emergency' || a.alertLevel === 'warning');
   const pendingReferrals = referrals.filter(r => r.status === 'sent' || r.status === 'received');
 
@@ -195,10 +214,12 @@ export default function PayamSupervisorDashboard() {
   const satisfactionRate = 76;
 
   const admittedPatients = recentPatients.map((p, i) => ({
+    _id: p._id,
     name: `${p.firstName} ${p.surname}`,
     age: p.estimatedAge || (p.dateOfBirth ? new Date().getFullYear() - new Date(p.dateOfBirth).getFullYear() : 25 + i * 3),
     gender: p.gender?.[0] || (i % 2 === 0 ? 'M' : 'F'),
     id: p.hospitalNumber,
+    admittedAt: p.registeredAt || p.registrationDate,
     ward: DEPARTMENTS[i % DEPARTMENTS.length] + '-' + (Math.floor(Math.random() * 15) + 1),
     doctor: DOCTORS[i % DOCTORS.length],
     nurse: NURSES[i % NURSES.length],
@@ -326,27 +347,28 @@ export default function PayamSupervisorDashboard() {
           {/* Quick Stats — includes incoming Boma referrals count */}
           <div className="card-elevated p-4 flex flex-col">
             <p className="text-[11px] font-medium mb-2" style={{ color: 'var(--text-muted)' }}>Quick Overview</p>
-            <div className="mt-auto space-y-2.5">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>Incoming Boma Transfers</span>
-                <span className="text-sm font-bold" style={{ color: ACCENT }}>{incomingBomaTransfers.length}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>Pending Referrals</span>
-                <span className="text-sm font-bold" style={{ color: 'var(--color-warning)' }}>{pendingReferrals.length}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>Active Alerts</span>
-                <span className="text-sm font-bold" style={{ color: 'var(--color-danger)' }}>{activeAlerts.length}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>Immunizations</span>
-                <span className="text-sm font-bold" style={{ color: '#A855F7' }}>{immStats?.totalVaccinations || 0}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>ANC / Births</span>
-                <span className="text-sm font-bold" style={{ color: '#EC4899' }}>{ancStats?.totalVisits || 0} / {birthStats?.total || 0}</span>
-              </div>
+            <div className="mt-auto space-y-2">
+              {[
+                { Icon: ArrowRightLeft, label: 'Incoming Boma Transfers', value: incomingBomaTransfers.length, color: ACCENT },
+                { Icon: FileText, label: 'Pending Referrals', value: pendingReferrals.length, color: 'var(--color-warning)' },
+                { Icon: AlertTriangle, label: 'Active Alerts', value: activeAlerts.length, color: 'var(--color-danger)' },
+                { Icon: Syringe, label: 'Immunizations', value: immStats?.totalVaccinations || 0, color: '#A855F7' },
+                { Icon: Baby, label: 'ANC / Births', value: `${ancStats?.totalVisits || 0} / ${birthStats?.total || 0}`, color: '#EC4899' },
+              ].map(item => (
+                <div key={item.label} className="flex items-center gap-2">
+                  <div
+                    className="flex items-center justify-center flex-shrink-0"
+                    style={{
+                      width: 24, height: 24, borderRadius: 6,
+                      background: `color-mix(in srgb, ${item.color} 12%, transparent)`,
+                    }}
+                  >
+                    <item.Icon className="w-3 h-3" style={{ color: item.color }} />
+                  </div>
+                  <span className="text-[11px] flex-1" style={{ color: 'var(--text-secondary)' }}>{item.label}</span>
+                  <span className="text-sm font-bold" style={{ color: item.color }}>{item.value}</span>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -484,7 +506,7 @@ export default function PayamSupervisorDashboard() {
             <table className="w-full">
               <thead>
                 <tr>
-                  {['Patient Name', 'Patient ID', 'Ward-Room No.', 'Assigned Doctor', 'Assigned Nurse', 'Division'].map(h => (
+                  {['Patient Name', 'Patient ID', 'Admitted', 'Ward-Room No.', 'Assigned Doctor', 'Assigned Nurse', 'Division'].map(h => (
                     <th key={h} className="text-left px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border-light)' }}>
                       {h}
                     </th>
@@ -492,18 +514,28 @@ export default function PayamSupervisorDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {admittedPatients.map((p, i) => (
+                {admittedPatients.map((p) => (
                   <tr
-                    key={i}
-                    className="cursor-pointer transition-colors"
-                    onClick={() => router.push('/patients')}
+                    key={p._id}
+                    role="button"
+                    tabIndex={0}
+                    className="cursor-pointer transition-colors hover:bg-[var(--table-row-hover)]"
+                    onClick={() => router.push(`/patients/${p._id}`)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/patients/${p._id}`); } }}
                     style={{ borderBottom: '1px solid var(--border-light)' }}
+                    title="View patient record"
                   >
                     <td className="px-4 py-2.5">
                       <span className="text-[12px] font-medium" style={{ color: 'var(--text-primary)' }}>{p.name}</span>
                       <span className="text-[10px] ml-1.5" style={{ color: 'var(--text-muted)' }}>{p.age} Y, {p.gender}</span>
                     </td>
                     <td className="px-4 py-2.5 text-[12px] font-mono" style={{ color: 'var(--text-secondary)' }}>{p.id}</td>
+                    <td className="px-4 py-2.5 text-[11px] font-mono" style={{ color: 'var(--text-secondary)' }}>
+                      <span className="inline-flex items-center gap-1">
+                        <Clock className="w-3 h-3" style={{ color: 'var(--accent-primary)' }} />
+                        {formatAdmittedAt(p.admittedAt)}
+                      </span>
+                    </td>
                     <td className="px-4 py-2.5 text-[12px]" style={{ color: 'var(--text-secondary)' }}>{p.ward}</td>
                     <td className="px-4 py-2.5 text-[12px]" style={{ color: 'var(--text-secondary)' }}>{p.doctor}</td>
                     <td className="px-4 py-2.5 text-[12px]" style={{ color: 'var(--text-secondary)' }}>{p.nurse}</td>

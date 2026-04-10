@@ -77,7 +77,8 @@ export default function NewPatientPage() {
 
     setSubmitting(true);
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const nowIso = new Date().toISOString();
+      const today = nowIso.split('T')[0];
       const result = await createPatient({
         hospitalNumber: '',
         geocodeId,
@@ -110,6 +111,8 @@ export default function NewPatientPage() {
         chronicConditions: form.chronicConditions ? form.chronicConditions.split(',').map(c => c.trim()) : ['None'],
         registrationHospital: currentUser?.hospitalId || '',
         registrationDate: today,
+        registeredAt: nowIso,
+        registeredBy: currentUser?.name || currentUser?.username || '',
         lastVisitDate: today,
         lastVisitHospital: currentUser?.hospitalId || '',
         isActive: true,

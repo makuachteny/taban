@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Link from 'next/link';
 import TopBar from '@/components/TopBar';
 import { useANC } from '@/lib/hooks/useANC';
 import { useApp } from '@/lib/context';
 import {
   HeartPulse, Search, Plus, X, Users, AlertTriangle,
-  Calendar, Activity, ChevronRight
+  Calendar, Activity, ChevronRight, ExternalLink,
 } from 'lucide-react';
 
 const RISK_FACTOR_OPTIONS = [
@@ -215,11 +216,15 @@ export default function ANCPage() {
               {filteredMothers.map(({ latest, visitCount }) => {
                 const risk = riskColors[latest.riskLevel] || riskColors.low;
                 const isSelected = selectedMother === latest.motherId;
+                const select = () => setSelectedMother(isSelected ? null : latest.motherId);
                 return (
                   <div
                     key={latest.motherId}
-                    onClick={() => setSelectedMother(isSelected ? null : latest.motherId)}
-                    className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors"
+                    role="button"
+                    tabIndex={0}
+                    onClick={select}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(); } }}
+                    className="flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-[var(--table-row-hover)]"
                     style={{ background: isSelected ? 'var(--nav-active-bg)' : undefined }}
                   >
                     <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
@@ -239,6 +244,15 @@ export default function ANCPage() {
                       <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
                         {visitCount} visit{visitCount !== 1 ? 's' : ''}
                       </span>
+                      <Link
+                        href={`/patients/${latest.motherId}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full transition-colors hover:bg-[var(--accent-light)]"
+                        style={{ color: 'var(--accent-primary)' }}
+                        title="View patient record"
+                      >
+                        View <ExternalLink className="w-3 h-3" />
+                      </Link>
                       <ChevronRight className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
                     </div>
                   </div>

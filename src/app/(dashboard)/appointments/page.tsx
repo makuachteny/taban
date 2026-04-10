@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useMemo, useCallback } from 'react';
+import Link from 'next/link';
 import TopBar from '@/components/TopBar';
 import {
   Calendar, Plus, Clock, CheckCircle2, XCircle, User, Search,
   ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Phone, AlertTriangle, RefreshCw,
   Video, Stethoscope, Syringe, HeartPulse, FlaskConical,
   Building2, Bell, X, UserPlus, ClipboardList,
-  Filter,
+  Filter, ExternalLink,
 } from 'lucide-react';
 import { useAppointments, useAppointmentStats } from '@/lib/hooks/useAppointments';
 import { usePatients } from '@/lib/hooks/usePatients';
@@ -558,7 +559,6 @@ export default function AppointmentsPage() {
         {pendingApprovals.length > 0 && (
           <div className="card-elevated" style={{
             padding: '12px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12,
-            borderLeft: '3px solid #D97706',
           }}>
             <Clock size={18} style={{ color: 'var(--color-warning)', flexShrink: 0 }} />
             <div style={{ flex: 1 }}>
@@ -607,10 +607,7 @@ export default function AppointmentsPage() {
                 const isWalkIn = apt.appointmentType === 'walk_in';
 
                 return (
-                  <div key={apt._id} className="card-elevated" style={{
-                    overflow: 'hidden', borderLeftWidth: 3, borderLeftStyle: 'solid',
-                    borderLeftColor: isWalkIn ? '#7C3AED' : sc.color,
-                  }}>
+                  <div key={apt._id} className="card-elevated" style={{ overflow: 'hidden' }}>
                     <div onClick={() => setExpandedId(isExpanded ? null : apt._id)} style={{
                       display: 'flex', alignItems: 'center', padding: '12px 16px', cursor: 'pointer', gap: 12, flexWrap: 'wrap',
                     }}>
@@ -626,7 +623,20 @@ export default function AppointmentsPage() {
                       </div>
                       <div style={{ flex: 1, minWidth: 120 }}>
                         <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
-                          {apt.patientName}
+                          {apt.patientId ? (
+                            <Link
+                              href={`/patients/${apt.patientId}`}
+                              onClick={(e) => e.stopPropagation()}
+                              style={{ color: 'var(--text-primary)', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                              className="hover:underline"
+                              title="View patient record"
+                            >
+                              {apt.patientName}
+                              <ExternalLink size={11} style={{ opacity: 0.55 }} />
+                            </Link>
+                          ) : (
+                            apt.patientName
+                          )}
                           {isWalkIn && <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: 'rgba(124,58,237,0.1)', color: 'var(--accent-primary)' }}>WALK-IN</span>}
                         </div>
                         <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
@@ -800,7 +810,20 @@ export default function AppointmentsPage() {
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                            {apt.patientName}
+                            {apt.patientId ? (
+                              <Link
+                                href={`/patients/${apt.patientId}`}
+                                onClick={(e) => { e.stopPropagation(); setShowDayPopup(false); }}
+                                style={{ color: 'var(--text-primary)', display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                                className="hover:underline"
+                                title="View patient record"
+                              >
+                                {apt.patientName}
+                                <ExternalLink size={10} style={{ opacity: 0.55 }} />
+                              </Link>
+                            ) : (
+                              apt.patientName
+                            )}
                             {isWI && <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: 'rgba(124,58,237,0.08)', color: 'var(--accent-primary)' }}>WALK-IN</span>}
                           </div>
                           <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{apt.reason.slice(0, 40)}{apt.reason.length > 40 ? '...' : ''}</div>

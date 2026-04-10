@@ -764,7 +764,6 @@ export default function EpidemicIntelligencePage() {
                     border: '1px solid var(--border-light)',
                     boxShadow: 'var(--card-shadow)',
                   }}>
-                    <div className="absolute top-0 left-0 w-full h-[2px]" style={{ background: colors.text }} />
                     <p className="text-2xl font-bold" style={{ color: colors.text }}>{count}</p>
                     <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{sev}</p>
                   </div>

@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Link from 'next/link';
 import TopBar from '@/components/TopBar';
 import { useImmunizations } from '@/lib/hooks/useImmunizations';
 import { useApp } from '@/lib/context';
 import {
   Syringe, Search, Plus, X, CheckCircle2, Clock, AlertTriangle,
-  XCircle, ChevronDown, ChevronUp, Users
+  XCircle, ChevronDown, ChevronUp, Users, ExternalLink,
 } from 'lucide-react';
 
 const VACCINES = ['BCG', 'OPV', 'Penta', 'PCV', 'Rota', 'Measles', 'Yellow Fever', 'Vitamin A'];
@@ -200,11 +201,15 @@ export default function ImmunizationsPage() {
             const completedCount = records.filter(r => r.status === 'completed').length;
             const overdueCount = records.filter(r => r.status === 'overdue' || r.status === 'missed').length;
 
+            const toggle = () => setExpandedChild(isExpanded ? null : childId);
             return (
               <div key={childId} className="border-b" style={{ borderColor: 'var(--border-light)' }}>
-                <button
-                  onClick={() => setExpandedChild(isExpanded ? null : childId)}
-                  className="w-full flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[var(--table-row-hover)]"
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={toggle}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } }}
+                  className="w-full flex items-center gap-3 px-4 py-3 transition-colors hover:bg-[var(--table-row-hover)] cursor-pointer"
                 >
                   <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
                     style={{ background: 'var(--accent-primary)' }}>
@@ -225,9 +230,18 @@ export default function ImmunizationsPage() {
                         {overdueCount} overdue
                       </span>
                     )}
+                    <Link
+                      href={`/patients/${childId}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full transition-colors hover:bg-[var(--accent-light)]"
+                      style={{ color: 'var(--accent-primary)' }}
+                      title="View patient record"
+                    >
+                      View <ExternalLink className="w-3 h-3" />
+                    </Link>
                     {isExpanded ? <ChevronUp className="w-4 h-4" style={{ color: 'var(--text-muted)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />}
                   </div>
-                </button>
+                </div>
 
                 {isExpanded && (
                   <div className="px-4 pb-4">

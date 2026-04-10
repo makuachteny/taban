@@ -10,7 +10,7 @@ import {
   Syringe, HeartPulse, Baby, FlaskConical,
   FileText, UserCheck, Globe, Pill,
   ArrowUpRight, SendHorizontal,
-  X, ClipboardList, TestTube, Bell,
+  X, ClipboardList, TestTube, Bell, Clock,
   CheckCircle2, ChevronDown, ChevronUp, Search
 } from 'lucide-react';
 import {
@@ -265,6 +265,18 @@ function TemplateIcon({ icon, color }: { icon: string; color: string }) {
   return <>{iconMap[icon] || <FileText className="w-5 h-5" style={{ color }} />}</>;
 }
 
+/** Format an ISO timestamp as a compact "Mon DD · HH:mm" or just "Mon DD" if no time. */
+function formatAdmittedAt(iso?: string): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const hasTime = /T\d{2}:\d{2}/.test(iso);
+  if (!hasTime) return dateStr;
+  const timeStr = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  return `${dateStr} · ${timeStr}`;
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const { currentUser, globalSearch } = useApp();
@@ -370,11 +382,18 @@ export default function DashboardPage() {
 
   const hospital = currentUser.hospital;
 
-  const recentPatients = patients.slice(0, 6).filter(p =>
-    !globalSearch ||
-    `${p.firstName} ${p.surname}`.toLowerCase().includes(globalSearch.toLowerCase()) ||
-    p.hospitalNumber.toLowerCase().includes(globalSearch.toLowerCase())
-  );
+  const recentPatients = [...patients]
+    .sort((a, b) => {
+      const ta = new Date(a.registeredAt || a.registrationDate || 0).getTime();
+      const tb = new Date(b.registeredAt || b.registrationDate || 0).getTime();
+      return tb - ta;
+    })
+    .filter(p =>
+      !globalSearch ||
+      `${p.firstName} ${p.surname}`.toLowerCase().includes(globalSearch.toLowerCase()) ||
+      p.hospitalNumber.toLowerCase().includes(globalSearch.toLowerCase())
+    )
+    .slice(0, 6);
   const activeAlerts = diseaseAlerts.filter(a => a.alertLevel === 'emergency' || a.alertLevel === 'warning');
   const pendingReferrals = referrals.filter(r => r.status === 'sent' || r.status === 'received');
 
@@ -400,10 +419,12 @@ export default function DashboardPage() {
 
   // Recently admitted patients table data
   const admittedPatients = recentPatients.map((p, i) => ({
+    _id: p._id,
     name: `${p.firstName} ${p.surname}`,
     age: p.estimatedAge || (p.dateOfBirth ? new Date().getFullYear() - new Date(p.dateOfBirth).getFullYear() : 25 + i * 3),
     gender: p.gender?.[0] || (i % 2 === 0 ? 'M' : 'F'),
     id: p.hospitalNumber,
+    admittedAt: p.registeredAt || p.registrationDate,
     ward: DEPARTMENTS[i % DEPARTMENTS.length] + '-' + (Math.floor(Math.random() * 15) + 1),
     doctor: DOCTORS[i % DOCTORS.length],
     nurse: NURSES[i % NURSES.length],
@@ -798,7 +819,7 @@ export default function DashboardPage() {
             <table className="w-full">
               <thead>
                 <tr>
-                  {['Patient Name', 'Patient ID', 'Ward-Room No.', 'Assigned Doctor', 'Assigned Nurse', 'Division'].map(h => (
+                  {['Patient Name', 'Patient ID', 'Admitted', 'Ward-Room No.', 'Assigned Doctor', 'Assigned Nurse', 'Division'].map(h => (
                     <th key={h} className="text-left px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)', borderBottom: '1px solid var(--border-light)' }}>
                       {h}
                     </th>
@@ -806,18 +827,28 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {admittedPatients.map((p, i) => (
+                {admittedPatients.map((p) => (
                   <tr
-                    key={i}
-                    className="cursor-pointer transition-colors"
-                    onClick={() => router.push('/patients')}
+                    key={p._id}
+                    role="button"
+                    tabIndex={0}
+                    className="cursor-pointer transition-colors hover:bg-[var(--table-row-hover)]"
+                    onClick={() => router.push(`/patients/${p._id}`)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/patients/${p._id}`); } }}
                     style={{ borderBottom: '1px solid var(--border-light)' }}
+                    title="View patient record"
                   >
                     <td className="px-4 py-2.5">
                       <span className="text-[12px] font-medium" style={{ color: 'var(--text-primary)' }}>{p.name}</span>
                       <span className="text-[10px] ml-1.5" style={{ color: 'var(--text-muted)' }}>{p.age} Y, {p.gender}</span>
                     </td>
                     <td className="px-4 py-2.5 text-[12px] font-mono" style={{ color: 'var(--text-secondary)' }}>{p.id}</td>
+                    <td className="px-4 py-2.5 text-[11px] font-mono" style={{ color: 'var(--text-secondary)' }}>
+                      <span className="inline-flex items-center gap-1">
+                        <Clock className="w-3 h-3" style={{ color: 'var(--accent-primary)' }} />
+                        {formatAdmittedAt(p.admittedAt)}
+                      </span>
+                    </td>
                     <td className="px-4 py-2.5 text-[12px]" style={{ color: 'var(--text-secondary)' }}>{p.ward}</td>
                     <td className="px-4 py-2.5 text-[12px]" style={{ color: 'var(--text-secondary)' }}>{p.doctor}</td>
                     <td className="px-4 py-2.5 text-[12px]" style={{ color: 'var(--text-secondary)' }}>{p.nurse}</td>
@@ -1036,7 +1067,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[
                 { label: 'New Patient', icon: Users, action: () => router.push('/patients/new'), color: 'var(--accent-primary)' },
-                { label: 'New Consultation', icon: ClipboardList, action: () => setSoapModalOpen(true), color: 'var(--color-success)' },
+                { label: 'New Consultation', icon: ClipboardList, action: () => setSoapModalOpen(true), color: 'var(--accent-primary)' },
                 { label: 'Quick Prescribe', icon: Pill, action: () => setPrescribeModalOpen(true), color: 'var(--accent-primary)' },
                 { label: 'Quick Lab Order', icon: TestTube, action: () => setLabModalOpen(true), color: 'var(--accent-primary)' },
                 { label: 'Immunization', icon: Syringe, action: () => router.push('/immunizations'), color: 'var(--accent-primary)' },

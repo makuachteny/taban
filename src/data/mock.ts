@@ -1649,8 +1649,16 @@ export interface Patient {
   nokAddress?: string;
   registrationHospital: string;
   registrationDate: string;
+  /** ISO 8601 timestamp (date + time) captured when patient is first registered. */
+  registeredAt?: string;
+  /** Name of user who first registered this patient. */
+  registeredBy?: string;
   lastVisitDate: string;
   lastVisitHospital: string;
+  /** ISO 8601 timestamp (date + time) of the most recent consultation. */
+  lastConsultedAt?: string;
+  /** Name of the provider who conducted the most recent consultation. */
+  lastConsultedBy?: string;
   isActive: boolean;
   photoUrl?: string;
   // Follow-up tracking (expert-recommended)
@@ -1747,9 +1755,27 @@ function generatePatient(index: number): Patient {
     nokRelationship: randomFrom(relationships),
     nokPhone: generatePhone(),
     registrationHospital: hospital.id,
-    registrationDate: `2025-${String(Math.floor(1 + Math.random() * 12)).padStart(2, '0')}-${String(Math.floor(1 + Math.random() * 28)).padStart(2, '0')}`,
+    registrationDate: (() => {
+      const m = String(Math.floor(1 + Math.random() * 12)).padStart(2, '0');
+      const d = String(Math.floor(1 + Math.random() * 28)).padStart(2, '0');
+      return `2025-${m}-${d}`;
+    })(),
+    registeredAt: (() => {
+      const m = String(Math.floor(1 + Math.random() * 12)).padStart(2, '0');
+      const d = String(Math.floor(1 + Math.random() * 28)).padStart(2, '0');
+      const hh = String(Math.floor(7 + Math.random() * 12)).padStart(2, '0');
+      const mm = String(Math.floor(Math.random() * 60)).padStart(2, '0');
+      return `2025-${m}-${d}T${hh}:${mm}:00.000Z`;
+    })(),
     lastVisitDate: `2026-0${Math.floor(1 + Math.random() * 2)}-${String(Math.floor(1 + Math.random() * 9)).padStart(2, '0')}`,
     lastVisitHospital: hospital.id,
+    lastConsultedAt: (() => {
+      const mo = Math.floor(1 + Math.random() * 2);
+      const d = String(Math.floor(1 + Math.random() * 9)).padStart(2, '0');
+      const hh = String(Math.floor(8 + Math.random() * 10)).padStart(2, '0');
+      const mm = String(Math.floor(Math.random() * 60)).padStart(2, '0');
+      return `2026-0${mo}-${d}T${hh}:${mm}:00.000Z`;
+    })(),
     isActive: true,
   };
 }
@@ -1889,6 +1915,10 @@ export interface MedicalRecord {
   hospitalId: string;
   hospitalName: string;
   visitDate: string;
+  /** ISO 8601 timestamp (date + time) captured when the consultation/visit is recorded. */
+  consultedAt?: string;
+  /** ISO 8601 timestamp (date + time) captured when the consultation was started. */
+  startedAt?: string;
   visitType: 'outpatient' | 'inpatient' | 'emergency' | 'referral';
   providerName: string;
   providerRole: string;
@@ -1961,24 +1991,6 @@ const commonPrescriptions: Prescription[] = [
   { drugName: 'TDF/3TC/DTG', genericName: 'Tenofovir/Lamivudine/Dolutegravir', dose: '300/300/50mg', route: 'Oral', frequency: 'OD', duration: '90 days', instructions: 'Take at same time daily' },
 ];
 
-function generateVitals(): VitalSigns {
-  const weight = 45 + Math.random() * 40;
-  const height = 150 + Math.random() * 35;
-  return {
-    temperature: +(36 + Math.random() * 3).toFixed(1),
-    systolic: Math.floor(100 + Math.random() * 60),
-    diastolic: Math.floor(60 + Math.random() * 35),
-    pulse: Math.floor(60 + Math.random() * 40),
-    respiratoryRate: Math.floor(14 + Math.random() * 10),
-    oxygenSaturation: Math.floor(92 + Math.random() * 8),
-    weight: +weight.toFixed(1),
-    height: +height.toFixed(1),
-    bmi: +(weight / ((height / 100) ** 2)).toFixed(1),
-    muac: Math.random() > 0.5 ? +(12 + Math.random() * 8).toFixed(1) : undefined,
-    recordedAt: new Date().toISOString(),
-  };
-}
-
 function generateLabResults(): LabResult[] {
   const allLabs: LabResult[] = [
     { testName: 'Malaria RDT', result: Math.random() > 0.4 ? 'Positive' : 'Negative', unit: '', referenceRange: 'Negative', abnormal: Math.random() > 0.4, critical: false, date: '2026-02-09' },
@@ -1995,28 +2007,76 @@ function generateLabResults(): LabResult[] {
 }
 
 export function generateMedicalRecords(patientId: string, count: number): MedicalRecord[] {
+  // Generate a coherent chronological series so trend charts are meaningful.
+  // Records are spaced roughly monthly going back from "now".
+  const startMonth = 8; // months back
+  const baseWeight = 55 + Math.random() * 25;
+  const baseSystolic = 115 + Math.random() * 25;
+  const baseTemp = 36.5 + Math.random() * 0.8;
+  const basePulse = 70 + Math.random() * 15;
+  const baseGlucose = 85 + Math.random() * 25;
+
   return Array.from({ length: count }, (_, i) => {
     const hospital = randomFrom(hospitals);
-    const month = Math.floor(1 + Math.random() * 2);
-    const day = Math.floor(1 + Math.random() * 28);
+    // Older records have higher index (we'll reverse-chronologically sort anyway)
+    const monthsAgo = startMonth - Math.floor((i / Math.max(1, count - 1)) * startMonth);
+    const visitDateObj = new Date();
+    visitDateObj.setMonth(visitDateObj.getMonth() - monthsAgo);
+    visitDateObj.setDate(1 + Math.floor(Math.random() * 27));
+    visitDateObj.setHours(8 + Math.floor(Math.random() * 9), Math.floor(Math.random() * 60), 0, 0);
+    const visitDate = visitDateObj.toISOString().split('T')[0];
+    const consultedAt = visitDateObj.toISOString();
+
     const numDiagnoses = 1 + Math.floor(Math.random() * 2);
     const numPrescriptions = 1 + Math.floor(Math.random() * 3);
+
+    // Drift vitals slightly over time for trends
+    const drift = (i / Math.max(1, count - 1)) * (Math.random() > 0.5 ? 1 : -1);
+    const weight = +(baseWeight + drift * 3 + (Math.random() - 0.5) * 1.5).toFixed(1);
+    const height = +(155 + Math.random() * 25).toFixed(1);
+    const systolic = Math.floor(baseSystolic + drift * 10 + (Math.random() - 0.5) * 6);
+    const diastolic = Math.floor(70 + (Math.random() - 0.5) * 10 + drift * 5);
+    const temperature = +(baseTemp + (Math.random() - 0.5) * 0.6 + Math.max(0, drift) * 0.8).toFixed(1);
+    const pulse = Math.floor(basePulse + (Math.random() - 0.5) * 8 + drift * 6);
+    const respRate = Math.floor(16 + Math.random() * 6);
+    const o2Sat = Math.floor(94 + Math.random() * 5);
+    const bmi = +(weight / ((height / 100) ** 2)).toFixed(1);
+
     return {
       id: `rec-${patientId}-${String(i + 1).padStart(3, '0')}`,
       patientId,
       hospitalId: hospital.id,
       hospitalName: hospital.name,
-      visitDate: `2026-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+      visitDate,
+      consultedAt,
+      startedAt: consultedAt,
       visitType: randomFrom(['outpatient', 'outpatient', 'outpatient', 'emergency', 'inpatient', 'referral'] as const),
       providerName: randomFrom(providerNames),
       providerRole: randomFrom(['Doctor', 'Clinical Officer']),
       department: randomFrom(departments),
       chiefComplaint: randomFrom(complaints),
       historyOfPresentIllness: 'Patient presents with the above complaints. Onset was gradual. No associated symptoms initially but condition has worsened over recent days. No significant travel history. Patient reports taking traditional medicine without improvement.',
-      vitalSigns: generateVitals(),
+      vitalSigns: {
+        temperature,
+        systolic,
+        diastolic,
+        pulse,
+        respiratoryRate: respRate,
+        oxygenSaturation: o2Sat,
+        weight,
+        height,
+        bmi,
+        muac: Math.random() > 0.5 ? +(12 + Math.random() * 8).toFixed(1) : undefined,
+        recordedAt: consultedAt,
+      },
       diagnoses: Array.from({ length: numDiagnoses }, () => randomFrom(commonDiagnoses)),
       prescriptions: Array.from({ length: numPrescriptions }, () => randomFrom(commonPrescriptions)),
-      labResults: generateLabResults(),
+      labResults: generateLabResults().map(lab => {
+        if (lab.testName === 'Blood Glucose (Random)') {
+          return { ...lab, result: (baseGlucose + drift * 20 + (Math.random() - 0.5) * 10).toFixed(0), date: visitDate };
+        }
+        return { ...lab, date: visitDate };
+      }),
       treatmentPlan: 'Continue prescribed medications. Adequate hydration. Rest. Return if symptoms worsen. Follow-up in 1 week.',
       followUp: Math.random() > 0.3 ? { date: '2026-02-16', reason: 'Review and follow-up assessment' } : undefined,
       syncStatus: Math.random() > 0.2 ? 'synced' : 'pending',

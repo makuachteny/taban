@@ -58,14 +58,14 @@ export default function RadiologyDashboard() {
         {/* KPI strip */}
         <div className="kpi-grid mb-4">
           {[
-            { label: 'Total Studies', value: stats.total, icon: Scan, color: ACCENT },
-            { label: 'Pending', value: stats.pending, icon: Clock, color: 'var(--color-warning)' },
+            { label: 'Total Studies', value: stats.total, icon: Scan, color: 'var(--accent-primary)' },
+            { label: 'Pending', value: stats.pending, icon: Clock, color: 'var(--accent-primary)' },
             { label: 'In Progress', value: stats.inProgress, icon: Activity, color: 'var(--accent-primary)' },
-            { label: 'Completed', value: stats.completed, icon: CheckCircle2, color: 'var(--color-success)' },
+            { label: 'Completed', value: stats.completed, icon: CheckCircle2, color: 'var(--accent-primary)' },
             { label: 'Urgent/Emergency', value: stats.urgent, icon: AlertTriangle, color: 'var(--color-danger)' },
-            { label: 'X-Rays', value: stats.xray, icon: Image, color: '#0891B2' },
-            { label: 'Ultrasounds', value: stats.ultrasound, icon: Eye, color: '#EC4899' },
-            { label: 'Avg. TAT', value: stats.avgTAT, icon: TrendingUp, color: 'var(--color-success)' },
+            { label: 'X-Rays', value: stats.xray, icon: Image, color: 'var(--accent-primary)' },
+            { label: 'Ultrasounds', value: stats.ultrasound, icon: Eye, color: 'var(--accent-primary)' },
+            { label: 'Avg. TAT', value: stats.avgTAT, icon: TrendingUp, color: 'var(--accent-primary)' },
           ].map(k => (
             <div key={k.label} className="kpi">
               <div className="kpi__icon" style={{ background: `${k.color}15` }}><k.icon style={{ color: k.color }} /></div>

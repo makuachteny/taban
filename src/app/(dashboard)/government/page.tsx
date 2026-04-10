@@ -352,12 +352,12 @@ export default function GovernmentDashboardPage() {
           {[
             { label: 'Hospitals', value: totalHospitals.toString(), icon: Building2, color: 'var(--accent-primary)', bg: 'rgba(0,119,215,0.10)', href: '/hospitals' },
             { label: 'Patients', value: totalPatients.toLocaleString(), icon: Users, color: 'var(--accent-primary)', bg: 'rgba(0,119,215,0.10)', href: '/hospitals' },
-            { label: 'Beds', value: totalBeds.toLocaleString(), icon: BedDouble, color: 'var(--color-warning)', bg: 'rgba(252,211,77,0.10)', href: '/hospitals' },
+            { label: 'Beds', value: totalBeds.toLocaleString(), icon: BedDouble, color: 'var(--accent-primary)', bg: 'rgba(0,119,215,0.10)', href: '/hospitals' },
             { label: 'Staff', value: totalStaff.toLocaleString(), icon: Stethoscope, color: 'var(--accent-primary)', bg: 'rgba(0,119,215,0.10)', href: '/hospitals' },
             { label: 'Online', value: onlineHospitals.toString(), icon: Wifi, color: 'var(--accent-primary)', bg: 'rgba(0,119,215,0.10)', href: '/hospitals' },
             { label: 'Offline', value: offlineHospitals.toString(), icon: WifiOff, color: 'var(--text-muted)', bg: 'rgba(100,116,139,0.10)', href: '/hospitals' },
             { label: 'Alerts', value: activeAlerts.toString(), icon: AlertTriangle, color: 'var(--color-danger)', bg: 'rgba(229,46,66,0.08)', href: '/surveillance' },
-            { label: 'Referrals', value: pendingReferrals.toString(), icon: ArrowRightLeft, color: 'var(--color-warning)', bg: 'rgba(252,211,77,0.10)' },
+            { label: 'Referrals', value: pendingReferrals.toString(), icon: ArrowRightLeft, color: 'var(--accent-primary)', bg: 'rgba(0,119,215,0.10)' },
           ].map(stat => (
             <div key={stat.label} className="kpi" onClick={() => stat.href && router.push(stat.href)}>
               <div className="kpi__icon" style={{ background: stat.bg }}>
@@ -519,8 +519,8 @@ export default function GovernmentDashboardPage() {
         <div className="card-elevated p-4 mb-4">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-md flex items-center justify-center" style={{ background: 'rgba(5,150,105,0.1)' }}>
-                <Download className="w-5 h-5" style={{ color: 'var(--color-success)' }} />
+              <div className="w-9 h-9 rounded-md flex items-center justify-center" style={{ background: 'var(--accent-light)' }}>
+                <Download className="w-5 h-5" style={{ color: 'var(--accent-primary)' }} />
               </div>
               <div>
                 <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Export to DHIS2</h3>
@@ -660,8 +660,8 @@ export default function GovernmentDashboardPage() {
         {/* FACILITY COMPARISON TOOL */}
         <div className="card-elevated p-4 mb-4">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-9 h-9 rounded-md flex items-center justify-center" style={{ background: 'rgba(124,58,237,0.1)' }}>
-              <GitCompareArrows className="w-5 h-5" style={{ color: '#7C3AED' }} />
+            <div className="w-9 h-9 rounded-md flex items-center justify-center" style={{ background: 'var(--accent-light)' }}>
+              <GitCompareArrows className="w-5 h-5" style={{ color: 'var(--accent-primary)' }} />
             </div>
             <div>
               <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Facility Comparison Tool</h3>

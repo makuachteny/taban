@@ -132,7 +132,11 @@ export default function PatientsPage() {
                         <td className="col-age whitespace-nowrap">{age}y · {patient.gender[0]}</td>
                         <td className="col-state text-xs">{patient.state}</td>
                         <td className="col-phone hide-mobile font-mono text-xs">{patient.phone}</td>
-                        <td className="col-visit hide-mobile text-xs">{patient.lastVisitDate}</td>
+                        <td className="col-visit hide-mobile text-xs">
+                          {patient.lastConsultedAt
+                            ? new Date(patient.lastConsultedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                            : patient.lastVisitDate || '—'}
+                        </td>
                         <td className="col-cond hide-mobile">
                           {patient.chronicConditions?.length && patient.chronicConditions[0] !== 'None' ? (
                             <span className="badge badge-warning text-[10px]">{patient.chronicConditions[0]}</span>

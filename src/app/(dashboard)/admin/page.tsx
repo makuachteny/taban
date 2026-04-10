@@ -168,11 +168,11 @@ export default function AdminDashboardPage() {
     .slice(0, 5);
 
   const quickLinks = [
-    { label: 'Organizations', icon: Building2, href: '/admin/organizations', color: 'var(--color-danger)' },
-    { label: 'All Users', icon: Users, href: '/admin/users', color: '#2563EB' },
-    { label: 'System Config', icon: Settings, href: '/admin/system', color: '#7C3AED' },
-    { label: 'Billing', icon: CreditCard, href: '/admin/billing', color: 'var(--color-warning)' },
-    { label: 'Analytics', icon: BarChart3, href: '/admin/analytics', color: 'var(--color-success)' },
+    { label: 'Organizations', icon: Building2, href: '/admin/organizations', color: 'var(--accent-primary)' },
+    { label: 'All Users', icon: Users, href: '/admin/users', color: 'var(--accent-primary)' },
+    { label: 'System Config', icon: Settings, href: '/admin/system', color: 'var(--accent-primary)' },
+    { label: 'Billing', icon: CreditCard, href: '/admin/billing', color: 'var(--accent-primary)' },
+    { label: 'Analytics', icon: BarChart3, href: '/admin/analytics', color: 'var(--accent-primary)' },
   ];
 
   const healthColor = (status: string) => {
@@ -208,8 +208,8 @@ export default function AdminDashboardPage() {
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(220,38,38,0.1)' }}>
-              <Shield className="w-5 h-5" style={{ color: 'var(--color-danger)' }} />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-light)' }}>
+              <Shield className="w-5 h-5" style={{ color: 'var(--accent-primary)' }} />
             </div>
             <div>
               <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Platform Administration</h1>
@@ -228,28 +228,28 @@ export default function AdminDashboardPage() {
               value: orgsLoading ? '...' : organizations.length.toString(),
               sub: `${activeOrgs.length} active`,
               icon: Building2,
-              accent: 'var(--color-danger)',
+              accent: 'var(--accent-primary)',
             },
             {
               label: 'Total Users',
               value: countsLoading ? '...' : totalUsers.toLocaleString(),
               sub: 'Across all orgs',
               icon: Users,
-              accent: '#2563EB',
+              accent: 'var(--accent-primary)',
             },
             {
               label: 'Total Patients',
               value: countsLoading ? '...' : totalPatients.toLocaleString(),
               sub: 'Across all orgs',
               icon: HeartPulse,
-              accent: 'var(--color-success)',
+              accent: 'var(--accent-primary)',
             },
             {
               label: 'Active Subscriptions',
               value: orgsLoading ? '...' : activeSubscriptions.toString(),
               sub: `${trialOrgs} trial, ${suspendedOrgs} suspended`,
               icon: CreditCard,
-              accent: 'var(--color-warning)',
+              accent: 'var(--accent-primary)',
             },
           ].map((stat) => (
             <div key={stat.label} className="p-5 rounded-xl cursor-pointer" onClick={() => {
@@ -362,10 +362,10 @@ export default function AdminDashboardPage() {
           <div className="lg:col-span-2 rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
             <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--border-light)' }}>
               <div className="flex items-center gap-2">
-                <Building2 className="w-4 h-4" style={{ color: 'var(--color-danger)' }} />
+                <Building2 className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
                 <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Recent Organizations</span>
               </div>
-              <button onClick={() => router.push('/admin/organizations')} className="text-xs font-medium flex items-center gap-1" style={{ color: 'var(--color-danger)' }}>
+              <button onClick={() => router.push('/admin/organizations')} className="text-xs font-medium flex items-center gap-1" style={{ color: 'var(--accent-primary)' }}>
                 View all <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -482,9 +482,9 @@ export default function AdminDashboardPage() {
         <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
           <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--border-light)' }}>
             <div className="flex items-center gap-2">
-              <Shield className="w-4 h-4" style={{ color: 'var(--color-danger)' }} />
+              <Shield className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
               <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Audit Log</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'rgba(220,38,38,0.1)', color: 'var(--color-danger)' }}>
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: 'var(--accent-light)', color: 'var(--accent-primary)' }}>
                 {filteredAuditLogs.length} entries
               </span>
             </div>

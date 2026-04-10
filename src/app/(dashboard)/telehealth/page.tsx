@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
+import Link from 'next/link';
 import TopBar from '@/components/TopBar';
 import {
   Video, Plus, Phone, PhoneOff, Clock, CheckCircle2, XCircle,
   Search, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, MessageSquare, FileText,
   Star, Shield, X, WifiOff,
   Calendar, DollarSign, Lock,
-  Filter, UserPlus,
+  Filter, UserPlus, ExternalLink,
 } from 'lucide-react';
 import { useTelehealth, useTelehealthStats } from '@/lib/hooks/useTelehealth';
 import { useAppointments } from '@/lib/hooks/useAppointments';
@@ -264,11 +265,10 @@ export default function TelehealthPage() {
         {/* Compliance banner */}
         <div className="card-elevated" style={{
           padding: '10px 14px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10,
-          borderLeft: '3px solid #059669',
         }}>
-          <Shield size={16} style={{ color: 'var(--color-success)', flexShrink: 0 }} />
+          <Shield size={16} style={{ color: 'var(--accent-primary)', flexShrink: 0 }} />
           <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-            <strong style={{ color: 'var(--color-success)' }}>ISO 13131</strong> &middot; Patient consent required &middot; End-to-end encrypted &middot; Quality monitored
+            <strong style={{ color: 'var(--accent-primary)' }}>ISO 13131</strong> &middot; Patient consent required &middot; End-to-end encrypted &middot; Quality monitored
           </span>
         </div>
 
@@ -373,10 +373,7 @@ export default function TelehealthPage() {
                 const tc = typeConfig[session.sessionType];
                 const isExp = expandedId === session._id;
                 return (
-                  <div key={session._id} className="card-elevated" style={{
-                    overflow: 'hidden', borderLeftWidth: 3, borderLeftStyle: 'solid',
-                    borderLeftColor: session.status === 'in_session' ? 'var(--color-success)' : sc.color,
-                  }}>
+                  <div key={session._id} className="card-elevated" style={{ overflow: 'hidden' }}>
                     <div onClick={() => setExpandedId(isExp ? null : session._id)} style={{
                       display: 'flex', alignItems: 'center', padding: '12px 16px', cursor: 'pointer', gap: 12, flexWrap: 'wrap',
                     }}>
@@ -388,7 +385,22 @@ export default function TelehealthPage() {
                         <tc.icon size={16} style={{ color: sc.color }} />
                       </div>
                       <div style={{ flex: 1, minWidth: 120 }}>
-                        <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 13 }}>{session.patientName}</div>
+                        <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4 }}>
+                          {session.patientId ? (
+                            <Link
+                              href={`/patients/${session.patientId}`}
+                              onClick={(e) => e.stopPropagation()}
+                              style={{ color: 'var(--text-primary)', display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                              className="hover:underline"
+                              title="View patient record"
+                            >
+                              {session.patientName}
+                              <ExternalLink size={11} style={{ opacity: 0.55 }} />
+                            </Link>
+                          ) : (
+                            session.patientName
+                          )}
+                        </div>
                         <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{tc.label} &middot; {session.chiefComplaint.slice(0, 40)}{session.chiefComplaint.length > 40 ? '...' : ''}</div>
                       </div>
                       {session.status === 'in_session' && <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--color-success)', animation: 'pulse 2s infinite' }} />}

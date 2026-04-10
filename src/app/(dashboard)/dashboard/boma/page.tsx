@@ -370,9 +370,9 @@ export default function BomaDashboardPage() {
         <div className="kpi-grid mb-3">
           {[
             { label: 'Households', value: stats?.uniqueHouseholds.toString() || '40', icon: Home, color: 'var(--accent-primary)', bg: 'rgba(0,119,215,0.12)' },
-            { label: 'Seen Today', value: todaysVisits.length.toString(), icon: Users, color: '#3B82F6', bg: 'rgba(59,130,246,0.12)' },
-            { label: 'Follow-Ups', value: pendingFollowUps.length.toString(), icon: Clock, color: 'var(--color-warning)', bg: 'rgba(245,158,11,0.12)' },
-            { label: 'Referrals', value: todayReferred.toString(), icon: ArrowRight, color: 'var(--color-danger)', bg: 'rgba(239,68,68,0.12)' },
+            { label: 'Seen Today', value: todaysVisits.length.toString(), icon: Users, color: 'var(--accent-primary)', bg: 'rgba(0,119,215,0.12)' },
+            { label: 'Follow-Ups', value: pendingFollowUps.length.toString(), icon: Clock, color: 'var(--accent-primary)', bg: 'rgba(0,119,215,0.12)' },
+            { label: 'Referrals', value: todayReferred.toString(), icon: ArrowRight, color: 'var(--accent-primary)', bg: 'rgba(0,119,215,0.12)' },
           ].map(kpi => (
             <div key={kpi.label} className="kpi cursor-pointer"
               onClick={() => { if (kpi.label === 'Referrals') router.push('/referrals'); }}>

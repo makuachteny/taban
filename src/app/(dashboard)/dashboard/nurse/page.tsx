@@ -427,9 +427,8 @@ export default function NurseDashboardPage() {
                 border: '1px solid var(--border-light)',
                 boxShadow: 'var(--card-shadow)',
               }}>
-              <div className="absolute top-0 left-0 w-full h-[2px]" style={{ background: kpi.color }} />
               <div className="flex items-center gap-1.5 mb-1">
-                <kpi.icon className="w-3 h-3" style={{ color: kpi.color }} />
+                <kpi.icon className="w-3 h-3" style={{ color: 'var(--accent-primary)' }} />
                 <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{kpi.label}</span>
               </div>
               <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{kpi.value}</p>
@@ -504,39 +503,31 @@ export default function NurseDashboardPage() {
                     const origIdx = patients.indexOf(patient);
                     const wardName = WARDS[origIdx % WARDS.length];
                     const vitalStatus = origIdx % 3 === 0 ? 'overdue' : origIdx % 3 === 1 ? 'due' : 'done';
-                    // Priority level indicator (Feature 5)
-                    const priorityLevel = vitalStatus === 'overdue' ? 1 : vitalStatus === 'due' ? 2 : 3;
                     return (
                       <div
                         key={patient._id}
-                        className="flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-all"
-                        onClick={() => {
-                          setVitalsPatient({ id: patient._id, name: `${patient.firstName} ${patient.surname}` });
-                          setVitalsForm({ systolic: '', diastolic: '', temperature: '', pulse: '', spo2: '', weight: '', respiratoryRate: '', notes: '' });
-                          setVitalsSaved(false);
-                          setVitalsModalOpen(true);
-                        }}
+                        className="flex items-center gap-3 p-2.5 rounded-xl transition-all"
                         style={{
                           background: 'var(--overlay-subtle)',
                           border: `1px solid ${vitalStatus === 'overdue' ? 'rgba(248,113,113,0.3)' : 'var(--border-light)'}`,
                         }}
                       >
-                        {/* Priority indicator bar */}
-                        {sortByUrgency && (
-                          <div className="w-1 h-full min-h-[40px] rounded-full flex-shrink-0" style={{
-                            background: priorityLevel === 1 ? 'var(--color-danger)' : priorityLevel === 2 ? 'var(--color-warning)' : 'var(--color-success)',
-                          }} />
-                        )}
-                        <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
-                          style={{ background: 'var(--accent-primary)' }}>
-                          {(patient.firstName || '?')[0]}{(patient.surname || '?')[0]}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{patient.firstName} {patient.surname}</p>
-                          <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-                            {patient.gender} · {patient.estimatedAge || (patient.dateOfBirth ? new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear() : 0)}y · {wardName}
-                          </p>
-                        </div>
+                        <button
+                          onClick={() => router.push(`/patients/${patient._id}`)}
+                          className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                          title="View full patient record"
+                        >
+                          <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
+                            style={{ background: 'var(--accent-primary)' }}>
+                            {(patient.firstName || '?')[0]}{(patient.surname || '?')[0]}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate hover:underline" style={{ color: 'var(--text-primary)' }}>{patient.firstName} {patient.surname}</p>
+                            <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                              {patient.gender} · {patient.estimatedAge || (patient.dateOfBirth ? new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear() : 0)}y · {wardName}
+                            </p>
+                          </div>
+                        </button>
                         <div className="text-right flex-shrink-0">
                           <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{
                             background: vitalStatus === 'overdue' ? 'rgba(248,113,113,0.15)' : vitalStatus === 'due' ? 'rgba(251,191,36,0.15)' : 'rgba(74,222,128,0.15)',
@@ -544,7 +535,23 @@ export default function NurseDashboardPage() {
                           }}>{vitalStatus === 'overdue' ? 'VITALS OVERDUE' : vitalStatus === 'due' ? 'VITALS DUE' : 'VITALS OK'}</span>
                           <p className="text-[9px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{patient.hospitalNumber}</p>
                         </div>
-                        <Thermometer className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setVitalsPatient({ id: patient._id, name: `${patient.firstName} ${patient.surname}` });
+                            setVitalsForm({ systolic: '', diastolic: '', temperature: '', pulse: '', spo2: '', weight: '', respiratoryRate: '', notes: '' });
+                            setVitalsSaved(false);
+                            setVitalsModalOpen(true);
+                          }}
+                          className="flex items-center justify-center w-7 h-7 rounded-lg flex-shrink-0 transition-colors"
+                          style={{
+                            background: 'var(--accent-light)',
+                            color: 'var(--accent-primary)',
+                          }}
+                          title="Record vitals"
+                        >
+                          <Thermometer className="w-3.5 h-3.5" />
+                        </button>
                       </div>
                     );
                   })}

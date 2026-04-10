@@ -90,6 +90,10 @@ export async function createPatient(data: Omit<PatientDoc, '_id' | '_rev' | 'typ
     ...data,
     orgId,
     hospitalNumber: data.hospitalNumber || `${prefix}-${String(count + 1).padStart(6, '0')}`,
+    // Always capture a full date+time registration timestamp at the moment the
+    // patient first enters the system. `registrationDate` remains for backward
+    // compatibility (date only) but `registeredAt` is authoritative.
+    registeredAt: data.registeredAt || now,
     createdAt: now,
     updatedAt: now,
   } as PatientDoc;
