@@ -37,6 +37,12 @@ export function usePermissions() {
   // Referrals — clinical staff + front desk + supervisors
   const canManageReferrals = role === 'doctor' || role === 'clinical_officer' || role === 'front_desk' || role === 'payam_supervisor' || isSuperAdmin;
 
+  // Appointments — clinical staff + front desk can book/manage; government/org_admin are view-only
+  const canBookAppointments = role === 'doctor' || role === 'clinical_officer' || role === 'nurse' || role === 'front_desk' || isMedSupt || isSuperAdmin;
+
+  // Messages — any clinical/CHW role can send (view is broader via nav config)
+  const canSendMessages = role === 'doctor' || role === 'clinical_officer' || role === 'nurse' || role === 'front_desk' || role === 'pharmacist' || role === 'lab_tech' || role === 'boma_health_worker' || role === 'community_health_volunteer' || role === 'payam_supervisor' || role === 'hrio' || role === 'nutritionist' || role === 'radiologist' || isMedSupt || isOrgAdmin || isSuperAdmin;
+
   // Facility assessments — data entry + supervisors + government
   const canAssessFacility = isDataEntry || role === 'hrio' || role === 'payam_supervisor' || isMedSupt || isGovernment || isSuperAdmin;
 
@@ -80,6 +86,8 @@ export function usePermissions() {
     canEnterLabResults,
     canDoTelehealth,
     canManageReferrals,
+    canBookAppointments,
+    canSendMessages,
     canAssessFacility,
     canViewEpidemicIntel,
     canViewMCHAnalytics,

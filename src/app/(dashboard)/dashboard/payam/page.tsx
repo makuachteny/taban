@@ -26,23 +26,12 @@ import { useHospitals } from '@/lib/hooks/useHospitals';
 import type { BHWPerformance } from '@/lib/services/boma-visit-service';
 import type { BomaVisitDoc } from '@/lib/db-types';
 import type { ImmunizationDefaulter } from '@/lib/services/immunization-service';
+import { formatCompactDateTime as formatAdmittedAt } from '@/lib/format-utils';
 
 const DEPARTMENTS = ['OPD', 'Emergency', 'Maternity', 'Pediatrics', 'Surgery', 'Lab', 'Pharmacy', 'ICU'];
 const DOCTORS = ['Dr. Wani James', 'Dr. Akol Deng', 'Dr. Ladu Morris', 'Dr. Achol Mabior', 'Dr. Taban Philip'];
 const NURSES = ['Nurse Ayen', 'Nurse Nyamal', 'Nurse Rose', 'Nurse Abuk', 'Nurse Dorothy'];
 const ACCENT = 'var(--color-warning)';
-
-/** Format an ISO timestamp as a compact "Mon DD · HH:mm" or just "Mon DD" if no time. */
-function formatAdmittedAt(iso?: string): string {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  const hasTime = /T\d{2}:\d{2}/.test(iso);
-  if (!hasTime) return dateStr;
-  const timeStr = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-  return `${dateStr} · ${timeStr}`;
-}
 
 function ChartTooltip({ active, payload, label }: {
   active?: boolean;

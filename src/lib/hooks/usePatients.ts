@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { PatientDoc } from '../db-types';
+import { patientsDB } from '../db';
 import { useApp } from '../context';
 
 export function usePatients() {
@@ -32,12 +33,17 @@ export function usePatients() {
     loadPatients();
   }, [loadPatients]);
 
-  // Auto-refresh every 30 seconds
+  // Live PouchDB subscription: re-load whenever a patient is created,
+  // updated, or marked deceased anywhere in the app. Replaces 30s polling.
   useEffect(() => {
-    const interval = setInterval(() => {
-      loadPatients();
-    }, 30000);
-    return () => clearInterval(interval);
+    let cancelled = false;
+    const changes = patientsDB().changes({ since: 'now', live: true, include_docs: false })
+      .on('change', () => { if (!cancelled) loadPatients(); })
+      .on('error', () => { /* swallow */ });
+    return () => {
+      cancelled = true;
+      try { changes.cancel(); } catch { /* noop */ }
+    };
   }, [loadPatients]);
 
   const search = useCallback(async (query: string) => {

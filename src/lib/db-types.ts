@@ -140,6 +140,10 @@ export interface BirthRegistrationDoc extends BaseDoc {
   certificateNumber: string;
   childPatientId?: string;
   motherPatientId?: string;
+  /** ANC mother record id linked to this birth (if the mother had prenatal
+   *  visits in the ANC module). Birth registration writes this back to all
+   *  matching ANC visits via linkedBirthId. */
+  linkedAncMotherId?: string;
   orgId?: string;
 }
 
@@ -282,6 +286,10 @@ export interface ANCVisitDoc extends BaseDoc {
   attendedBy: string;
   attendedByRole: string;
   orgId?: string;
+  /** Set when the mother gives birth and the birth registration links back
+   *  to this ANC visit. Lets the ANC module display "Delivered" status and
+   *  lets the birth module surface the prenatal history. */
+  linkedBirthId?: string;
 }
 
 // ===== Boma Health Worker Visit (Community-Level Data Collection) =====

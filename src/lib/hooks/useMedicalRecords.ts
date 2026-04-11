@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { MedicalRecordDoc } from '../db-types';
+import { medicalRecordsDB } from '../db';
 
 export function useMedicalRecords(patientId?: string) {
   const [records, setRecords] = useState<MedicalRecordDoc[]>([]);
@@ -30,6 +31,24 @@ export function useMedicalRecords(patientId?: string) {
   useEffect(() => {
     loadRecords();
   }, [loadRecords]);
+
+  // Live PouchDB subscription scoped to this patient: re-load when any
+  // medical record changes (matching by patientId on the changed doc).
+  useEffect(() => {
+    if (!patientId) return;
+    let cancelled = false;
+    const changes = medicalRecordsDB().changes({ since: 'now', live: true, include_docs: true })
+      .on('change', (change) => {
+        if (cancelled) return;
+        const doc = change.doc as MedicalRecordDoc | undefined;
+        if (!doc || doc.patientId === patientId || change.deleted) loadRecords();
+      })
+      .on('error', () => { /* swallow */ });
+    return () => {
+      cancelled = true;
+      try { changes.cancel(); } catch { /* noop */ }
+    };
+  }, [patientId, loadRecords]);
 
   const create = useCallback(async (data: Omit<MedicalRecordDoc, '_id' | '_rev' | 'type' | 'createdAt' | 'updatedAt'>) => {
     const { createMedicalRecord } = await import('../services/medical-record-service');

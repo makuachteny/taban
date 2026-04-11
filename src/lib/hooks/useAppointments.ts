@@ -2,17 +2,20 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { AppointmentDoc, AppointmentStatus } from '../db-types';
+import { appointmentsDB } from '../db';
+import { useDataScope } from './useDataScope';
 
 export function useAppointments() {
   const [appointments, setAppointments] = useState<AppointmentDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const scope = useDataScope();
 
   const load = useCallback(async () => {
     try {
       setError(null);
       const { getAllAppointments } = await import('../services/appointment-service');
-      const data = await getAllAppointments();
+      const data = await getAllAppointments(scope);
       setAppointments(data);
     } catch (err) {
       console.error(err);
@@ -20,13 +23,20 @@ export function useAppointments() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [scope]);
 
   useEffect(() => { load(); }, [load]);
 
+  // Live PouchDB subscription: re-load on any appointment change.
   useEffect(() => {
-    const interval = setInterval(load, 30000);
-    return () => clearInterval(interval);
+    let cancelled = false;
+    const changes = appointmentsDB().changes({ since: 'now', live: true, include_docs: false })
+      .on('change', () => { if (!cancelled) load(); })
+      .on('error', () => { /* swallow */ });
+    return () => {
+      cancelled = true;
+      try { changes.cancel(); } catch { /* noop */ }
+    };
   }, [load]);
 
   const create = useCallback(async (data: Omit<AppointmentDoc, '_id' | '_rev' | 'type' | 'createdAt' | 'updatedAt'>) => {
@@ -89,23 +99,30 @@ export function usePatientAppointments(patientId?: string) {
 export function useAppointmentStats() {
   const [stats, setStats] = useState<Awaited<ReturnType<typeof import('../services/appointment-service').getAppointmentStats>> | null>(null);
   const [loading, setLoading] = useState(true);
+  const scope = useDataScope();
 
   const load = useCallback(async () => {
     try {
       const { getAppointmentStats } = await import('../services/appointment-service');
-      const data = await getAppointmentStats();
+      const data = await getAppointmentStats(scope);
       setStats(data);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [scope]);
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => {
-    const interval = setInterval(load, 30000);
-    return () => clearInterval(interval);
+    let cancelled = false;
+    const changes = appointmentsDB().changes({ since: 'now', live: true, include_docs: false })
+      .on('change', () => { if (!cancelled) load(); })
+      .on('error', () => { /* swallow */ });
+    return () => {
+      cancelled = true;
+      try { changes.cancel(); } catch { /* noop */ }
+    };
   }, [load]);
 
   return { stats, loading, reload: load };

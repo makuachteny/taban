@@ -1,20 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import TopBar from '@/components/TopBar';
 import { useDeaths } from '@/lib/hooks/useDeaths';
 import { useHospitals } from '@/lib/hooks/useHospitals';
+import { usePatients } from '@/lib/hooks/usePatients';
 import { useApp } from '@/lib/context';
+import { usePermissions } from '@/lib/hooks/usePermissions';
 import { COMMON_ICD11_CODES } from '@/lib/icd11-codes';
-import { Plus, Search, X, AlertTriangle, FileText, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Search, X, AlertTriangle, FileText, ChevronDown, ChevronUp, UserCheck } from 'lucide-react';
 
 export default function DeathsPage() {
   const { deaths, stats, register } = useDeaths();
   const { hospitals } = useHospitals();
+  const { patients } = usePatients();
   const { currentUser } = useApp();
+  const { canRecordVitalEvents } = usePermissions();
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [expandedDeath, setExpandedDeath] = useState<string | null>(null);
+  const [patientLookup, setPatientLookup] = useState('');
+  const [linkedPatientId, setLinkedPatientId] = useState<string | undefined>(undefined);
   const [form, setForm] = useState({
     deceasedFirstName: '', deceasedSurname: '', deceasedGender: 'Male' as 'Male' | 'Female',
     dateOfBirth: '', dateOfDeath: new Date().toISOString().slice(0, 10), ageAtDeath: 0,
@@ -27,6 +33,17 @@ export default function DeathsPage() {
     deathNotified: true, deathRegistered: false,
   });
 
+  const patientMatches = useMemo(() => {
+    if (!patientLookup || patientLookup.length < 2) return [];
+    const q = patientLookup.toLowerCase();
+    return (patients || [])
+      .filter(p => !p.isDeceased && (
+        `${p.firstName} ${p.surname}`.toLowerCase().includes(q) ||
+        (p.hospitalNumber || '').toLowerCase().includes(q)
+      ))
+      .slice(0, 6);
+  }, [patientLookup, patients]);
+
   const filtered = (deaths || []).filter(d =>
     !search || `${d.deceasedFirstName} ${d.deceasedSurname}`.toLowerCase().includes(search.toLowerCase()) ||
     (d.certificateNumber || '').toLowerCase().includes(search.toLowerCase()) || (d.underlyingICD11 || '').toLowerCase().includes(search.toLowerCase())
@@ -37,6 +54,7 @@ export default function DeathsPage() {
     const fac = hospitals.find(h => h._id === (form.facilityId || currentUser?.hospitalId));
     await register({
       ...form,
+      patientId: linkedPatientId,
       facilityId: fac?._id || currentUser?.hospitalId || '',
       facilityName: fac?.name || currentUser?.hospitalName || '',
       state: fac?.state || form.state,
@@ -44,6 +62,28 @@ export default function DeathsPage() {
       certificateNumber: form.certificateNumber || `SS-D-${Date.now().toString(36).toUpperCase()}`,
     });
     setShowForm(false);
+    setLinkedPatientId(undefined);
+    setPatientLookup('');
+  };
+
+  const selectLinkedPatient = (patientId: string) => {
+    const p = patients.find(x => x._id === patientId);
+    if (!p) return;
+    setLinkedPatientId(p._id);
+    setPatientLookup('');
+    // Pre-fill the form with the patient's known data
+    const dob = p.dateOfBirth || '';
+    const ageAtDeath = p.estimatedAge ?? (dob ? new Date().getFullYear() - new Date(dob).getFullYear() : 0);
+    setForm(f => ({
+      ...f,
+      deceasedFirstName: p.firstName || f.deceasedFirstName,
+      deceasedSurname: p.surname || f.deceasedSurname,
+      deceasedGender: (p.gender as 'Male' | 'Female') || f.deceasedGender,
+      dateOfBirth: dob || f.dateOfBirth,
+      ageAtDeath: ageAtDeath || f.ageAtDeath,
+      state: p.state || f.state,
+      county: p.county || f.county,
+    }));
   };
 
   const ICD11Select = ({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) => (
@@ -68,9 +108,11 @@ export default function DeathsPage() {
             </div>
             <p className="page-header__subtitle">WHO Medical Certificate of Cause of Death with ICD-11 Coding</p>
           </div>
-          <button onClick={() => setShowForm(true)} className="btn btn-primary btn-sm flex items-center gap-2">
-            <Plus className="w-4 h-4" /> Register Death
-          </button>
+          {canRecordVitalEvents && (
+            <button onClick={() => setShowForm(true)} className="btn btn-primary btn-sm flex items-center gap-2">
+              <Plus className="w-4 h-4" /> Register Death
+            </button>
+          )}
         </div>
 
         {/* Stats */}
@@ -211,6 +253,60 @@ export default function DeathsPage() {
                 <button onClick={() => setShowForm(false)}><X className="w-5 h-5" style={{ color: 'var(--text-muted)' }} /></button>
               </div>
               <div className="p-4 space-y-4">
+                {/* Link to existing patient (optional) */}
+                <div className="rounded-lg p-3" style={{ background: 'var(--accent-light)', border: '1px solid var(--accent-border, rgba(43,111,224,0.2))' }}>
+                  <label className="text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5" style={{ color: 'var(--accent-primary)' }}>
+                    <UserCheck className="w-3 h-3" />
+                    Link to existing patient (optional, but recommended)
+                  </label>
+                  {linkedPatientId ? (
+                    (() => {
+                      const lp = patients.find(p => p._id === linkedPatientId);
+                      return (
+                        <div className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+                          <div className="text-xs">
+                            <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{lp?.firstName} {lp?.surname}</p>
+                            <p style={{ color: 'var(--text-muted)' }}>{lp?.hospitalNumber} · {lp?.gender}{lp?.estimatedAge ? ` · ${lp.estimatedAge}y` : ''}</p>
+                          </div>
+                          <button onClick={() => { setLinkedPatientId(undefined); }} className="text-[10px] font-semibold" style={{ color: 'var(--accent-primary)' }}>Unlink</button>
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <>
+                      <div className="relative">
+                        <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                        <input
+                          type="text"
+                          value={patientLookup}
+                          onChange={e => setPatientLookup(e.target.value)}
+                          placeholder="Search patient by name or hospital number…"
+                          className="w-full text-xs p-2 pl-8 rounded-lg outline-none"
+                          style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+                        />
+                      </div>
+                      {patientMatches.length > 0 && (
+                        <div className="mt-1.5 rounded-lg overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+                          {patientMatches.map(p => (
+                            <button
+                              key={p._id}
+                              onClick={() => selectLinkedPatient(p._id)}
+                              className="w-full px-2.5 py-2 text-left text-xs hover:bg-[var(--overlay-subtle)] transition-colors"
+                              style={{ borderBottom: '1px solid var(--border-light)' }}
+                            >
+                              <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{p.firstName} {p.surname}</p>
+                              <p style={{ color: 'var(--text-muted)' }}>{p.hospitalNumber} · {p.gender}{p.estimatedAge ? ` · ${p.estimatedAge}y` : ''}</p>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      <p className="text-[10px] mt-1.5" style={{ color: 'var(--text-muted)' }}>
+                        Linking will mark the patient as deceased and auto-fill their details below.
+                      </p>
+                    </>
+                  )}
+                </div>
+
                 <h3 className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>Deceased Information</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div><label className="text-xs font-medium uppercase tracking-wider mb-1 block" style={{ color: 'var(--text-muted)' }}>First Name *</label><input type="text" value={form.deceasedFirstName} onChange={e => setForm({ ...form, deceasedFirstName: e.target.value })} className="w-full p-2 rounded-lg text-sm outline-none" style={{ background: 'var(--overlay-subtle)', color: 'var(--text-primary)', border: '1px solid var(--border-light)' }} /></div>

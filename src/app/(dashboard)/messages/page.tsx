@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
 import SendMessageModal from '@/components/SendMessageModal';
+import EmptyState from '@/components/EmptyState';
 import { useMessages } from '@/lib/hooks/useMessages';
 import { usePatients } from '@/lib/hooks/usePatients';
 import {
@@ -115,10 +116,12 @@ export default function MessagesPage() {
               <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading messages...</p>
             </div>
           ) : filtered.length === 0 ? (
-            <div className="p-8 text-center">
-              <MessageSquare className="w-10 h-10 mx-auto mb-2" style={{ color: 'var(--text-muted)', opacity: 0.3 }} />
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No messages found</p>
-            </div>
+            <EmptyState
+              icon={MessageSquare}
+              title="No messages yet"
+              message="Send appointment reminders, lab result notifications, and follow-up messages to your patients via SMS, WhatsApp, or in-app channels."
+              action={{ label: 'Send a message', onClick: () => setShowPatientPicker(true) }}
+            />
           ) : (
             <table className="data-table">
               <thead>

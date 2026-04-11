@@ -2,16 +2,18 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { UserDoc, UserRole } from '../db-types';
+import { useDataScope } from './useDataScope';
 
 export function useUsers() {
   const [users, setUsers] = useState<UserDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const scope = useDataScope();
 
   const loadUsers = useCallback(async () => {
     try {
       const { getAllUsers } = await import('../services/user-service');
-      const data = await getAllUsers();
+      const data = await getAllUsers(scope);
       setUsers(data);
       setError(null);
     } catch (err) {
@@ -20,7 +22,7 @@ export function useUsers() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [scope]);
 
   useEffect(() => {
     loadUsers();

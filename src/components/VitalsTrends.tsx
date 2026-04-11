@@ -310,12 +310,7 @@ function MetricCard({ metric }: { metric: MetricSummary }) {
   })();
 
   return (
-    <div
-      className="card-elevated p-4"
-      style={{
-        borderLeft: `3px solid ${statusColor}`,
-      }}
-    >
+    <div className="card-elevated p-4">
       <div className="flex items-start justify-between mb-2">
         <div>
           <p className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>

@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createToken } from '@/lib/auth-token';
 
-// Rate limiting: track failed attempts in memory
+// Rate limiting: track failed attempts in memory, keyed separately by
+// username AND by source IP. Per-user lock stops single-account brute-force;
+// per-IP lock stops password spraying across many usernames from one host.
+//
+// NOTE: This is process-local state. For horizontally scaled deploys, move
+// this into Redis so multiple Next.js instances share the same counters.
 const failedAttempts: Record<string, { count: number; lockedUntil: number }> = {};
+const ipAttempts: Record<string, { count: number; lockedUntil: number }> = {};
+
+const USER_LOCK_THRESHOLD = 5;       // failed tries before user lock
+const USER_LOCK_MS = 15 * 60 * 1000; // 15 minutes
+const IP_LOCK_THRESHOLD = 20;        // failed tries from one IP before IP lock
+const IP_LOCK_MS = 15 * 60 * 1000;   // 15 minutes
 
 // Periodic cleanup of expired rate-limit entries to prevent memory leaks
 const CLEANUP_INTERVAL = 5 * 60 * 1000; // 5 minutes
@@ -16,6 +27,20 @@ function cleanupExpiredEntries() {
       delete failedAttempts[key];
     }
   }
+  for (const key of Object.keys(ipAttempts)) {
+    if (ipAttempts[key].lockedUntil > 0 && ipAttempts[key].lockedUntil < now) {
+      delete ipAttempts[key];
+    }
+  }
+}
+
+function getClientIp(request: NextRequest): string {
+  // Next.js doesn't expose request.ip in all runtimes; read from headers set
+  // by the upstream proxy (Nginx / Cloudflare / Vercel). Fall back to a
+  // literal so the key is never empty.
+  const xff = request.headers.get('x-forwarded-for');
+  if (xff) return xff.split(',')[0].trim();
+  return request.headers.get('x-real-ip') || 'unknown';
 }
 
 export async function POST(request: NextRequest) {
@@ -44,11 +69,24 @@ export async function POST(request: NextRequest) {
     // Periodic cleanup of expired entries
     cleanupExpiredEntries();
 
-    // Rate limiting check
-    const attempt = failedAttempts[sanitizedUsername];
-    if (attempt && attempt.lockedUntil > Date.now()) {
-      const remainingMinutes = Math.ceil((attempt.lockedUntil - Date.now()) / 60000);
-      return NextResponse.json({ error: `Account temporarily locked. Try again in ${remainingMinutes} minutes.` }, { status: 429 });
+    const clientIp = getClientIp(request);
+
+    // Rate limiting check — reject both individual-account lockouts and
+    // source-IP lockouts before we touch the password verifier.
+    const userLock = failedAttempts[sanitizedUsername];
+    if (userLock && userLock.lockedUntil > Date.now()) {
+      const remainingMinutes = Math.ceil((userLock.lockedUntil - Date.now()) / 60000);
+      return NextResponse.json(
+        { error: `Account temporarily locked. Try again in ${remainingMinutes} minutes.` },
+        { status: 429 }
+      );
+    }
+    const ipLock = ipAttempts[clientIp];
+    if (ipLock && ipLock.lockedUntil > Date.now()) {
+      return NextResponse.json(
+        { error: 'Too many failed attempts from this network. Try again later.' },
+        { status: 429 }
+      );
     }
 
     // Server-safe user authentication (no PouchDB — uses static user registry)
@@ -57,13 +95,21 @@ export async function POST(request: NextRequest) {
     const user = await authenticateUser(sanitizedUsername, password);
 
     if (!user) {
-      // Track failed attempt
+      // Track failed attempt by username
       if (!failedAttempts[sanitizedUsername]) {
         failedAttempts[sanitizedUsername] = { count: 0, lockedUntil: 0 };
       }
       failedAttempts[sanitizedUsername].count++;
-      if (failedAttempts[sanitizedUsername].count >= 5) {
-        failedAttempts[sanitizedUsername].lockedUntil = Date.now() + 15 * 60 * 1000;
+      if (failedAttempts[sanitizedUsername].count >= USER_LOCK_THRESHOLD) {
+        failedAttempts[sanitizedUsername].lockedUntil = Date.now() + USER_LOCK_MS;
+      }
+      // Track failed attempt by IP (separate counter — password-spray defence)
+      if (!ipAttempts[clientIp]) {
+        ipAttempts[clientIp] = { count: 0, lockedUntil: 0 };
+      }
+      ipAttempts[clientIp].count++;
+      if (ipAttempts[clientIp].count >= IP_LOCK_THRESHOLD) {
+        ipAttempts[clientIp].lockedUntil = Date.now() + IP_LOCK_MS;
       }
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
@@ -74,8 +120,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    // Clear failed attempts
+    // Clear failed attempts on successful login (both counters)
     delete failedAttempts[sanitizedUsername];
+    delete ipAttempts[clientIp];
 
     // Create JWT
     const token = await createToken({

@@ -50,24 +50,50 @@ function PatientLogin({ onLogin }: { onLogin: (patient: PatientDoc) => void }) {
       let found: PatientDoc | undefined;
 
       if (mode === 'login') {
-        // Match by hospital number + phone
+        // Match by hospital number + full phone. We require an exact phone
+        // match (after whitespace strip) because the old `endsWith(last 6)`
+        // fallback meant that anyone with the right hospital ID and any
+        // number ending in the patient's last 6 digits could log in.
         const hnum = hospitalNumber.trim().toUpperCase();
         const ph = phoneNumber.trim().replace(/\s/g, '');
         found = patients.find(p => {
           const pPhone = (p.phone || '').replace(/\s/g, '');
           return (p.hospitalNumber?.toUpperCase() === hnum || p.geocodeId?.toUpperCase() === hnum) &&
-            (pPhone === ph || pPhone.endsWith(ph.slice(-6)));
+            pPhone === ph &&
+            pPhone.length > 0;
         });
       } else {
-        // Lookup by name + DOB
+        // Lookup by name + DOB — now require DOB (was optional), otherwise
+        // two fields (first + last name) was too weak to gate real records.
         const fn = firstName.trim().toLowerCase();
         const sn = surname.trim().toLowerCase();
+        if (!dateOfBirth) {
+          setError('Date of birth is required for name-based lookup.');
+          setLoading(false);
+          return;
+        }
         found = patients.find(p =>
           p.firstName.toLowerCase() === fn &&
           p.surname.toLowerCase() === sn &&
-          (dateOfBirth ? p.dateOfBirth === dateOfBirth : true)
+          p.dateOfBirth === dateOfBirth
         );
       }
+
+      // Audit trail every portal lookup (success OR failure) so that a
+      // clinician/admin can review who searched for whom — critical given
+      // this form is on a public, unauthenticated route.
+      try {
+        const { logAudit } = await import('@/lib/services/audit-service');
+        await logAudit(
+          found ? 'PATIENT_PORTAL_LOGIN' : 'PATIENT_PORTAL_LOOKUP_FAIL',
+          undefined,
+          'patient-portal',
+          mode === 'login'
+            ? `hospital_number=${hospitalNumber.trim().slice(0, 20)} ${found ? `→ ${found._id}` : '(no match)'}`
+            : `name=${firstName.trim().slice(0, 40)} ${surname.trim().slice(0, 40)} ${found ? `→ ${found._id}` : '(no match)'}`,
+          !!found
+        );
+      } catch { /* audit best-effort */ }
 
       if (found) {
         localStorage.setItem('taban-patient-id', found._id);
@@ -621,7 +647,7 @@ function PatientDashboard({ patient, onLogout }: { patient: PatientDoc; onLogout
               {appointments.sort((a, b) => b.appointmentDate.localeCompare(a.appointmentDate)).map(apt => {
                 const isPast = apt.status === 'completed' || apt.status === 'cancelled' || apt.status === 'no_show';
                 return (
-                  <div key={apt._id} className="card-elevated" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, borderLeft: `3px solid ${isPast ? 'var(--border-medium)' : 'var(--accent-primary)'}` }}>
+                  <div key={apt._id} className="card-elevated" style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
                     <div style={{ minWidth: 48, textAlign: 'center' }}>
                       <div className="stat-value" style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{apt.appointmentTime}</div>
                       <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{apt.appointmentDate}</div>
@@ -763,7 +789,7 @@ function PatientDashboard({ patient, onLogout }: { patient: PatientDoc; onLogout
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {allRx.map((rx, i) => (
-                  <div key={i} className="card-elevated" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, borderLeft: '3px solid var(--accent-primary)' }}>
+                  <div key={i} className="card-elevated" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
                     <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <Pill size={16} style={{ color: 'var(--accent-primary)' }} />
                     </div>

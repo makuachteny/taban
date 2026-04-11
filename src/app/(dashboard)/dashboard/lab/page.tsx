@@ -87,12 +87,6 @@ const LAB_EVENT_TYPES = [
   { label: 'Glucose Result Ready', color: '#38BDF8', icon: FlaskConical },
 ];
 
-const SAMPLE_PATIENTS = [
-  'Deng Mabior', 'Achol Mayen', 'Nyamal Koang', 'Gatluak Ruot', 'Ayen Dut',
-  'Kuol Akot', 'Ladu Tombe', 'Rose Gbudue', 'Majok Chol', 'Nyandit Dut',
-  'Abuk Deng', 'Garang Makuei', 'Awut Makuei', 'Nyandeng Chol', 'Tut Chuol',
-];
-
 interface LiveEvent {
   id: number;
   label: string;
@@ -203,17 +197,26 @@ export default function LabDashboardPage() {
   }, [results]);
 
   // --- Simulated live events ---
+  // Patient name pool is derived from the real lab orders so the live ticker
+  // shows actual patients from your facility, not hardcoded sample names.
+  const livePatientPool = useMemo(() => {
+    const names = results
+      .map(r => r.patientName)
+      .filter((n): n is string => Boolean(n && n.trim()));
+    return names.length > 0 ? Array.from(new Set(names)) : ['New patient'];
+  }, [results]);
+
   const generateEvent = useCallback((): LiveEvent => {
     const evt = LAB_EVENT_TYPES[Math.floor(Math.random() * LAB_EVENT_TYPES.length)];
     const now = new Date();
     return {
       id: Date.now() + Math.random(),
       ...evt,
-      patient: SAMPLE_PATIENTS[Math.floor(Math.random() * SAMPLE_PATIENTS.length)],
+      patient: livePatientPool[Math.floor(Math.random() * livePatientPool.length)],
       time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
       isNew: true,
     };
-  }, []);
+  }, [livePatientPool]);
 
   useEffect(() => {
     const initial: LiveEvent[] = [];

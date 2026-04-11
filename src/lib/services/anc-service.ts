@@ -1,14 +1,17 @@
 import { ancDB } from '../db';
 import type { ANCVisitDoc } from '../db-types';
 import { v4 as uuidv4 } from 'uuid';
+import type { DataScope } from './data-scope';
+import { filterByScope } from './data-scope';
 
-export async function getAllANCVisits(): Promise<ANCVisitDoc[]> {
+export async function getAllANCVisits(scope?: DataScope): Promise<ANCVisitDoc[]> {
   const db = ancDB();
   const result = await db.allDocs({ include_docs: true });
-  return result.rows
+  const all = result.rows
     .map(r => r.doc as ANCVisitDoc)
     .filter(d => d && d.type === 'anc_visit')
     .sort((a, b) => new Date(b.visitDate || '').getTime() - new Date(a.visitDate || '').getTime());
+  return scope ? filterByScope(all, scope) : all;
 }
 
 export async function getByMother(motherId: string): Promise<ANCVisitDoc[]> {
@@ -37,8 +40,8 @@ export async function createANCVisit(data: Omit<ANCVisitDoc, '_id' | '_rev' | 't
   return doc;
 }
 
-export async function getANCStats() {
-  const all = await getAllANCVisits();
+export async function getANCStats(scope?: DataScope) {
+  const all = await getAllANCVisits(scope);
   const thisMonth = new Date().toISOString().slice(0, 7);
 
   // Unique mothers

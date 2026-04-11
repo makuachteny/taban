@@ -10,6 +10,55 @@ type DemoRequest = {
   message?: string;
 };
 
+// Rate limit the public demo-request endpoint. Without this, an attacker
+// could spam the form to burn our email-provider quota and flood the
+// notification inbox. Simple per-IP sliding window, process-local.
+const demoRateLimit: Record<string, { count: number; windowStart: number }> = {};
+const DEMO_RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const DEMO_RATE_MAX = 5;                     // 5 requests / hour / IP
+
+function getClientIp(req: NextRequest): string {
+  const xff = req.headers.get('x-forwarded-for');
+  if (xff) return xff.split(',')[0].trim();
+  return req.headers.get('x-real-ip') || 'unknown';
+}
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = demoRateLimit[ip];
+  if (!entry || now - entry.windowStart > DEMO_RATE_WINDOW_MS) {
+    demoRateLimit[ip] = { count: 1, windowStart: now };
+    return false;
+  }
+  entry.count++;
+  return entry.count > DEMO_RATE_MAX;
+}
+
+/**
+ * Escape user-supplied text before interpolating into HTML email bodies.
+ * Without this, a requester name like `<img src=x onerror=...>` would land
+ * unescaped in the outbound HTML mail and execute in any client that
+ * renders it.
+ */
+function escapeHtml(input: string): string {
+  return input
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
+ * Reject email addresses containing CRLF sequences — these are the primary
+ * vector for SMTP header injection. We also cap length defensively so an
+ * attacker can't stuff megabytes into a field.
+ */
+function isSafeHeaderValue(value: string): boolean {
+  if (value.length > 320) return false;
+  return !/[\r\n]/.test(value);
+}
+
 type EmailMessage = {
   to: string;
   subject: string;
@@ -143,10 +192,16 @@ function buildRequesterEmail(req: DemoRequest, scheduleUrl?: string): EmailMessa
     'Taban Team',
   ];
 
+  // Escape every interpolated field so a poisoned `name` or `scheduleUrl`
+  // cannot inject tags, scripts, or off-domain anchors into the email body.
+  const safeName = escapeHtml(req.name);
+  const safeSchedule = scheduleUrl ? escapeHtml(scheduleUrl) : null;
   const html = [
-    `<p>Hi ${req.name},</p>`,
+    `<p>Hi ${safeName},</p>`,
     '<p>Thanks for requesting a demo of Taban. We will contact you within 24 hours.</p>',
-    scheduleUrl ? `<p>You can schedule a time here: <a href="${scheduleUrl}">${scheduleUrl}</a></p>` : '<p>We will follow up shortly to schedule a time.</p>',
+    safeSchedule
+      ? `<p>You can schedule a time here: <a href="${safeSchedule}">${safeSchedule}</a></p>`
+      : '<p>We will follow up shortly to schedule a time.</p>',
     '<p>Best,<br/>Taban Team</p>',
   ].join('');
 
@@ -160,21 +215,41 @@ function buildRequesterEmail(req: DemoRequest, scheduleUrl?: string): EmailMessa
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json()) as Partial<DemoRequest>;
+    // Per-IP rate limit to stop abuse of the unauthenticated endpoint.
+    const ip = getClientIp(req);
+    if (isRateLimited(ip)) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
+    let body: Partial<DemoRequest>;
+    try {
+      body = (await req.json()) as Partial<DemoRequest>;
+    } catch {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    }
+
     const demo: DemoRequest = {
-      name: (body.name || '').trim(),
-      email: (body.email || '').trim(),
-      org: (body.org || '').trim(),
-      role: (body.role || '').trim(),
-      phone: body.phone?.trim(),
-      message: body.message?.trim(),
+      name: (body.name || '').trim().slice(0, 200),
+      email: (body.email || '').trim().slice(0, 320),
+      org: (body.org || '').trim().slice(0, 200),
+      role: (body.role || '').trim().slice(0, 100),
+      phone: body.phone?.trim().slice(0, 40),
+      message: body.message?.trim().slice(0, 2000),
     };
 
     if (!demo.name || !demo.email || !demo.org || !demo.role) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
-    if (!isValidEmail(demo.email)) {
+    if (!isValidEmail(demo.email) || !isSafeHeaderValue(demo.email)) {
       return NextResponse.json({ error: 'Invalid email address' }, { status: 400 });
+    }
+    // Refuse CRLF in any free-text header-bound field (name/org) to block
+    // SMTP header injection if a provider ever lifts these into headers.
+    if (!isSafeHeaderValue(demo.name) || !isSafeHeaderValue(demo.org)) {
+      return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
     }
 
     const requestId = randomUUID();
@@ -192,7 +267,12 @@ export async function POST(req: NextRequest) {
       scheduleUrl: scheduleUrl || null,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to submit demo request';
-    return NextResponse.json({ error: message }, { status: 500 });
+    // Don't leak internal error details (API keys in stack traces, provider
+    // responses, etc.) to an unauthenticated endpoint.
+    console.error('[demo-request]', err);
+    return NextResponse.json(
+      { error: 'Failed to submit demo request' },
+      { status: 500 }
+    );
   }
 }

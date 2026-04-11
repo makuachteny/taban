@@ -3,8 +3,11 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import TopBar from '@/components/TopBar';
+import EmptyState from '@/components/EmptyState';
 import { useImmunizations } from '@/lib/hooks/useImmunizations';
+import { usePatients } from '@/lib/hooks/usePatients';
 import { useApp } from '@/lib/context';
+import { usePermissions } from '@/lib/hooks/usePermissions';
 import {
   Syringe, Search, Plus, X, CheckCircle2, Clock, AlertTriangle,
   XCircle, ChevronDown, ChevronUp, Users, ExternalLink,
@@ -23,9 +26,12 @@ const statusConfig = {
 export default function ImmunizationsPage() {
   const { currentUser } = useApp();
   const { immunizations, stats, coverage, loading, register } = useImmunizations();
+  const { patients } = usePatients();
+  const { canRecordVitalEvents } = usePermissions();
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [expandedChild, setExpandedChild] = useState<string | null>(null);
+  const [patientLookup, setPatientLookup] = useState('');
 
   // Form state
   const [form, setForm] = useState({
@@ -34,6 +40,35 @@ export default function ImmunizationsPage() {
     nextDueDate: '', batchNumber: '', site: 'left arm' as typeof SITES[number],
     adverseReaction: false, adverseReactionDetails: '',
   });
+
+  // Filter patients (children only — under 6 years old) for the lookup picker
+  const patientMatches = useMemo(() => {
+    if (!patientLookup || patientLookup.length < 2) return [];
+    const q = patientLookup.toLowerCase();
+    return (patients || [])
+      .filter(p => {
+        const age = p.estimatedAge ?? (p.dateOfBirth ? new Date().getFullYear() - new Date(p.dateOfBirth).getFullYear() : 99);
+        if (age > 15) return false; // immunizations are pediatric
+        return (
+          `${p.firstName} ${p.surname}`.toLowerCase().includes(q) ||
+          (p.hospitalNumber || '').toLowerCase().includes(q)
+        );
+      })
+      .slice(0, 6);
+  }, [patientLookup, patients]);
+
+  const selectImmunizationPatient = (id: string) => {
+    const p = patients.find(x => x._id === id);
+    if (!p) return;
+    setForm(f => ({
+      ...f,
+      patientId: p._id,
+      patientName: `${p.firstName || ''} ${p.surname || ''}`.trim(),
+      gender: (p.gender as 'Male' | 'Female') || f.gender,
+      dateOfBirth: p.dateOfBirth || f.dateOfBirth,
+    }));
+    setPatientLookup('');
+  };
 
   // Group immunizations by child
   const childGroups = useMemo(() => {
@@ -116,9 +151,11 @@ export default function ImmunizationsPage() {
               </div>
             </div>
           </div>
-          <button onClick={() => setShowModal(true)} className="btn btn-primary">
-            <Plus className="w-4 h-4" /> Record Vaccination
-          </button>
+          {canRecordVitalEvents && (
+            <button onClick={() => setShowModal(true)} className="btn btn-primary">
+              <Plus className="w-4 h-4" /> Record Vaccination
+            </button>
+          )}
         </div>
 
         {/* Stats Row */}
@@ -277,10 +314,14 @@ export default function ImmunizationsPage() {
           })}
 
           {filteredChildren.length === 0 && (
-            <div className="p-8 text-center">
-              <Syringe className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--text-muted)', opacity: 0.3 }} />
-              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No immunization records found</p>
-            </div>
+            <EmptyState
+              icon={Syringe}
+              title={search ? 'No matching children' : 'No immunization records yet'}
+              message={search
+                ? 'Try a different search term, or clear the search to see all children.'
+                : 'Record childhood vaccinations (BCG, OPV, Penta, PCV, Rota, Measles, Yellow Fever) to track South Sudan EPI coverage and surface defaulters.'}
+              action={!search && canRecordVitalEvents ? { label: 'Record vaccination', onClick: () => setShowModal(true) } : undefined}
+            />
           )}
         </div>
 
@@ -296,6 +337,56 @@ export default function ImmunizationsPage() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Link to existing patient (recommended) */}
+                <div className="rounded-lg p-3" style={{ background: 'var(--accent-light)', border: '1px solid var(--accent-border, rgba(43,111,224,0.25))' }}>
+                  <label className="text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5" style={{ color: 'var(--accent-primary)', textTransform: 'uppercase' }}>
+                    <Users className="w-3 h-3" />
+                    Link to existing child (recommended)
+                  </label>
+                  {form.patientId ? (
+                    <div className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+                      <div className="text-xs">
+                        <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{form.patientName}</p>
+                        <p style={{ color: 'var(--text-muted)' }}>{form.gender}{form.dateOfBirth ? ` · DOB ${form.dateOfBirth}` : ''}</p>
+                      </div>
+                      <button type="button" onClick={() => setForm(f => ({ ...f, patientId: '', patientName: '', dateOfBirth: '' }))} className="text-[10px] font-semibold" style={{ color: 'var(--accent-primary)' }}>Unlink</button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="relative">
+                        <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }} />
+                        <input
+                          type="text"
+                          value={patientLookup}
+                          onChange={e => setPatientLookup(e.target.value)}
+                          placeholder="Search child by name or hospital number…"
+                          className="w-full text-xs p-2 pl-8 rounded-lg outline-none"
+                          style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+                        />
+                      </div>
+                      {patientMatches.length > 0 && (
+                        <div className="mt-1.5 rounded-lg overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+                          {patientMatches.map(p => (
+                            <button
+                              key={p._id}
+                              type="button"
+                              onClick={() => selectImmunizationPatient(p._id)}
+                              className="w-full px-2.5 py-2 text-left text-xs hover:bg-[var(--overlay-subtle)] transition-colors"
+                              style={{ borderBottom: '1px solid var(--border-light)' }}
+                            >
+                              <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{p.firstName} {p.surname}</p>
+                              <p style={{ color: 'var(--text-muted)' }}>{p.hospitalNumber} · {p.gender}{p.estimatedAge ? ` · ${p.estimatedAge}y` : ''}</p>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      <p className="text-[10px] mt-1.5" style={{ color: 'var(--text-muted)' }}>
+                        Linking the child to an existing patient prevents duplicate records and lets you view their full health history.
+                      </p>
+                    </>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label>Child Name</label>

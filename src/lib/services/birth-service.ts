@@ -1,15 +1,38 @@
-import { birthsDB } from '../db';
-import type { BirthRegistrationDoc } from '../db-types';
+import { birthsDB, ancDB } from '../db';
+import type { BirthRegistrationDoc, ANCVisitDoc } from '../db-types';
 import { v4 as uuidv4 } from 'uuid';
 import { logAudit } from './audit-service';
+import type { DataScope } from './data-scope';
+import { filterByScope } from './data-scope';
 
-export async function getAllBirths(): Promise<BirthRegistrationDoc[]> {
+/**
+ * Look up ANC visits for a mother by name (case-insensitive). Used after a
+ * birth is registered so the prenatal record can be linked back. We do a name
+ * match because ANC and birth records aren't always created with the same
+ * patient ID — many mothers in rural settings don't carry an ID.
+ */
+async function findAncVisitsForMother(motherName: string): Promise<ANCVisitDoc[]> {
+  if (!motherName) return [];
+  try {
+    const db = ancDB();
+    const result = await db.allDocs({ include_docs: true });
+    const target = motherName.trim().toLowerCase();
+    return result.rows
+      .map(r => r.doc as ANCVisitDoc)
+      .filter(d => d && d.type === 'anc_visit' && (d.motherName || '').trim().toLowerCase() === target);
+  } catch {
+    return [];
+  }
+}
+
+export async function getAllBirths(scope?: DataScope): Promise<BirthRegistrationDoc[]> {
   const db = birthsDB();
   const result = await db.allDocs({ include_docs: true });
-  return result.rows
+  const all = result.rows
     .map(r => r.doc as BirthRegistrationDoc)
     .filter(d => d && d.type === 'birth')
     .sort((a, b) => new Date(b.dateOfBirth || '').getTime() - new Date(a.dateOfBirth || '').getTime());
+  return scope ? filterByScope(all, scope) : all;
 }
 
 export async function getBirthsByFacility(facilityId: string): Promise<BirthRegistrationDoc[]> {
@@ -26,16 +49,48 @@ export async function createBirth(data: Omit<BirthRegistrationDoc, '_id' | '_rev
   const db = birthsDB();
   const now = new Date().toISOString();
   const id = `birth-${uuidv4().slice(0, 8)}`;
+
+  // Best-effort: find any ANC visits this mother has on file so we can
+  // bidirectionally link the prenatal history with the birth record.
+  let linkedAncMotherId: string | undefined;
+  let ancVisits: ANCVisitDoc[] = [];
+  if (!data.linkedAncMotherId && data.motherName) {
+    try {
+      ancVisits = await findAncVisitsForMother(data.motherName);
+      if (ancVisits.length > 0) {
+        linkedAncMotherId = ancVisits[0].motherId;
+      }
+    } catch {
+      // ignore — birth registration must not fail because of ANC linkage
+    }
+  }
+
   const doc: BirthRegistrationDoc = {
     _id: id,
     type: 'birth',
     ...data,
+    linkedAncMotherId: data.linkedAncMotherId || linkedAncMotherId,
     createdAt: now,
     updatedAt: now,
   };
   const resp = await db.put(doc);
   doc._rev = resp.rev;
   logAudit('REGISTER_BIRTH', undefined, undefined, `Registered birth ${doc._id}: ${data.childFirstName} ${data.childSurname}, gender: ${data.childGender}`).catch(() => {});
+
+  // Write the birth id back onto every matching ANC visit so the ANC module
+  // can flag the mother as "Delivered" without a separate query.
+  if (ancVisits.length > 0) {
+    const ancDb = ancDB();
+    for (const visit of ancVisits) {
+      try {
+        const fresh = await ancDb.get(visit._id) as ANCVisitDoc;
+        await ancDb.put({ ...fresh, linkedBirthId: id, updatedAt: now });
+      } catch {
+        // Skip individual failures — partial linkage is better than none.
+      }
+    }
+  }
+
   return doc;
 }
 
@@ -69,8 +124,8 @@ export async function deleteBirth(id: string): Promise<boolean> {
   }
 }
 
-export async function getBirthStats() {
-  const all = await getAllBirths();
+export async function getBirthStats(scope?: DataScope) {
+  const all = await getAllBirths(scope);
   const thisMonth = new Date().toISOString().slice(0, 7);
   const thisYear = new Date().getFullYear().toString();
   return {

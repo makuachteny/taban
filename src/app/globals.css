@@ -705,9 +705,7 @@ label {
 }
 @media (max-width: 639px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
 
-/* Left accent line on KPI cards */
-:root .kpi { border-left: 2px solid #D4D4D4; }
-[data-theme="dark"] .kpi { border-left: 2px solid #2D3748; }
+/* KPI cards — no left accent line */
 
 /* ============ Page transition ============ */
 .page-enter {
@@ -1313,7 +1311,7 @@ svg circle {
 /* ============ LIGHT MODE: Solid separators ============ */
 [data-theme="light"] .card-elevated { border: 1px solid #E0E0E0; }
 [data-theme="light"] .card { border: 1px solid #E0E0E0; }
-[data-theme="light"] .kpi { border: 1px solid #E0E0E0; border-left: 2px solid #D4D4D4; }
+[data-theme="light"] .kpi { border: 1px solid #E0E0E0; }
 [data-theme="light"] .space-y-2 > * + * { border-top: 1px solid #EEEEEE; padding-top: 8px; }
 [data-theme="light"] .referral-row,
 [data-theme="light"] .alert-row { border-bottom: 1px solid #E0E0E0; }

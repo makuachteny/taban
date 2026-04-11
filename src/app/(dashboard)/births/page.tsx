@@ -5,6 +5,7 @@ import TopBar from '@/components/TopBar';
 import { useBirths } from '@/lib/hooks/useBirths';
 import { useHospitals } from '@/lib/hooks/useHospitals';
 import { useApp } from '@/lib/context';
+import { usePermissions } from '@/lib/hooks/usePermissions';
 import {
   Baby, Plus, Search, X, ChevronDown, ChevronUp, Users, Calendar, Activity
 } from 'lucide-react';
@@ -13,6 +14,7 @@ export default function BirthsPage() {
   const { births, stats, loading, register } = useBirths();
   const { hospitals } = useHospitals();
   const { currentUser } = useApp();
+  const { canRecordVitalEvents } = usePermissions();
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [expandedBirth, setExpandedBirth] = useState<string | null>(null);
@@ -54,9 +56,11 @@ export default function BirthsPage() {
             <h1 className="text-xl font-semibold">Birth Registration</h1>
             <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>Civil Registration and Vital Statistics (CRVS)</p>
           </div>
-          <button onClick={() => setShowForm(true)} className="btn btn-primary btn-sm flex items-center gap-2">
-            <Plus className="w-4 h-4" /> Register Birth
-          </button>
+          {canRecordVitalEvents && (
+            <button onClick={() => setShowForm(true)} className="btn btn-primary btn-sm flex items-center gap-2">
+              <Plus className="w-4 h-4" /> Register Birth
+            </button>
+          )}
         </div>
 
         {/* Stats */}

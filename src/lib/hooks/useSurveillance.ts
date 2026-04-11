@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { DiseaseAlertDoc } from '../db-types';
+import { diseaseAlertsDB } from '../db';
 import { useApp } from '../context';
 
 export function useSurveillance() {
@@ -30,6 +31,18 @@ export function useSurveillance() {
 
   useEffect(() => {
     loadAlerts();
+  }, [loadAlerts]);
+
+  // Live PouchDB subscription: re-load on any disease alert change.
+  useEffect(() => {
+    let cancelled = false;
+    const changes = diseaseAlertsDB().changes({ since: 'now', live: true, include_docs: false })
+      .on('change', () => { if (!cancelled) loadAlerts(); })
+      .on('error', () => { /* swallow */ });
+    return () => {
+      cancelled = true;
+      try { changes.cancel(); } catch { /* noop */ }
+    };
   }, [loadAlerts]);
 
   return { alerts, loading, error, reload: loadAlerts };

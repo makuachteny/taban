@@ -19,6 +19,7 @@ import {
 } from 'recharts';
 import { usePatients } from '@/lib/hooks/usePatients';
 import { useReferrals } from '@/lib/hooks/useReferrals';
+import { formatCompactDateTime } from '@/lib/format-utils';
 import { useSurveillance } from '@/lib/hooks/useSurveillance';
 import { useImmunizations } from '@/lib/hooks/useImmunizations';
 import { useANC } from '@/lib/hooks/useANC';
@@ -263,18 +264,6 @@ function TemplateIcon({ icon, color }: { icon: string; color: string }) {
     clipboard: <ClipboardList className="w-5 h-5" style={{ color }} />,
   };
   return <>{iconMap[icon] || <FileText className="w-5 h-5" style={{ color }} />}</>;
-}
-
-/** Format an ISO timestamp as a compact "Mon DD · HH:mm" or just "Mon DD" if no time. */
-function formatAdmittedAt(iso?: string): string {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  const hasTime = /T\d{2}:\d{2}/.test(iso);
-  if (!hasTime) return dateStr;
-  const timeStr = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-  return `${dateStr} · ${timeStr}`;
 }
 
 export default function DashboardPage() {
@@ -846,7 +835,7 @@ export default function DashboardPage() {
                     <td className="px-4 py-2.5 text-[11px] font-mono" style={{ color: 'var(--text-secondary)' }}>
                       <span className="inline-flex items-center gap-1">
                         <Clock className="w-3 h-3" style={{ color: 'var(--accent-primary)' }} />
-                        {formatAdmittedAt(p.admittedAt)}
+                        {formatCompactDateTime(p.admittedAt)}
                       </span>
                     </td>
                     <td className="px-4 py-2.5 text-[12px]" style={{ color: 'var(--text-secondary)' }}>{p.ward}</td>
@@ -989,12 +978,52 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* Alert count */}
+            {/* Active surveillance alerts — clickable, shows top 2 */}
             {activeAlerts.length > 0 && (
-              <div className="mx-4 mb-4 p-2 rounded-lg flex items-center gap-2" style={{ background: 'rgba(229,46,66,0.06)', border: '1px solid rgba(229,46,66,0.12)' }}>
-                <AlertTriangle className="w-3.5 h-3.5" style={{ color: 'var(--color-danger)' }} />
-                <span className="text-[11px] font-medium" style={{ color: 'var(--color-danger)' }}>{activeAlerts.length} active disease alert(s)</span>
-              </div>
+              <button
+                onClick={() => router.push('/surveillance')}
+                className="mx-4 mb-4 p-3 rounded-lg w-[calc(100%-2rem)] text-left transition-all hover:shadow-md"
+                style={{
+                  background: 'rgba(229,46,66,0.06)',
+                  border: '1px solid rgba(229,46,66,0.18)',
+                }}
+                title="Open surveillance module"
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5" style={{ color: 'var(--color-danger)' }} />
+                    <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-danger)' }}>
+                      {activeAlerts.length} Active Disease Alert{activeAlerts.length > 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5" style={{ color: 'var(--color-danger)' }} />
+                </div>
+                <div className="space-y-1">
+                  {activeAlerts.slice(0, 2).map((a, i) => (
+                    <div key={i} className="flex items-center justify-between text-[11px]">
+                      <span style={{ color: 'var(--text-primary)' }}>
+                        <span className="font-semibold">{a.disease || 'Unknown disease'}</span>
+                        {a.county || a.state ? ` · ${a.county || a.state}` : ''}
+                        {typeof a.cases === 'number' ? ` · ${a.cases} cases` : ''}
+                      </span>
+                      <span
+                        className="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase"
+                        style={{
+                          background: a.alertLevel === 'emergency' ? 'rgba(229,46,66,0.18)' : 'rgba(252,211,77,0.2)',
+                          color: a.alertLevel === 'emergency' ? 'var(--color-danger)' : 'var(--color-warning)',
+                        }}
+                      >
+                        {a.alertLevel}
+                      </span>
+                    </div>
+                  ))}
+                  {activeAlerts.length > 2 && (
+                    <p className="text-[10px] pt-0.5" style={{ color: 'var(--text-muted)' }}>
+                      +{activeAlerts.length - 2} more — open surveillance for full triage
+                    </p>
+                  )}
+                </div>
+              </button>
             )}
           </div>
 

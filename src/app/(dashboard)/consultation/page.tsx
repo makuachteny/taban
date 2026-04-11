@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import TopBar from '@/components/TopBar';
 import {
@@ -86,6 +86,19 @@ export default function ConsultationPage() {
   );
   const [showPatientDropdown, setShowPatientDropdown] = useState(false);
 
+  // ── Auto-save draft state (declared early so the effects below can use it) ──
+  // Drafts are persisted to localStorage every ~600ms while editing so a
+  // browser crash, power loss, or accidental tab close never costs the
+  // doctor an in-progress consultation. Drafts are scoped per patient and
+  // expire after 24 hours.
+  const DRAFT_TTL_MS = 24 * 60 * 60 * 1000;
+  const draftKey = (pid: string | null) => (pid ? `taban:consultation:draft:${pid}` : null);
+  const [draftRestored, setDraftRestored] = useState(false);
+  const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
+  const [restorePromptFor, setRestorePromptFor] = useState<{ key: string; savedAt: string } | null>(null);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const skipNextAutosave = useRef(false);
+
   // Pre-select patient from URL (?patientId=...) once patients load.
   useEffect(() => {
     const queryPatientId = searchParams?.get('patientId');
@@ -95,6 +108,29 @@ export default function ConsultationPage() {
       setSelectedPatient(queryPatientId);
     }
   }, [searchParams, patients, selectedPatient]);
+
+  // Look for an existing draft for this patient on mount/patient-change.
+  // Surfaces a one-time prompt offering to restore.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!selectedPatient || draftRestored) return;
+    const key = draftKey(selectedPatient);
+    if (!key) return;
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as { savedAt: string };
+      const age = Date.now() - new Date(parsed.savedAt).getTime();
+      if (age > DRAFT_TTL_MS) {
+        window.localStorage.removeItem(key);
+        return;
+      }
+      setRestorePromptFor({ key, savedAt: parsed.savedAt });
+    } catch {
+      // ignore — corrupt draft
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPatient, draftRestored]);
 
   // Chief Complaint
   const [chiefComplaint, setChiefComplaint] = useState('');
@@ -158,6 +194,54 @@ export default function ConsultationPage() {
   // Timestamp captured when this consultation session was started (first mount).
   // Stable across renders so we can record the true start time on save.
   const [consultationStartedAt] = useState(() => new Date().toISOString());
+
+  // Debounced auto-save: every time form state changes, schedule a write
+  // ~600ms later. Cancels any pending write so rapid typing only triggers a
+  // single save. (Auto-save state is declared higher up.)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!selectedPatient) return;
+    if (skipNextAutosave.current) {
+      skipNextAutosave.current = false;
+      return;
+    }
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      const key = draftKey(selectedPatient);
+      if (!key) return;
+      const draft = {
+        savedAt: new Date().toISOString(),
+        consultationStartedAt,
+        chiefComplaint,
+        vitals,
+        physExam,
+        diagnoses,
+        prescriptions,
+        labOrders,
+        treatmentPlan,
+        followUpDate,
+        followUpReason,
+        addReferral,
+        referralHospital,
+        referralUrgency,
+        referralReason,
+      };
+      try {
+        window.localStorage.setItem(key, JSON.stringify(draft));
+        setDraftSavedAt(draft.savedAt);
+      } catch {
+        // Storage may be full / blocked — fail silently
+      }
+    }, 600);
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    selectedPatient, chiefComplaint, vitals, physExam, diagnoses, prescriptions,
+    labOrders, treatmentPlan, followUpDate, followUpReason, addReferral,
+    referralHospital, referralUrgency, referralReason,
+  ]);
 
   // Only doctors and clinical officers can create consultations
   if (currentUser && currentUser.role !== 'doctor' && currentUser.role !== 'clinical_officer') {
@@ -396,12 +480,64 @@ export default function ConsultationPage() {
         console.warn('Could not update patient lastConsultedAt', e);
       }
 
+      // Successful save → clear the draft so we don't re-prompt on next visit
+      try {
+        const key = draftKey(selectedPatient);
+        if (key && typeof window !== 'undefined') window.localStorage.removeItem(key);
+      } catch {
+        // ignore
+      }
+
       showToast('Consultation saved successfully!', 'success');
       router.push(`/patients/${selectedPatient}`);
     } catch (err) {
       console.error('Failed to save consultation:', err);
       showToast('Failed to save consultation. Please try again.', 'error');
     }
+  };
+
+  // Restore a draft into the form state.
+  const applyDraft = (key: string) => {
+    if (typeof window === 'undefined') return;
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) {
+        setRestorePromptFor(null);
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      // Skip the next autosave so the restore itself doesn't trigger an
+      // immediate write of the same data (no-op but cleaner).
+      skipNextAutosave.current = true;
+      if (parsed.chiefComplaint != null) setChiefComplaint(parsed.chiefComplaint);
+      if (parsed.vitals) setVitals(parsed.vitals);
+      if (parsed.physExam) setPhysExam(parsed.physExam);
+      if (Array.isArray(parsed.diagnoses)) setDiagnoses(parsed.diagnoses);
+      if (Array.isArray(parsed.prescriptions)) setPrescriptions(parsed.prescriptions);
+      if (parsed.labOrders) setLabOrders(parsed.labOrders);
+      if (parsed.treatmentPlan != null) setTreatmentPlan(parsed.treatmentPlan);
+      if (parsed.followUpDate != null) setFollowUpDate(parsed.followUpDate);
+      if (parsed.followUpReason != null) setFollowUpReason(parsed.followUpReason);
+      if (typeof parsed.addReferral === 'boolean') setAddReferral(parsed.addReferral);
+      if (parsed.referralHospital != null) setReferralHospital(parsed.referralHospital);
+      if (parsed.referralUrgency != null) setReferralUrgency(parsed.referralUrgency);
+      if (parsed.referralReason != null) setReferralReason(parsed.referralReason);
+      setDraftSavedAt(parsed.savedAt || null);
+      showToast('Draft restored', 'success');
+    } catch {
+      showToast('Could not restore draft', 'error');
+    } finally {
+      setDraftRestored(true);
+      setRestorePromptFor(null);
+    }
+  };
+
+  const discardDraft = (key: string) => {
+    if (typeof window !== 'undefined') {
+      try { window.localStorage.removeItem(key); } catch { /* ignore */ }
+    }
+    setDraftRestored(true);
+    setRestorePromptFor(null);
   };
 
   const runAIEvaluation = () => {
@@ -435,11 +571,48 @@ export default function ConsultationPage() {
       setAcceptedTests(new Set());
       // Auto-open the AI section
       setOpenSections(prev => prev.map((v, i) => i === 3 ? true : v));
+
+      // Audit trail: record that the rule-based AI evaluated this patient,
+      // who triggered it, and what the engine suggested. No clinical data
+      // leaves the device (the engine runs in-browser), but clinicians and
+      // auditors need a provable log of every AI-assisted decision.
+      import('@/lib/services/audit-service').then(({ logAudit }) => {
+        const topDx = (result.suggestedDiagnoses || [])
+          .slice(0, 3)
+          .map(d => `${d.icd10Code || ''} ${d.name}`.trim())
+          .join(', ');
+        logAudit(
+          'AI_EVALUATION',
+          currentUser?._id,
+          currentUser?.username,
+          `Patient ${selectedPatientData._id} (${selectedPatientData.hospitalNumber}): rule-based diagnosis engine run. Severity=${result.severityAssessment || 'unknown'}. Top dx: ${topDx || 'none'}`
+        ).catch(() => {});
+      }).catch(() => {});
     }, 300);
   };
 
   // Apply AI Clinical Scribe extraction to all form fields
   const applyScribeExtraction = (extraction: ScribeExtraction) => {
+    // Audit trail: record that clinical scribe extracted structured data
+    // for this patient. The transcript itself is NOT logged (to avoid
+    // duplicating PHI), only a summary of what fields were populated.
+    if (selectedPatientData) {
+      import('@/lib/services/audit-service').then(({ logAudit }) => {
+        const populated: string[] = [];
+        if (extraction.chiefComplaint) populated.push('chief_complaint');
+        if (Object.values(extraction.vitals).some(v => v)) populated.push('vitals');
+        if (extraction.examFindings.length) populated.push(`exam(${extraction.examFindings.length})`);
+        if (extraction.diagnoses.length) populated.push(`dx(${extraction.diagnoses.length})`);
+        if (extraction.medications.length) populated.push(`rx(${extraction.medications.length})`);
+        logAudit(
+          'CLINICAL_SCRIBE_APPLIED',
+          currentUser?._id,
+          currentUser?.username,
+          `Patient ${selectedPatientData._id} (${selectedPatientData.hospitalNumber}): scribe populated ${populated.join(', ') || 'no fields'}`
+        ).catch(() => {});
+      }).catch(() => {});
+    }
+
     // Chief Complaint
     if (extraction.chiefComplaint) {
       setChiefComplaint(extraction.chiefComplaint);
@@ -616,9 +789,53 @@ export default function ConsultationPage() {
             <ArrowLeft className="w-4 h-4" /> Back to Patients
           </button>
 
+          {/* Draft restore banner */}
+          {restorePromptFor && (
+            <div
+              className="card-elevated mb-4 px-4 py-3 flex items-center gap-3 flex-wrap"
+              style={{
+                background: 'var(--accent-light)',
+                border: '1px solid var(--accent-border, rgba(43,111,224,0.25))',
+              }}
+            >
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: '#fff' }}>
+                <FileText className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
+              </div>
+              <div className="flex-1 min-w-[180px]">
+                <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  Unsaved consultation draft found
+                </p>
+                <p className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+                  Last edited {new Date(restorePromptFor.savedAt).toLocaleString()}
+                </p>
+              </div>
+              <button
+                onClick={() => applyDraft(restorePromptFor.key)}
+                className="btn btn-primary btn-sm"
+              >
+                Restore draft
+              </button>
+              <button
+                onClick={() => discardDraft(restorePromptFor.key)}
+                className="btn btn-secondary btn-sm"
+              >
+                Discard
+              </button>
+            </div>
+          )}
+
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-xl font-semibold">
               New Medical Consultation
+              {draftSavedAt && !restorePromptFor && (
+                <span
+                  className="ml-3 inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full align-middle"
+                  style={{ background: 'var(--accent-light)', color: 'var(--accent-primary)' }}
+                  title={`Draft auto-saved at ${new Date(draftSavedAt).toLocaleTimeString()}`}
+                >
+                  <Check className="w-3 h-3" /> Draft saved
+                </span>
+              )}
             </h1>
             <button
               onClick={() => setScribeOpen(!scribeOpen)}

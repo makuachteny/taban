@@ -1,9 +1,26 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
-import type { HospitalDoc, OrganizationDoc, UserRole } from './db-types';
+import type { HospitalDoc, OrganizationDoc, UserRole, UserDoc } from './db-types';
 import type { OrgBranding } from './branding';
 import type { AggregateStatus } from './sync/sync-manager';
+// Eagerly bundle the critical login path. These modules are tiny and used at
+// the most user-facing flow — lazy-loading them via dynamic import() created
+// a separate webpack chunk that could 404 if the browser tab outlived a dev
+// rebuild ("Loading chunk _app-pages-browser_src_lib_auth_ts-*.js failed").
+import { usersDB } from './db';
+import { verifyPassword } from './auth';
+import { createToken } from './auth-token';
+import { logAudit } from './services/audit-service';
+
+/** True when an error came from a failed dynamic-chunk fetch (stale tab after
+ *  a hot-reload, network blip, etc.). The recovery for these is always a
+ *  full page reload. */
+function isChunkLoadError(err: unknown): boolean {
+  if (!err) return false;
+  const msg = err instanceof Error ? `${err.name} ${err.message}` : String(err);
+  return /ChunkLoadError|Loading chunk .*failed|Failed to fetch dynamically imported module/i.test(msg);
+}
 
 export type Theme = 'light' | 'dark';
 
@@ -223,13 +240,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async (username: string, password: string, hospitalId?: string): Promise<UserRole | false> => {
     try {
-      // Auth happens client-side where PouchDB data lives
-      const { usersDB } = await import('./db');
-      const { verifyPassword } = await import('./auth');
-      const { createToken } = await import('./auth-token');
-      const { logAudit } = await import('./services/audit-service');
-      type UserDoc = import('./db-types').UserDoc;
-
+      // Auth happens client-side where PouchDB data lives.
+      // usersDB / verifyPassword / createToken / logAudit are imported eagerly
+      // at the top of this file so they can never produce a chunk-load error.
       const sanitizedUsername = username.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '');
       const db = usersDB();
 
@@ -331,6 +344,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       console.error('Login error:', err);
       // Expose the real error for debugging (remove in production)
       (window as unknown as Record<string, unknown>).__lastLoginError = err instanceof Error ? err.message : String(err);
+
+      // Stale-chunk recovery: this happens when a long-lived browser tab tries
+      // to lazy-load a JS chunk that the dev server already rebuilt under a
+      // new hash. The fix is always a hard reload — offer it directly.
+      if (isChunkLoadError(err)) {
+        const reload = confirm(
+          'A code update was detected and one of the page resources is out of date. ' +
+          'Click OK to reload the page and try again.'
+        );
+        if (reload) window.location.reload();
+        return false;
+      }
+
       alert(`Login internal error: ${err instanceof Error ? err.message : String(err)}`);
       return false;
     }

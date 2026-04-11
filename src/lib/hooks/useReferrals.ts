@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { ReferralDoc } from '../db-types';
 import type { Attachment } from '@/data/mock';
+import { referralsDB } from '../db';
 import { useApp } from '../context';
 
 export function useReferrals() {
@@ -33,12 +34,17 @@ export function useReferrals() {
     loadReferrals();
   }, [loadReferrals]);
 
-  // Auto-refresh every 30 seconds
+  // Live PouchDB subscription: re-load when a referral is created, accepted,
+  // or status-updated anywhere in the app. Replaces 30s polling.
   useEffect(() => {
-    const interval = setInterval(() => {
-      loadReferrals();
-    }, 30000);
-    return () => clearInterval(interval);
+    let cancelled = false;
+    const changes = referralsDB().changes({ since: 'now', live: true, include_docs: false })
+      .on('change', () => { if (!cancelled) loadReferrals(); })
+      .on('error', () => { /* swallow */ });
+    return () => {
+      cancelled = true;
+      try { changes.cancel(); } catch { /* noop */ }
+    };
   }, [loadReferrals]);
 
   const create = useCallback(async (data: Omit<ReferralDoc, '_id' | '_rev' | 'type' | 'createdAt' | 'updatedAt'>) => {

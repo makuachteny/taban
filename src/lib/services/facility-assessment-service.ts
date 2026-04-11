@@ -1,14 +1,17 @@
 import { facilityAssessmentsDB } from '../db';
 import type { FacilityAssessmentDoc } from '../db-types';
 import { v4 as uuidv4 } from 'uuid';
+import type { DataScope } from './data-scope';
+import { filterByScope } from './data-scope';
 
-export async function getAllAssessments(): Promise<FacilityAssessmentDoc[]> {
+export async function getAllAssessments(scope?: DataScope): Promise<FacilityAssessmentDoc[]> {
   const db = facilityAssessmentsDB();
   const result = await db.allDocs({ include_docs: true });
-  return result.rows
+  const all = result.rows
     .map(r => r.doc as FacilityAssessmentDoc)
     .filter(d => d && d.type === 'facility_assessment')
     .sort((a, b) => new Date(b.assessmentDate).getTime() - new Date(a.assessmentDate).getTime());
+  return scope ? filterByScope(all, scope) : all;
 }
 
 export async function getAssessmentsByFacility(facilityId: string): Promise<FacilityAssessmentDoc[]> {
@@ -62,8 +65,8 @@ export async function deleteAssessment(id: string): Promise<boolean> {
   }
 }
 
-export async function getAssessmentSummary() {
-  const all = await getAllAssessments();
+export async function getAssessmentSummary(scope?: DataScope) {
+  const all = await getAllAssessments(scope);
   // Latest assessment per facility
   const latest: Record<string, FacilityAssessmentDoc> = {};
   for (const a of all) {

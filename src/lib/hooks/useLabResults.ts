@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { LabResultDoc } from '../db-types';
+import { labResultsDB } from '../db';
 import { useApp } from '../context';
 
 export function useLabResults() {
@@ -32,12 +33,19 @@ export function useLabResults() {
     loadResults();
   }, [loadResults]);
 
-  // Auto-refresh every 30 seconds
+  // Live subscription: re-load whenever any lab result doc changes anywhere
+  // (consultation page creating an order, lab tech entering a result, etc.).
+  // Replaces the previous 30-second polling so cross-module updates are
+  // reflected immediately without manual refresh.
   useEffect(() => {
-    const interval = setInterval(() => {
-      loadResults();
-    }, 30000);
-    return () => clearInterval(interval);
+    let cancelled = false;
+    const changes = labResultsDB().changes({ since: 'now', live: true, include_docs: false })
+      .on('change', () => { if (!cancelled) loadResults(); })
+      .on('error', () => { /* swallow — fall back to manual reload */ });
+    return () => {
+      cancelled = true;
+      try { changes.cancel(); } catch { /* noop */ }
+    };
   }, [loadResults]);
 
   const create = useCallback(async (data: Omit<LabResultDoc, '_id' | '_rev' | 'type' | 'createdAt' | 'updatedAt'>) => {

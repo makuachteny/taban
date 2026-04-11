@@ -2,17 +2,20 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { TelehealthSessionDoc, TelehealthStatus } from '../db-types';
+import { telehealthDB } from '../db';
+import { useDataScope } from './useDataScope';
 
 export function useTelehealth() {
   const [sessions, setSessions] = useState<TelehealthSessionDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const scope = useDataScope();
 
   const load = useCallback(async () => {
     try {
       setError(null);
       const { getAllSessions } = await import('../services/telehealth-service');
-      const data = await getAllSessions();
+      const data = await getAllSessions(scope);
       setSessions(data);
     } catch (err) {
       console.error(err);
@@ -20,13 +23,19 @@ export function useTelehealth() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [scope]);
 
   useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
-    const interval = setInterval(load, 30000);
-    return () => clearInterval(interval);
+    let cancelled = false;
+    const changes = telehealthDB().changes({ since: 'now', live: true, include_docs: false })
+      .on('change', () => { if (!cancelled) load(); })
+      .on('error', () => { /* swallow */ });
+    return () => {
+      cancelled = true;
+      try { changes.cancel(); } catch { /* noop */ }
+    };
   }, [load]);
 
   const create = useCallback(async (
@@ -72,23 +81,30 @@ export function useTelehealth() {
 export function useTelehealthStats() {
   const [stats, setStats] = useState<Awaited<ReturnType<typeof import('../services/telehealth-service').getTelehealthStats>> | null>(null);
   const [loading, setLoading] = useState(true);
+  const scope = useDataScope();
 
   const load = useCallback(async () => {
     try {
       const { getTelehealthStats } = await import('../services/telehealth-service');
-      const data = await getTelehealthStats();
+      const data = await getTelehealthStats(scope);
       setStats(data);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [scope]);
 
   useEffect(() => { load(); }, [load]);
   useEffect(() => {
-    const interval = setInterval(load, 30000);
-    return () => clearInterval(interval);
+    let cancelled = false;
+    const changes = telehealthDB().changes({ since: 'now', live: true, include_docs: false })
+      .on('change', () => { if (!cancelled) load(); })
+      .on('error', () => { /* swallow */ });
+    return () => {
+      cancelled = true;
+      try { changes.cancel(); } catch { /* noop */ }
+    };
   }, [load]);
 
   return { stats, loading, reload: load };

@@ -228,9 +228,7 @@ export default function DHIS2ExportPage() {
         {activeTab === 'reports' && (
           <div className="space-y-3">
             {DHIS2_REPORTS.map((report, i) => (
-              <div key={i} className="card-elevated p-5" style={{
-                borderLeft: report.status === 'submitted' ? '3px solid #10B944' : report.status === 'draft' ? '3px solid #0077D7' : '3px solid var(--border-light)',
-              }}>
+              <div key={i} className="card-elevated p-5">
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <h3 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{report.name}</h3>

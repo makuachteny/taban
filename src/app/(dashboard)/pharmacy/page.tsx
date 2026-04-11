@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import TopBar from '@/components/TopBar';
-import { Pill, AlertTriangle, Search, TrendingDown, CheckCircle2, Loader2 } from 'lucide-react';
+import { Pill, AlertTriangle, Search, TrendingDown, CheckCircle2, Loader2, Info } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/context';
 import { usePermissions } from '@/lib/hooks/usePermissions';
@@ -22,26 +22,45 @@ interface InventoryItem {
   dispensedToday: number;
 }
 
-const inventory: InventoryItem[] = medications.slice(0, 20).map((med, i) => {
-  const stockLevel = Math.floor(Math.random() * 500);
-  const reorderLevel = 50 + Math.floor(Math.random() * 100);
-  const isLow = stockLevel < reorderLevel;
-  const isCritical = stockLevel < reorderLevel * 0.3;
-  const year = Math.random() > 0.1 ? '2027' : '2025';
-  const month = String(Math.floor(1 + Math.random() * 12)).padStart(2, '0');
-  return {
-    id: `inv-${String(i + 1).padStart(3, '0')}`,
-    name: med.name,
-    category: med.category,
-    stockLevel,
-    unit: ['tablets', 'vials', 'bottles', 'sachets', 'tubes'][Math.floor(Math.random() * 5)],
-    reorderLevel,
-    expiryDate: `${year}-${month}-28`,
-    batchNumber: `BN${2024 + Math.floor(Math.random() * 3)}${String(Math.floor(Math.random() * 9999)).padStart(4, '0')}`,
-    status: year === '2025' ? 'expired' : isCritical ? 'critical' : isLow ? 'low' : 'adequate',
-    dispensedToday: Math.floor(Math.random() * 30),
-  };
-});
+// Deterministic pseudo-random based on a seed string. Used to keep the demo
+// inventory stable across page reloads (was previously Math.random which
+// reshuffled on every render, confusing users).
+function seededInt(seed: string, max: number): number {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) {
+    h = ((h << 5) - h + seed.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h) % max;
+}
+
+// TODO(production): replace this generator with a real `pharmacyInventoryDB`
+// PouchDB hook so stock counts are persisted and shared across users.
+function buildDemoInventory(): InventoryItem[] {
+  const units = ['tablets', 'vials', 'bottles', 'sachets', 'tubes'];
+  return medications.slice(0, 20).map((med, i) => {
+    const seed = `${med.name}-${i}`;
+    const stockLevel = seededInt(seed, 500);
+    const reorderLevel = 50 + seededInt(seed + 'r', 100);
+    const isLow = stockLevel < reorderLevel;
+    const isCritical = stockLevel < reorderLevel * 0.3;
+    // Most items expire in 2027, ~10% in 2025 (already expired)
+    const expired = seededInt(seed + 'e', 10) === 0;
+    const year = expired ? '2025' : '2027';
+    const month = String(1 + seededInt(seed + 'm', 12)).padStart(2, '0');
+    return {
+      id: `inv-${String(i + 1).padStart(3, '0')}`,
+      name: med.name,
+      category: med.category,
+      stockLevel,
+      unit: units[seededInt(seed + 'u', units.length)],
+      reorderLevel,
+      expiryDate: `${year}-${month}-28`,
+      batchNumber: `BN${2024 + seededInt(seed + 'b', 3)}${String(seededInt(seed + 'n', 9999)).padStart(4, '0')}`,
+      status: expired ? 'expired' : isCritical ? 'critical' : isLow ? 'low' : 'adequate',
+      dispensedToday: seededInt(seed + 'd', 30),
+    };
+  });
+}
 
 export default function PharmacyPage() {
   const [activeTab, setActiveTab] = useState<'queue' | 'inventory'>('queue');
@@ -53,10 +72,38 @@ export default function PharmacyPage() {
 
   const q = search || globalSearch;
 
+  // Demo inventory baseline (deterministic seed) + per-session dispense
+  // tracker so the stock counts visibly drop when prescriptions are filled.
+  const baselineInventory = useMemo(() => buildDemoInventory(), []);
+  const [dispensedFromInventory, setDispensedFromInventory] = useState<Record<string, number>>({});
+
+  const inventory = useMemo<InventoryItem[]>(() =>
+    baselineInventory.map(item => {
+      const dispensedSession = dispensedFromInventory[item.name] || 0;
+      const newStock = Math.max(0, item.stockLevel - dispensedSession);
+      const isLow = newStock < item.reorderLevel;
+      const isCritical = newStock < item.reorderLevel * 0.3;
+      return {
+        ...item,
+        stockLevel: newStock,
+        dispensedToday: item.dispensedToday + dispensedSession,
+        status: item.status === 'expired'
+          ? 'expired'
+          : isCritical ? 'critical' : isLow ? 'low' : 'adequate',
+      };
+    }),
+  [baselineInventory, dispensedFromInventory]);
+
   const handleDispense = async (rxId: string) => {
-    await dispense(rxId);
     const rx = rxQueue.find(r => r._id === rxId);
+    await dispense(rxId);
     if (rx) {
+      // Decrement the matching inventory item by 1 unit (best-effort match by drug name).
+      // This makes pharmacy → inventory wiring visible in the demo.
+      setDispensedFromInventory(prev => ({
+        ...prev,
+        [rx.medication]: (prev[rx.medication] || 0) + 1,
+      }));
       const { logAudit } = await import('@/lib/services/audit-service');
       logAudit('DISPENSE_PRESCRIPTION', undefined, undefined, `Dispensed ${rx.medication} to ${rx.patientName} (${rxId})`).catch(() => {});
     }
@@ -185,6 +232,28 @@ export default function PharmacyPage() {
 
           {activeTab === 'inventory' && (
             <>
+              {/* Demo data notice — flagged in code as TODO until pharmacyInventoryDB lands */}
+              <div
+                className="card-elevated px-4 py-3 mb-4 flex items-start gap-3"
+                style={{
+                  background: 'var(--accent-light)',
+                  border: '1px solid var(--accent-border, rgba(43,111,224,0.25))',
+                }}
+              >
+                <Info className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--accent-primary)' }} />
+                <div className="flex-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  <p className="font-semibold mb-0.5" style={{ color: 'var(--text-primary)' }}>
+                    Demo inventory
+                  </p>
+                  <p>
+                    Stock counts shown here are seeded from the medication catalog and are not yet
+                    persisted to a real inventory database. Dispensing a prescription decrements the
+                    matching item locally so you can see the cross-module wiring in action — refreshing
+                    the page resets the baseline.
+                  </p>
+                </div>
+              </div>
+
               <div className="card-elevated p-4 mb-4">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--text-muted)' }} />

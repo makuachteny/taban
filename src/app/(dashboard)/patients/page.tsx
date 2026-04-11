@@ -117,15 +117,9 @@ export default function PatientsPage() {
                     return (
                       <tr key={patient._id} className="cursor-pointer" onClick={() => router.push(`/patients/${patient._id}`)}>
                         <td className="col-patient">
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                              style={{ background: 'var(--accent-primary)' }}>
-                              {(patient.firstName || '?')[0]}{(patient.surname || '?')[0]}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-medium text-sm truncate">{patient.firstName} {patient.surname}</p>
-                              <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{patient.tribe}</p>
-                            </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-sm truncate">{patient.firstName} {patient.surname}</p>
+                            <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{patient.tribe}</p>
                           </div>
                         </td>
                         <td className="col-hospital"><span className="font-mono text-xs whitespace-nowrap" style={{ color: 'var(--accent-primary)' }}>{patient.hospitalNumber}</span></td>

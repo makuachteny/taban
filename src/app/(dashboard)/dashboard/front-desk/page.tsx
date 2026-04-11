@@ -6,6 +6,7 @@ import TopBar from '@/components/TopBar';
 import { useApp } from '@/lib/context';
 import { usePatients } from '@/lib/hooks/usePatients';
 import { useReferrals } from '@/lib/hooks/useReferrals';
+import { formatCompactDateTime as formatAdmittedAt } from '@/lib/format-utils';
 import {
   Users, Calendar, ClipboardCheck, ArrowRightLeft, MessageSquare,
   Activity, UserPlus, Clock, ChevronRight, Shield, Wifi,
@@ -15,18 +16,6 @@ import {
 } from 'lucide-react';
 
 const ACCENT = 'var(--accent-primary)';
-
-/** Format an ISO timestamp as a compact "Mon DD · HH:mm" or just "Mon DD" if no time. */
-function formatAdmittedAt(iso?: string): string {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  const hasTime = /T\d{2}:\d{2}/.test(iso);
-  if (!hasTime) return dateStr;
-  const timeStr = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-  return `${dateStr} · ${timeStr}`;
-}
 
 const EVENT_TYPES = [
   { type: 'arrival', label: 'Patient Arrived', color: '#14B8A6', icon: LogIn },
@@ -39,10 +28,14 @@ const EVENT_TYPES = [
   { type: 'discharge', label: 'Patient Discharged', color: '#38BDF8', icon: FileText },
 ];
 
-const SAMPLE_PATIENTS = [
+/**
+ * Fallback patient names used only when the patient DB hasn't synced yet (cold
+ * start). The dashboard immediately switches to real patient names from the
+ * `usePatients()` hook as soon as data loads.
+ */
+const FALLBACK_PATIENT_NAMES = [
   'Deng Mabior', 'Achol Mayen', 'Nyamal Koang', 'Gatluak Ruot', 'Ayen Dut',
   'Kuol Akot', 'Ladu Tombe', 'Rose Gbudue', 'Majok Chol', 'Nyandit Dut',
-  'Abuk Deng', 'Garang Makuei', 'Awut Makuei', 'Nyandeng Chol', 'Tut Chuol',
 ];
 
 const DEPARTMENTS = ['OPD', 'Emergency', 'Maternity', 'Pediatrics', 'Surgery', 'Pharmacy'];
@@ -136,9 +129,10 @@ interface LiveEvent {
   isNew: boolean;
 }
 
-function generateInitialQueue(): QueueEntry[] {
+function buildQueueFromPatients(names: string[]): QueueEntry[] {
+  const pool = names.length > 0 ? names : FALLBACK_PATIENT_NAMES;
   const now = new Date();
-  return SAMPLE_PATIENTS.slice(0, 10).map((name, i) => {
+  return pool.slice(0, 10).map((name, i) => {
     const complaint = SAMPLE_COMPLAINTS[i % SAMPLE_COMPLAINTS.length];
     const checkIn = new Date(now.getTime() - (10 - i) * 8 * 60000);
     const status: QueueStatus = i < 2 ? 'IN CONSULT' : i < 8 ? 'WAITING' : 'DONE';
@@ -165,8 +159,25 @@ export default function FrontDeskDashboardPage() {
   const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
   const [eventCounter, setEventCounter] = useState(0);
 
-  // Feature 1: Live Queue Board state
-  const [queueEntries, setQueueEntries] = useState<QueueEntry[]>(() => generateInitialQueue());
+  // Real patient name pool (used by queue, live ticker, and any place we
+  // would have shown SAMPLE_PATIENTS).
+  const livePatientNames = useMemo(() => {
+    const names = (patients || [])
+      .map(p => `${p.firstName || ''} ${p.surname || ''}`.trim())
+      .filter(Boolean);
+    return names.length > 0 ? names : FALLBACK_PATIENT_NAMES;
+  }, [patients]);
+
+  // Feature 1: Live Queue Board state — seeded once from real patient names
+  const [queueEntries, setQueueEntries] = useState<QueueEntry[]>(() => buildQueueFromPatients([]));
+  const [queueSeeded, setQueueSeeded] = useState(false);
+  useEffect(() => {
+    // Re-seed once when patients first load so the queue shows real names
+    if (!queueSeeded && livePatientNames.length > 0 && livePatientNames !== FALLBACK_PATIENT_NAMES) {
+      setQueueEntries(buildQueueFromPatients(livePatientNames));
+      setQueueSeeded(true);
+    }
+  }, [livePatientNames, queueSeeded]);
 
   // Feature 2: Walk-in vs Appointment filter
   const [queueFilter, setQueueFilter] = useState<'all' | 'walk-in' | 'appointment'>('all');
@@ -186,12 +197,12 @@ export default function FrontDeskDashboardPage() {
     return {
       id: Date.now() + Math.random(),
       ...evtType,
-      patient: SAMPLE_PATIENTS[Math.floor(Math.random() * SAMPLE_PATIENTS.length)],
+      patient: livePatientNames[Math.floor(Math.random() * livePatientNames.length)],
       department: DEPARTMENTS[Math.floor(Math.random() * DEPARTMENTS.length)],
       time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
       isNew: true,
     };
-  }, []);
+  }, [livePatientNames]);
 
   useEffect(() => {
     const initial: LiveEvent[] = [];
@@ -300,20 +311,20 @@ export default function FrontDeskDashboardPage() {
     )
     .slice(0, 8);
 
-  // Simulated queue data (kept for KPI strip compatibility)
-  const waitingQueue = SAMPLE_PATIENTS.slice(0, 5).map((name, i) => ({
+  // Simulated queue data (kept for KPI strip compatibility) — derived from real patient names
+  const waitingQueue = livePatientNames.slice(0, 5).map((name, i) => ({
     name,
-    waitTime: `${Math.floor(Math.random() * 45) + 5}m`,
+    waitTime: `${10 + i * 8}m`,
     priority: i === 0 ? 'urgent' : i < 2 ? 'normal' : 'routine',
-    dept: DEPARTMENTS[Math.floor(Math.random() * DEPARTMENTS.length)],
+    dept: DEPARTMENTS[i % DEPARTMENTS.length],
   }));
 
-  const upcomingAppointments = SAMPLE_PATIENTS.slice(5, 10).map((name, i) => {
+  const upcomingAppointments = livePatientNames.slice(5, 10).map((name, i) => {
     const hour = 8 + i;
     return {
       name,
-      time: `${hour.toString().padStart(2, '0')}:${(i * 15 % 60).toString().padStart(2, '0')}`,
-      dept: DEPARTMENTS[Math.floor(Math.random() * DEPARTMENTS.length)],
+      time: `${hour.toString().padStart(2, '0')}:${((i * 15) % 60).toString().padStart(2, '0')}`,
+      dept: DEPARTMENTS[(i + 2) % DEPARTMENTS.length],
       status: i < 2 ? 'arrived' : i < 4 ? 'confirmed' : 'pending',
     };
   });
@@ -420,7 +431,6 @@ export default function FrontDeskDashboardPage() {
                   <div key={ref._id} className="rounded-xl overflow-hidden transition-all" style={{
                     background: isEmergency ? '#EF444408' : 'var(--overlay-subtle)',
                     border: isEmergency ? '1px solid #EF444430' : '1px solid var(--border-light)',
-                    borderLeft: `3px solid ${urgencyColor}`,
                   }}>
                     <div className="flex items-center gap-3 p-3">
                       <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
@@ -580,7 +590,7 @@ export default function FrontDeskDashboardPage() {
                 </span>
               </div>
               <button
-                onClick={() => setQueueEntries(generateInitialQueue())}
+                onClick={() => setQueueEntries(buildQueueFromPatients(livePatientNames))}
                 className="p-1 rounded-md transition-all"
                 style={{ background: 'var(--overlay-subtle)' }}
                 title="Refresh queue"
@@ -751,7 +761,6 @@ export default function FrontDeskDashboardPage() {
                     style={{
                       background: 'var(--overlay-subtle)',
                       border: `1px solid var(--border-light)`,
-                      borderLeft: `3px solid ${pColor}`,
                     }}>
                     <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
                       style={{ background: 'var(--accent-primary)' }}>

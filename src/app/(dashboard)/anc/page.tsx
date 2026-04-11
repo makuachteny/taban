@@ -3,8 +3,11 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import TopBar from '@/components/TopBar';
+import EmptyState from '@/components/EmptyState';
 import { useANC } from '@/lib/hooks/useANC';
+import { usePatients } from '@/lib/hooks/usePatients';
 import { useApp } from '@/lib/context';
+import { usePermissions } from '@/lib/hooks/usePermissions';
 import {
   HeartPulse, Search, Plus, X, Users, AlertTriangle,
   Calendar, Activity, ChevronRight, ExternalLink,
@@ -25,10 +28,13 @@ const riskColors = {
 export default function ANCPage() {
   const { currentUser } = useApp();
   const { visits, stats, loading, register } = useANC();
+  const { patients } = usePatients();
+  const { canRecordVitalEvents } = usePermissions();
   const [search, setSearch] = useState('');
   const [riskFilter, setRiskFilter] = useState<string>('all');
   const [showModal, setShowModal] = useState(false);
   const [selectedMother, setSelectedMother] = useState<string | null>(null);
+  const [patientLookup, setPatientLookup] = useState('');
 
   const [form, setForm] = useState({
     motherId: '', motherName: '', motherAge: 25, gravida: 1, parity: 0,
@@ -41,6 +47,38 @@ export default function ANCPage() {
     birthPlanFacility: '', birthPlanTransport: '', birthPlanBloodDonor: '',
     nextVisitDate: '', notes: '',
   });
+  const [linkedPatientId, setLinkedPatientId] = useState<string | undefined>(undefined);
+
+  // Filter to female patients of childbearing age (10-55) for the lookup
+  const patientMatches = useMemo(() => {
+    if (!patientLookup || patientLookup.length < 2) return [];
+    const q = patientLookup.toLowerCase();
+    return (patients || [])
+      .filter(p => {
+        if (p.gender !== 'Female') return false;
+        const age = p.estimatedAge ?? (p.dateOfBirth ? new Date().getFullYear() - new Date(p.dateOfBirth).getFullYear() : 0);
+        if (age < 10 || age > 55) return false;
+        return (
+          `${p.firstName} ${p.surname}`.toLowerCase().includes(q) ||
+          (p.hospitalNumber || '').toLowerCase().includes(q)
+        );
+      })
+      .slice(0, 6);
+  }, [patientLookup, patients]);
+
+  const selectAncPatient = (id: string) => {
+    const p = patients.find(x => x._id === id);
+    if (!p) return;
+    const age = p.estimatedAge ?? (p.dateOfBirth ? new Date().getFullYear() - new Date(p.dateOfBirth).getFullYear() : form.motherAge);
+    setLinkedPatientId(p._id);
+    setForm(f => ({
+      ...f,
+      motherId: p._id, // re-use patient id so birth-service linkage works
+      motherName: `${p.firstName || ''} ${p.surname || ''}`.trim(),
+      motherAge: age || f.motherAge,
+    }));
+    setPatientLookup('');
+  };
 
   // Group visits by mother — get latest visit for each
   const motherSummaries = useMemo(() => {
@@ -110,8 +148,11 @@ export default function ANCPage() {
       notes: form.notes,
       attendedBy: currentUser?.name || '',
       attendedByRole: currentUser?.role || 'doctor',
+      patientId: linkedPatientId,
     });
     setShowModal(false);
+    setLinkedPatientId(undefined);
+    setPatientLookup('');
   };
 
   if (loading) {
@@ -151,9 +192,11 @@ export default function ANCPage() {
               </div>
             </div>
           </div>
-          <button onClick={() => setShowModal(true)} className="btn btn-primary">
-            <Plus className="w-4 h-4" /> Register Visit
-          </button>
+          {canRecordVitalEvents && (
+            <button onClick={() => setShowModal(true)} className="btn btn-primary">
+              <Plus className="w-4 h-4" /> Register Visit
+            </button>
+          )}
         </div>
 
         {/* Stats Row */}
@@ -259,10 +302,14 @@ export default function ANCPage() {
                 );
               })}
               {filteredMothers.length === 0 && (
-                <div className="p-8 text-center">
-                  <HeartPulse className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--text-muted)', opacity: 0.3 }} />
-                  <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No mothers found</p>
-                </div>
+                <EmptyState
+                  icon={HeartPulse}
+                  title={search ? 'No matching mothers' : 'No ANC visits yet'}
+                  message={search
+                    ? 'Try a different search term, or clear the search to see all enrolled mothers.'
+                    : 'Start enrolling pregnant mothers in antenatal care. Track gestational age, vitals, risk factors, and birth plans across all 8 WHO-recommended visits.'}
+                  action={!search && canRecordVitalEvents ? { label: 'Register ANC visit', onClick: () => setShowModal(true) } : undefined}
+                />
               )}
             </div>
           </div>
@@ -361,6 +408,60 @@ export default function ANCPage() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
+                {/* Link to existing patient (recommended) */}
+                <div className="rounded-lg p-3" style={{ background: 'var(--accent-light)', border: '1px solid var(--accent-border, rgba(43,111,224,0.25))' }}>
+                  <label className="text-xs font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5" style={{ color: 'var(--accent-primary)', textTransform: 'uppercase' }}>
+                    <Users className="w-3 h-3" />
+                    Link to existing mother (recommended)
+                  </label>
+                  {linkedPatientId ? (
+                    (() => {
+                      const lp = patients.find(p => p._id === linkedPatientId);
+                      return (
+                        <div className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+                          <div className="text-xs">
+                            <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{lp?.firstName} {lp?.surname}</p>
+                            <p style={{ color: 'var(--text-muted)' }}>{lp?.hospitalNumber}{lp?.estimatedAge ? ` · ${lp.estimatedAge}y` : ''}</p>
+                          </div>
+                          <button type="button" onClick={() => { setLinkedPatientId(undefined); setForm(f => ({ ...f, motherId: '' })); }} className="text-[10px] font-semibold" style={{ color: 'var(--accent-primary)' }}>Unlink</button>
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={patientLookup}
+                          onChange={e => setPatientLookup(e.target.value)}
+                          placeholder="Search female patient by name or hospital number…"
+                          className="w-full text-xs p-2 rounded-lg outline-none"
+                          style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+                        />
+                      </div>
+                      {patientMatches.length > 0 && (
+                        <div className="mt-1.5 rounded-lg overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+                          {patientMatches.map(p => (
+                            <button
+                              key={p._id}
+                              type="button"
+                              onClick={() => selectAncPatient(p._id)}
+                              className="w-full px-2.5 py-2 text-left text-xs hover:bg-[var(--overlay-subtle)] transition-colors"
+                              style={{ borderBottom: '1px solid var(--border-light)' }}
+                            >
+                              <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{p.firstName} {p.surname}</p>
+                              <p style={{ color: 'var(--text-muted)' }}>{p.hospitalNumber}{p.estimatedAge ? ` · ${p.estimatedAge}y` : ''}</p>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      <p className="text-[10px] mt-1.5" style={{ color: 'var(--text-muted)' }}>
+                        Linking lets the system flag the mother as &ldquo;Delivered&rdquo; once a birth is registered for her.
+                      </p>
+                    </>
+                  )}
+                </div>
+
                 {/* Mother Info */}
                 <div className="p-3 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
                   <p className="text-xs font-semibold mb-3 uppercase tracking-wider" style={{ color: 'var(--accent-primary)' }}>Mother Information</p>

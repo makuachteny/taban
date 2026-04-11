@@ -1,12 +1,37 @@
-import PouchDB from 'pouchdb-browser';
-import PouchDBFind from 'pouchdb-find';
+// pouchdb-browser references `self` at import time, which crashes SSR. Gate
+// all PouchDB usage behind a runtime browser check and lazy-load the module
+// so Next.js server rendering never evaluates the browser-only package.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type PouchDBCtor = any;
+type PouchDatabase = PouchDB.Database;
 
-PouchDB.plugin(PouchDBFind);
+let PouchDBRef: PouchDBCtor | null = null;
+const databases: Record<string, PouchDatabase> = {};
 
-const databases: Record<string, PouchDB.Database> = {};
+function loadPouchDB(): PouchDBCtor {
+  if (typeof window === 'undefined') {
+    throw new Error('PouchDB cannot be used during server-side rendering');
+  }
+  if (!PouchDBRef) {
+    // `require` keeps the dependency out of the SSR bundle evaluation path —
+    // webpack only resolves it when loadPouchDB() is actually called on the
+    // client. `import()` would be cleaner but would make getDB() async and
+    // break every existing synchronous caller.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const PouchDBModule = require('pouchdb-browser');
+    const PouchDB = PouchDBModule.default || PouchDBModule;
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const PouchDBFindModule = require('pouchdb-find');
+    const PouchDBFind = PouchDBFindModule.default || PouchDBFindModule;
+    PouchDB.plugin(PouchDBFind);
+    PouchDBRef = PouchDB;
+  }
+  return PouchDBRef;
+}
 
-export function getDB(name: string): PouchDB.Database {
+export function getDB(name: string): PouchDatabase {
   if (!databases[name]) {
+    const PouchDB = loadPouchDB();
     databases[name] = new PouchDB(name, { auto_compaction: true });
   }
   return databases[name];
@@ -15,16 +40,18 @@ export function getDB(name: string): PouchDB.Database {
 /**
  * Get a PouchDB instance pointing at the remote CouchDB server.
  * Useful for direct server queries or one-off replication outside the sync manager.
- * Returns null if sync is not enabled.
+ * Returns null if sync is not enabled or called during SSR.
  */
-const remoteDatabases: Record<string, PouchDB.Database> = {};
+const remoteDatabases: Record<string, PouchDatabase> = {};
 
-export function getRemoteDB(name: string): PouchDB.Database | null {
+export function getRemoteDB(name: string): PouchDatabase | null {
+  if (typeof window === 'undefined') return null;
   const syncEnabled = process.env.NEXT_PUBLIC_SYNC_ENABLED === 'true';
   const couchdbUrl = process.env.NEXT_PUBLIC_COUCHDB_URL;
   if (!syncEnabled || !couchdbUrl) return null;
 
   if (!remoteDatabases[name]) {
+    const PouchDB = loadPouchDB();
     const url = `${couchdbUrl.replace(/\/+$/, '')}/${name}`;
     remoteDatabases[name] = new PouchDB(url, { skip_setup: true });
   }
@@ -87,6 +114,8 @@ export async function markSeeded(): Promise<void> {
 
 // Reset all databases (useful for debugging)
 export async function resetAllDatabases(): Promise<void> {
+  if (typeof window === 'undefined') return;
+  const PouchDB = loadPouchDB();
   const dbNames = [
     'taban_users', 'taban_patients', 'taban_hospitals',
     'taban_medical_records', 'taban_referrals', 'taban_lab_results',

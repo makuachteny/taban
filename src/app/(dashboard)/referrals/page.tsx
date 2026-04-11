@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import TopBar from '@/components/TopBar';
+import EmptyState from '@/components/EmptyState';
 import {
   ArrowRightLeft, Plus, Send, Eye, CheckCircle2, Clock,
   AlertTriangle, ChevronDown, ChevronUp, X, Building2,
@@ -16,6 +17,7 @@ import { useReferrals } from '@/lib/hooks/useReferrals';
 import { useHospitals } from '@/lib/hooks/useHospitals';
 import { usePatients } from '@/lib/hooks/usePatients';
 import { useApp } from '@/lib/context';
+import { usePermissions } from '@/lib/hooks/usePermissions';
 import { useToast } from '@/components/Toast';
 import FileUpload from '@/components/FileUpload';
 import type { Attachment, TransferPackage } from '@/data/mock';
@@ -39,6 +41,7 @@ export default function ReferralsPage() {
   const { hospitals } = useHospitals();
   const { patients } = usePatients();
   const { currentUser, globalSearch } = useApp();
+  const { canManageReferrals } = usePermissions();
   const OUR_HOSPITAL_ID = currentUser?.hospitalId || '';
 
   const [activeTab, setActiveTab] = useState<'incoming' | 'outgoing'>('incoming');
@@ -525,16 +528,18 @@ export default function ReferralsPage() {
               </div>
               <p className="page-header__subtitle">Manage incoming and outgoing patient referrals</p>
             </div>
-            <button
-              onClick={() => setShowNewReferral(!showNewReferral)}
-              className="btn btn-primary"
-            >
-              {showNewReferral ? (
-                <><X className="w-4 h-4" /> Cancel</>
-              ) : (
-                <><Plus className="w-4 h-4" /> New Referral</>
-              )}
-            </button>
+            {canManageReferrals && (
+              <button
+                onClick={() => setShowNewReferral(!showNewReferral)}
+                className="btn btn-primary"
+              >
+                {showNewReferral ? (
+                  <><X className="w-4 h-4" /> Cancel</>
+                ) : (
+                  <><Plus className="w-4 h-4" /> New Referral</>
+                )}
+              </button>
+            )}
           </div>
 
           {/* Summary Stats */}
@@ -755,14 +760,15 @@ export default function ReferralsPage() {
           {/* Referrals List */}
           <div className="space-y-3">
             {filteredReferrals.length === 0 ? (
-              <div className="card-elevated flex flex-col items-center justify-center py-16">
-                <ArrowRightLeft className="w-12 h-12 mb-3" style={{ color: 'var(--border-medium)' }} />
-                <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                  No {activeTab} referrals found
-                </p>
-                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                  {activeTab === 'outgoing' ? 'Create a new referral to get started' : 'Incoming referrals will appear here'}
-                </p>
+              <div className="card-elevated">
+                <EmptyState
+                  icon={ArrowRightLeft}
+                  title={activeTab === 'outgoing' ? 'No outgoing referrals' : 'No incoming referrals'}
+                  message={activeTab === 'outgoing'
+                    ? 'Refer patients to specialists or higher-level facilities. Each referral packages the patient\u2019s history for the receiving team.'
+                    : 'Referrals from other facilities will land here for review and acceptance.'}
+                  action={activeTab === 'outgoing' ? { label: 'Create referral', onClick: () => setShowNewReferral(true) } : undefined}
+                />
               </div>
             ) : (
               filteredReferrals.map(ref => {
@@ -811,7 +817,7 @@ export default function ReferralsPage() {
                           <Eye className="w-3.5 h-3.5" />
                           {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                         </button>
-                        {activeTab === 'incoming' && (ref.status === 'sent' || ref.status === 'received') && (
+                        {canManageReferrals && activeTab === 'incoming' && (ref.status === 'sent' || ref.status === 'received') && (
                           <>
                             <button
                               className="btn btn-success btn-sm"
@@ -840,7 +846,7 @@ export default function ReferralsPage() {
                             </button>
                           </>
                         )}
-                        {activeTab === 'incoming' && ref.status === 'seen' && (
+                        {canManageReferrals && activeTab === 'incoming' && ref.status === 'seen' && (
                           <button
                             className="btn btn-sm"
                             title="Mark referral as completed with outcome notes"
@@ -851,7 +857,7 @@ export default function ReferralsPage() {
                             Mark Complete
                           </button>
                         )}
-                        {ref.status !== 'cancelled' && (
+                        {canManageReferrals && ref.status !== 'cancelled' && (
                           <button
                             className="btn btn-secondary btn-sm"
                             title="Add a note to this referral"

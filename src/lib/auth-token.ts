@@ -1,16 +1,39 @@
 import { SignJWT, jwtVerify } from 'jose';
 
-// NEXT_PUBLIC_ prefix makes the secret available in the browser bundle.
-// This is required because this offline-first app creates JWTs client-side.
-const secret = process.env.NEXT_PUBLIC_JWT_SECRET || process.env.JWT_SECRET || 'taban-south-sudan-health-2026-secret-key';
+// Server-side secret (never leaves Node). All authoritative token creation and
+// verification runs server-side, so the client never needs the signing key.
+// NOTE: NEXT_PUBLIC_JWT_SECRET is still read as a last-resort fallback so the
+// offline client can verify self-issued dev tokens, but the server refuses to
+// start with a default secret in production.
+const HARDCODED_FALLBACK = 'taban-south-sudan-health-2026-secret-key';
+const secret =
+  process.env.JWT_SECRET ||
+  process.env.NEXT_PUBLIC_JWT_SECRET ||
+  HARDCODED_FALLBACK;
+
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+const IS_SERVER = typeof window === 'undefined';
+
+if (IS_SERVER && IS_PRODUCTION && secret === HARDCODED_FALLBACK) {
+  // Fail loudly instead of silently running with a public default. Any
+  // production deploy MUST set JWT_SECRET (at least 32 bytes of entropy).
+  throw new Error(
+    '[SECURITY] JWT_SECRET environment variable must be set in production. ' +
+    'Refusing to start with the default fallback secret.'
+  );
+}
+
+if (IS_SERVER && IS_PRODUCTION && secret.length < 32) {
+  throw new Error(
+    '[SECURITY] JWT_SECRET must be at least 32 characters in production ' +
+    `(got ${secret.length}). Generate one with: openssl rand -hex 32`
+  );
+}
+
 const JWT_SECRET = new TextEncoder().encode(secret);
 
 const JWT_ISSUER = 'taban';
 const JWT_AUDIENCE = 'taban-web';
-
-if (typeof window === 'undefined' && secret === 'taban-south-sudan-health-2026-secret-key' && process.env.NODE_ENV === 'production') {
-  console.warn('[SECURITY] JWT secret not set. Set NEXT_PUBLIC_JWT_SECRET environment variable for production.');
-}
 
 /**
  * Check if Web Crypto API is available.
@@ -22,11 +45,15 @@ function hasCryptoSubtle(): boolean {
 }
 
 /**
- * Fallback token for non-secure contexts (development only).
+ * Fallback token for non-secure contexts (DEVELOPMENT ONLY).
  * Uses base64-encoded JSON — NOT cryptographically secure.
- * In production, always use HTTPS so jose/crypto.subtle works.
+ * In production this path is refused: we fail closed rather than accept
+ * unsigned tokens on the wire.
  */
 function createFallbackToken(payload: Record<string, unknown>): string {
+  if (IS_PRODUCTION) {
+    throw new Error('[SECURITY] Refusing to issue unsigned fallback token in production');
+  }
   const header = btoa(JSON.stringify({ alg: 'none', typ: 'JWT' }));
   const body = btoa(JSON.stringify({
     ...payload,
@@ -39,6 +66,10 @@ function createFallbackToken(payload: Record<string, unknown>): string {
 }
 
 function verifyFallbackToken(token: string): Record<string, unknown> | null {
+  // Refuse unsigned tokens in production. The only way a token carrying the
+  // literal "dev-fallback" signature could reach a production verifier is
+  // token forgery, so reject unconditionally.
+  if (IS_PRODUCTION) return null;
   try {
     const parts = token.split('.');
     if (parts.length !== 3 || parts[2] !== 'dev-fallback') return null;

@@ -3,18 +3,31 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
-import { FlaskConical, Clock, CheckCircle2, AlertTriangle, Search } from 'lucide-react';
+import { FlaskConical, Clock, CheckCircle2, AlertTriangle, Search, X } from 'lucide-react';
 import { useLabResults } from '@/lib/hooks/useLabResults';
 import { useApp } from '@/lib/context';
 import { usePermissions } from '@/lib/hooks/usePermissions';
+
+interface ResultDraft {
+  orderId: string;
+  patientName: string;
+  testName: string;
+  result: string;
+  unit: string;
+  referenceRange: string;
+  abnormal: boolean;
+  critical: boolean;
+}
 
 export default function LabPage() {
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const { globalSearch } = useApp();
-  const { results: labResults, update: updateLabResult } = useLabResults();
+  const { results: labResults, update: updateLabResult, loading: labLoading } = useLabResults();
   const { canEnterLabResults } = usePermissions();
   const router = useRouter();
+  const [resultDraft, setResultDraft] = useState<ResultDraft | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const filtered = labResults.filter(o => {
     const q = search || globalSearch;
@@ -28,12 +41,38 @@ export default function LabPage() {
   const completed = labResults.filter(o => o.status === 'completed').length;
   const abnormal = labResults.filter(o => o.abnormal).length;
 
+  const submitResult = async () => {
+    if (!resultDraft || !resultDraft.result.trim()) return;
+    setSubmitting(true);
+    try {
+      await updateLabResult(resultDraft.orderId, {
+        status: 'completed',
+        result: resultDraft.result.trim(),
+        unit: resultDraft.unit.trim(),
+        referenceRange: resultDraft.referenceRange.trim(),
+        abnormal: resultDraft.abnormal,
+        critical: resultDraft.critical,
+        completedAt: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+      });
+      setResultDraft(null);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <>
       <TopBar title="Laboratory" />
       <main className="page-container page-enter">
           <h1 className="text-xl font-semibold mb-1">Laboratory Information System</h1>
           <p className="text-sm mb-5" style={{ color: 'var(--text-muted)' }}>Manage lab orders, track specimens, and view results</p>
+
+          {labLoading && (
+            <div className="card-elevated p-4 mb-4 flex items-center gap-3" style={{ background: 'var(--overlay-subtle)' }}>
+              <div className="w-4 h-4 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--accent-primary)', borderTopColor: 'transparent' }} />
+              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Loading lab orders…</span>
+            </div>
+          )}
 
           {/* Stats */}
           <div className="kpi-grid mb-4">
@@ -86,6 +125,127 @@ export default function LabPage() {
             </div>
           </div>
 
+          {/* Result Entry Modal */}
+          {resultDraft && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center"
+              style={{ background: 'rgba(0,0,0,0.55)', padding: 24 }}
+              onClick={(e) => { if (e.target === e.currentTarget && !submitting) setResultDraft(null); }}
+            >
+              <div
+                className="card-elevated"
+                style={{
+                  width: '100%', maxWidth: 520, padding: 28, borderRadius: 16,
+                  background: 'var(--bg-card)', position: 'relative',
+                  boxShadow: '0 24px 64px rgba(0,0,0,0.25), 0 8px 24px rgba(0,0,0,0.1)',
+                  maxHeight: '90vh', overflowY: 'auto',
+                }}
+              >
+                <button
+                  onClick={() => !submitting && setResultDraft(null)}
+                  className="absolute"
+                  style={{ top: 14, right: 14, width: 30, height: 30, borderRadius: 6, background: 'var(--overlay-subtle)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}
+                  title="Close"
+                  disabled={submitting}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'var(--accent-light)' }}>
+                    <FlaskConical className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>Enter Lab Result</h3>
+                    <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>{resultDraft.testName} · {resultDraft.patientName}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3 mt-5">
+                  <div>
+                    <label className="text-[11px] font-semibold uppercase tracking-wider mb-1.5 block" style={{ color: 'var(--text-muted)' }}>Result *</label>
+                    <input
+                      type="text"
+                      autoFocus
+                      value={resultDraft.result}
+                      onChange={(e) => setResultDraft({ ...resultDraft, result: e.target.value })}
+                      placeholder="e.g. 12.4"
+                      className="w-full p-2.5 rounded-lg outline-none text-sm"
+                      style={{
+                        background: 'var(--overlay-subtle)',
+                        border: '1px solid var(--border-light)',
+                        color: 'var(--text-primary)',
+                      }}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[11px] font-semibold uppercase tracking-wider mb-1.5 block" style={{ color: 'var(--text-muted)' }}>Unit</label>
+                      <input
+                        type="text"
+                        value={resultDraft.unit}
+                        onChange={(e) => setResultDraft({ ...resultDraft, unit: e.target.value })}
+                        placeholder="e.g. mg/dL"
+                        className="w-full p-2.5 rounded-lg outline-none text-sm"
+                        style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-semibold uppercase tracking-wider mb-1.5 block" style={{ color: 'var(--text-muted)' }}>Reference Range</label>
+                      <input
+                        type="text"
+                        value={resultDraft.referenceRange}
+                        onChange={(e) => setResultDraft({ ...resultDraft, referenceRange: e.target.value })}
+                        placeholder="e.g. 7-10"
+                        className="w-full p-2.5 rounded-lg outline-none text-sm"
+                        style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 pt-1">
+                    <label className="flex items-center gap-2 text-xs cursor-pointer" style={{ color: 'var(--text-secondary)' }}>
+                      <input
+                        type="checkbox"
+                        checked={resultDraft.abnormal}
+                        onChange={(e) => setResultDraft({ ...resultDraft, abnormal: e.target.checked, critical: e.target.checked ? resultDraft.critical : false })}
+                      />
+                      Abnormal
+                    </label>
+                    <label className="flex items-center gap-2 text-xs cursor-pointer" style={{ color: 'var(--text-secondary)', opacity: resultDraft.abnormal ? 1 : 0.5 }}>
+                      <input
+                        type="checkbox"
+                        checked={resultDraft.critical}
+                        disabled={!resultDraft.abnormal}
+                        onChange={(e) => setResultDraft({ ...resultDraft, critical: e.target.checked })}
+                      />
+                      Critical
+                    </label>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 mt-6 pt-4" style={{ borderTop: '1px solid var(--border-light)' }}>
+                  <button
+                    onClick={() => setResultDraft(null)}
+                    disabled={submitting}
+                    className="btn btn-secondary btn-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={submitResult}
+                    disabled={submitting || !resultDraft.result.trim()}
+                    className="btn btn-primary btn-sm"
+                    style={{ opacity: submitting || !resultDraft.result.trim() ? 0.6 : 1 }}
+                  >
+                    {submitting ? 'Saving…' : 'Save Result'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Lab Orders Table */}
           <div className="card-elevated overflow-hidden">
             <table className="data-table">
@@ -137,23 +297,26 @@ export default function LabPage() {
                       )}
                     </td>
                     {canEnterLabResults && (
-                      <td>
+                      <td onClick={(e) => e.stopPropagation()}>
                         {order.status === 'pending' && (
                           <button className="btn btn-primary btn-sm" style={{ padding: '4px 12px', fontSize: '0.75rem' }}
                             onClick={() => updateLabResult(order._id, { status: 'in_progress' })}>Accept</button>
                         )}
                         {order.status === 'in_progress' && (
                           <button className="btn btn-primary btn-sm" style={{ padding: '4px 12px', fontSize: '0.75rem', background: 'var(--accent-primary)' }}
-                            onClick={() => {
-                              const result = prompt('Enter lab result:');
-                              if (result) {
-                                updateLabResult(order._id, {
-                                  status: 'completed',
-                                  result,
-                                  completedAt: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-                                });
-                              }
-                            }}>Enter Result</button>
+                            onClick={() => setResultDraft({
+                              orderId: order._id,
+                              patientName: order.patientName || '',
+                              testName: order.testName || '',
+                              result: '',
+                              unit: order.unit || '',
+                              referenceRange: order.referenceRange || '',
+                              abnormal: false,
+                              critical: false,
+                            })}
+                          >
+                            Enter Result
+                          </button>
                         )}
                       </td>
                     )}

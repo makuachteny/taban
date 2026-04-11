@@ -1,14 +1,17 @@
 import { immunizationsDB } from '../db';
 import type { ImmunizationDoc } from '../db-types';
 import { v4 as uuidv4 } from 'uuid';
+import type { DataScope } from './data-scope';
+import { filterByScope } from './data-scope';
 
-export async function getAllImmunizations(): Promise<ImmunizationDoc[]> {
+export async function getAllImmunizations(scope?: DataScope): Promise<ImmunizationDoc[]> {
   const db = immunizationsDB();
   const result = await db.allDocs({ include_docs: true });
-  return result.rows
+  const all = result.rows
     .map(r => r.doc as ImmunizationDoc)
     .filter(d => d && d.type === 'immunization')
     .sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
+  return scope ? filterByScope(all, scope) : all;
 }
 
 export async function getByPatient(patientId: string): Promise<ImmunizationDoc[]> {
@@ -67,8 +70,8 @@ export async function deleteImmunization(id: string): Promise<boolean> {
   }
 }
 
-export async function getImmunizationStats() {
-  const all = await getAllImmunizations();
+export async function getImmunizationStats(scope?: DataScope) {
+  const all = await getAllImmunizations(scope);
   const completed = all.filter(i => i.status === 'completed');
   const overdue = all.filter(i => i.status === 'overdue');
   const scheduled = all.filter(i => i.status === 'scheduled');
@@ -215,8 +218,8 @@ export async function getDefaulterStats() {
   };
 }
 
-export async function getVaccineCoverage() {
-  const all = await getAllImmunizations();
+export async function getVaccineCoverage(scope?: DataScope) {
+  const all = await getAllImmunizations(scope);
   const completed = all.filter(i => i.status === 'completed');
   const childIds = new Set(all.map(i => i.patientId));
   const totalChildren = childIds.size;

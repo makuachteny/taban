@@ -10,29 +10,18 @@ import {
   Pill, Activity, Brain, ChevronDown, ChevronUp,
   ShieldAlert, TestTubes, MessageSquare, ChevronRight,
   CalendarClock, UserPlus, TrendingUp as TrendingUpIcon, ClipboardList,
-  User as UserIcon, Building2, Search, X,
+  User as UserIcon, Building2, Search, X, Printer,
 } from 'lucide-react';
 import { usePatients } from '@/lib/hooks/usePatients';
 import { useMedicalRecords } from '@/lib/hooks/useMedicalRecords';
 import { useHospitals } from '@/lib/hooks/useHospitals';
 import { usePatientReferrals } from '@/lib/hooks/useReferrals';
+import { useLabResults } from '@/lib/hooks/useLabResults';
+import { useImmunizations } from '@/lib/hooks/useImmunizations';
 import { Package, Clock, Building2 as Building2Icon } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import VitalsTrends from '@/components/VitalsTrends';
-
-/** Format an ISO timestamp as "Mon DD, YYYY at HH:mm". Falls back to the raw
- *  string if parsing fails. If only a date (no time) is provided, returns the
- *  date alone. */
-function formatDateTime(iso?: string): string {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  const hasTime = /T\d{2}:\d{2}/.test(iso);
-  const dateStr = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-  if (!hasTime) return dateStr;
-  const timeStr = d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-  return `${dateStr} at ${timeStr}`;
-}
+import { formatDateTime } from '@/lib/format-utils';
 
 export default function PatientDetailPage({ params }: { params: { id: string } }) {
   const { id } = params;
@@ -54,6 +43,8 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
   const patient = patients.find(p => p._id === id);
   const { records } = useMedicalRecords(patient?._id);
   const { referrals: patientReferrals } = usePatientReferrals(patient?._id);
+  const { results: allLabResults } = useLabResults();
+  const { immunizations: allImmunizations } = useImmunizations();
 
   // ── Filtered Full History ──────────────────────────────────────────────
   const filteredHistory = useMemo(() => {
@@ -106,6 +97,13 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
   const age = patient.estimatedAge || (patient.dateOfBirth ? (new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear()) : 0);
   const regHospital = hospitals.find(h => h._id === patient.registrationHospital);
 
+  // Counts for the "Related Records" sidebar card
+  const consultationsCount = records.length;
+  const activeReferralsCount = (patientReferrals || []).filter(r => r.status !== 'completed' && r.status !== 'cancelled').length;
+  const labOrdersCount = (allLabResults || []).filter(r => r.patientId === patient._id).length;
+  const immunizationsCount = (allImmunizations || []).filter(i => i.patientId === patient._id).length;
+  const prescriptionsCount = records.reduce((sum, r) => sum + (r.prescriptions?.length || 0), 0);
+
   const tabs = [
     { id: 'overview', label: t('tab.overview'), icon: Heart },
     { id: 'trends', label: 'Trends', icon: TrendingUpIcon },
@@ -131,37 +129,77 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
 
   return (
     <>
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media print {
+          .no-print, .no-print * { display: none !important; }
+          body { background: #fff !important; color: #000 !important; }
+          .card-elevated { box-shadow: none !important; border: 1px solid #ccc !important; page-break-inside: avoid; }
+          .page-container { padding: 0 !important; max-width: 100% !important; }
+          .badge { border: 1px solid #ccc !important; background: #fff !important; color: #000 !important; }
+          a, button { color: inherit !important; }
+          @page { margin: 12mm; }
+        }
+      ` }} />
       <TopBar title="Patient Record" />
       <main className="page-container page-enter">
-          <button onClick={() => router.push('/patients')} className="flex items-center gap-1.5 text-sm mb-4" style={{ color: 'var(--taban-blue)' }}>
+          <button onClick={() => router.push('/patients')} className="flex items-center gap-1.5 text-sm mb-4 no-print" style={{ color: 'var(--taban-blue)' }}>
             <ArrowLeft className="w-4 h-4" /> {t('action.back')}
           </button>
 
           {/* Patient Header */}
-          <div className="card-elevated px-5 py-4 mb-5">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-lg flex items-center justify-center text-base font-bold text-white flex-shrink-0"
-                style={{ background: patient.gender === 'Male' ? 'var(--taban-blue)' : 'var(--taban-sky)' }}>
-                {(patient.firstName || '?')[0]}{(patient.surname || '?')[0]}
-              </div>
+          <div className="card-elevated px-5 py-4 mb-5 relative overflow-hidden">
+            <div className="flex items-start gap-4">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2.5">
-                  <h1 className="text-lg font-semibold truncate">
+                {/* Name + hospital number */}
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <h1 className="text-xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
                     {patient.firstName} {patient.middleName} {patient.surname}
                   </h1>
-                  <span className="font-mono text-[11px] px-2 py-0.5 rounded flex-shrink-0" style={{ background: 'var(--accent-light)', color: 'var(--taban-blue)' }}>
+                  <span
+                    className="font-mono text-[11px] px-2 py-0.5 rounded-md flex-shrink-0"
+                    style={{ background: 'var(--accent-light)', color: 'var(--taban-blue)', fontWeight: 600 }}
+                  >
                     {patient.hospitalNumber}
                   </span>
+                </div>
+
+                {/* Demographics chips */}
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  <span
+                    className="inline-flex items-center text-[11px] px-2 py-0.5 rounded-full font-medium"
+                    style={{ background: 'var(--overlay-subtle)', color: 'var(--text-secondary)' }}
+                  >
+                    {age} yrs
+                  </span>
+                  <span
+                    className="inline-flex items-center text-[11px] px-2 py-0.5 rounded-full font-medium"
+                    style={{
+                      background: patient.gender === 'Male' ? 'rgba(43,111,224,0.10)' : 'rgba(236,72,153,0.10)',
+                      color: patient.gender === 'Male' ? 'var(--taban-blue)' : '#BE185D',
+                    }}
+                  >
+                    {patient.gender}
+                  </span>
+                  {patient.state && (
+                    <span
+                      className="inline-flex items-center text-[11px] px-2 py-0.5 rounded-full font-medium"
+                      style={{ background: 'var(--overlay-subtle)', color: 'var(--text-secondary)' }}
+                    >
+                      {patient.state}
+                    </span>
+                  )}
                   {patient.allergies?.length > 0 && patient.allergies[0] !== 'None known' && (
                     <span className="badge badge-emergency text-[10px] flex-shrink-0">
                       <AlertTriangle className="w-3 h-3" /> Allergy: {patient.allergies.join(', ')}
                     </span>
                   )}
                 </div>
-                <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-                  {age} years · {patient.gender}
-                </p>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-[11px]" style={{ color: 'var(--text-muted)' }}>
+
+                {/* Timeline meta */}
+                <div
+                  className="flex flex-wrap gap-x-4 gap-y-1 mt-3 pt-3 border-t text-[11px]"
+                  style={{ color: 'var(--text-muted)', borderColor: 'var(--border-light)' }}
+                >
                   <span className="flex items-center gap-1">
                     <UserPlus className="w-3 h-3" />
                     <span>Registered: <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>{registeredAtDisplay}</span></span>
@@ -174,7 +212,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                   </span>
                 </div>
               </div>
-              <div className="flex gap-2 flex-shrink-0">
+              <div className="flex gap-2 flex-shrink-0 no-print">
                 <button onClick={() => router.push(`/consultation?patientId=${patient._id}`)} className="btn btn-primary btn-sm">
                   <Stethoscope className="w-4 h-4" /> {t('action.newConsultation')}
                 </button>
@@ -184,12 +222,19 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                 <button onClick={() => router.push('/referrals')} className="btn btn-secondary btn-sm">
                   <ArrowRightLeft className="w-4 h-4" /> {t('action.refer')}
                 </button>
+                <button
+                  onClick={() => { if (typeof window !== 'undefined') window.print(); }}
+                  className="btn btn-secondary btn-sm"
+                  title="Print patient summary"
+                >
+                  <Printer className="w-4 h-4" /> Print
+                </button>
               </div>
             </div>
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-0 border-b mb-5" style={{ borderColor: 'var(--border-light)' }}>
+          <div className="flex gap-0 border-b mb-5 no-print" style={{ borderColor: 'var(--border-light)' }}>
             {tabs.map(tab => (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${activeTab === tab.id ? 'tab-active' : ''}`}
@@ -544,6 +589,76 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
 
               {/* Sidebar info */}
               <div className="space-y-5">
+                {/* ── Related Records (deep links) ── */}
+                <div className="card-elevated">
+                  <div className="px-5 py-3 border-b flex items-center gap-2" style={{ borderColor: 'var(--border-light)' }}>
+                    <ClipboardList className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
+                    <h3 className="font-semibold text-sm">Related Records</h3>
+                  </div>
+                  <div className="p-3 space-y-1">
+                    {[
+                      {
+                        icon: FileText,
+                        label: 'Past Consultations',
+                        count: consultationsCount,
+                        action: () => setActiveTab('history'),
+                      },
+                      {
+                        icon: ArrowRightLeft,
+                        label: 'Active Referrals',
+                        count: activeReferralsCount,
+                        action: () => setActiveTab('referrals'),
+                      },
+                      {
+                        icon: FlaskConical,
+                        label: 'Lab Orders',
+                        count: labOrdersCount,
+                        action: () => setActiveTab('labs'),
+                      },
+                      {
+                        icon: Pill,
+                        label: 'Prescriptions',
+                        count: prescriptionsCount,
+                        action: () => setActiveTab('prescriptions'),
+                      },
+                      {
+                        icon: Heart,
+                        label: 'Immunizations',
+                        count: immunizationsCount,
+                        action: () => router.push(`/immunizations`),
+                      },
+                    ].map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <button
+                          key={item.label}
+                          onClick={item.action}
+                          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors hover:bg-[var(--accent-light)] text-left"
+                          title={`View ${item.label}`}
+                        >
+                          <div
+                            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                            style={{ background: 'var(--accent-light)' }}
+                          >
+                            <Icon className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
+                          </div>
+                          <span className="text-xs flex-1" style={{ color: 'var(--text-secondary)' }}>{item.label}</span>
+                          <span
+                            className="text-xs font-bold px-2 py-0.5 rounded-full min-w-[24px] text-center"
+                            style={{
+                              background: item.count > 0 ? 'var(--accent-primary)' : 'var(--overlay-subtle)',
+                              color: item.count > 0 ? '#fff' : 'var(--text-muted)',
+                            }}
+                          >
+                            {item.count}
+                          </span>
+                          <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <div className="card-elevated">
                   <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
                     <h3 className="font-semibold text-sm">{t('patient.demographics')}</h3>

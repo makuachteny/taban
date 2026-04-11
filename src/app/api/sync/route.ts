@@ -12,7 +12,39 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { query, upsertDocument, deleteDocument } from '@/lib/db/postgres';
+
+/**
+ * Constant-time comparison of two strings. Prevents timing side-channels
+ * that would otherwise leak the signature byte-by-byte.
+ */
+function timingSafeEqualStrings(a: string, b: string): boolean {
+  const bufA = new Uint8Array(Buffer.from(a, 'utf8'));
+  const bufB = new Uint8Array(Buffer.from(b, 'utf8'));
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
+/**
+ * Verify the CouchDB webhook signature. We require a dedicated
+ * COUCHDB_WEBHOOK_SECRET (separate from the admin password) and compute
+ * HMAC-SHA256 over the raw request body. Fails closed: any missing env
+ * variable or signature mismatch returns false.
+ */
+function verifyWebhookSignature(rawBody: string, header: string | null): boolean {
+  const secret = process.env.COUCHDB_WEBHOOK_SECRET;
+  if (!secret || secret.length < 32) {
+    console.error('[Sync] COUCHDB_WEBHOOK_SECRET not set or too short (<32 chars)');
+    return false;
+  }
+  if (!header) return false;
+
+  // Accept header forms: "sha256=<hex>" or just "<hex>"
+  const provided = header.startsWith('sha256=') ? header.slice('sha256='.length) : header;
+  const expected = crypto.createHmac('sha256', secret).update(rawBody, 'utf8').digest('hex');
+  return timingSafeEqualStrings(provided, expected);
+}
 
 // Map CouchDB database names to PostgreSQL table names
 const DB_TABLE_MAP: Record<string, string> = {
@@ -301,14 +333,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Sync not configured: DATABASE_URL not set' }, { status: 503 });
     }
 
-    // Verify shared secret for webhook authentication
-    const authHeader = request.headers.get('authorization');
-    const expectedToken = process.env.COUCHDB_ADMIN_PASSWORD;
-    if (expectedToken && authHeader !== `Bearer ${expectedToken}`) {
+    // Require a dedicated HMAC-signed webhook secret. Previously this used
+    // COUCHDB_ADMIN_PASSWORD as a bearer token, which reused a high-value
+    // credential and gave anyone who captured the header full privileges.
+    // HMAC over the raw body also prevents replay / tampering.
+    const rawBody = await request.text();
+    const signature = request.headers.get('x-taban-signature') || request.headers.get('authorization');
+    if (!verifyWebhookSignature(rawBody, signature)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body: SyncPayload = await request.json();
+    let body: SyncPayload;
+    try {
+      body = JSON.parse(rawBody) as SyncPayload;
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
     const { db, changes } = body;
 
     if (!db || !changes || !Array.isArray(changes)) {

@@ -13,6 +13,7 @@ import {
 import { useAppointments, useAppointmentStats } from '@/lib/hooks/useAppointments';
 import { usePatients } from '@/lib/hooks/usePatients';
 import { useApp } from '@/lib/context';
+import { usePermissions } from '@/lib/hooks/usePermissions';
 import { useToast } from '@/components/Toast';
 import type { AppointmentType, AppointmentPriority, AppointmentStatus, FacilityLevel } from '@/lib/db-types';
 
@@ -77,6 +78,7 @@ export default function AppointmentsPage() {
   const { stats } = useAppointmentStats();
   const { patients } = usePatients();
   const { currentUser, globalSearch } = useApp();
+  const { canBookAppointments } = usePermissions();
   const { showToast } = useToast();
 
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
@@ -342,12 +344,16 @@ export default function AppointmentsPage() {
 
           <div style={{ flex: 1 }} />
 
-          <button onClick={() => setShowWalkIn(true)} className="btn btn-secondary" style={{ gap: 6, color: 'var(--accent-primary)', borderColor: 'var(--accent-border)' }}>
-            <UserPlus size={16} /> Walk-In
-          </button>
-          <button onClick={() => setShowNewForm(true)} className="btn btn-primary" style={{ gap: 6 }}>
-            <Plus size={16} /> Book Appointment
-          </button>
+          {canBookAppointments && (
+            <>
+              <button onClick={() => setShowWalkIn(true)} className="btn btn-secondary" style={{ gap: 6, color: 'var(--accent-primary)', borderColor: 'var(--accent-border)' }}>
+                <UserPlus size={16} /> Walk-In
+              </button>
+              <button onClick={() => setShowNewForm(true)} className="btn btn-primary" style={{ gap: 6 }}>
+                <Plus size={16} /> Book Appointment
+              </button>
+            </>
+          )}
         </div>
 
         {/* Filters bar */}
@@ -517,7 +523,7 @@ export default function AppointmentsPage() {
                               const sc = statusConfig[a.status];
                               return (
                                 <div key={a._id} onClick={e => { e.stopPropagation(); setExpandedId(expandedId === a._id ? null : a._id); }}
-                                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 8, marginBottom: 4, background: 'var(--accent-light)', borderLeft: `3px solid ${sc?.color || 'var(--accent-primary)'}`, cursor: 'pointer' }}>
+                                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', borderRadius: 8, marginBottom: 4, background: 'var(--accent-light)', cursor: 'pointer' }}>
                                   <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', minWidth: 44 }}>{a.appointmentTime}</div>
                                   <div style={{ flex: 1 }}>
                                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{a.patientName}</div>
@@ -591,12 +597,12 @@ export default function AppointmentsPage() {
                 <Calendar size={40} style={{ color: 'var(--text-muted)', opacity: 0.3, marginBottom: 12 }} />
                 <p style={{ color: 'var(--text-secondary)', marginBottom: 12 }}>No appointments {selectedDate ? 'on this date' : 'found'}</p>
                 <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-                  <button onClick={() => setShowNewForm(true)} className="btn btn-primary btn-sm" style={{ gap: 4 }}>
+                  {canBookAppointments && <button onClick={() => setShowNewForm(true)} className="btn btn-primary btn-sm" style={{ gap: 4 }}>
                     <Plus size={14} /> Book Appointment
-                  </button>
-                  <button onClick={() => setShowWalkIn(true)} className="btn btn-secondary btn-sm" style={{ gap: 4 }}>
+                  </button>}
+                  {canBookAppointments && <button onClick={() => setShowWalkIn(true)} className="btn btn-secondary btn-sm" style={{ gap: 4 }}>
                     <UserPlus size={14} /> Walk-In
-                  </button>
+                  </button>}
                 </div>
               </div>
             ) : (
@@ -773,14 +779,16 @@ export default function AppointmentsPage() {
         {showDayPopup && selectedDate && (
           <Modal onClose={() => { setShowDayPopup(false); }} title={new Date(selectedDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })} size="lg">
             {/* Quick actions */}
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-              <button className="btn btn-primary btn-sm" style={{ gap: 4 }} onClick={() => { setShowDayPopup(false); setFormDate(selectedDate); setShowNewForm(true); }}>
-                <Plus size={14} /> New Appointment
-              </button>
-              <button className="btn btn-secondary btn-sm" style={{ gap: 4, color: 'var(--accent-primary)', borderColor: 'var(--accent-border)' }} onClick={() => { setShowDayPopup(false); setShowWalkIn(true); }}>
-                <UserPlus size={14} /> Walk-In
-              </button>
-            </div>
+            {canBookAppointments && (
+              <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+                <button className="btn btn-primary btn-sm" style={{ gap: 4 }} onClick={() => { setShowDayPopup(false); setFormDate(selectedDate); setShowNewForm(true); }}>
+                  <Plus size={14} /> New Appointment
+                </button>
+                <button className="btn btn-secondary btn-sm" style={{ gap: 4, color: 'var(--accent-primary)', borderColor: 'var(--accent-border)' }} onClick={() => { setShowDayPopup(false); setShowWalkIn(true); }}>
+                  <UserPlus size={14} /> Walk-In
+                </button>
+              </div>
+            )}
 
             {/* Day's appointments */}
             {(() => {

@@ -2,14 +2,18 @@ import { deathsDB } from '../db';
 import type { DeathRegistrationDoc } from '../db-types';
 import { v4 as uuidv4 } from 'uuid';
 import { logAudit } from './audit-service';
+import { updatePatient } from './patient-service';
+import type { DataScope } from './data-scope';
+import { filterByScope } from './data-scope';
 
-export async function getAllDeaths(): Promise<DeathRegistrationDoc[]> {
+export async function getAllDeaths(scope?: DataScope): Promise<DeathRegistrationDoc[]> {
   const db = deathsDB();
   const result = await db.allDocs({ include_docs: true });
-  return result.rows
+  const all = result.rows
     .map(r => r.doc as DeathRegistrationDoc)
     .filter(d => d && d.type === 'death')
     .sort((a, b) => new Date(b.dateOfDeath || '').getTime() - new Date(a.dateOfDeath || '').getTime());
+  return scope ? filterByScope(all, scope) : all;
 }
 
 export async function getDeathsByFacility(facilityId: string): Promise<DeathRegistrationDoc[]> {
@@ -31,6 +35,23 @@ export async function createDeath(data: Omit<DeathRegistrationDoc, '_id' | '_rev
   const resp = await db.put(doc);
   doc._rev = resp.rev;
   logAudit('REGISTER_DEATH', undefined, undefined, `Registered death ${doc._id}: ${data.deceasedFirstName} ${data.deceasedSurname}, cause: ${data.immediateCause || 'unspecified'}`).catch(() => {});
+
+  // If this death is linked to an existing patient record, mark that patient as deceased
+  // so dashboards, search results, and patient lookups reflect the new status.
+  if (data.patientId) {
+    try {
+      await updatePatient(data.patientId, {
+        isDeceased: true,
+        deceasedDate: data.dateOfDeath || now.slice(0, 10),
+        followUpStatus: 'died',
+        isActive: false,
+      });
+    } catch {
+      // Don't fail the death registration if the patient patch fails;
+      // the death record itself is the source of truth for CRVS.
+    }
+  }
+
   return doc;
 }
 
@@ -64,8 +85,8 @@ export async function deleteDeath(id: string): Promise<boolean> {
   }
 }
 
-export async function getDeathStats() {
-  const all = await getAllDeaths();
+export async function getDeathStats(scope?: DataScope) {
+  const all = await getAllDeaths(scope);
   const thisYear = new Date().getFullYear().toString();
   const thisMonth = new Date().toISOString().slice(0, 7);
   const maternalDeaths = all.filter(d => d.maternalDeath);
