@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import { Search, Filter, ChevronRight, UserPlus, Users } from 'lucide-react';
 import { usePatients } from '@/lib/hooks/usePatients';
 import { useApp } from '@/lib/context';
@@ -34,22 +35,17 @@ export default function PatientsPage() {
     <>
       <TopBar title="Patients" />
       <main className="page-container page-enter">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-3">
-            <div className="page-header">
-              <div className="page-header__top">
-                <div className="page-header__icon"><Users size={18} /></div>
-                <h1 className="page-header__title">Patient Registry</h1>
-              </div>
-              <p className="page-header__subtitle">{filtered.length} patients found</p>
-            </div>
-            {canRegisterPatients && (
+          <PageHeader
+            icon={Users}
+            title="Patient Registry"
+            subtitle={`${filtered.length} patients found`}
+            actions={canRegisterPatients && (
               <button onClick={() => router.push('/patients/new')} className="btn btn-primary">
                 <UserPlus className="w-4 h-4" />
                 Register New Patient
               </button>
             )}
-          </div>
+          />
 
           {/* Search & Filter */}
           <div className="card-elevated p-4 mb-4">

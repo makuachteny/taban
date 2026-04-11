@@ -1,6 +1,7 @@
 'use client';
 
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import { useVitalStatistics } from '@/lib/hooks/useVitalStatistics';
 import { Baby, Skull, AlertTriangle, Activity } from 'lucide-react';
 
@@ -15,13 +16,11 @@ export default function VitalStatisticsPage() {
     <>
       <TopBar title="Vital Statistics" />
       <main className="page-container page-enter">
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-1">
-            <Activity className="w-6 h-6" style={{ color: 'var(--accent-primary)' }} />
-            <h1 className="text-xl font-semibold">National Vital Statistics</h1>
-          </div>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Civil Registration and Vital Statistics (CRVS) — Republic of South Sudan</p>
-        </div>
+        <PageHeader
+          icon={Activity}
+          title="National Vital Statistics"
+          subtitle="Civil Registration and Vital Statistics (CRVS) — Republic of South Sudan"
+        />
 
         {/* Birth Statistics */}
         <h2 className="font-semibold text-sm flex items-center gap-2 mb-3"><Baby className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} /> Birth Statistics</h2>

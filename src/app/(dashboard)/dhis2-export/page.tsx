@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import {
   Globe, RefreshCw, CheckCircle, Clock, AlertTriangle,
   Download, FileJson, FileSpreadsheet, Upload, Loader2,
@@ -118,18 +119,11 @@ export default function DHIS2ExportPage() {
       <TopBar title="DHIS2 Integration" />
       <main className="page-container page-enter">
 
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <Globe className="w-6 h-6" style={{ color: 'var(--accent-primary)' }} />
-              <h1 className="text-xl font-semibold">DHIS2 Integration</h1>
-            </div>
-            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-              {hospitalName} → hmis.southsudan.health
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
+        <PageHeader
+          icon={Globe}
+          title="DHIS2 Integration"
+          subtitle={`${hospitalName} → hmis.southsudan.health`}
+          actions={
             <button
               onClick={handleSync}
               disabled={syncing}
@@ -143,8 +137,8 @@ export default function DHIS2ExportPage() {
               <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} />
               {syncing ? 'Syncing...' : 'Sync Now'}
             </button>
-          </div>
-        </div>
+          }
+        />
 
         {/* Status Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">

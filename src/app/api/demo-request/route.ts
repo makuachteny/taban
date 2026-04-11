@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
+import { getClientIp } from '@/lib/request-utils';
 
 type DemoRequest = {
   name: string;
@@ -16,12 +17,6 @@ type DemoRequest = {
 const demoRateLimit: Record<string, { count: number; windowStart: number }> = {};
 const DEMO_RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 const DEMO_RATE_MAX = 5;                     // 5 requests / hour / IP
-
-function getClientIp(req: NextRequest): string {
-  const xff = req.headers.get('x-forwarded-for');
-  if (xff) return xff.split(',')[0].trim();
-  return req.headers.get('x-real-ip') || 'unknown';
-}
 
 function isRateLimited(ip: string): boolean {
   const now = Date.now();

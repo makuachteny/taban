@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import {
   Building2, BedDouble, Users, Stethoscope, WifiOff,
   Zap, ZapOff, Sun, Truck, Signal, Clock, Activity,
@@ -209,30 +210,27 @@ function HospitalsPageInner() {
     <>
       <TopBar title="Health Facility Performance" />
       <main className="page-container page-enter">
-        {/* ── Header + Search ── */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
-          <div className="page-header" style={{ marginBottom: 0 }}>
-            <div className="page-header__top">
-              <div className="page-header__icon"><Building2 style={{ width: 18, height: 18 }} /></div>
-              <h1 className="page-header__title">Hospital Network</h1>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 4 }}>({filteredHospitals.length} facilities)</span>
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ position: 'relative' }}>
-              <Search style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, color: 'var(--text-muted)' }} />
-              <input type="text" placeholder="Search facilities..." value={search} onChange={e => setSearch(e.target.value)}
-                style={{ paddingLeft: 32, width: 200 }} />
-            </div>
-            <button onClick={() => setShowFilters(!showFilters)} className="btn btn-secondary btn-sm" style={{ gap: 4 }}>
-              <Filter style={{ width: 13, height: 13 }} /> Filters
-              <ChevronDown style={{ width: 12, height: 12, transform: showFilters ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-            </button>
-            <button onClick={handleExport} className="btn btn-secondary btn-sm" style={{ gap: 4 }}>
-              <Download style={{ width: 13, height: 13 }} /> Export
-            </button>
-          </div>
-        </div>
+        <PageHeader
+          icon={Building2}
+          title="Hospital Network"
+          subtitle={`${filteredHospitals.length} facilities`}
+          actions={
+            <>
+              <div style={{ position: 'relative' }}>
+                <Search style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, color: 'var(--text-muted)' }} />
+                <input type="text" placeholder="Search facilities..." value={search} onChange={e => setSearch(e.target.value)}
+                  style={{ paddingLeft: 32, width: 200 }} />
+              </div>
+              <button onClick={() => setShowFilters(!showFilters)} className="btn btn-secondary btn-sm" style={{ gap: 4 }}>
+                <Filter style={{ width: 13, height: 13 }} /> Filters
+                <ChevronDown style={{ width: 12, height: 12, transform: showFilters ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+              </button>
+              <button onClick={handleExport} className="btn btn-secondary btn-sm" style={{ gap: 4 }}>
+                <Download style={{ width: 13, height: 13 }} /> Export
+              </button>
+            </>
+          }
+        />
 
         {/* ── Filters ── */}
         {showFilters && (

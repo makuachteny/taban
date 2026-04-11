@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import { useBirths } from '@/lib/hooks/useBirths';
 import { useHospitals } from '@/lib/hooks/useHospitals';
 import { useApp } from '@/lib/context';
@@ -51,17 +52,16 @@ export default function BirthsPage() {
     <>
       <TopBar title="Birth Registration" />
       <main className="page-container page-enter">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-xl font-semibold">Birth Registration</h1>
-            <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>Civil Registration and Vital Statistics (CRVS)</p>
-          </div>
-          {canRecordVitalEvents && (
-            <button onClick={() => setShowForm(true)} className="btn btn-primary btn-sm flex items-center gap-2">
+        <PageHeader
+          icon={Baby}
+          title="Birth Registration"
+          subtitle="Civil Registration and Vital Statistics (CRVS)"
+          actions={canRecordVitalEvents && (
+            <button onClick={() => setShowForm(true)} className="btn btn-primary flex items-center gap-2">
               <Plus className="w-4 h-4" /> Register Birth
             </button>
           )}
-        </div>
+        />
 
         {/* Stats */}
         {stats && (

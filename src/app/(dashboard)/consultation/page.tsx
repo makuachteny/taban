@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import {
   ArrowLeft, Save, ChevronDown, ChevronUp, Search,
   Stethoscope, Thermometer, ClipboardList,
@@ -824,32 +825,25 @@ export default function ConsultationPage() {
             </div>
           )}
 
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-xl font-semibold">
-              New Medical Consultation
-              {draftSavedAt && !restorePromptFor && (
-                <span
-                  className="ml-3 inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full align-middle"
-                  style={{ background: 'var(--accent-light)', color: 'var(--accent-primary)' }}
-                  title={`Draft auto-saved at ${new Date(draftSavedAt).toLocaleTimeString()}`}
-                >
-                  <Check className="w-3 h-3" /> Draft saved
-                </span>
-              )}
-            </h1>
-            <button
-              onClick={() => setScribeOpen(!scribeOpen)}
-              className="btn btn-sm flex items-center gap-2"
-              style={{
-                background: scribeOpen ? 'rgba(229,46,66,0.12)' : 'rgba(43,111,224,0.10)',
-                color: scribeOpen ? 'var(--color-danger)' : 'var(--accent-primary)',
-                border: `1px solid ${scribeOpen ? 'rgba(229,46,66,0.2)' : 'rgba(43,111,224,0.2)'}`,
-              }}
-            >
-              <Mic className="w-4 h-4" />
-              {scribeOpen ? 'Close Scribe' : 'AI Scribe'}
-            </button>
-          </div>
+          <PageHeader
+            icon={Stethoscope}
+            title="New Medical Consultation"
+            subtitle={draftSavedAt && !restorePromptFor ? `Draft auto-saved at ${new Date(draftSavedAt).toLocaleTimeString()}` : 'Record vitals, exam findings, diagnoses, and plan'}
+            actions={
+              <button
+                onClick={() => setScribeOpen(!scribeOpen)}
+                className="btn btn-sm flex items-center gap-2"
+                style={{
+                  background: scribeOpen ? 'rgba(229,46,66,0.12)' : 'rgba(43,111,224,0.10)',
+                  color: scribeOpen ? 'var(--color-danger)' : 'var(--accent-primary)',
+                  border: `1px solid ${scribeOpen ? 'rgba(229,46,66,0.2)' : 'rgba(43,111,224,0.2)'}`,
+                }}
+              >
+                <Mic className="w-4 h-4" />
+                {scribeOpen ? 'Close Scribe' : 'AI Scribe'}
+              </button>
+            }
+          />
 
           {/* Patient Selector */}
           <div className="card-elevated p-5 mb-4">

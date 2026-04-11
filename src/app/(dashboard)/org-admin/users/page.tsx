@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import { useApp } from '@/lib/context';
 import {
   Users, Plus, MoreVertical, KeyRound,
@@ -252,26 +253,21 @@ export default function OrgUsersPage() {
           </div>
         )}
 
-        {/* Header */}
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: `${brandColor}15` }}>
-              <Users className="w-5 h-5" style={{ color: brandColor }} />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Users</h1>
-              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{users.length} total users in your organization</p>
-            </div>
-          </div>
-          <button
-            onClick={() => { setError(''); setShowCreateModal(true); }}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all hover:opacity-90"
-            style={{ background: brandColor }}
-          >
-            <Plus className="w-4 h-4" />
-            Create User
-          </button>
-        </div>
+        <PageHeader
+          icon={Users}
+          title="Users"
+          subtitle={`${users.length} total users in your organization`}
+          actions={
+            <button
+              onClick={() => { setError(''); setShowCreateModal(true); }}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all hover:opacity-90"
+              style={{ background: brandColor }}
+            >
+              <Plus className="w-4 h-4" />
+              Create User
+            </button>
+          }
+        />
 
         {/* Filters */}
         <div className="flex items-center gap-3 mb-4">

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import { useMCHAnalytics } from '@/lib/hooks/useMCHAnalytics';
 import {
   HeartPulse, Baby, Syringe, AlertTriangle,
@@ -60,30 +61,27 @@ export default function MCHAnalyticsPage() {
       <TopBar title="MCH Analytics" />
       <main className="page-container page-enter">
 
-        {/* ═══ HEADER ═══ */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="page-header">
-            <div className="page-header__top">
-              <div className="page-header__icon"><HeartPulse size={18} /></div>
-              <h1 className="page-header__title">Maternal & Child Health Analytics</h1>
-            </div>
-            <p className="page-header__subtitle">WHO RMNCH &middot; SDG 3.1 &amp; 3.2 &middot; Continuum of Care Tracking</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="px-4 py-2 rounded-md flex items-center gap-2" style={{
-              background: grade.bg,
-              border: `1px solid ${grade.text}30`,
-            }}>
-              <Shield className="w-4 h-4" style={{ color: grade.text }} />
-              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: grade.text }}>
-                Grade: {summary.overallGrade}
-              </span>
-            </div>
-            <div className="px-3 py-2 rounded-md" style={{ background: 'rgba(236,72,153,0.08)', border: '1px solid rgba(236,72,153,0.15)' }}>
-              <p className="text-[10px] font-semibold" style={{ color: '#EC4899' }}>{summary.highRiskCount} High Risk</p>
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          icon={HeartPulse}
+          title="Maternal & Child Health Analytics"
+          subtitle="WHO RMNCH · SDG 3.1 & 3.2 · Continuum of Care Tracking"
+          actions={
+            <>
+              <div className="px-4 py-2 rounded-md flex items-center gap-2" style={{
+                background: grade.bg,
+                border: `1px solid ${grade.text}30`,
+              }}>
+                <Shield className="w-4 h-4" style={{ color: grade.text }} />
+                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: grade.text }}>
+                  Grade: {summary.overallGrade}
+                </span>
+              </div>
+              <div className="px-3 py-2 rounded-md" style={{ background: 'rgba(236,72,153,0.08)', border: '1px solid rgba(236,72,153,0.15)' }}>
+                <p className="text-[10px] font-semibold" style={{ color: '#EC4899' }}>{summary.highRiskCount} High Risk</p>
+              </div>
+            </>
+          }
+        />
 
         {/* ═══ KPI STRIP ═══ */}
         <div className="kpi-grid mb-4">

@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import {
   AlertTriangle, Shield, Eye, Bell, TrendingUp, TrendingDown,
   Minus, MapPin, Activity, FileText, Calendar, ChevronRight,
-  Download, Filter
+  Download,
 } from 'lucide-react';
 import { weeklyDiseaseData, casesByState } from '@/data/mock';
 import { useSurveillance } from '@/lib/hooks/useSurveillance';
@@ -122,6 +123,29 @@ export default function SurveillancePage() {
 
   const reportingWeek = 'W6 2026 (Feb 3-9)';
 
+  /**
+   * Export the current IDSR report as a JSON blob the user can download.
+   * This replaces the previous inert "Export Report" button. We include
+   * the alert list, aggregated disease totals, and the reporting week so
+   * MOH officers have an offline artifact they can archive.
+   */
+  const handleExport = () => {
+    const payload = {
+      reportingWeek,
+      generatedAt: new Date().toISOString(),
+      totals: { alerts: totalAlerts, emergencies, warnings, watch: watchItems, cases: totalCases, deaths: totalDeaths },
+      alerts: diseaseAlerts || [],
+      idsrSummary,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `surveillance-report-${reportingWeek.replace(/[ ()]/g, '_')}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const summaryCards = [
     { label: 'Total Alerts', value: totalAlerts.toString(), icon: Bell, color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)' },
     { label: 'Emergencies', value: emergencies.toString(), icon: AlertTriangle, color: 'var(--color-danger)', bg: 'rgba(229,46,66,0.10)' },
@@ -133,27 +157,17 @@ export default function SurveillancePage() {
     <>
       <TopBar title="Disease Surveillance" />
       <main className="page-container page-enter">
-          {/* Page Header */}
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
-                Disease Surveillance Dashboard
-              </h1>
-              <p className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-                IDSR Reporting Week: {reportingWeek} -- Ministry of Health, Republic of South Sudan
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button className="btn btn-secondary btn-sm">
-                <Filter className="w-4 h-4" />
-                Filters
-              </button>
-              <button className="btn btn-primary btn-sm">
+          <PageHeader
+            icon={Activity}
+            title="Disease Surveillance Dashboard"
+            subtitle={`IDSR Reporting Week: ${reportingWeek} · Ministry of Health, Republic of South Sudan`}
+            actions={
+              <button className="btn btn-primary btn-sm" onClick={handleExport}>
                 <Download className="w-4 h-4" />
                 Export Report
               </button>
-            </div>
-          </div>
+            }
+          />
 
           {/* Summary Cards */}
           <div className="kpi-grid mb-6">

@@ -1,6 +1,7 @@
 'use client';
 
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import { useDataQuality } from '@/lib/hooks/useDataQuality';
 import { Database, Wifi, Users, TrendingUp, BarChart3, Clock, CheckCircle2, Activity } from 'lucide-react';
 
@@ -16,13 +17,11 @@ export default function DataQualityPage() {
     <>
       <TopBar title="Data Quality" />
       <main className="page-container page-enter">
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-1">
-            <Database className="w-6 h-6" style={{ color: 'var(--accent-primary)' }} />
-            <h1 className="text-xl font-semibold">Data Quality & Completeness</h1>
-          </div>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>National HIS data quality monitoring — WHO assessment framework</p>
-        </div>
+        <PageHeader
+          icon={Database}
+          title="Data Quality & Completeness"
+          subtitle="National HIS data quality monitoring — WHO assessment framework"
+        />
 
         {/* National summary cards */}
         <div className="kpi-grid mb-6">

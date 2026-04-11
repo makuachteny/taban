@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import SendMessageModal from '@/components/SendMessageModal';
 import EmptyState from '@/components/EmptyState';
 import { useMessages } from '@/lib/hooks/useMessages';
@@ -67,19 +68,16 @@ export default function MessagesPage() {
     <>
       <TopBar title="Messages" />
       <main className="page-container page-enter">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="page-header">
-            <div className="page-header__top">
-              <div className="page-header__icon"><MessageSquare size={18} /></div>
-              <h1 className="page-header__title">Messages</h1>
-            </div>
-            <p className="page-header__subtitle">Send messages to patients via app or SMS</p>
-          </div>
-          <button onClick={handleNewMessage} className="btn btn-primary btn-sm flex items-center gap-2">
-            <Plus className="w-4 h-4" /> New Message
-          </button>
-        </div>
+        <PageHeader
+          icon={MessageSquare}
+          title="Messages"
+          subtitle="Send messages to patients via app or SMS"
+          actions={
+            <button onClick={handleNewMessage} className="btn btn-primary flex items-center gap-2">
+              <Plus className="w-4 h-4" /> New Message
+            </button>
+          }
+        />
 
         {/* Filters */}
         <div className="flex items-center gap-3 mb-4">

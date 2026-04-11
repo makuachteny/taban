@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import {
   Calendar, Plus, Clock, CheckCircle2, XCircle, User, Search,
   ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Phone, AlertTriangle, RefreshCw,
@@ -277,14 +278,11 @@ export default function AppointmentsPage() {
     <div>
       <TopBar />
       <main className="page-container page-enter">
-        {/* ═══ Header ═══ */}
-        <div className="page-header">
-          <div className="page-header__top">
-            <div className="page-header__icon"><Calendar size={20} /></div>
-            <h1 className="page-header__title">Appointments</h1>
-          </div>
-          <p className="page-header__subtitle">Schedule, approve, and manage patient appointments</p>
-        </div>
+        <PageHeader
+          icon={Calendar}
+          title="Appointments"
+          subtitle="Schedule, approve, and manage patient appointments"
+        />
 
         {/* ═══ Quick Stats ═══ */}
         {stats && (

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createToken } from '@/lib/auth-token';
+import { getClientIp } from '@/lib/request-utils';
 
 // Rate limiting: track failed attempts in memory, keyed separately by
 // username AND by source IP. Per-user lock stops single-account brute-force;
@@ -34,14 +35,6 @@ function cleanupExpiredEntries() {
   }
 }
 
-function getClientIp(request: NextRequest): string {
-  // Next.js doesn't expose request.ip in all runtimes; read from headers set
-  // by the upstream proxy (Nginx / Cloudflare / Vercel). Fall back to a
-  // literal so the key is never empty.
-  const xff = request.headers.get('x-forwarded-for');
-  if (xff) return xff.split(',')[0].trim();
-  return request.headers.get('x-real-ip') || 'unknown';
-}
 
 export async function POST(request: NextRequest) {
   try {

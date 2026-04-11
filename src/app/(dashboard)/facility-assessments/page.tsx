@@ -2,29 +2,134 @@
 
 import { useState } from 'react';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import { useFacilityAssessments } from '@/lib/hooks/useFacilityAssessments';
-import { Building2, ClipboardCheck, Wifi, Droplets, Users, Activity, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
+import { useHospitals } from '@/lib/hooks/useHospitals';
+import { useApp } from '@/lib/context';
+import { usePermissions } from '@/lib/hooks/usePermissions';
+import { useToast } from '@/components/Toast';
+import { Building2, ClipboardCheck, Wifi, Droplets, Users, Activity, TrendingUp, ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
+
+/**
+ * Default values for the minimal create-assessment form. The full
+ * FacilityAssessmentDoc schema has ~25 fields; to keep the form usable
+ * in the field we capture the 6 score axes + core infrastructure
+ * booleans and derive the overall score as an average.
+ */
+const EMPTY_FORM = {
+  facilityId: '',
+  assessmentDate: new Date().toISOString().slice(0, 10),
+  generalEquipmentScore: 70,
+  diagnosticCapacityScore: 70,
+  essentialMedicinesScore: 70,
+  infectionControlScore: 70,
+  staffingScore: 70,
+  powerReliabilityScore: 70,
+  reportingCompleteness: 70,
+  reportingTimeliness: 70,
+  dataQualityScore: 70,
+  hisStaffCount: 1,
+  hisStaffTrained: 1,
+  hasCleanWater: true,
+  hasSanitation: true,
+  hasWasteManagement: true,
+  hasEmergencyTransport: false,
+  hasCommunication: true,
+  hasPatientRegisters: true,
+  hasDHIS2Reporting: false,
+  recommendations: '',
+};
 
 export default function FacilityAssessmentsPage() {
-  const { assessments, summary, loading } = useFacilityAssessments();
+  const { assessments, summary, loading, create } = useFacilityAssessments();
+  const { hospitals } = useHospitals();
+  const { currentUser } = useApp();
+  const { canAssessFacility } = usePermissions();
+  const { showToast } = useToast();
   const [expandedAssessment, setExpandedAssessment] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [submitting, setSubmitting] = useState(false);
 
   if (loading) return <><TopBar title="Facility Assessments" /><main className="page-container flex items-center justify-center"><p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading...</p></main></>;
 
   const scoreColor = (score: number) => score >= 70 ? 'var(--accent-primary)' : score >= 50 ? 'var(--color-warning)' : 'var(--color-danger)';
   const scoreBg = (score: number) => score >= 70 ? 'rgba(43,111,224,0.12)' : score >= 50 ? 'rgba(252,211,77,0.12)' : 'rgba(229,46,66,0.12)';
 
+  const handleSubmit = async () => {
+    if (!form.facilityId) {
+      showToast('Please choose a facility', 'error');
+      return;
+    }
+    const facility = hospitals.find(h => h._id === form.facilityId);
+    if (!facility) {
+      showToast('Facility not found', 'error');
+      return;
+    }
+    // Overall score = average of the six service-readiness axes.
+    const overall = Math.round((
+      form.generalEquipmentScore +
+      form.diagnosticCapacityScore +
+      form.essentialMedicinesScore +
+      form.infectionControlScore +
+      form.staffingScore +
+      form.powerReliabilityScore
+    ) / 6);
+    try {
+      setSubmitting(true);
+      await create({
+        facilityId: facility._id,
+        facilityName: facility.name,
+        assessmentDate: form.assessmentDate,
+        assessedBy: currentUser?.name || 'Unknown',
+        generalEquipmentScore: form.generalEquipmentScore,
+        diagnosticCapacityScore: form.diagnosticCapacityScore,
+        essentialMedicinesScore: form.essentialMedicinesScore,
+        infectionControlScore: form.infectionControlScore,
+        hasCleanWater: form.hasCleanWater,
+        hasSanitation: form.hasSanitation,
+        hasWasteManagement: form.hasWasteManagement,
+        hasEmergencyTransport: form.hasEmergencyTransport,
+        hasCommunication: form.hasCommunication,
+        powerReliabilityScore: form.powerReliabilityScore,
+        staffingScore: form.staffingScore,
+        hisStaffCount: form.hisStaffCount,
+        hisStaffTrained: form.hisStaffTrained,
+        hasPatientRegisters: form.hasPatientRegisters,
+        hasDHIS2Reporting: form.hasDHIS2Reporting,
+        reportingCompleteness: form.reportingCompleteness,
+        reportingTimeliness: form.reportingTimeliness,
+        dataQualityScore: form.dataQualityScore,
+        overallScore: overall,
+        state: facility.state,
+        recommendations: form.recommendations,
+        orgId: currentUser?.orgId,
+      });
+      showToast('Assessment recorded', 'success');
+      setShowForm(false);
+      setForm(EMPTY_FORM);
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to save assessment', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <>
       <TopBar title="Facility Assessments" />
       <main className="page-container page-enter">
-        <div className="page-header mb-6">
-          <div className="page-header__top">
-            <div className="page-header__icon"><ClipboardCheck size={18} /></div>
-            <h1 className="page-header__title">Health Facility Assessments</h1>
-          </div>
-          <p className="page-header__subtitle">Service readiness, infrastructure, and data management evaluation</p>
-        </div>
+        <PageHeader
+          icon={ClipboardCheck}
+          title="Health Facility Assessments"
+          subtitle="Service readiness, infrastructure, and data management evaluation"
+          actions={canAssessFacility && (
+            <button onClick={() => setShowForm(true)} className="btn btn-primary">
+              <Plus className="w-4 h-4" /> New Assessment
+            </button>
+          )}
+        />
 
         {summary && (
           <>
@@ -162,6 +267,108 @@ export default function FacilityAssessmentsPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Create Assessment Modal */}
+        {showForm && (
+          <div className="modal-backdrop" onClick={() => !submitting && setShowForm(false)}>
+            <div className="modal-content card-elevated p-6 max-w-2xl w-full" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <ClipboardCheck className="w-5 h-5" style={{ color: 'var(--accent-primary)' }} />
+                  <h3 className="text-base font-semibold">New Facility Assessment</h3>
+                </div>
+                <button onClick={() => setShowForm(false)} className="p-1.5 rounded-lg" style={{ background: 'var(--overlay-subtle)' }}>
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-wider mb-1 block" style={{ color: 'var(--text-muted)' }}>Facility</label>
+                  <select value={form.facilityId} onChange={e => setForm({ ...form, facilityId: e.target.value })}>
+                    <option value="">Select a facility...</option>
+                    {hospitals.map(h => <option key={h._id} value={h._id}>{h.name} ({h.state})</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-wider mb-1 block" style={{ color: 'var(--text-muted)' }}>Assessment Date</label>
+                  <input type="date" value={form.assessmentDate} onChange={e => setForm({ ...form, assessmentDate: e.target.value })} />
+                </div>
+              </div>
+
+              <p className="text-[10px] font-semibold uppercase tracking-wider mt-2 mb-2" style={{ color: 'var(--text-muted)' }}>Service readiness scores (0–100)</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+                {([
+                  ['generalEquipmentScore', 'General Equipment'],
+                  ['diagnosticCapacityScore', 'Diagnostics'],
+                  ['essentialMedicinesScore', 'Medicines'],
+                  ['infectionControlScore', 'Infection Control'],
+                  ['staffingScore', 'Staffing'],
+                  ['powerReliabilityScore', 'Power Reliability'],
+                ] as const).map(([key, label]) => (
+                  <div key={key}>
+                    <label className="text-[11px] font-medium block mb-1" style={{ color: 'var(--text-secondary)' }}>{label}</label>
+                    <input type="number" min={0} max={100} value={form[key]} onChange={e => setForm({ ...form, [key]: Math.max(0, Math.min(100, parseInt(e.target.value) || 0)) })} />
+                  </div>
+                ))}
+              </div>
+
+              <p className="text-[10px] font-semibold uppercase tracking-wider mt-2 mb-2" style={{ color: 'var(--text-muted)' }}>Data management scores</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+                {([
+                  ['reportingCompleteness', 'Reporting Completeness'],
+                  ['reportingTimeliness', 'Reporting Timeliness'],
+                  ['dataQualityScore', 'Data Quality'],
+                ] as const).map(([key, label]) => (
+                  <div key={key}>
+                    <label className="text-[11px] font-medium block mb-1" style={{ color: 'var(--text-secondary)' }}>{label}</label>
+                    <input type="number" min={0} max={100} value={form[key]} onChange={e => setForm({ ...form, [key]: Math.max(0, Math.min(100, parseInt(e.target.value) || 0)) })} />
+                  </div>
+                ))}
+              </div>
+
+              <p className="text-[10px] font-semibold uppercase tracking-wider mt-2 mb-2" style={{ color: 'var(--text-muted)' }}>Infrastructure checklist</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+                {([
+                  ['hasCleanWater', 'Clean Water'],
+                  ['hasSanitation', 'Sanitation'],
+                  ['hasWasteManagement', 'Waste Mgmt'],
+                  ['hasEmergencyTransport', 'Emergency Transport'],
+                  ['hasCommunication', 'Communication'],
+                  ['hasPatientRegisters', 'Patient Registers'],
+                  ['hasDHIS2Reporting', 'DHIS2 Reporting'],
+                ] as const).map(([key, label]) => (
+                  <label key={key} className="flex items-center gap-2 p-2 rounded-lg text-xs cursor-pointer" style={{ background: 'var(--overlay-subtle)' }}>
+                    <input type="checkbox" checked={form[key]} onChange={e => setForm({ ...form, [key]: e.target.checked })} />
+                    {label}
+                  </label>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                  <label className="text-[11px] font-medium block mb-1" style={{ color: 'var(--text-secondary)' }}>HIS Staff Count</label>
+                  <input type="number" min={0} value={form.hisStaffCount} onChange={e => setForm({ ...form, hisStaffCount: Math.max(0, parseInt(e.target.value) || 0) })} />
+                </div>
+                <div>
+                  <label className="text-[11px] font-medium block mb-1" style={{ color: 'var(--text-secondary)' }}>HIS Staff Trained</label>
+                  <input type="number" min={0} value={form.hisStaffTrained} onChange={e => setForm({ ...form, hisStaffTrained: Math.max(0, parseInt(e.target.value) || 0) })} />
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="text-[11px] font-medium block mb-1" style={{ color: 'var(--text-secondary)' }}>Recommendations</label>
+                <textarea rows={3} value={form.recommendations} onChange={e => setForm({ ...form, recommendations: e.target.value })} placeholder="Actions the facility should prioritize based on this assessment..." />
+              </div>
+
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary flex-1" disabled={submitting}>Cancel</button>
+                <button type="button" onClick={handleSubmit} className="btn btn-primary flex-1" disabled={submitting}>
+                  {submitting ? 'Saving…' : 'Save Assessment'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </>
   );

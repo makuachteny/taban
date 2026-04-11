@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import { useApp } from '@/lib/context';
 import {
   Users, Building2, UserCheck, CreditCard, Shield,
@@ -245,35 +246,13 @@ export default function OrgAdminDashboard() {
       <TopBar title="Organization Dashboard" />
 
       <div className="page-container page-enter">
-        {/* Org Header */}
-        <div className="mb-6 flex items-center gap-4">
-          {currentUser?.branding?.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={currentUser.branding.logoUrl}
-              alt={currentUser.branding.name}
-              className="w-12 h-12 rounded-lg object-cover"
-              style={{ border: `2px solid ${brandColor}` }}
-            />
-          ) : (
+        <PageHeader
+          icon={Building2}
+          title={org?.name || currentUser?.branding?.name || 'Organization'}
+          subtitle={`${org?.orgType === 'public' ? 'Public Sector' : 'Private Sector'} Organization`}
+          actions={org?.subscriptionPlan ? (
             <div
-              className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-lg"
-              style={{ background: `linear-gradient(135deg, ${brandColor}, ${brandColor}dd)` }}
-            >
-              {(org?.name || 'O')[0]}
-            </div>
-          )}
-          <div>
-            <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
-              {org?.name || currentUser?.branding?.name || 'Organization'}
-            </h1>
-            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-              {org?.orgType === 'public' ? 'Public Sector' : 'Private Sector'} Organization
-            </p>
-          </div>
-          {org?.subscriptionPlan && (
-            <div
-              className="ml-auto px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider"
+              className="px-3 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider"
               style={{
                 background: `${brandColor}18`,
                 color: brandColor,
@@ -282,8 +261,8 @@ export default function OrgAdminDashboard() {
             >
               {planLabels[org.subscriptionPlan] || org.subscriptionPlan} Plan
             </div>
-          )}
-        </div>
+          ) : null}
+        />
 
         {/* Stat Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

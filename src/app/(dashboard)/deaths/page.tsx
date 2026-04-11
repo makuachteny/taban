@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import { useDeaths } from '@/lib/hooks/useDeaths';
 import { useHospitals } from '@/lib/hooks/useHospitals';
 import { usePatients } from '@/lib/hooks/usePatients';
@@ -100,20 +101,16 @@ export default function DeathsPage() {
     <>
       <TopBar title="Death Registration" />
       <main className="page-container page-enter">
-        <div className="flex items-center justify-between mb-6">
-          <div className="page-header">
-            <div className="page-header__top">
-              <div className="page-header__icon"><FileText size={18} /></div>
-              <h1 className="page-header__title">Death Registration</h1>
-            </div>
-            <p className="page-header__subtitle">WHO Medical Certificate of Cause of Death with ICD-11 Coding</p>
-          </div>
-          {canRecordVitalEvents && (
-            <button onClick={() => setShowForm(true)} className="btn btn-primary btn-sm flex items-center gap-2">
+        <PageHeader
+          icon={FileText}
+          title="Death Registration"
+          subtitle="WHO Medical Certificate of Cause of Death with ICD-11 Coding"
+          actions={canRecordVitalEvents && (
+            <button onClick={() => setShowForm(true)} className="btn btn-primary flex items-center gap-2">
               <Plus className="w-4 h-4" /> Register Death
             </button>
           )}
-        </div>
+        />
 
         {/* Stats */}
         {stats && (

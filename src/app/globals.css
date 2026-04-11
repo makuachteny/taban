@@ -1141,8 +1141,18 @@ svg circle {
 }
 
 /* Standard page header — icon + title + subtitle */
-.page-header {
+/* ============ Unified page header ============ */
+.page-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
   margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.page-header {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 .page-header__top {
   display: flex;
@@ -1151,8 +1161,8 @@ svg circle {
   margin-bottom: 4px;
 }
 .page-header__icon {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -1163,15 +1173,28 @@ svg circle {
 }
 .page-header__title {
   font-family: 'DM Sans', 'Inter', -apple-system, sans-serif;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 800;
   color: var(--text-primary);
   letter-spacing: -0.025em;
+  line-height: 1.15;
+  margin: 0;
 }
 .page-header__subtitle {
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   color: var(--text-secondary);
-  margin-left: 48px;
+  margin: 2px 0 0 52px;
+  line-height: 1.45;
+}
+.page-header__actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+@media (max-width: 640px) {
+  .page-header__title { font-size: 1.25rem; }
+  .page-header__subtitle { margin-left: 52px; font-size: 0.78rem; }
 }
 
 /* Standard stat card grid */

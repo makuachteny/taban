@@ -13,6 +13,7 @@ import {
   ClipboardCheck, Bell,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import PageHeader from '@/components/PageHeader';
 import { useReferrals } from '@/lib/hooks/useReferrals';
 import { useHospitals } from '@/lib/hooks/useHospitals';
 import { usePatients } from '@/lib/hooks/usePatients';
@@ -519,16 +520,11 @@ export default function ReferralsPage() {
     <>
       <TopBar title="Referrals" />
       <main className="page-container page-enter">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-3">
-            <div className="page-header">
-              <div className="page-header__top">
-                <div className="page-header__icon"><ArrowRightLeft size={18} /></div>
-                <h1 className="page-header__title">Referral Management</h1>
-              </div>
-              <p className="page-header__subtitle">Manage incoming and outgoing patient referrals</p>
-            </div>
-            {canManageReferrals && (
+          <PageHeader
+            icon={ArrowRightLeft}
+            title="Referral Management"
+            subtitle="Manage incoming and outgoing patient referrals"
+            actions={canManageReferrals && (
               <button
                 onClick={() => setShowNewReferral(!showNewReferral)}
                 className="btn btn-primary"
@@ -540,7 +536,7 @@ export default function ReferralsPage() {
                 )}
               </button>
             )}
-          </div>
+          />
 
           {/* Summary Stats */}
           <div className="kpi-grid mb-6">

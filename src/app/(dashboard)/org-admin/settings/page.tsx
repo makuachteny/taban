@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import { useApp } from '@/lib/context';
 import {
   Settings, Mail, CreditCard, Building2,
@@ -74,16 +75,11 @@ export default function OrgSettingsPage() {
       <TopBar title="Organization Settings" />
 
       <div className="page-container page-enter">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: `${brandColor}15` }}>
-            <Settings className="w-5 h-5" style={{ color: brandColor }} />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Organization Settings</h1>
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>View your organization configuration (read-only)</p>
-          </div>
-        </div>
+        <PageHeader
+          icon={Settings}
+          title="Organization Settings"
+          subtitle="View your organization configuration (read-only)"
+        />
 
         {/* Read-only notice */}
         <div className="mb-6 p-3 rounded-lg flex items-center gap-2" style={{ background: `${brandColor}08`, border: `1px solid ${brandColor}20` }}>

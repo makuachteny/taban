@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import { FlaskConical, Clock, CheckCircle2, AlertTriangle, Search, X } from 'lucide-react';
 import { useLabResults } from '@/lib/hooks/useLabResults';
 import { useApp } from '@/lib/context';
@@ -64,8 +65,11 @@ export default function LabPage() {
     <>
       <TopBar title="Laboratory" />
       <main className="page-container page-enter">
-          <h1 className="text-xl font-semibold mb-1">Laboratory Information System</h1>
-          <p className="text-sm mb-5" style={{ color: 'var(--text-muted)' }}>Manage lab orders, track specimens, and view results</p>
+          <PageHeader
+            icon={FlaskConical}
+            title="Laboratory Information System"
+            subtitle="Manage lab orders, track specimens, and view results"
+          />
 
           {labLoading && (
             <div className="card-elevated p-4 mb-4 flex items-center gap-3" style={{ background: 'var(--overlay-subtle)' }}>

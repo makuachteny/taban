@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import { useApp } from '@/lib/context';
 import {
   Building2, Plus, X, MapPin, ChevronDown, AlertCircle, Users,
@@ -170,26 +171,21 @@ export default function OrgHospitalsPage() {
           </div>
         )}
 
-        {/* Header */}
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: `${brandColor}15` }}>
-              <Building2 className="w-5 h-5" style={{ color: brandColor }} />
-            </div>
-            <div>
-              <h1 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Hospitals & Facilities</h1>
-              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{hospitals.length} facilities in your organization</p>
-            </div>
-          </div>
-          <button
-            onClick={() => { setError(''); setShowCreateModal(true); }}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all hover:opacity-90"
-            style={{ background: brandColor }}
-          >
-            <Plus className="w-4 h-4" />
-            Add Facility
-          </button>
-        </div>
+        <PageHeader
+          icon={Building2}
+          title="Hospitals & Facilities"
+          subtitle={`${hospitals.length} facilities in your organization`}
+          actions={
+            <button
+              onClick={() => { setError(''); setShowCreateModal(true); }}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white transition-all hover:opacity-90"
+              style={{ background: brandColor }}
+            >
+              <Plus className="w-4 h-4" />
+              Add Facility
+            </button>
+          }
+        />
 
         {/* Hospitals Table */}
         <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>

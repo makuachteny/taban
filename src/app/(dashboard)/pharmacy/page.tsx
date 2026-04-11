@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import { Pill, AlertTriangle, Search, TrendingDown, CheckCircle2, Loader2, Info } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/context';
@@ -126,13 +127,11 @@ export default function PharmacyPage() {
     <>
       <TopBar title="Pharmacy" />
       <main className="page-container page-enter">
-          <div className="page-header mb-5">
-            <div className="page-header__top">
-              <div className="page-header__icon"><Pill size={18} /></div>
-              <h1 className="page-header__title">Pharmacy Management</h1>
-            </div>
-            <p className="page-header__subtitle">Dispense medications and manage inventory</p>
-          </div>
+          <PageHeader
+            icon={Pill}
+            title="Pharmacy Management"
+            subtitle="Dispense medications and manage inventory"
+          />
 
           {/* Stats */}
           <div className="kpi-grid mb-4">

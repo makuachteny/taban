@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import { Check, Camera, ArrowLeft, ArrowRight, Users } from 'lucide-react';
 import { statesAndCounties, states, tribes, languages, bloodTypes } from '@/data/mock';
 import { usePatients } from '@/lib/hooks/usePatients';
@@ -146,12 +147,11 @@ export default function NewPatientPage() {
             <ArrowLeft className="w-4 h-4" /> Back to Patients
           </button>
 
-          <div className="page-header mb-6">
-            <div className="page-header__top">
-              <div className="page-header__icon"><Users size={18} /></div>
-              <h1 className="page-header__title">Patient Registration</h1>
-            </div>
-          </div>
+          <PageHeader
+            icon={Users}
+            title="Patient Registration"
+            subtitle="Enroll a new patient into the registry"
+          />
 
           {/* Step Indicator */}
           <div className="flex items-center gap-0 mb-8">

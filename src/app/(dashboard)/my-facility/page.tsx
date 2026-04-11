@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '@/lib/context';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import { useHospitals } from '@/lib/hooks/useHospitals';
 import {
   Building2, BedDouble, Users, Zap,
@@ -183,27 +184,12 @@ export default function MyFacilityPage() {
       <TopBar title="My Facility" />
       <main className="page-container page-enter">
 
-        {/* Header Card */}
-        <div className="card-elevated p-5 mb-4">
-          <div className="flex items-start justify-between flex-wrap gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-md flex items-center justify-center" style={{ background: 'var(--accent-light)' }}>
-                <Building2 className="w-6 h-6" style={{ color: 'var(--accent-primary)' }} />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{hospital?.name || 'Unknown Facility'}</h2>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{hospital?.state}</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{
-                    background: 'var(--accent-light)',
-                    color: 'var(--accent-primary)',
-                  }}>
-                    {hospital?.facilityType?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
+        <PageHeader
+          icon={Building2}
+          title={hospital?.name || 'My Facility'}
+          subtitle={`${hospital?.state || ''} · ${hospital?.facilityType?.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Facility'}`}
+          actions={
+            <>
               {error && (
                 <span className="text-xs font-medium flex items-center gap-1" style={{ color: 'var(--color-danger)' }}>
                   <AlertTriangle className="w-3.5 h-3.5" /> {error}
@@ -226,9 +212,9 @@ export default function MyFacilityPage() {
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        />
 
         {/* Form Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

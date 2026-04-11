@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import EmptyState from '@/components/EmptyState';
 import { useImmunizations } from '@/lib/hooks/useImmunizations';
 import { usePatients } from '@/lib/hooks/usePatients';
@@ -134,29 +135,16 @@ export default function ImmunizationsPage() {
     <>
       <TopBar title="Immunizations" />
       <main className="page-container page-enter">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-primary)' }}>
-                <Syringe className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
-                  Immunization Tracker
-                </h1>
-                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                  EPI vaccination records & coverage monitoring
-                </p>
-              </div>
-            </div>
-          </div>
-          {canRecordVitalEvents && (
+        <PageHeader
+          icon={Syringe}
+          title="Immunization Tracker"
+          subtitle="EPI vaccination records & coverage monitoring"
+          actions={canRecordVitalEvents && (
             <button onClick={() => setShowModal(true)} className="btn btn-primary">
               <Plus className="w-4 h-4" /> Record Vaccination
             </button>
           )}
-        </div>
+        />
 
         {/* Stats Row */}
         {stats && (

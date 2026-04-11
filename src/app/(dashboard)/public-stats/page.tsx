@@ -1,6 +1,7 @@
 'use client';
 
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import { useVitalStatistics } from '@/lib/hooks/useVitalStatistics';
 import { useHospitals } from '@/lib/hooks/useHospitals';
 import { useDataQuality } from '@/lib/hooks/useDataQuality';
@@ -28,13 +29,11 @@ export default function PublicStatsPage() {
     <>
       <TopBar title="Public Statistics" />
       <main className="page-container page-enter">
-        <div className="page-header mb-6">
-          <div className="page-header__top">
-            <div className="page-header__icon"><Globe size={18} /></div>
-            <h1 className="page-header__title">Public Health Statistics</h1>
-          </div>
-          <p className="page-header__subtitle">Republic of South Sudan — National Health Indicators Portal</p>
-        </div>
+        <PageHeader
+          icon={Globe}
+          title="Public Health Statistics"
+          subtitle="Republic of South Sudan — National Health Indicators Portal"
+        />
 
         {/* National Overview */}
         <div className="card-elevated p-5 mb-6" style={{ background: 'rgba(43,111,224,0.04)' }}>

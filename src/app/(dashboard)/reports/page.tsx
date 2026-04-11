@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import {
   FileText, Download, Users, Activity, Pill, BedDouble, TrendingUp,
   ChevronUp, Loader2, BarChart3, AlertTriangle
@@ -490,24 +491,18 @@ export default function ReportsPage() {
     <>
       <TopBar title="Reports" />
       <main className="page-container page-enter">
-        {/* ── Page heading ────────────────────────────────────── */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-xl font-semibold">
-              Reports & Analytics
-            </h1>
-            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-              Generate and download standardized health reports
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
+        <PageHeader
+          icon={BarChart3}
+          title="Reports & Analytics"
+          subtitle="Generate and download standardized health reports"
+          actions={
             <select className="text-sm" style={{ width: '180px' }}>
               <option>February 2026</option>
               <option>January 2026</option>
               <option>December 2025</option>
             </select>
-          </div>
-        </div>
+          }
+        />
 
         {/* ── Summary stats cards ─────────────────────────────── */}
         <div className="kpi-grid mb-6">

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import { useEpidemicIntelligence } from '@/lib/hooks/useEpidemicIntelligence';
 import {
   Activity, AlertTriangle, TrendingUp, TrendingDown, Minus,
@@ -88,41 +89,28 @@ export default function EpidemicIntelligencePage() {
       <TopBar title="Epidemic Intelligence" />
       <main className="page-container page-enter">
 
-        {/* ═══ HEADER ═══ */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{
-              background: 'linear-gradient(135deg, #DC2626, #EF4444)',
-              boxShadow: '0 4px 12px rgba(220,38,38,0.3)',
-            }}>
-              <Bug className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-semibold tracking-wide" style={{ color: 'var(--text-primary)' }}>
-                Epidemic Intelligence Center
-              </h1>
-              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                WHO EWARS &middot; IDSR Surveillance &middot; Real-time Disease Tracking
-              </p>
-            </div>
-          </div>
-          {/* Overall Risk Badge */}
-          <div className="flex items-center gap-3">
-            <div className="px-4 py-2 rounded-xl flex items-center gap-2" style={{
-              background: risk.bg,
-              border: `1px solid ${risk.border}`,
-            }}>
-              <Shield className="w-4 h-4" style={{ color: risk.text }} />
-              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: risk.text }}>
-                {summary.overallRiskLevel} Risk
-              </span>
-            </div>
-            <div className="text-right">
-              <p className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>IDSR Week</p>
-              <p className="text-sm font-bold font-mono" style={{ color: 'var(--text-primary)' }}>{idsrReport.reportingWeek}</p>
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          icon={Bug}
+          title="Epidemic Intelligence Center"
+          subtitle="WHO EWARS · IDSR Surveillance · Real-time Disease Tracking"
+          actions={
+            <>
+              <div className="px-4 py-2 rounded-xl flex items-center gap-2" style={{
+                background: risk.bg,
+                border: `1px solid ${risk.border}`,
+              }}>
+                <Shield className="w-4 h-4" style={{ color: risk.text }} />
+                <span className="text-xs font-bold uppercase tracking-wider" style={{ color: risk.text }}>
+                  {summary.overallRiskLevel} Risk
+                </span>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>IDSR Week</p>
+                <p className="text-sm font-bold font-mono" style={{ color: 'var(--text-primary)' }}>{idsrReport.reportingWeek}</p>
+              </div>
+            </>
+          }
+        />
 
         {/* ═══ KPI STRIP ═══ */}
         <div className="kpi-grid mb-4">

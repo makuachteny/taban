@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import { useApp } from '@/lib/context';
 import {
   BarChart3, Users, FlaskConical, ArrowRightLeft, Building2, TrendingUp,
@@ -175,18 +176,11 @@ export default function OrgAnalyticsPage() {
       <TopBar title="Organization Analytics" />
 
       <div className="page-container page-enter">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: `${brandColor}15` }}>
-            <BarChart3 className="w-5 h-5" style={{ color: brandColor }} />
-          </div>
-          <div>
-            <h1 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Analytics</h1>
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              Organization-wide data insights for {currentUser?.organization?.name || 'your organization'}
-            </p>
-          </div>
-        </div>
+        <PageHeader
+          icon={BarChart3}
+          title="Analytics"
+          subtitle={`Organization-wide data insights for ${currentUser?.organization?.name || 'your organization'}`}
+        />
 
         {/* Stat Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

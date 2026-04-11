@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import EmptyState from '@/components/EmptyState';
 import { useANC } from '@/lib/hooks/useANC';
 import { usePatients } from '@/lib/hooks/usePatients';
@@ -175,29 +176,16 @@ export default function ANCPage() {
     <>
       <TopBar title="Antenatal Care" />
       <main className="page-container page-enter">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-primary)' }}>
-                <HeartPulse className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
-                  Antenatal Care
-                </h1>
-                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                  Maternal health monitoring · WHO 8-contact ANC model
-                </p>
-              </div>
-            </div>
-          </div>
-          {canRecordVitalEvents && (
+        <PageHeader
+          icon={HeartPulse}
+          title="Antenatal Care"
+          subtitle="Maternal health monitoring · WHO 8-contact ANC model"
+          actions={canRecordVitalEvents && (
             <button onClick={() => setShowModal(true)} className="btn btn-primary">
               <Plus className="w-4 h-4" /> Register Visit
             </button>
           )}
-        </div>
+        />
 
         {/* Stats Row */}
         {stats && (

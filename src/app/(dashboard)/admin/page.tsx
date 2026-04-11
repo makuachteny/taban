@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import { useApp } from '@/lib/context';
 import { useOrganizations } from '@/lib/hooks/useOrganizations';
 import {
@@ -205,20 +206,11 @@ export default function AdminDashboardPage() {
       <TopBar title="Super Admin" />
       <main className="page-container page-enter">
 
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-light)' }}>
-              <Shield className="w-5 h-5" style={{ color: 'var(--accent-primary)' }} />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Platform Administration</h1>
-              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                Multi-tenant management console
-              </p>
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          icon={Shield}
+          title="Platform Administration"
+          subtitle="Multi-tenant management console"
+        />
 
         {/* KPI Stat Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

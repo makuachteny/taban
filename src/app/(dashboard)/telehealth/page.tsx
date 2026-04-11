@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import TopBar from '@/components/TopBar';
+import PageHeader from '@/components/PageHeader';
 import {
   Video, Plus, Phone, PhoneOff, Clock, CheckCircle2, XCircle,
   Search, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, MessageSquare, FileText,
@@ -190,21 +191,16 @@ export default function TelehealthPage() {
     <div>
       <TopBar />
       <main className="page-container page-enter">
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
-          <div className="page-header" style={{ marginBottom: 0 }}>
-            <div className="page-header__top">
-              <div className="page-header__icon" style={{ background: 'rgba(5,150,105,0.1)' }}><Video size={18} style={{ color: 'var(--color-success)' }} /></div>
-              <h1 className="page-header__title">Telehealth</h1>
-            </div>
-            <p className="page-header__subtitle">Virtual consultations &middot; ISO 13131 compliant</p>
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+        <PageHeader
+          icon={Video}
+          title="Telehealth"
+          subtitle="Virtual consultations · ISO 13131 compliant"
+          actions={
             <button onClick={() => setShowNewForm(true)} className="btn btn-primary" style={{ gap: 6 }}>
               <Plus size={16} /> New Session
             </button>
-          </div>
-        </div>
+          }
+        />
 
         {/* ═══ Quick Stats ═══ */}
         {stats && (
