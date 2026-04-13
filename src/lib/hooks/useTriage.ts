@@ -44,7 +44,7 @@ export function useTriage(patientId?: string) {
     let cancelled = false;
     const changes = triageDB().changes({ since: 'now', live: true, include_docs: false })
       .on('change', () => { if (!cancelled) load(); })
-      .on('error', () => { /* swallow */ });
+      .on('error', (err) => { console.warn('Triage subscription error:', err); });
     return () => {
       cancelled = true;
       try { changes.cancel(); } catch { /* noop */ }

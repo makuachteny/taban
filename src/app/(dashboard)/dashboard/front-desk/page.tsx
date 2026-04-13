@@ -1,68 +1,33 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
 import { useApp } from '@/lib/context';
 import { usePatients } from '@/lib/hooks/usePatients';
 import { useReferrals } from '@/lib/hooks/useReferrals';
-import { formatCompactDateTime as formatAdmittedAt } from '@/lib/format-utils';
+import { useAppointments } from '@/lib/hooks/useAppointments';
+import { useTriage } from '@/lib/hooks/useTriage';
+import { formatCompactDateTime } from '@/lib/format-utils';
+import { useToast } from '@/components/Toast';
 import {
   Users, Calendar, ClipboardCheck, ArrowRightLeft, MessageSquare,
-  Activity, UserPlus, Clock, ChevronRight, Shield, Wifi,
-  Radio, LogIn, Bell, FileText, ClipboardList, Filter, RotateCw, AlertCircle,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  Eye, EyeOff, CheckCircle, AlertTriangle, Zap
+  UserPlus, Clock, ChevronRight, Shield, Wifi,
+  LogIn, Bell, ClipboardList,
+  Eye, EyeOff, CheckCircle, AlertTriangle, Zap, Stethoscope,
+  AlertCircle,
 } from 'lucide-react';
 
 const ACCENT = 'var(--accent-primary)';
 
-const EVENT_TYPES = [
-  { type: 'arrival', label: 'Patient Arrived', color: '#14B8A6', icon: LogIn },
-  { type: 'registered', label: 'Patient Registered', color: '#60A5FA', icon: UserPlus },
-  { type: 'checked_in', label: 'Patient Checked In', color: 'var(--color-success)', icon: ClipboardCheck },
-  { type: 'appointment', label: 'Appointment Scheduled', color: '#A855F7', icon: Calendar },
-  { type: 'referral', label: 'Referral Received', color: 'var(--color-warning)', icon: ArrowRightLeft },
-  { type: 'message', label: 'Message Sent', color: '#FB923C', icon: MessageSquare },
-  { type: 'triage', label: 'Triage Complete', color: '#EC4899', icon: Activity },
-  { type: 'discharge', label: 'Patient Discharged', color: '#38BDF8', icon: FileText },
-];
-
-/**
- * Fallback patient names used only when the patient DB hasn't synced yet (cold
- * start). The dashboard immediately switches to real patient names from the
- * `usePatients()` hook as soon as data loads.
- */
-const FALLBACK_PATIENT_NAMES = [
-  'Deng Mabior', 'Achol Mayen', 'Nyamal Koang', 'Gatluak Ruot', 'Ayen Dut',
-  'Kuol Akot', 'Ladu Tombe', 'Rose Gbudue', 'Majok Chol', 'Nyandit Dut',
-];
-
-const DEPARTMENTS = ['OPD', 'Emergency', 'Maternity', 'Pediatrics', 'Surgery', 'Pharmacy'];
-
-// Feature 3: Complaint-to-Department mapping
 const COMPLAINT_DEPARTMENT_MAP: Record<string, string> = {
-  fever: 'General Medicine',
-  malaria: 'General Medicine',
-  cough: 'General Medicine',
-  headache: 'General Medicine',
-  pregnancy: 'Maternity',
-  anc: 'Maternity',
-  antenatal: 'Maternity',
-  injury: 'Emergency',
-  wound: 'Emergency',
-  fracture: 'Emergency',
-  accident: 'Emergency',
-  child: 'Pediatrics',
-  pediatric: 'Pediatrics',
-  infant: 'Pediatrics',
-  eye: 'Ophthalmology',
-  vision: 'Ophthalmology',
-  dental: 'Dental',
-  tooth: 'Dental',
-  toothache: 'Dental',
-  skin: 'Dermatology',
-  rash: 'Dermatology',
+  fever: 'General Medicine', malaria: 'General Medicine', cough: 'General Medicine',
+  headache: 'General Medicine', pregnancy: 'Maternity', anc: 'Maternity',
+  antenatal: 'Maternity', injury: 'Emergency', wound: 'Emergency',
+  fracture: 'Emergency', accident: 'Emergency', child: 'Pediatrics',
+  pediatric: 'Pediatrics', infant: 'Pediatrics', eye: 'Ophthalmology',
+  vision: 'Ophthalmology', dental: 'Dental', tooth: 'Dental',
+  skin: 'Dermatology', rash: 'Dermatology',
 };
 
 function suggestDepartment(complaint: string): string {
@@ -73,324 +38,214 @@ function suggestDepartment(complaint: string): string {
   return 'General Medicine';
 }
 
-const SAMPLE_COMPLAINTS = [
-  'fever and body aches',
-  'pregnancy checkup - anc visit',
-  'wound on left arm',
-  'child with cough',
-  'eye pain and blurred vision',
-  'toothache for 3 days',
-  'skin rash on chest',
-  'headache and dizziness',
-  'fracture right leg',
-  'malaria symptoms',
-  'routine checkup',
-  'back pain',
-  'antenatal follow-up',
-  'infant vaccination',
-  'dental cleaning',
-];
-
-type QueueStatus = 'WAITING' | 'IN CONSULT' | 'DONE';
-type QueueType = 'walk-in' | 'appointment' | 'referral';
-
-interface QueueEntry {
-  id: number;
-  position: number;
-  patientName: string;
-  priority: 'urgent' | 'normal' | 'routine';
-  type: QueueType;
-  complaint: string;
-  department: string;
-  checkInTime: string;
-  estWait: string;
-  status: QueueStatus;
-}
-
-// Feature 4: Previous visit data for repeat visitors
-const PREVIOUS_VISITS: Record<string, { lastDepartment: string; lastComplaint: string; lastVisitDate: string }> = {
-  'Deng Mabior': { lastDepartment: 'General Medicine', lastComplaint: 'fever and body aches', lastVisitDate: '2026-02-15' },
-  'Achol Mayen': { lastDepartment: 'Maternity', lastComplaint: 'pregnancy checkup - anc visit', lastVisitDate: '2026-03-01' },
-  'Gatluak Ruot': { lastDepartment: 'Emergency', lastComplaint: 'wound on left arm', lastVisitDate: '2026-01-20' },
-  'Kuol Akot': { lastDepartment: 'Pediatrics', lastComplaint: 'child with cough', lastVisitDate: '2026-02-28' },
-  'Nyandit Dut': { lastDepartment: 'Dental', lastComplaint: 'toothache for 3 days', lastVisitDate: '2026-03-05' },
-  'Garang Makuei': { lastDepartment: 'Ophthalmology', lastComplaint: 'eye pain and blurred vision', lastVisitDate: '2026-02-10' },
-};
-
-interface LiveEvent {
-  id: number;
-  type: string;
-  label: string;
-  color: string;
-  icon: typeof Activity;
-  patient: string;
-  department: string;
-  time: string;
-  isNew: boolean;
-}
-
-function buildQueueFromPatients(names: string[]): QueueEntry[] {
-  const pool = names.length > 0 ? names : FALLBACK_PATIENT_NAMES;
-  const now = new Date();
-  return pool.slice(0, 10).map((name, i) => {
-    const complaint = SAMPLE_COMPLAINTS[i % SAMPLE_COMPLAINTS.length];
-    const checkIn = new Date(now.getTime() - (10 - i) * 8 * 60000);
-    const status: QueueStatus = i < 2 ? 'IN CONSULT' : i < 8 ? 'WAITING' : 'DONE';
-    return {
-      id: i + 1,
-      position: i + 1,
-      patientName: name,
-      priority: i === 0 ? 'urgent' : i < 3 ? 'normal' : 'routine',
-      type: (i % 3 === 0 ? 'appointment' : 'walk-in') as QueueType,
-      complaint,
-      department: suggestDepartment(complaint),
-      checkInTime: checkIn.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-      estWait: `${(i + 1) * 12}m`,
-      status,
-    };
-  });
-}
-
 export default function FrontDeskDashboardPage() {
   const router = useRouter();
   const { currentUser, globalSearch } = useApp();
   const { patients } = usePatients();
   const { referrals, updateStatus } = useReferrals();
-  const [liveEvents, setLiveEvents] = useState<LiveEvent[]>([]);
-  const [eventCounter, setEventCounter] = useState(0);
+  const { appointments, updateStatus: updateAppointmentStatus } = useAppointments();
+  const { triages } = useTriage();
+  const { showToast } = useToast();
 
-  // Real patient name pool (used by queue, live ticker, and any place we
-  // would have shown SAMPLE_PATIENTS).
-  const livePatientNames = useMemo(() => {
-    const names = (patients || [])
-      .map(p => `${p.firstName || ''} ${p.surname || ''}`.trim())
-      .filter(Boolean);
-    return names.length > 0 ? names : FALLBACK_PATIENT_NAMES;
-  }, [patients]);
-
-  // Feature 1: Live Queue Board state — seeded once from real patient names
-  const [queueEntries, setQueueEntries] = useState<QueueEntry[]>(() => buildQueueFromPatients([]));
-  const [queueSeeded, setQueueSeeded] = useState(false);
-  useEffect(() => {
-    // Re-seed once when patients first load so the queue shows real names
-    if (!queueSeeded && livePatientNames.length > 0 && livePatientNames !== FALLBACK_PATIENT_NAMES) {
-      setQueueEntries(buildQueueFromPatients(livePatientNames));
-      setQueueSeeded(true);
-    }
-  }, [livePatientNames, queueSeeded]);
-
-  // Feature 2: Walk-in vs Appointment filter
-  const [queueFilter, setQueueFilter] = useState<'all' | 'walk-in' | 'appointment'>('all');
-
-  // Feature 4: Selected patient for check-in (to show previous visit info)
-  const [selectedCheckInPatient, setSelectedCheckInPatient] = useState<string | null>(null);
-
-  // Incoming Referrals state
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [queueFilter, setQueueFilter] = useState<'all' | 'walk-in' | 'appointment' | 'referral'>('all');
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [expandedReferralId, setExpandedReferralId] = useState<string | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [referralToast, setReferralToast] = useState<string | null>(null);
 
-  const generateEvent = useCallback((): LiveEvent => {
-    const evtType = EVENT_TYPES[Math.floor(Math.random() * EVENT_TYPES.length)];
-    const now = new Date();
-    return {
-      id: Date.now() + Math.random(),
-      ...evtType,
-      patient: livePatientNames[Math.floor(Math.random() * livePatientNames.length)],
-      department: DEPARTMENTS[Math.floor(Math.random() * DEPARTMENTS.length)],
-      time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-      isNew: true,
-    };
-  }, [livePatientNames]);
+  const today = new Date().toISOString().slice(0, 10);
+  const facilityId = currentUser?.hospitalId || '';
 
-  useEffect(() => {
-    const initial: LiveEvent[] = [];
-    for (let i = 0; i < 6; i++) {
-      initial.push({ ...generateEvent(), isNew: false, id: i });
-    }
-    setLiveEvents(initial);
+  // ── Real today's appointments ──
+  const todaysAppointments = useMemo(() =>
+    appointments
+      .filter(a => a.appointmentDate === today && a.status !== 'cancelled')
+      .sort((a, b) => a.appointmentTime.localeCompare(b.appointmentTime)),
+    [appointments, today]
+  );
 
-    const interval = setInterval(() => {
-      setLiveEvents(prev => {
-        const newEvent = generateEvent();
-        return [newEvent, ...prev.slice(0, 9).map(e => ({ ...e, isNew: false }))];
+  // ── Real today's triages (pending/seen = still in queue) ──
+  const todaysTriages = useMemo(() =>
+    triages
+      .filter(t => (t.triagedAt || '').startsWith(today))
+      .sort((a, b) => {
+        const pOrder: Record<string, number> = { RED: 0, YELLOW: 1, GREEN: 2 };
+        return (pOrder[a.priority] ?? 3) - (pOrder[b.priority] ?? 3);
+      }),
+    [triages, today]
+  );
+
+  const activeTriages = useMemo(() =>
+    todaysTriages.filter(t => t.status === 'pending' || t.status === 'seen'),
+    [todaysTriages]
+  );
+
+  // ── Unified queue: triaged walk-ins + appointments ──
+  interface QueueItem {
+    id: string;
+    patientId: string;
+    patientName: string;
+    type: 'walk-in' | 'appointment' | 'referral';
+    priority: 'RED' | 'YELLOW' | 'GREEN' | 'normal';
+    complaint: string;
+    department: string;
+    time: string;
+    status: 'WAITING' | 'IN CONSULT' | 'DONE';
+    sourceId: string; // triage or appointment ID
+  }
+
+  const queue = useMemo(() => {
+    const items: QueueItem[] = [];
+
+    // Add triaged patients (walk-ins and triaged appointments)
+    for (const t of todaysTriages) {
+      const status = t.status === 'pending' ? 'WAITING' :
+                     t.status === 'seen' || t.status === 'admitted' ? 'IN CONSULT' : 'DONE';
+      items.push({
+        id: `triage-${t._id}`,
+        patientId: t.patientId,
+        patientName: t.patientName,
+        type: 'walk-in',
+        priority: t.priority as 'RED' | 'YELLOW' | 'GREEN',
+        complaint: t.chiefComplaint || 'ETAT Assessment',
+        department: t.chiefComplaint ? suggestDepartment(t.chiefComplaint) : 'Triage',
+        time: new Date(t.triagedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        status,
+        sourceId: t._id,
       });
-      setEventCounter(c => c + 1);
-    }, 5000);
+    }
 
-    return () => clearInterval(interval);
-  }, [generateEvent]);
+    // Add appointments not already triaged
+    const triagedPatientIds = new Set(todaysTriages.map(t => t.patientId));
+    for (const a of todaysAppointments) {
+      if (triagedPatientIds.has(a.patientId)) continue;
+      const status = a.status === 'completed' ? 'DONE' :
+                     a.status === 'in_progress' ? 'IN CONSULT' : 'WAITING';
+      items.push({
+        id: `appt-${a._id}`,
+        patientId: a.patientId,
+        patientName: a.patientName,
+        type: 'appointment',
+        priority: a.priority === 'emergency' ? 'RED' : a.priority === 'urgent' ? 'YELLOW' : 'normal',
+        complaint: a.reason || 'Scheduled visit',
+        department: a.department || 'OPD',
+        time: a.appointmentTime,
+        status,
+        sourceId: a._id,
+      });
+    }
 
-  // Feature 1: Auto-refresh queue every 30 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setQueueEntries(prev =>
-        prev.map(entry => {
-          // Randomly advance some statuses
-          if (entry.status === 'WAITING' && Math.random() < 0.15) {
-            return { ...entry, status: 'IN CONSULT' as QueueStatus };
-          }
-          if (entry.status === 'IN CONSULT' && Math.random() < 0.1) {
-            return { ...entry, status: 'DONE' as QueueStatus };
-          }
-          return entry;
-        })
-      );
-    }, 30000);
+    // Sort: RED first, then YELLOW, then GREEN, then normal. Within same priority, by time.
+    const pOrder: Record<string, number> = { RED: 0, YELLOW: 1, GREEN: 2, normal: 3 };
+    items.sort((a, b) => (pOrder[a.priority] ?? 3) - (pOrder[b.priority] ?? 3) || a.time.localeCompare(b.time));
 
-    return () => clearInterval(interval);
-  }, []);
+    return items;
+  }, [todaysTriages, todaysAppointments]);
 
-  // Feature 2: Filtered queue entries
-  const filteredQueueEntries = useMemo(() => {
-    if (queueFilter === 'all') return queueEntries;
-    return queueEntries.filter(entry => entry.type === queueFilter);
-  }, [queueEntries, queueFilter]);
+  const filteredQueue = useMemo(() => {
+    if (queueFilter === 'all') return queue;
+    return queue.filter(q => q.type === queueFilter);
+  }, [queue, queueFilter]);
 
-  // Feature 4: Previous visit info for selected patient
-  const previousVisitInfo = useMemo(() => {
-    if (!selectedCheckInPatient) return null;
-    return PREVIOUS_VISITS[selectedCheckInPatient] || null;
-  }, [selectedCheckInPatient]);
-
-  // Incoming referrals: filter by current facility and pending statuses, sort emergency first
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const incomingReferrals = useMemo(() => {
-    const facilityId = currentUser?.hospitalId || '';
-    return referrals
+  // ── Incoming referrals ──
+  const incomingReferrals = useMemo(() =>
+    referrals
       .filter(r => r.toHospitalId === facilityId && (r.status === 'sent' || r.status === 'received'))
       .sort((a, b) => {
-        const urgencyOrder = { emergency: 0, urgent: 1, routine: 2 };
+        const urgencyOrder: Record<string, number> = { emergency: 0, urgent: 1, routine: 2 };
         return (urgencyOrder[a.urgency] ?? 2) - (urgencyOrder[b.urgency] ?? 2);
-      });
-  }, [referrals, currentUser?.hospitalId]);
+      }),
+    [referrals, facilityId]
+  );
 
-  // Handle referral check-in
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // ── Selected patient previous visit info (from real records) ──
+  const selectedPatient = useMemo(() =>
+    selectedPatientId ? patients.find(p => p._id === selectedPatientId) : null,
+    [selectedPatientId, patients]
+  );
+
+  // ── Recent registrations (today) ──
+  const recentPatients = useMemo(() =>
+    [...patients]
+      .sort((a, b) => (b.registeredAt || b.registrationDate || '').localeCompare(a.registeredAt || a.registrationDate || ''))
+      .filter(p =>
+        !globalSearch ||
+        `${p.firstName} ${p.surname}`.toLowerCase().includes(globalSearch.toLowerCase()) ||
+        p.hospitalNumber.toLowerCase().includes(globalSearch.toLowerCase())
+      )
+      .slice(0, 8),
+    [patients, globalSearch]
+  );
+
+  const pendingReferrals = referrals.filter(r => r.status === 'sent' || r.status === 'received');
+
+  // ── Handle referral check-in ──
   const handleReferralCheckIn = useCallback(async (referral: typeof referrals[0]) => {
     try {
       await updateStatus(referral._id, 'received');
-      const newEntry: QueueEntry = {
-        id: Date.now(),
-        position: queueEntries.length + 1,
-        patientName: referral.patientName,
-        priority: referral.urgency === 'emergency' ? 'urgent' : referral.urgency === 'urgent' ? 'urgent' : 'normal',
-        type: 'referral',
-        complaint: referral.reason,
-        department: referral.department || 'General Medicine',
-        checkInTime: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-        estWait: `${(queueEntries.length + 1) * 12}m`,
-        status: 'WAITING',
-      };
-      setQueueEntries(prev => [...prev, newEntry]);
-      setReferralToast(`Patient ${referral.patientName} checked in from referral`);
-      setTimeout(() => setReferralToast(null), 4000);
+      showToast(`Patient ${referral.patientName} checked in from referral`, 'success');
     } catch {
-      setReferralToast('Failed to check in referral patient');
-      setTimeout(() => setReferralToast(null), 4000);
+      showToast('Failed to check in referral patient', 'error');
     }
-  }, [updateStatus, queueEntries.length]);
+  }, [updateStatus, showToast]);
+
+  // ── Handle appointment check-in ──
+  const handleCheckIn = useCallback(async (appointmentId: string, patientName: string) => {
+    try {
+      await updateAppointmentStatus(appointmentId, 'checked_in');
+      showToast(`${patientName} checked in successfully`, 'success');
+    } catch {
+      showToast('Failed to check in patient', 'error');
+    }
+  }, [updateAppointmentStatus, showToast]);
 
   if (!currentUser) return null;
 
   const hospital = currentUser.hospital;
   const todayDate = new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-  const pendingReferrals = referrals.filter(r => r.status === 'sent' || r.status === 'received');
-
-  const recentPatients = [...patients]
-    .sort((a, b) => {
-      const ta = new Date(a.registeredAt || a.registrationDate || 0).getTime();
-      const tb = new Date(b.registeredAt || b.registrationDate || 0).getTime();
-      return tb - ta;
-    })
-    .filter(p =>
-      !globalSearch ||
-      `${p.firstName} ${p.surname}`.toLowerCase().includes(globalSearch.toLowerCase()) ||
-      p.hospitalNumber.toLowerCase().includes(globalSearch.toLowerCase())
-    )
-    .slice(0, 8);
-
-  // Simulated queue data (kept for KPI strip compatibility) — derived from real patient names
-  const waitingQueue = livePatientNames.slice(0, 5).map((name, i) => ({
-    name,
-    waitTime: `${10 + i * 8}m`,
-    priority: i === 0 ? 'urgent' : i < 2 ? 'normal' : 'routine',
-    dept: DEPARTMENTS[i % DEPARTMENTS.length],
-  }));
-
-  const upcomingAppointments = livePatientNames.slice(5, 10).map((name, i) => {
-    const hour = 8 + i;
-    return {
-      name,
-      time: `${hour.toString().padStart(2, '0')}:${((i * 15) % 60).toString().padStart(2, '0')}`,
-      dept: DEPARTMENTS[(i + 2) % DEPARTMENTS.length],
-      status: i < 2 ? 'arrived' : i < 4 ? 'confirmed' : 'pending',
-    };
-  });
-
-  const statusColor = (s: QueueStatus) =>
-    s === 'WAITING' ? '#60A5FA' : s === 'IN CONSULT' ? 'var(--color-warning)' : 'var(--color-success)';
+  const waitingCount = queue.filter(q => q.status === 'WAITING').length;
+  const inConsultCount = queue.filter(q => q.status === 'IN CONSULT').length;
 
   const priorityColor = (p: string) =>
-    p === 'urgent' ? '#F87171' : p === 'normal' ? 'var(--color-warning)' : 'var(--color-success)';
+    p === 'RED' ? '#EF4444' : p === 'YELLOW' ? 'var(--color-warning)' : p === 'GREEN' ? 'var(--color-success)' : 'var(--accent-primary)';
+  const statusColor = (s: string) =>
+    s === 'WAITING' ? '#60A5FA' : s === 'IN CONSULT' ? 'var(--color-warning)' : 'var(--color-success)';
 
   return (
     <>
       <TopBar title="Reception Center" />
       <main className="page-container page-enter">
 
-        {/* COMMAND CENTER HEADER */}
+        {/* HEADER */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{
-              background: 'var(--accent-primary)',
-            }}>
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: ACCENT }}>
               <Shield className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-semibold tracking-wide" style={{ color: 'var(--text-primary)' }}>
-                Reception
-              </h1>
-              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                {todayDate} · {hospital?.name || currentUser.hospitalName || ''}
-              </p>
+              <h1 className="text-xl font-semibold tracking-wide" style={{ color: 'var(--text-primary)' }}>Reception</h1>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{todayDate} · {hospital?.name || currentUser.hospitalName || ''}</p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="text-[10px] text-right" style={{ color: 'var(--text-muted)' }}>
-              <div className="flex items-center gap-1">
-                <Wifi className="w-3 h-3" style={{ color: 'var(--color-success)' }} />
-                <span>Connected · {hospital?.internetType || 'N/A'}</span>
-              </div>
-            </div>
+          <div className="flex items-center gap-1 text-[10px]" style={{ color: 'var(--text-muted)' }}>
+            <Wifi className="w-3 h-3" style={{ color: 'var(--color-success)' }} />
+            <span>Connected</span>
           </div>
         </div>
 
         {/* KPI STRIP */}
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 mb-4">
           {[
-            { label: 'Registrations', value: (hospital?.todayVisits || Math.max(12, patients.length)).toString(), icon: UserPlus, color: ACCENT },
-            { label: 'Waiting', value: waitingQueue.length.toString(), icon: Clock, color: '#FB923C' },
-            { label: 'Check-ins', value: Math.floor(patients.length * 0.6).toString(), icon: ClipboardCheck, color: 'var(--color-success)' },
-            { label: 'Appointments', value: upcomingAppointments.length.toString(), icon: Calendar, color: '#60A5FA' },
-            { label: 'Referrals', value: pendingReferrals.length.toString(), icon: ArrowRightLeft, color: 'var(--color-warning)' },
-            { label: 'Messages', value: Math.floor(referrals.length * 1.5).toString(), icon: MessageSquare, color: '#A855F7' },
-            { label: 'Active', value: patients.length.toString(), icon: Users, color: '#38BDF8' },
-            { label: 'Pending', value: Math.ceil(patients.length * 0.15).toString(), icon: Bell, color: '#F87171' },
+            { label: 'Total Queue', value: queue.length, icon: ClipboardList, color: ACCENT },
+            { label: 'Waiting', value: waitingCount, icon: Clock, color: '#FB923C' },
+            { label: 'In Consult', value: inConsultCount, icon: Stethoscope, color: 'var(--color-success)' },
+            { label: 'Appointments', value: todaysAppointments.length, icon: Calendar, color: '#60A5FA' },
+            { label: 'Triaged', value: todaysTriages.length, icon: AlertTriangle, color: '#EC4899' },
+            { label: 'Referrals In', value: incomingReferrals.length, icon: ArrowRightLeft, color: 'var(--color-warning)' },
+            { label: 'Registered', value: recentPatients.length, icon: UserPlus, color: '#38BDF8' },
+            { label: 'RED Priority', value: activeTriages.filter(t => t.priority === 'RED').length, icon: Bell, color: '#EF4444' },
           ].map((kpi) => (
-            <div key={kpi.label} className="relative px-3 py-2.5 rounded-xl transition-all cursor-pointer overflow-hidden"
-              onClick={() => {
-                const routes: Record<string, string> = { 'Registrations': '/patients', 'Waiting': '/patients', 'Check-ins': '/patients', 'Referrals': '/referrals', 'Messages': '/messages' };
-                if (routes[kpi.label]) router.push(routes[kpi.label]);
-              }}
-              style={{
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border-light)',
-                boxShadow: 'var(--card-shadow)',
-              }}>
+            <div key={kpi.label} className="px-3 py-2.5 rounded-xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)' }}>
               <div className="flex items-center gap-1.5 mb-1">
-                <kpi.icon className="w-3 h-3" style={{ color: 'var(--accent-primary)' }} />
+                <kpi.icon className="w-3 h-3" style={{ color: kpi.color }} />
                 <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{kpi.label}</span>
               </div>
               <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{kpi.value}</p>
@@ -398,132 +253,54 @@ export default function FrontDeskDashboardPage() {
           ))}
         </div>
 
-        {/* ========== INCOMING REFERRALS PANEL ========== */}
+        {/* INCOMING REFERRALS */}
         {incomingReferrals.length > 0 && (
-          <div className="rounded-2xl overflow-hidden mb-4" style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-light)',
-            boxShadow: 'var(--card-shadow)',
-          }}>
+          <div className="rounded-2xl overflow-hidden mb-4" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)' }}>
             <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
               <div className="flex items-center gap-2">
                 <ArrowRightLeft className="w-4 h-4" style={{ color: '#FB923C' }} />
                 <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Incoming Referrals</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{
-                  background: '#FB923C20',
-                  color: '#FB923C',
-                  border: '1px solid #FB923C30',
-                }}>{incomingReferrals.length}</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'rgba(251,146,60,0.12)', color: '#FB923C' }}>{incomingReferrals.length}</span>
               </div>
-              <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>
-                {incomingReferrals.filter(r => r.urgency === 'emergency').length} emergency
-              </span>
             </div>
             <div className="p-3 space-y-2">
               {incomingReferrals.map(ref => {
                 const isExpanded = expandedReferralId === ref._id;
-                const urgencyColor = ref.urgency === 'emergency' ? 'var(--color-danger)' : ref.urgency === 'urgent' ? 'var(--color-warning)' : 'var(--color-success)';
+                const urgencyColor = ref.urgency === 'emergency' ? '#EF4444' : ref.urgency === 'urgent' ? 'var(--color-warning)' : 'var(--color-success)';
                 const UrgencyIcon = ref.urgency === 'emergency' ? Zap : ref.urgency === 'urgent' ? AlertTriangle : CheckCircle;
-                const statusColor = ref.status === 'sent' ? '#60A5FA' : 'var(--color-warning)';
-                const isEmergency = ref.urgency === 'emergency';
-
                 return (
-                  <div key={ref._id} className="rounded-xl overflow-hidden transition-all" style={{
-                    background: isEmergency ? '#EF444408' : 'var(--overlay-subtle)',
-                    border: isEmergency ? '1px solid #EF444430' : '1px solid var(--border-light)',
-                  }}>
+                  <div key={ref._id} className="rounded-xl overflow-hidden" style={{ background: ref.urgency === 'emergency' ? 'rgba(239,68,68,0.04)' : 'var(--overlay-subtle)', border: `1px solid ${ref.urgency === 'emergency' ? 'rgba(239,68,68,0.2)' : 'var(--border-light)'}` }}>
                     <div className="flex items-center gap-3 p-3">
-                      <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
-                        style={{ background: isEmergency ? 'var(--color-danger)' : ACCENT }}>
+                      <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0" style={{ background: ref.urgency === 'emergency' ? '#EF4444' : ACCENT }}>
                         {ref.patientName.split(' ').map(n => n[0]).join('').slice(0, 2)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
-                          <span className="text-[12px] font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
-                            {ref.patientName}
-                          </span>
-                          <span className="flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded flex-shrink-0" style={{
-                            background: `${urgencyColor}15`,
-                            color: urgencyColor,
-                            border: `1px solid ${urgencyColor}30`,
-                          }}>
-                            <UrgencyIcon className="w-2.5 h-2.5" />
+                          <span className="text-[12px] font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{ref.patientName}</span>
+                          <span className="flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded flex-shrink-0" style={{ background: `${urgencyColor}12`, color: urgencyColor }}>
+                            <UrgencyIcon className="w-2.5 h-2.5" style={{ color: urgencyColor }} />
                             {ref.urgency.toUpperCase()}
                           </span>
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded flex-shrink-0" style={{
-                            background: `${statusColor}15`,
-                            color: statusColor,
-                            border: `1px solid ${statusColor}30`,
-                          }}>{ref.status.toUpperCase()}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-                            From: <strong style={{ color: 'var(--text-secondary)' }}>{ref.fromHospital}</strong>
-                          </span>
-                          <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>·</span>
-                          <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{ref.department}</span>
-                        </div>
-                        <p className="text-[10px] mt-0.5 truncate" style={{ color: 'var(--text-muted)' }}>
-                          {ref.reason}
-                        </p>
-                        <span className="text-[9px] font-mono" style={{ color: 'var(--text-muted)' }}>
-                          {new Date(ref.referralDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                        </span>
+                        <p className="text-[10px] truncate" style={{ color: 'var(--text-muted)' }}>From: {ref.fromHospital} · {ref.reason}</p>
                       </div>
                       <div className="flex items-center gap-1.5 flex-shrink-0">
-                        <button
-                          onClick={() => setExpandedReferralId(isExpanded ? null : ref._id)}
-                          className="p-1.5 rounded-lg transition-all"
-                          style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}
-                          title="View Details"
-                        >
-                          {isExpanded
-                            ? <EyeOff className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />
-                            : <Eye className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />
-                          }
+                        <button onClick={() => setExpandedReferralId(isExpanded ? null : ref._id)} className="p-1.5 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+                          {isExpanded ? <EyeOff className="w-3.5 h-3.5" style={{ color: 'var(--text-secondary)' }} /> : <Eye className="w-3.5 h-3.5" style={{ color: 'var(--text-secondary)' }} />}
                         </button>
-                        <button
-                          onClick={() => handleReferralCheckIn(ref)}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-semibold transition-all text-white"
-                          style={{ background: ACCENT }}
-                          title="Check in patient from referral"
-                        >
-                          <LogIn className="w-3 h-3" />
-                          Check In
+                        <button onClick={() => handleReferralCheckIn(ref)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-semibold text-white" style={{ background: ACCENT }}>
+                          <LogIn className="w-3 h-3" /> Check In
                         </button>
                       </div>
                     </div>
                     {isExpanded && (
-                      <div className="px-3 pb-3 pt-1 border-t" style={{ borderColor: 'var(--border-light)' }}>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 rounded-lg" style={{
-                          background: `${ACCENT}05`,
-                          border: `1px solid ${ACCENT}15`,
-                        }}>
-                          <div>
-                            <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Reason</p>
-                            <p className="text-[11px] font-medium mt-0.5" style={{ color: 'var(--text-primary)' }}>{ref.reason}</p>
-                          </div>
-                          <div>
-                            <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Referring Doctor</p>
-                            <p className="text-[11px] font-medium mt-0.5" style={{ color: 'var(--text-primary)' }}>{ref.referringDoctor}</p>
-                          </div>
-                          <div>
-                            <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Department</p>
-                            <p className="text-[11px] font-medium mt-0.5" style={{ color: 'var(--text-primary)' }}>{ref.department}</p>
-                          </div>
-                          <div>
-                            <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Date Sent</p>
-                            <p className="text-[11px] font-medium mt-0.5" style={{ color: 'var(--text-primary)' }}>
-                              {new Date(ref.referralDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}
-                            </p>
-                          </div>
+                      <div className="px-3 pb-3 border-t" style={{ borderColor: 'var(--border-light)' }}>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 rounded-lg mt-2" style={{ background: 'var(--overlay-subtle)' }}>
+                          <div><p className="text-[9px] font-semibold uppercase" style={{ color: 'var(--text-muted)' }}>Reason</p><p className="text-[11px] mt-0.5" style={{ color: 'var(--text-primary)' }}>{ref.reason}</p></div>
+                          <div><p className="text-[9px] font-semibold uppercase" style={{ color: 'var(--text-muted)' }}>Doctor</p><p className="text-[11px] mt-0.5" style={{ color: 'var(--text-primary)' }}>{ref.referringDoctor}</p></div>
+                          <div><p className="text-[9px] font-semibold uppercase" style={{ color: 'var(--text-muted)' }}>Department</p><p className="text-[11px] mt-0.5" style={{ color: 'var(--text-primary)' }}>{ref.department}</p></div>
+                          <div><p className="text-[9px] font-semibold uppercase" style={{ color: 'var(--text-muted)' }}>Date</p><p className="text-[11px] mt-0.5" style={{ color: 'var(--text-primary)' }}>{new Date(ref.referralDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p></div>
                         </div>
-                        {ref.notes && (
-                          <div className="mt-2 p-2 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
-                            <p className="text-[9px] font-semibold uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Notes</p>
-                            <p className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>{ref.notes}</p>
-                          </div>
-                        )}
                       </div>
                     )}
                   </div>
@@ -533,132 +310,70 @@ export default function FrontDeskDashboardPage() {
           </div>
         )}
 
-        {/* ========== TOAST NOTIFICATION ========== */}
-        {referralToast && (
-          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg text-white text-sm font-medium"
-            style={{ background: ACCENT, animation: 'fadeIn 0.3s ease-out' }}>
-            <CheckCircle className="w-4 h-4" />
-            {referralToast}
-          </div>
-        )}
-
-        {/* ========== FEATURE 1 & 2: LIVE QUEUE BOARD WITH FILTER TOGGLE ========== */}
-        <div className="rounded-2xl overflow-hidden mb-4" style={{
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border-light)',
-          boxShadow: 'var(--card-shadow)',
-        }}>
-          {/* Queue Board Header with Filter Toggle */}
+        {/* PATIENT QUEUE TABLE */}
+        <div className="rounded-2xl overflow-hidden mb-4" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)' }}>
           <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
             <div className="flex items-center gap-2">
               <ClipboardList className="w-4 h-4" style={{ color: ACCENT }} />
-              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Live Queue Board</span>
-              <span className="px-2 py-0.5 rounded text-[9px] font-bold tracking-wider" style={{
-                background: 'rgba(20,184,166,0.1)',
-                color: '#14B8A6',
-                border: '1px solid rgba(20,184,166,0.2)',
-              }}>LIVE</span>
-              <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>
-                Auto-refreshes every 30s
-              </span>
+              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Patient Queue</span>
+              <span className="px-2 py-0.5 rounded text-[9px] font-bold" style={{ background: 'rgba(20,184,166,0.1)', color: '#14B8A6' }}>LIVE</span>
             </div>
             <div className="flex items-center gap-2">
-              {/* Feature 2: Walk-in vs Appointment Toggle */}
               <div className="flex items-center gap-1 p-0.5 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
-                {([
-                  { key: 'all' as const, label: 'All' },
-                  { key: 'walk-in' as const, label: 'Walk-ins' },
-                  { key: 'appointment' as const, label: 'Appointments' },
-                ]).map(tab => (
-                  <button
-                    key={tab.key}
-                    onClick={() => setQueueFilter(tab.key)}
-                    className="px-3 py-1 rounded-md text-[10px] font-semibold transition-all"
-                    style={{
-                      background: queueFilter === tab.key ? ACCENT : 'transparent',
-                      color: queueFilter === tab.key ? '#FFFFFF' : 'var(--text-muted)',
-                    }}
-                  >
-                    {tab.label}
+                {(['all', 'walk-in', 'appointment', 'referral'] as const).map(tab => (
+                  <button key={tab} onClick={() => setQueueFilter(tab)} className="px-3 py-1 rounded-md text-[10px] font-semibold transition-all" style={{ background: queueFilter === tab ? ACCENT : 'transparent', color: queueFilter === tab ? '#FFF' : 'var(--text-muted)' }}>
+                    {tab === 'all' ? 'All' : tab === 'walk-in' ? 'Walk-ins' : tab === 'appointment' ? 'Appts' : 'Referrals'}
                   </button>
                 ))}
               </div>
-              <div className="flex items-center gap-1">
-                <Filter className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />
-                <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>
-                  {filteredQueueEntries.length} patients
-                </span>
-              </div>
-              <button
-                onClick={() => setQueueEntries(buildQueueFromPatients(livePatientNames))}
-                className="p-1 rounded-md transition-all"
-                style={{ background: 'var(--overlay-subtle)' }}
-                title="Refresh queue"
-              >
-                <RotateCw className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />
-              </button>
+              <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>{filteredQueue.length} patients</span>
             </div>
           </div>
-
-          {/* Queue Table */}
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
-                  {['#', 'Patient Name', 'Priority', 'Type', 'Complaint', 'Department', 'Check-in Time', 'Est. Wait', 'Status'].map(h => (
+                  {['#', 'Patient', 'Priority', 'Type', 'Complaint', 'Department', 'Time', 'Status', 'Action'].map(h => (
                     <th key={h} className="px-3 py-2 text-left text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {filteredQueueEntries.map(entry => {
-                  const sColor = statusColor(entry.status);
+                {filteredQueue.length === 0 ? (
+                  <tr><td colSpan={9} className="text-center py-8 text-xs" style={{ color: 'var(--text-muted)' }}>No patients in queue</td></tr>
+                ) : filteredQueue.map((entry, idx) => {
                   const pColor = priorityColor(entry.priority);
+                  const sColor = statusColor(entry.status);
                   return (
-                    <tr
-                      key={entry.id}
-                      className="cursor-pointer transition-all"
-                      style={{ borderBottom: '1px solid var(--border-light)' }}
-                      onClick={() => setSelectedCheckInPatient(entry.patientName)}
-                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--overlay-subtle)')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                    >
-                      <td className="px-3 py-2.5 text-[11px] font-bold" style={{ color: 'var(--text-muted)' }}>{entry.position}</td>
+                    <tr key={entry.id} className="cursor-pointer transition-all hover:bg-[var(--overlay-subtle)]" style={{ borderBottom: '1px solid var(--border-light)' }} onClick={() => setSelectedPatientId(entry.patientId)}>
+                      <td className="px-3 py-2.5 text-[11px] font-bold" style={{ color: 'var(--text-muted)' }}>{idx + 1}</td>
                       <td className="px-3 py-2.5">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0"
-                            style={{ background: ACCENT }}>
-                            {entry.patientName.split(' ').map(n => n[0]).join('')}
+                          <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0" style={{ background: ACCENT }}>
+                            {entry.patientName.split(' ').map(n => n[0]).join('').slice(0, 2)}
                           </div>
                           <span className="text-[11px] font-medium" style={{ color: 'var(--text-primary)' }}>{entry.patientName}</span>
                         </div>
                       </td>
-                      <td className="px-3 py-2.5">
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{
-                          background: `${pColor}15`,
-                          color: pColor,
-                          border: `1px solid ${pColor}30`,
-                        }}>{entry.priority.toUpperCase()}</span>
-                      </td>
-                      <td className="px-3 py-2.5">
-                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded" style={{
-                          background: entry.type === 'walk-in' ? '#FB923C15' : '#A855F715',
-                          color: entry.type === 'walk-in' ? '#FB923C' : '#A855F7',
-                          border: `1px solid ${entry.type === 'walk-in' ? '#FB923C30' : '#A855F730'}`,
-                        }}>{entry.type === 'walk-in' ? 'WALK-IN' : 'APPT'}</span>
-                      </td>
+                      <td className="px-3 py-2.5"><span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: `${pColor}15`, color: pColor }}>{entry.priority}</span></td>
+                      <td className="px-3 py-2.5"><span className="text-[9px] font-semibold px-1.5 py-0.5 rounded" style={{ background: entry.type === 'walk-in' ? 'rgba(251,146,60,0.1)' : entry.type === 'referral' ? 'rgba(234,179,8,0.1)' : 'rgba(168,85,247,0.1)', color: entry.type === 'walk-in' ? '#FB923C' : entry.type === 'referral' ? 'var(--color-warning)' : '#A855F7' }}>{entry.type.toUpperCase()}</span></td>
                       <td className="px-3 py-2.5 text-[10px] max-w-[160px] truncate" style={{ color: 'var(--text-secondary)' }}>{entry.complaint}</td>
                       <td className="px-3 py-2.5 text-[10px] font-medium" style={{ color: 'var(--text-primary)' }}>{entry.department}</td>
-                      <td className="px-3 py-2.5 text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>{entry.checkInTime}</td>
-                      <td className="px-3 py-2.5 text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>
-                        <Clock className="w-2.5 h-2.5 inline mr-0.5" />{entry.estWait}
-                      </td>
+                      <td className="px-3 py-2.5 text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>{entry.time}</td>
+                      <td className="px-3 py-2.5"><span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{ background: `${sColor}15`, color: sColor }}>{entry.status}</span></td>
                       <td className="px-3 py-2.5">
-                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full" style={{
-                          background: `${sColor}15`,
-                          color: sColor,
-                          border: `1px solid ${sColor}30`,
-                        }}>{entry.status}</span>
+                        {entry.status === 'WAITING' && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              router.push(`/consultation?patientId=${entry.patientId}`);
+                            }}
+                            className="text-[9px] font-bold px-2 py-1 rounded-md text-white"
+                            style={{ background: ACCENT }}
+                          >
+                            Send to Doctor
+                          </button>
+                        )}
                       </td>
                     </tr>
                   );
@@ -668,310 +383,111 @@ export default function FrontDeskDashboardPage() {
           </div>
         </div>
 
-        {/* ========== FEATURE 4: REPEAT VISIT AUTO-FILL BANNER ========== */}
-        {selectedCheckInPatient && (
-          <div className="rounded-2xl overflow-hidden mb-4 p-4" style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-light)',
-            boxShadow: 'var(--card-shadow)',
-          }}>
-            <div className="flex items-center justify-between mb-2">
+        {/* SELECTED PATIENT INFO */}
+        {selectedPatient && (
+          <div className="rounded-2xl overflow-hidden mb-4 p-4" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)' }}>
+            <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <UserPlus className="w-4 h-4" style={{ color: ACCENT }} />
-                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Check-in: {selectedCheckInPatient}</span>
+                <AlertCircle className="w-4 h-4" style={{ color: ACCENT }} />
+                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{selectedPatient.firstName} {selectedPatient.surname}</span>
+                <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>{selectedPatient.hospitalNumber}</span>
               </div>
-              <button
-                onClick={() => setSelectedCheckInPatient(null)}
-                className="text-[10px] font-medium px-2 py-1 rounded-md"
-                style={{ color: 'var(--text-muted)', background: 'var(--overlay-subtle)' }}
-              >
-                Close
-              </button>
+              <div className="flex gap-2">
+                <button onClick={() => router.push(`/patients/${selectedPatient._id}`)} className="text-[10px] font-semibold px-3 py-1 rounded-md" style={{ color: ACCENT, background: 'var(--accent-light)' }}>View Record</button>
+                <button onClick={() => router.push(`/consultation?patientId=${selectedPatient._id}`)} className="text-[10px] font-semibold px-3 py-1 rounded-md text-white" style={{ background: ACCENT }}>Start Consultation</button>
+                <button onClick={() => setSelectedPatientId(null)} className="text-[10px] px-2 py-1 rounded-md" style={{ color: 'var(--text-muted)', background: 'var(--overlay-subtle)' }}>Close</button>
+              </div>
             </div>
-
-            {previousVisitInfo ? (
-              <div className="flex items-start gap-3 p-3 rounded-xl" style={{
-                background: `${ACCENT}08`,
-                border: `1px solid ${ACCENT}20`,
-              }}>
-                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: ACCENT }} />
-                <div className="flex-1">
-                  <p className="text-[11px] font-semibold mb-1" style={{ color: ACCENT }}>
-                    Previous Visit Found — Returning Patient
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Last Department</p>
-                      <p className="text-[11px] font-medium" style={{ color: 'var(--text-primary)' }}>{previousVisitInfo.lastDepartment}</p>
-                    </div>
-                    <div>
-                      <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Last Complaint</p>
-                      <p className="text-[11px] font-medium" style={{ color: 'var(--text-primary)' }}>{previousVisitInfo.lastComplaint}</p>
-                    </div>
-                    <div>
-                      <p className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Last Visit Date</p>
-                      <p className="text-[11px] font-medium" style={{ color: 'var(--text-primary)' }}>{previousVisitInfo.lastVisitDate}</p>
-                    </div>
-                  </div>
-                  <p className="text-[10px] mt-2" style={{ color: 'var(--text-muted)' }}>
-                    Department pre-filled from previous visit: <strong style={{ color: 'var(--text-primary)' }}>{previousVisitInfo.lastDepartment}</strong>
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="p-3 rounded-xl" style={{
-                background: 'var(--overlay-subtle)',
-                border: '1px solid var(--border-light)',
-              }}>
-                <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-                  No previous visit records found for this patient. This appears to be a first-time visit.
-                </p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div><p className="text-[9px] font-semibold uppercase" style={{ color: 'var(--text-muted)' }}>Gender / Age</p><p className="text-[11px] mt-0.5" style={{ color: 'var(--text-primary)' }}>{selectedPatient.gender} · {selectedPatient.estimatedAge || (selectedPatient.dateOfBirth ? new Date().getFullYear() - new Date(selectedPatient.dateOfBirth).getFullYear() : '?')}y</p></div>
+              <div><p className="text-[9px] font-semibold uppercase" style={{ color: 'var(--text-muted)' }}>Phone</p><p className="text-[11px] mt-0.5 font-mono" style={{ color: 'var(--text-primary)' }}>{selectedPatient.phone || 'N/A'}</p></div>
+              <div><p className="text-[9px] font-semibold uppercase" style={{ color: 'var(--text-muted)' }}>Location</p><p className="text-[11px] mt-0.5" style={{ color: 'var(--text-primary)' }}>{selectedPatient.county}, {selectedPatient.state}</p></div>
+              <div><p className="text-[9px] font-semibold uppercase" style={{ color: 'var(--text-muted)' }}>Last Visit</p><p className="text-[11px] mt-0.5" style={{ color: 'var(--text-primary)' }}>{selectedPatient.lastConsultedAt ? formatCompactDateTime(selectedPatient.lastConsultedAt) : selectedPatient.lastVisitDate || 'First visit'}</p></div>
+            </div>
+            {selectedPatient.allergies?.length > 0 && selectedPatient.allergies[0] !== 'None known' && (
+              <div className="mt-2 p-2 rounded-lg" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)' }}>
+                <p className="text-[10px] font-semibold" style={{ color: '#EF4444' }}>Allergies: {selectedPatient.allergies.join(', ')}</p>
               </div>
             )}
           </div>
         )}
 
-        {/* MAIN GRID: Check-in Queue (2 cols) + Registration Feed (1 col) + Appointments (1 col) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        {/* BOTTOM GRID: Appointments + Registrations + Quick Actions */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
 
-          {/* Check-in Queue - 2 columns */}
-          <div className="md:col-span-2 rounded-2xl overflow-hidden" style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-light)',
-            boxShadow: 'var(--card-shadow)',
-          }}>
-            <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
-              <div className="flex items-center gap-2">
-                <ClipboardList className="w-4 h-4" style={{ color: ACCENT }} />
-                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Check-in Queue</span>
-                <span className="px-2 py-0.5 rounded text-[9px] font-bold tracking-wider" style={{
-                  background: `rgba(20,184,166,0.1)`,
-                  color: ACCENT,
-                  border: `1px solid rgba(20,184,166,0.2)`,
-                }}>LIVE</span>
-              </div>
-              <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>{waitingQueue.length} waiting</span>
-            </div>
-            <div className="p-3 space-y-2">
-              {waitingQueue.map((item, idx) => {
-                const pColor = item.priority === 'urgent' ? '#F87171' : item.priority === 'normal' ? 'var(--color-warning)' : 'var(--color-success)';
-                return (
-                  <div key={idx} className="flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all"
-                    onClick={() => router.push('/patients')}
-                    style={{
-                      background: 'var(--overlay-subtle)',
-                      border: `1px solid var(--border-light)`,
-                    }}>
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
-                      style={{ background: 'var(--accent-primary)' }}>
-                      {item.name.split(' ').map(n => n[0]).join('')}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{item.name}</p>
-                      <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{item.dept}</p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{
-                        background: `${pColor}15`,
-                        color: pColor,
-                        border: `1px solid ${pColor}30`,
-                      }}>{item.priority.toUpperCase()}</span>
-                      <p className="text-[10px] mt-1 font-mono" style={{ color: 'var(--text-muted)' }}>
-                        <Clock className="w-2.5 h-2.5 inline mr-0.5" />{item.waitTime}
-                      </p>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Registration Feed - 1 column */}
-          <div className="rounded-2xl overflow-hidden flex flex-col" style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-light)',
-            boxShadow: 'var(--card-shadow)',
-            maxHeight: '440px',
-          }}>
-            <div className="px-3 py-2 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-light)' }}>
-              <div className="flex items-center gap-2">
-                <Radio className="w-4 h-4" style={{ color: ACCENT }} />
-                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Activity Feed</span>
-              </div>
-              <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>{eventCounter} events</span>
-            </div>
-            <div className="flex-1 overflow-y-auto p-2 space-y-1">
-              {liveEvents.map(evt => {
-                const Icon = evt.icon;
-                return (
-                  <div key={evt.id} className="p-2 rounded-lg transition-all"
-                    style={{
-                      background: evt.isNew ? `${evt.color}08` : 'transparent',
-                      border: evt.isNew ? `1px solid ${evt.color}20` : '1px solid transparent',
-                      animation: evt.isNew ? 'fadeIn 0.3s ease-out' : undefined,
-                    }}>
-                    <div className="flex items-start gap-2">
-                      <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: `${evt.color}15` }}>
-                        <Icon className="w-3 h-3" style={{ color: evt.color }} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[11px] font-semibold truncate" style={{ color: evt.color }}>{evt.label}</span>
-                          {evt.isNew && (
-                            <span className="text-[8px] font-bold px-1 py-0.5 rounded" style={{ background: `${evt.color}20`, color: evt.color }}>NEW</span>
-                          )}
-                        </div>
-                        <p className="text-[10px] truncate" style={{ color: 'var(--text-secondary)' }}>{evt.patient}</p>
-                        <div className="flex items-center justify-between mt-0.5">
-                          <span className="text-[9px] truncate" style={{ color: 'var(--text-muted)' }}>{evt.department}</span>
-                          <span className="text-[9px] font-mono flex-shrink-0 ml-1" style={{ color: 'var(--text-muted)' }}>{evt.time}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Appointments - 1 column */}
-          <div className="rounded-2xl overflow-hidden flex flex-col" style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-light)',
-            boxShadow: 'var(--card-shadow)',
-            maxHeight: '440px',
-          }}>
+          {/* Today's Appointments */}
+          <div className="rounded-2xl overflow-hidden flex flex-col" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)' }}>
             <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" style={{ color: '#60A5FA' }} />
-                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Appointments</span>
+                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Today&apos;s Appointments</span>
               </div>
-              <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Today</span>
+              <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{todaysAppointments.length} scheduled</span>
             </div>
-            <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
-              {upcomingAppointments.map((appt, idx) => {
-                const sColor = appt.status === 'arrived' ? 'var(--color-success)' : appt.status === 'confirmed' ? '#60A5FA' : 'var(--color-warning)';
+            <div className="flex-1 overflow-y-auto p-2 space-y-1.5" style={{ maxHeight: '360px' }}>
+              {todaysAppointments.length === 0 ? (
+                <p className="text-center text-xs py-6" style={{ color: 'var(--text-muted)' }}>No appointments scheduled for today</p>
+              ) : todaysAppointments.map(appt => {
+                const sColor = appt.status === 'completed' ? 'var(--color-success)' : appt.status === 'checked_in' || appt.status === 'in_progress' ? 'var(--color-warning)' : '#60A5FA';
                 return (
-                  <div key={idx} className="p-2.5 rounded-xl transition-all cursor-pointer"
-                    style={{
-                      background: 'var(--overlay-subtle)',
-                      border: '1px solid var(--border-light)',
-                    }}>
+                  <div key={appt._id} className="p-2.5 rounded-xl" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-[11px] font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{appt.name}</span>
-                      <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{
-                        background: `${sColor}15`,
-                        color: sColor,
-                        border: `1px solid ${sColor}30`,
-                      }}>{appt.status.toUpperCase()}</span>
+                      <span className="text-[11px] font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{appt.patientName}</span>
+                      <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{ background: `${sColor}15`, color: sColor }}>{appt.status.toUpperCase().replace('_', ' ')}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{appt.dept}</span>
-                      <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>{appt.time}</span>
+                      <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{appt.department} · {appt.providerName}</span>
+                      <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>{appt.appointmentTime}</span>
                     </div>
+                    {appt.status === 'scheduled' || appt.status === 'confirmed' ? (
+                      <button onClick={() => handleCheckIn(appt._id, appt.patientName)} className="mt-1.5 w-full text-[10px] font-semibold py-1 rounded-md text-white" style={{ background: ACCENT }}>
+                        Check In
+                      </button>
+                    ) : null}
                   </div>
                 );
               })}
             </div>
           </div>
-        </div>
 
-        {/* BOTTOM: Recent Registrations Table + Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Recent Registrations - 3 columns */}
-          <div className="col-span-3 rounded-2xl overflow-hidden" style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-light)',
-            boxShadow: 'var(--card-shadow)',
-          }}>
+          {/* Recent Registrations */}
+          <div className="rounded-2xl overflow-hidden flex flex-col" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)' }}>
             <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4" style={{ color: ACCENT }} />
                 <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Recent Registrations</span>
               </div>
-              <button onClick={() => router.push('/patients')} className="text-xs font-medium flex items-center gap-1" style={{ color: ACCENT }}>
-                View all <ChevronRight className="w-3.5 h-3.5" />
-              </button>
+              <button onClick={() => router.push('/patients')} className="text-xs font-medium flex items-center gap-1" style={{ color: ACCENT }}>View all <ChevronRight className="w-3.5 h-3.5" /></button>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
-                    {['Patient', 'ID', 'Gender', 'Age', 'Registered', 'Status'].map(h => (
-                      <th key={h} className="px-4 py-2 text-left text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentPatients.map(patient => (
-                    <tr key={patient._id}
-                      role="button"
-                      tabIndex={0}
-                      className="cursor-pointer transition-all"
-                      onClick={() => router.push(`/patients/${patient._id}`)}
-                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/patients/${patient._id}`); } }}
-                      style={{ borderBottom: '1px solid var(--border-light)' }}
-                      onMouseEnter={e => (e.currentTarget.style.background = 'var(--overlay-subtle)')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                      title="View patient record">
-                      <td className="px-4 py-2.5">
-                        <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0"
-                            style={{ background: 'var(--accent-primary)' }}>
-                            {(patient.firstName || '?')[0]}{(patient.surname || '?')[0]}
-                          </div>
-                          <span className="text-[11px] font-medium" style={{ color: 'var(--text-primary)' }}>
-                            {patient.firstName} {patient.surname}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-2.5 text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>{patient.hospitalNumber}</td>
-                      <td className="px-4 py-2.5 text-[10px]" style={{ color: 'var(--text-muted)' }}>{patient.gender}</td>
-                      <td className="px-4 py-2.5 text-[10px]" style={{ color: 'var(--text-muted)' }}>
-                        {patient.estimatedAge || (patient.dateOfBirth ? new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear() : 0)}y
-                      </td>
-                      <td className="px-4 py-2.5 text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>
-                        <span className="inline-flex items-center gap-1">
-                          <Clock className="w-3 h-3" style={{ color: 'var(--accent-primary)' }} />
-                          {formatAdmittedAt(patient.registeredAt || patient.registrationDate)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2.5">
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{
-                          background: 'rgba(20,184,166,0.1)',
-                          color: ACCENT,
-                          border: '1px solid rgba(20,184,166,0.2)',
-                        }}>REGISTERED</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="flex-1 overflow-y-auto p-2 space-y-1.5" style={{ maxHeight: '360px' }}>
+              {recentPatients.map(patient => (
+                <div key={patient._id} className="flex items-center gap-2.5 p-2 rounded-xl cursor-pointer hover:bg-[var(--accent-light)]" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }} onClick={() => router.push(`/patients/${patient._id}`)}>
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0" style={{ background: ACCENT }}>
+                    {(patient.firstName || '?')[0]}{(patient.surname || '?')[0]}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{patient.firstName} {patient.surname}</p>
+                    <p className="text-[9px] font-mono" style={{ color: 'var(--text-muted)' }}>{patient.hospitalNumber} · {patient.gender} · {patient.estimatedAge || (patient.dateOfBirth ? new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear() : '?')}y</p>
+                  </div>
+                  <span className="text-[9px] font-mono flex-shrink-0" style={{ color: 'var(--text-muted)' }}>{formatCompactDateTime(patient.registeredAt || patient.registrationDate)}</span>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Quick Actions - 1 column */}
-          <div className="rounded-2xl p-4" style={{
-            background: 'var(--bg-card)',
-            border: '1px solid var(--border-light)',
-            boxShadow: 'var(--card-shadow)',
-          }}>
+          {/* Quick Actions */}
+          <div className="rounded-2xl p-4" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)' }}>
             <p className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>Quick Actions</p>
             <div className="space-y-2">
               {[
-                { label: 'Register Patient', icon: UserPlus, href: '/patients/new', color: ACCENT },
-                { label: 'Check In', icon: ClipboardCheck, href: '/patients', color: 'var(--color-success)' },
-                { label: 'Referrals', icon: ArrowRightLeft, href: '/referrals', color: 'var(--color-warning)' },
-                { label: 'Message', icon: MessageSquare, href: '/messages', color: '#A855F7' },
+                { label: 'Register New Patient', icon: UserPlus, href: '/patients/new', color: ACCENT },
+                { label: 'Find Patient (QR / ID)', icon: ClipboardCheck, href: '/patients', color: 'var(--color-success)' },
+                { label: 'View Referrals', icon: ArrowRightLeft, href: '/referrals', color: 'var(--color-warning)' },
+                { label: 'Appointments', icon: Calendar, href: '/appointments', color: '#60A5FA' },
+                { label: 'Send Message', icon: MessageSquare, href: '/messages', color: '#A855F7' },
               ].map(action => (
-                <button
-                  key={action.label}
-                  onClick={() => router.push(action.href)}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl transition-all"
-                  style={{ background: `${action.color}08`, border: `1px solid ${action.color}20` }}
-                >
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${action.color}15` }}>
+                <button key={action.label} onClick={() => router.push(action.href)} className="w-full flex items-center gap-3 p-3 rounded-xl transition-all hover:bg-[var(--accent-light)]" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${action.color}12` }}>
                     <action.icon className="w-4 h-4" style={{ color: action.color }} />
                   </div>
                   <span className="text-[11px] font-semibold" style={{ color: 'var(--text-primary)' }}>{action.label}</span>
@@ -980,13 +496,14 @@ export default function FrontDeskDashboardPage() {
               ))}
             </div>
 
-            {/* Pending Referrals Summary */}
+            {/* Queue Summary */}
             <div className="mt-4 p-3 rounded-xl" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
-              <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Referral Summary</p>
-              <div className="grid grid-cols-2 gap-2">
+              <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Queue Summary</p>
+              <div className="grid grid-cols-3 gap-2">
                 {[
-                  { label: 'Pending', value: pendingReferrals.length, color: 'var(--color-warning)' },
-                  { label: 'Total', value: referrals.length, color: ACCENT },
+                  { label: 'Waiting', value: waitingCount, color: '#60A5FA' },
+                  { label: 'In Consult', value: inConsultCount, color: 'var(--color-warning)' },
+                  { label: 'Referrals', value: pendingReferrals.length, color: '#FB923C' },
                 ].map(stat => (
                   <div key={stat.label} className="text-center p-2 rounded-lg" style={{ background: `${stat.color}08` }}>
                     <p className="text-base font-bold" style={{ color: stat.color }}>{stat.value}</p>

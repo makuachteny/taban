@@ -41,7 +41,7 @@ export function useLabResults() {
     let cancelled = false;
     const changes = labResultsDB().changes({ since: 'now', live: true, include_docs: false })
       .on('change', () => { if (!cancelled) loadResults(); })
-      .on('error', () => { /* swallow — fall back to manual reload */ });
+      .on('error', (err) => { console.warn('Lab results subscription error:', err); });
     return () => {
       cancelled = true;
       try { changes.cancel(); } catch { /* noop */ }

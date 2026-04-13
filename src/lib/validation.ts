@@ -36,6 +36,15 @@ function sanitizeString(val: unknown): string {
   return val.replace(/[\x00-\x1F\x7F]/g, '').trim();
 }
 
+function validatePhone(value: unknown, fieldName: string): string | null {
+  if (!value || typeof value !== 'string') return null;
+  const phone = value.replace(/\s/g, '');
+  if (phone.length > 0 && !/^\+?[\d-]{7,15}$/.test(phone)) {
+    return `Invalid ${fieldName} format`;
+  }
+  return null;
+}
+
 export function validatePatientData(data: Record<string, unknown>): Record<string, string> {
   const errors: Record<string, string> = {};
 
@@ -51,6 +60,16 @@ export function validatePatientData(data: Record<string, unknown>): Record<strin
     errors.surname = 'Surname is required';
   } else if (surname.length > 100) {
     errors.surname = 'Surname is too long';
+  }
+
+  // Optional name fields — validate length when provided
+  const middleName = sanitizeString(data.middleName);
+  if (middleName && middleName.length > 100) {
+    errors.middleName = 'Middle name is too long';
+  }
+  const maidenName = sanitizeString(data.maidenName);
+  if (maidenName && maidenName.length > 100) {
+    errors.maidenName = 'Maiden name is too long';
   }
 
   if (!data.gender || !['male', 'female', 'unknown'].includes((data.gender as string).toLowerCase())) {
@@ -70,15 +89,49 @@ export function validatePatientData(data: Record<string, unknown>): Record<strin
     }
   }
 
-  if (data.phone && typeof data.phone === 'string') {
-    const phone = data.phone.replace(/\s/g, '');
-    if (phone.length > 0 && !/^\+?[\d-]{7,15}$/.test(phone)) {
-      errors.phone = 'Invalid phone number format';
+  // Validate estimated age range
+  if (data.estimatedAge !== undefined && data.estimatedAge !== null) {
+    const age = Number(data.estimatedAge);
+    if (isNaN(age) || age < 0 || age > 150) {
+      errors.estimatedAge = 'Estimated age must be between 0 and 150';
     }
   }
 
+  // Validate all phone fields
+  const phoneErr = validatePhone(data.phone, 'phone number');
+  if (phoneErr) errors.phone = phoneErr;
+  const altPhoneErr = validatePhone(data.altPhone, 'alternative phone number');
+  if (altPhoneErr) errors.altPhone = altPhoneErr;
+  const whatsappErr = validatePhone(data.whatsapp, 'WhatsApp number');
+  if (whatsappErr) errors.whatsapp = whatsappErr;
+  const nokPhoneErr = validatePhone(data.nokPhone, 'next-of-kin phone number');
+  if (nokPhoneErr) errors.nokPhone = nokPhoneErr;
+
   if (!data.state || typeof data.state !== 'string') {
     errors.state = 'State is required';
+  }
+
+  // Validate boma code format when provided
+  if (data.bomaCode && typeof data.bomaCode === 'string') {
+    const code = data.bomaCode.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (code.length === 0 || code.length > 4) {
+      errors.bomaCode = 'Boma code must be 1-4 alphanumeric characters';
+    }
+  }
+
+  // Validate address length
+  if (data.address && typeof data.address === 'string' && data.address.length > 500) {
+    errors.address = 'Address is too long (max 500 characters)';
+  }
+
+  // Validate national ID format when provided
+  if (data.nationalId && typeof data.nationalId === 'string') {
+    const nid = data.nationalId.trim();
+    if (nid.length > 0 && nid.length < 3) {
+      errors.nationalId = 'National ID is too short';
+    } else if (nid.length > 30) {
+      errors.nationalId = 'National ID is too long';
+    }
   }
 
   return errors;
@@ -94,15 +147,15 @@ export function validateVitalSigns(vitals: Record<string, unknown>): Record<stri
     }
   }
 
-  if (vitals.systolicBP) {
-    const sys = Number(vitals.systolicBP);
+  if (vitals.systolicBP || vitals.systolic) {
+    const sys = Number(vitals.systolicBP || vitals.systolic);
     if (isNaN(sys) || sys < 40 || sys > 300) {
       errors.systolicBP = 'Systolic BP must be between 40-300 mmHg';
     }
   }
 
-  if (vitals.diastolicBP) {
-    const dia = Number(vitals.diastolicBP);
+  if (vitals.diastolicBP || vitals.diastolic) {
+    const dia = Number(vitals.diastolicBP || vitals.diastolic);
     if (isNaN(dia) || dia < 20 || dia > 200) {
       errors.diastolicBP = 'Diastolic BP must be between 20-200 mmHg';
     }
@@ -168,5 +221,22 @@ export function validateMedicalRecord(data: Record<string, unknown>): Record<str
     });
   }
 
+  return errors;
+}
+
+export function validatePrescription(data: Record<string, unknown>): Record<string, string> {
+  const errors: Record<string, string> = {};
+  if (!data.medication || (typeof data.medication === 'string' && !data.medication.trim())) {
+    errors.medication = 'Medication name is required';
+  }
+  if (!data.dose || (typeof data.dose === 'string' && !data.dose.trim())) {
+    errors.dose = 'Dose is required';
+  }
+  if (!data.frequency || (typeof data.frequency === 'string' && !data.frequency.trim())) {
+    errors.frequency = 'Frequency is required';
+  }
+  if (!data.patientId || typeof data.patientId !== 'string') {
+    errors.patientId = 'Patient ID is required';
+  }
   return errors;
 }

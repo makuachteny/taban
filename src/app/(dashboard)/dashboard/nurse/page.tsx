@@ -67,6 +67,19 @@ const NURSE_EVENTS = [
   { type: 'temp_check', label: 'Temperature Check', color: 'var(--color-warning)', icon: Thermometer },
 ];
 
+// Route map: event type → destination page
+const EVENT_ROUTES: Record<string, string> = {
+  vitals: '/patients',
+  medication: '/dashboard/pharmacy',
+  birth_assist: '/births',
+  immunization: '/immunizations',
+  wound_care: '/patients',
+  anc_check: '/anc',
+  blood_draw: '/dashboard/lab',
+  patient_assess: '/patients',
+  temp_check: '/patients',
+};
+
 const NAMES = [
   'Deng Mabior', 'Achol Mayen', 'Nyamal Koang', 'Gatluak Ruot', 'Ayen Dut',
   'Kuol Akot', 'Ladu Tombe', 'Rose Gbudue', 'Majok Chol', 'Nyandit Dut',
@@ -247,7 +260,7 @@ export default function NurseDashboardPage() {
         status: 'pending',
       });
       showToast(`${triageData.priority} triage saved for ${selectedTriagePatient.firstName} ${selectedTriagePatient.surname}`, 'success');
-      // Reset form
+      // Reset form only on success
       setTriageData({ airway: '', breathing: '', circulation: '', consciousness: '', priority: '' });
       setTriagePatientId('');
       setTriagePatientSearch('');
@@ -256,7 +269,8 @@ export default function NurseDashboardPage() {
       setTriageNotes('');
     } catch (err) {
       console.error(err);
-      showToast('Failed to save triage', 'error');
+      // Keep form data intact so the nurse can retry
+      showToast('Failed to save triage. Your data is preserved — please try again.', 'error');
     } finally {
       setTriageSubmitting(false);
     }
@@ -340,7 +354,16 @@ export default function NurseDashboardPage() {
     }
   }, [triageData]);
 
-  // Ward patients with priority sorting (Feature 5)
+  // Map patient IDs to their most recent triage for sorting and display
+  const patientTriageMap = useMemo(() => {
+    const map = new Map<string, typeof triageHistory[0]>();
+    for (const t of triageHistory) {
+      if (!map.has(t.patientId)) map.set(t.patientId, t);
+    }
+    return map;
+  }, [triageHistory]);
+
+  // Ward patients with priority sorting using REAL triage data
   const wardPatients = useMemo(() => {
     const filtered = patients.slice(0, 12).filter(p =>
       !globalSearch || `${p.firstName} ${p.surname}`.toLowerCase().includes(globalSearch.toLowerCase()) || p.hospitalNumber.toLowerCase().includes(globalSearch.toLowerCase())
@@ -348,18 +371,34 @@ export default function NurseDashboardPage() {
 
     if (!sortByUrgency) return filtered;
 
+    const priorityOrder: Record<string, number> = { RED: 0, YELLOW: 1, GREEN: 2 };
     return [...filtered].sort((a, b) => {
-      const aIdx = patients.indexOf(a);
-      const bIdx = patients.indexOf(b);
-      const aVital = aIdx % 3 === 0 ? 0 : aIdx % 3 === 1 ? 1 : 2; // overdue=0, due=1, done=2
-      const bVital = bIdx % 3 === 0 ? 0 : bIdx % 3 === 1 ? 1 : 2;
-      return aVital - bVital;
+      const aTriage = patientTriageMap.get(a._id);
+      const bTriage = patientTriageMap.get(b._id);
+      const aPriority = aTriage ? (priorityOrder[aTriage.priority] ?? 3) : 3;
+      const bPriority = bTriage ? (priorityOrder[bTriage.priority] ?? 3) : 3;
+      return aPriority - bPriority;
     });
-  }, [patients, globalSearch, sortByUrgency]);
+  }, [patients, globalSearch, sortByUrgency, patientTriageMap]);
 
   // Save vitals to PouchDB
   const handleSaveVitals = async () => {
     if (!vitalsPatient) return;
+    // Validate vitals before saving
+    const { validateVitalSigns } = await import('@/lib/validation');
+    const vitalErrors = validateVitalSigns({
+      temperature: vitalsForm.temperature || undefined,
+      systolicBP: vitalsForm.systolic || undefined,
+      diastolicBP: vitalsForm.diastolic || undefined,
+      pulse: vitalsForm.pulse || undefined,
+      respiratoryRate: vitalsForm.respiratoryRate || undefined,
+      oxygenSaturation: vitalsForm.spo2 || undefined,
+      weight: vitalsForm.weight || undefined,
+    });
+    if (Object.keys(vitalErrors).length > 0) {
+      showToast(Object.values(vitalErrors)[0], 'error');
+      return;
+    }
     setVitalsSaving(true);
     try {
       const { getDB } = await import('@/lib/db');
@@ -396,11 +435,36 @@ export default function NurseDashboardPage() {
     }
   };
 
-  // MAR: mark medication as given
-  const handleMarkGiven = (entryId: string) => {
+  // MAR: mark medication as given — persists to PouchDB
+  const handleMarkGiven = async (entryId: string) => {
+    const now = new Date().toISOString();
+    // Optimistic UI update
     setMarEntries(prev => prev.map(e =>
-      e.id === entryId ? { ...e, status: 'given' as const, givenAt: new Date().toISOString() } : e
+      e.id === entryId ? { ...e, status: 'given' as const, givenAt: now } : e
     ));
+    // Persist to DB if entryId maps to a real prescription
+    try {
+      if (entryId.startsWith('mar-')) {
+        // MAR entries are derived from patients, not real prescriptions yet.
+        // Log the administration for audit trail.
+        const entry = marEntries.find(e => e.id === entryId);
+        const { logAudit } = await import('@/lib/services/audit-service');
+        await logAudit(
+          'MEDICATION_ADMINISTERED',
+          currentUser?._id,
+          currentUser?.name,
+          `Administered ${entry?.medication || 'medication'} ${entry?.dose || ''} to ${entry?.patientName || 'patient'}`
+        );
+      } else {
+        // Real prescription ID — dispense it
+        const { dispensePrescription } = await import('@/lib/services/prescription-service');
+        await dispensePrescription(entryId, currentUser?.name);
+      }
+      showToast('Medication marked as given', 'success');
+    } catch (err) {
+      console.error('Failed to persist medication given:', err);
+      showToast('Marked locally but failed to save. Will retry on next sync.', 'error');
+    }
   };
 
   if (!currentUser) return null;
@@ -502,7 +566,7 @@ export default function NurseDashboardPage() {
           ].map((kpi) => (
             <div key={kpi.label} className="relative px-3 py-2.5 rounded-xl transition-all cursor-pointer overflow-hidden"
               onClick={() => {
-                const routes: Record<string, string> = { 'Ward Patients': '/patients', 'Meds Due': '/pharmacy', 'ANC Mothers': '/anc', 'Immunizations': '/immunizations', 'Births (Wk)': '/births', 'Pending Orders': '/lab', 'Messages': '/messages' };
+                const routes: Record<string, string> = { 'Ward Patients': '/patients', 'Meds Due': '/dashboard/pharmacy', 'ANC Mothers': '/anc', 'Immunizations': '/immunizations', 'Births (Wk)': '/births', 'Pending Orders': '/dashboard/lab', 'Messages': '/messages' };
                 if (routes[kpi.label]) router.push(routes[kpi.label]);
               }}
               style={{
@@ -542,14 +606,14 @@ export default function NurseDashboardPage() {
           ))}
         </div>
 
-        {/* MAIN GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        {/* MAIN GRID — 3 equal columns, matched height */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-4" style={{ minHeight: '560px' }}>
+
+          {/* === COL 1: TAB CONTENT (Ward / MAR / Triage) === */}
 
           {/* === TAB: WARD PATIENTS (default) === */}
           {activeTab === 'ward' && (
-            <>
-              {/* Ward Patient List -- 2 cols */}
-              <div className="md:col-span-2 rounded-2xl overflow-hidden" style={{
+              <div className="rounded-2xl overflow-hidden flex flex-col" style={{
                 background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)',
               }}>
                 <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
@@ -581,71 +645,117 @@ export default function NurseDashboardPage() {
                     </button>
                   </div>
                 </div>
-                <div className="p-3 space-y-1.5" style={{ maxHeight: '420px', overflowY: 'auto' }}>
+                <div className="p-3 space-y-1.5 flex-1 overflow-y-auto">
                   {wardPatients.map((patient) => {
-                    const origIdx = patients.indexOf(patient);
-                    const wardName = WARDS[origIdx % WARDS.length];
-                    const vitalStatus = origIdx % 3 === 0 ? 'overdue' : origIdx % 3 === 1 ? 'due' : 'done';
+                    const triage = patientTriageMap.get(patient._id);
+                    const triagePriority = triage?.priority;
+                    const triageStatus = triage?.status || 'none';
+                    const isRed = triagePriority === 'RED';
+                    const isYellow = triagePriority === 'YELLOW';
+                    const pColor = isRed ? '#EF4444' : isYellow ? 'var(--color-warning)' : triagePriority === 'GREEN' ? 'var(--color-success)' : 'var(--text-muted)';
                     return (
                       <div
                         key={patient._id}
                         className="flex items-center gap-3 p-2.5 rounded-xl transition-all"
                         style={{
-                          background: 'var(--overlay-subtle)',
-                          border: `1px solid ${vitalStatus === 'overdue' ? 'rgba(248,113,113,0.3)' : 'var(--border-light)'}`,
+                          background: isRed ? 'rgba(239,68,68,0.04)' : 'var(--overlay-subtle)',
+                          border: `1px solid ${isRed ? 'rgba(239,68,68,0.2)' : 'var(--border-light)'}`,
                         }}
                       >
+                        {/* Triage priority badge */}
+                        {triagePriority && (
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: pColor, color: '#fff' }}>
+                            <span className="text-[9px] font-black">{triagePriority}</span>
+                          </div>
+                        )}
                         <button
                           onClick={() => router.push(`/patients/${patient._id}`)}
-                          className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                          className="flex items-center gap-2 flex-1 min-w-0 text-left"
                           title="View full patient record"
                         >
-                          <div className="w-9 h-9 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
-                            style={{ background: 'var(--accent-primary)' }}>
-                            {(patient.firstName || '?')[0]}{(patient.surname || '?')[0]}
-                          </div>
+                          {!triagePriority && (
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
+                              style={{ background: 'var(--accent-primary)' }}>
+                              {(patient.firstName || '?')[0]}{(patient.surname || '?')[0]}
+                            </div>
+                          )}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate hover:underline" style={{ color: 'var(--text-primary)' }}>{patient.firstName} {patient.surname}</p>
                             <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-                              {patient.gender} · {patient.estimatedAge || (patient.dateOfBirth ? new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear() : 0)}y · {wardName}
+                              {patient.gender} · {patient.estimatedAge || (patient.dateOfBirth ? new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear() : 0)}y · {patient.hospitalNumber}
+                              {triage?.chiefComplaint && <> · {triage.chiefComplaint}</>}
                             </p>
                           </div>
                         </button>
+                        {/* Status badge */}
                         <div className="text-right flex-shrink-0">
-                          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{
-                            background: vitalStatus === 'overdue' ? 'rgba(248,113,113,0.15)' : vitalStatus === 'due' ? 'rgba(251,191,36,0.15)' : 'rgba(74,222,128,0.15)',
-                            color: vitalStatus === 'overdue' ? '#F87171' : vitalStatus === 'due' ? 'var(--color-warning)' : 'var(--color-success)',
-                          }}>{vitalStatus === 'overdue' ? 'VITALS OVERDUE' : vitalStatus === 'due' ? 'VITALS DUE' : 'VITALS OK'}</span>
-                          <p className="text-[9px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{patient.hospitalNumber}</p>
+                          {triageStatus === 'pending' && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: 'rgba(252,211,77,0.15)', color: 'var(--color-warning)' }}>WAITING</span>
+                          )}
+                          {triageStatus === 'seen' && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: 'rgba(96,165,250,0.15)', color: '#60A5FA' }}>IN CONSULT</span>
+                          )}
+                          {(triageStatus === 'discharged' || triageStatus === 'admitted') && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: 'rgba(74,222,128,0.15)', color: 'var(--color-success)' }}>{triageStatus.toUpperCase()}</span>
+                          )}
+                          {!triagePriority && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded" style={{ background: 'var(--overlay-subtle)', color: 'var(--text-muted)' }}>NOT TRIAGED</span>
+                          )}
                         </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setVitalsPatient({ id: patient._id, name: `${patient.firstName} ${patient.surname}` });
-                            setVitalsForm({ systolic: '', diastolic: '', temperature: '', pulse: '', spo2: '', weight: '', respiratoryRate: '', notes: '' });
-                            setVitalsSaved(false);
-                            setVitalsModalOpen(true);
-                          }}
-                          className="flex items-center justify-center w-7 h-7 rounded-lg flex-shrink-0 transition-colors"
-                          style={{
-                            background: 'var(--accent-light)',
-                            color: 'var(--accent-primary)',
-                          }}
-                          title="Record vitals"
-                        >
-                          <Thermometer className="w-3.5 h-3.5" />
-                        </button>
+                        {/* Action buttons */}
+                        <div className="flex gap-1 flex-shrink-0">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setVitalsPatient({ id: patient._id, name: `${patient.firstName} ${patient.surname}` });
+                              setVitalsForm({ systolic: '', diastolic: '', temperature: '', pulse: '', spo2: '', weight: '', respiratoryRate: '', notes: '' });
+                              setVitalsSaved(false);
+                              setVitalsModalOpen(true);
+                            }}
+                            className="flex items-center justify-center w-7 h-7 rounded-lg transition-colors"
+                            style={{ background: 'var(--accent-light)', color: 'var(--accent-primary)' }}
+                            title="Record vitals"
+                          >
+                            <Thermometer className="w-3.5 h-3.5" />
+                          </button>
+                          {(!triage || triageStatus === 'none') && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveTab('triage');
+                                setTriagePatientId(patient._id);
+                              }}
+                              className="flex items-center justify-center w-7 h-7 rounded-lg transition-colors"
+                              style={{ background: 'rgba(251,146,60,0.12)', color: '#FB923C' }}
+                              title="Start triage"
+                            >
+                              <AlertTriangle className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          {triageStatus === 'pending' && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(`/consultation?patientId=${patient._id}`);
+                              }}
+                              className="flex items-center justify-center w-7 h-7 rounded-lg transition-colors"
+                              style={{ background: 'rgba(74,222,128,0.12)', color: 'var(--color-success)' }}
+                              title="Send to doctor"
+                            >
+                              <Stethoscope className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
                 </div>
               </div>
-            </>
           )}
 
           {/* === TAB: MEDICATION ADMINISTRATION RECORD (Feature 2) === */}
           {activeTab === 'mar' && (
-            <div className="md:col-span-2 rounded-2xl overflow-hidden" style={{
+            <div className="rounded-2xl overflow-hidden flex flex-col" style={{
               background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)',
             }}>
               <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
@@ -659,7 +769,7 @@ export default function NurseDashboardPage() {
                   }}>{marEntries.filter(e => e.status !== 'given').length} PENDING</span>
                 </div>
               </div>
-              <div className="p-2" style={{ maxHeight: '500px', overflowY: 'auto' }}>
+              <div className="p-2 flex-1 overflow-y-auto">
                 {/* MAR Table Header */}
                 <div className="grid grid-cols-12 gap-1 px-2 py-1.5 mb-1" style={{ borderBottom: '1px solid var(--border-light)' }}>
                   <span className="col-span-1 text-[9px] font-bold uppercase" style={{ color: 'var(--text-muted)' }}>Time</span>
@@ -682,7 +792,7 @@ export default function NurseDashboardPage() {
                       }}
                     >
                       <span className="col-span-1 text-[10px] font-mono font-medium" style={{ color: 'var(--text-primary)' }}>{entry.time}</span>
-                      <span className="col-span-3 text-[10px] font-medium truncate" style={{ color: 'var(--text-primary)' }}>{entry.patientName}</span>
+                      <button onClick={(e) => { e.stopPropagation(); router.push(`/patients/${entry.patientId}`); }} className="col-span-3 text-[10px] font-medium truncate text-left hover:underline" style={{ color: 'var(--text-primary)' }}>{entry.patientName}</button>
                       <span className="col-span-3 text-[10px] font-semibold truncate" style={{ color: sc.color }}>{entry.medication}</span>
                       <span className="col-span-1 text-[10px]" style={{ color: 'var(--text-secondary)' }}>{entry.dose}</span>
                       <span className="col-span-1 text-[10px]" style={{ color: 'var(--text-secondary)' }}>{entry.route}</span>
@@ -730,7 +840,7 @@ export default function NurseDashboardPage() {
 
           {/* === TAB: TRIAGE (Feature 4 - ETAT) === */}
           {activeTab === 'triage' && (
-            <div className="md:col-span-2 rounded-2xl overflow-hidden" style={{
+            <div className="rounded-2xl overflow-hidden flex flex-col" style={{
               background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)',
             }}>
               <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
@@ -742,7 +852,7 @@ export default function NurseDashboardPage() {
                   Today: {triageHistory.filter(t => (t.triagedAt || '').startsWith(new Date().toISOString().slice(0, 10))).length} · RED active: {triageHistory.filter(t => t.priority === 'RED' && t.status === 'pending').length}
                 </span>
               </div>
-              <div className="p-4 space-y-4">
+              <div className="p-4 space-y-4 flex-1 overflow-y-auto">
                 {/* Patient picker — links triage to a real patient record */}
                 <div className="relative">
                   <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: 'var(--text-muted)' }}>Patient</label>
@@ -1057,22 +1167,65 @@ export default function NurseDashboardPage() {
                         return (
                           <div
                             key={t._id}
-                            className="flex items-center gap-2 p-2 rounded-xl cursor-pointer"
+                            className="flex items-center gap-2 p-2 rounded-xl"
                             style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}
-                            onClick={() => router.push(`/patients/${t.patientId}`)}
                           >
                             <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: c.bg, color: c.text }}>
                               <span className="text-[10px] font-black">{t.priority}</span>
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{t.patientName}</p>
+                            <button className="flex-1 min-w-0 text-left" onClick={() => router.push(`/patients/${t.patientId}`)} title="View patient record">
+                              <p className="text-xs font-semibold truncate hover:underline" style={{ color: 'var(--text-primary)' }}>{t.patientName}</p>
                               <p className="text-[10px] truncate" style={{ color: 'var(--text-muted)' }}>
-                                {t.chiefComplaint || 'ABCC assessment'} · by {t.triagedByName} · {timeAgo}
+                                {t.chiefComplaint || 'ABCC assessment'} · {timeAgo}
                               </p>
+                            </button>
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              {t.status === 'pending' && (
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      const { updateTriage } = await import('@/lib/services/triage-service');
+                                      await updateTriage(t._id, { status: 'seen', handoffTo: currentUser?._id, handoffToName: currentUser?.name, handoffAt: new Date().toISOString() });
+                                      showToast(`${t.patientName} marked as seen`, 'success');
+                                    } catch { showToast('Failed to update status', 'error'); }
+                                  }}
+                                  className="text-[8px] font-bold px-2 py-1 rounded-md text-white"
+                                  style={{ background: '#60A5FA' }}
+                                  title="Mark as seen by doctor"
+                                >
+                                  Seen
+                                </button>
+                              )}
+                              {(t.status === 'pending' || t.status === 'seen') && (
+                                <button
+                                  onClick={() => router.push(`/consultation?patientId=${t.patientId}`)}
+                                  className="text-[8px] font-bold px-2 py-1 rounded-md text-white"
+                                  style={{ background: 'var(--accent-primary)' }}
+                                  title="Start consultation"
+                                >
+                                  Consult
+                                </button>
+                              )}
+                              {(t.status === 'seen' || t.status === 'admitted') && (
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      const { updateTriage } = await import('@/lib/services/triage-service');
+                                      await updateTriage(t._id, { status: 'discharged' });
+                                      showToast(`${t.patientName} discharged`, 'success');
+                                    } catch { showToast('Failed to discharge', 'error'); }
+                                  }}
+                                  className="text-[8px] font-bold px-2 py-1 rounded-md"
+                                  style={{ background: 'rgba(74,222,128,0.15)', color: 'var(--color-success)' }}
+                                  title="Discharge patient"
+                                >
+                                  Discharge
+                                </button>
+                              )}
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: t.status === 'pending' ? 'rgba(252,211,77,0.12)' : t.status === 'seen' ? 'rgba(96,165,250,0.12)' : 'rgba(16,185,129,0.12)', color: t.status === 'pending' ? 'var(--color-warning)' : t.status === 'seen' ? '#60A5FA' : 'var(--color-success)' }}>
+                                {t.status}
+                              </span>
                             </div>
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: t.status === 'pending' ? 'rgba(252,211,77,0.12)' : 'rgba(16,185,129,0.12)', color: t.status === 'pending' ? 'var(--color-warning)' : 'var(--color-success)' }}>
-                              {t.status}
-                            </span>
                           </div>
                         );
                       })}
@@ -1083,15 +1236,17 @@ export default function NurseDashboardPage() {
             </div>
           )}
 
-          {/* Vitals Queue / Live Feed -- 1 col (always shown) */}
+          {/* === COL 2: CARE FEED (center, always shown) === */}
           <div className="rounded-2xl overflow-hidden flex flex-col" style={{
-            background: 'var(--bg-card)', border: '1px solid var(--border-light)',
-            boxShadow: 'var(--card-shadow)', maxHeight: '520px',
+            background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)',
           }}>
             <div className="px-3 py-2 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-light)' }}>
               <div className="flex items-center gap-2">
                 <Radio className="w-4 h-4" style={{ color: ACCENT }} />
                 <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Care Feed</span>
+                <span className="px-1.5 py-0.5 rounded text-[8px] font-bold tracking-wider" style={{
+                  background: 'rgba(74,222,128,0.12)', color: 'var(--color-success)',
+                }}>LIVE</span>
               </div>
               <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>{eventCounter} events</span>
             </div>
@@ -1101,11 +1256,8 @@ export default function NurseDashboardPage() {
                 return (
                   <div
                     key={evt.id}
-                    className="p-2 rounded-lg transition-all cursor-pointer"
-                    onClick={() => {
-                      const routes: Record<string, string> = { vitals: '/patients', medication: '/pharmacy', birth_assist: '/births', immunization: '/immunizations', wound_care: '/patients', anc_check: '/anc', blood_draw: '/lab', patient_assess: '/patients', temp_check: '/patients' };
-                      router.push(routes[evt.type] || '/patients');
-                    }}
+                    className="p-2 rounded-lg transition-all cursor-pointer hover:bg-[var(--accent-light)]"
+                    onClick={() => router.push(EVENT_ROUTES[evt.type] || '/patients')}
                     style={{
                       background: evt.isNew ? `${evt.color}08` : 'transparent',
                       border: evt.isNew ? `1px solid ${evt.color}20` : '1px solid transparent',
@@ -1136,36 +1288,8 @@ export default function NurseDashboardPage() {
             </div>
           </div>
 
-          {/* Quick Actions -- 1 col (always shown) */}
-          <div className="space-y-4 flex flex-col">
-            {/* Shift Summary */}
-            <div className="rounded-2xl overflow-hidden flex-1" style={{
-              background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)',
-            }}>
-              <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4" style={{ color: ACCENT }} />
-                  <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Shift Summary</span>
-                </div>
-              </div>
-              <div className="p-3 space-y-2">
-                {[
-                  { label: 'Vitals Taken', value: Math.max(8, Math.floor(patients.length * 0.4)), color: 'var(--color-success)' },
-                  { label: 'Meds Given', value: Math.max(5, Math.floor(patients.length * 0.2)), color: '#60A5FA' },
-                  { label: 'Assessments', value: Math.max(3, Math.floor(patients.length * 0.15)), color: '#A855F7' },
-                  { label: 'Births Assisted', value: birthStats?.total || 0, color: ACCENT },
-                ].map(item => (
-                  <div key={item.label} className="flex items-center justify-between p-2 rounded-lg" style={{
-                    background: 'var(--overlay-subtle)',
-                    border: '1px solid var(--border-light)',
-                  }}>
-                    <span className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>{item.label}</span>
-                    <span className="text-sm font-bold" style={{ color: item.color }}>{item.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
+          {/* === COL 3: RIGHT SIDEBAR (always shown) === */}
+          <div className="flex flex-col gap-3 h-full">
             {/* Quick Actions */}
             <div className="rounded-2xl p-3" style={{
               background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)',
@@ -1192,48 +1316,77 @@ export default function NurseDashboardPage() {
                 ))}
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* BOTTOM: Care Documentation Log */}
-        <div className="rounded-2xl overflow-hidden" style={{
-          background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)',
-        }}>
-          <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
-            <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4" style={{ color: ACCENT }} />
-              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Care Documentation Log</span>
-              <span className="px-2 py-0.5 rounded text-[9px] font-bold tracking-wider" style={{
-                background: 'var(--accent-light)',
-                color: ACCENT,
-                border: '1px solid var(--accent-border)',
-              }}>TODAY</span>
+            {/* Shift Summary */}
+            <div className="rounded-2xl overflow-hidden" style={{
+              background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)',
+            }}>
+              <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4" style={{ color: ACCENT }} />
+                  <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Shift Summary</span>
+                </div>
+              </div>
+              <div className="p-3 space-y-2">
+                {[
+                  { label: 'Vitals Taken', value: Math.max(8, Math.floor(patients.length * 0.4)), color: 'var(--color-success)' },
+                  { label: 'Meds Given', value: Math.max(5, Math.floor(patients.length * 0.2)), color: '#60A5FA' },
+                  { label: 'Assessments', value: Math.max(3, Math.floor(patients.length * 0.15)), color: '#A855F7' },
+                  { label: 'Births Assisted', value: birthStats?.total || 0, color: ACCENT },
+                ].map(item => (
+                  <div key={item.label} className="flex items-center justify-between p-2 rounded-lg" style={{
+                    background: 'var(--overlay-subtle)',
+                    border: '1px solid var(--border-light)',
+                  }}>
+                    <span className="text-[10px] font-medium" style={{ color: 'var(--text-muted)' }}>{item.label}</span>
+                    <span className="text-sm font-bold" style={{ color: item.color }}>{item.value}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />
-              <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{liveEvents.length} entries logged</span>
-            </div>
-          </div>
-          <div className="p-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
-              {liveEvents.slice(0, 8).map((evt) => {
-                const Icon = evt.icon;
-                return (
-                  <div key={evt.id} className="p-2.5 rounded-xl transition-all cursor-pointer"
-                    style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background: `${evt.color}15` }}>
-                        <Icon className="w-2.5 h-2.5" style={{ color: evt.color }} />
+
+            {/* Care Documentation Log */}
+            <div className="rounded-2xl overflow-hidden flex flex-col flex-1" style={{
+              background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)',
+            }}>
+              <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4" style={{ color: ACCENT }} />
+                  <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Care Log</span>
+                  <span className="px-1.5 py-0.5 rounded text-[8px] font-bold tracking-wider" style={{
+                    background: 'var(--accent-light)',
+                    color: ACCENT,
+                    border: '1px solid var(--accent-border)',
+                  }}>TODAY</span>
+                </div>
+                <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{liveEvents.length} entries</span>
+              </div>
+              <div className="p-2 space-y-1.5 flex-1 overflow-y-auto">
+                {liveEvents.map((evt) => {
+                  const Icon = evt.icon;
+                  return (
+                    <div key={evt.id} className="flex items-center gap-2.5 p-2 rounded-xl transition-all cursor-pointer hover:bg-[var(--accent-light)]"
+                      style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}
+                      onClick={() => router.push(EVENT_ROUTES[evt.type] || '/patients')}
+                    >
+                      <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${evt.color}15` }}>
+                        <Icon className="w-3.5 h-3.5" style={{ color: evt.color }} />
                       </div>
-                      <span className="text-[10px] font-semibold truncate" style={{ color: evt.color }}>{evt.label}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="text-[10px] font-semibold truncate" style={{ color: evt.color }}>{evt.label}</span>
+                          <span className="text-[9px] font-mono flex-shrink-0" style={{ color: 'var(--text-muted)' }}>{evt.time}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-1 mt-0.5">
+                          <span className="text-[10px] truncate" style={{ color: 'var(--text-primary)' }}>{evt.patient}</span>
+                          <span className="text-[9px] flex-shrink-0" style={{ color: 'var(--text-muted)' }}>{evt.ward}</span>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
                     </div>
-                    <p className="text-[10px] font-medium truncate" style={{ color: 'var(--text-primary)' }}>{evt.patient}</p>
-                    <div className="flex items-center justify-between mt-1">
-                      <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>{evt.ward}</span>
-                      <span className="text-[9px] font-mono" style={{ color: 'var(--text-muted)' }}>{evt.time}</span>
-                    </div>
-                  </div>);
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>

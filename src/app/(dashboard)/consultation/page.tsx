@@ -20,6 +20,7 @@ import type { ScribeExtraction } from '@/lib/services/clinical-scribe-service';
 import { usePatients } from '@/lib/hooks/usePatients';
 import { useHospitals } from '@/lib/hooks/useHospitals';
 import { useMedicalRecords } from '@/lib/hooks/useMedicalRecords';
+import { useTriage } from '@/lib/hooks/useTriage';
 import { useApp } from '@/lib/context';
 import { useToast } from '@/components/Toast';
 import { evaluatePatient } from '@/lib/ai/diagnosis-engine';
@@ -65,6 +66,7 @@ export default function ConsultationPage() {
   const { patients } = usePatients();
   const { hospitals } = useHospitals();
   const { currentUser } = useApp();
+  const { triages } = useTriage();
 
   // Section collapse state (11 sections — includes AI section at index 3 and Attachments at index 8)
   const [openSections, setOpenSections] = useState<boolean[]>([
@@ -135,6 +137,7 @@ export default function ConsultationPage() {
 
   // Chief Complaint
   const [chiefComplaint, setChiefComplaint] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   // Vital Signs
   const [vitals, setVitals] = useState({
@@ -346,7 +349,15 @@ export default function ConsultationPage() {
   };
 
   const handleSubmit = async () => {
-    if (!selectedPatient) return;
+    if (!selectedPatient || isSaving) return;
+
+    // Validate chief complaint before saving
+    if (!chiefComplaint || chiefComplaint.trim().length < 3) {
+      showToast('Chief complaint is required (minimum 3 characters)', 'error');
+      return;
+    }
+
+    setIsSaving(true);
     const hospital = currentUser?.hospital;
     const now = new Date().toISOString();
     const weight = parseFloat(vitals.weight) || 0;
@@ -385,7 +396,7 @@ export default function ConsultationPage() {
             completedAt: '',
             hospitalId,
             hospitalName,
-            orgId: currentUser?.organization?._id,
+            orgId: currentUser?.orgId,
           });
         }
       }
@@ -406,7 +417,7 @@ export default function ConsultationPage() {
             status: 'pending',
             hospitalId,
             hospitalName,
-            orgId: currentUser?.organization?._id,
+            orgId: currentUser?.orgId,
           });
         }
       }
@@ -481,6 +492,27 @@ export default function ConsultationPage() {
         console.warn('Could not update patient lastConsultedAt', e);
       }
 
+      // 6. Auto-assign doctor on triage: update triage handoff for this patient
+      try {
+        const { updateTriage } = await import('@/lib/services/triage-service');
+        const todayStr = now.slice(0, 10);
+        const patientTriage = triages.find(t =>
+          t.patientId === selectedPatient &&
+          (t.triagedAt || '').startsWith(todayStr) &&
+          (t.status === 'pending' || t.status === 'seen')
+        );
+        if (patientTriage) {
+          await updateTriage(patientTriage._id, {
+            status: 'seen',
+            handoffTo: currentUser?._id,
+            handoffToName: currentUser?.name,
+            handoffAt: now,
+          });
+        }
+      } catch (e) {
+        console.warn('Could not update triage handoff', e);
+      }
+
       // Successful save → clear the draft so we don't re-prompt on next visit
       try {
         const key = draftKey(selectedPatient);
@@ -494,6 +526,8 @@ export default function ConsultationPage() {
     } catch (err) {
       console.error('Failed to save consultation:', err);
       showToast('Failed to save consultation. Please try again.', 'error');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -844,6 +878,55 @@ export default function ConsultationPage() {
               </button>
             }
           />
+
+          {/* Doctor Queue — Triaged patients waiting to be seen */}
+          {!selectedPatient && (() => {
+            const today = new Date().toISOString().slice(0, 10);
+            const pendingTriages = triages
+              .filter(t => (t.triagedAt || '').startsWith(today) && (t.status === 'pending') && !t.handoffTo)
+              .sort((a, b) => {
+                const pOrder: Record<string, number> = { RED: 0, YELLOW: 1, GREEN: 2 };
+                return (pOrder[a.priority] ?? 3) - (pOrder[b.priority] ?? 3);
+              });
+            if (pendingTriages.length === 0) return null;
+            return (
+              <div className="card-elevated p-4 mb-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'rgba(239,68,68,0.1)' }}>
+                    <AlertTriangle className="w-4 h-4" style={{ color: '#EF4444' }} />
+                  </div>
+                  <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Patients Waiting ({pendingTriages.length})</span>
+                  <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Sorted by triage priority</span>
+                </div>
+                <div className="space-y-1.5">
+                  {pendingTriages.slice(0, 6).map(t => {
+                    const pColor = t.priority === 'RED' ? '#EF4444' : t.priority === 'YELLOW' ? 'var(--color-warning)' : 'var(--color-success)';
+                    return (
+                      <button
+                        key={t._id}
+                        onClick={() => { setSelectedPatient(t.patientId); setPatientSearch(''); }}
+                        className="w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-all hover:bg-[var(--accent-light)]"
+                        style={{ background: t.priority === 'RED' ? 'rgba(239,68,68,0.04)' : 'var(--overlay-subtle)', border: `1px solid ${t.priority === 'RED' ? 'rgba(239,68,68,0.15)' : 'var(--border-light)'}` }}
+                      >
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: pColor, color: '#fff' }}>
+                          <span className="text-[10px] font-black">{t.priority}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{t.patientName}</p>
+                          <p className="text-[10px] truncate" style={{ color: 'var(--text-muted)' }}>
+                            {t.chiefComplaint || 'ETAT Assessment'} · {t.hospitalNumber} · Triaged {new Date(t.triagedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                        <span className="text-[10px] font-semibold flex-shrink-0 px-2 py-1 rounded-md text-white" style={{ background: 'var(--accent-primary)' }}>
+                          Start Consultation
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Patient Selector */}
           <div className="card-elevated p-5 mb-4">
@@ -1572,8 +1655,8 @@ export default function ConsultationPage() {
               <button onClick={() => router.push('/patients')} className="btn btn-secondary">
                 <ArrowLeft className="w-4 h-4" /> Cancel
               </button>
-              <button onClick={handleSubmit} className="btn btn-primary btn-lg">
-                <Save className="w-4 h-4" /> Save Consultation
+              <button onClick={handleSubmit} disabled={isSaving || !selectedPatient} className="btn btn-primary btn-lg" style={{ opacity: isSaving ? 0.7 : 1 }}>
+                {isSaving ? <><span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> Saving...</> : <><Save className="w-4 h-4" /> Save Consultation</>}
               </button>
             </div>
           </div>

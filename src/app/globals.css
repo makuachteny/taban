@@ -281,9 +281,9 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
 
 /* ============ Global icon color ============ */
-/* All Lucide icons forced to theme-aware blue */
-svg.lucide {
-  color: var(--icon-color) !important;
+/* Lucide icons default to theme-aware blue when no inline color is set */
+svg.lucide:not([style*="color"]) {
+  color: var(--icon-color);
 }
 /* Active nav items keep their white override */
 .nav-item-active svg.lucide {
@@ -291,8 +291,7 @@ svg.lucide {
 }
 /* White icons inside primary-colored buttons/elements */
 .btn-primary svg.lucide,
-.pp-btn-primary svg.lucide,
-[style*="background: var(--accent-primary)"] svg.lucide {
+.pp-btn-primary svg.lucide {
   color: #ffffff !important;
 }
 

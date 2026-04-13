@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
 import PageHeader from '@/components/PageHeader';
-import { Check, Camera, ArrowLeft, ArrowRight, Users } from 'lucide-react';
+import { Check, ArrowLeft, ArrowRight, Users } from 'lucide-react';
+import PhotoCapture from '@/components/PhotoCapture';
 import { statesAndCounties, states, tribes, languages, bloodTypes } from '@/data/mock';
 import { usePatients } from '@/lib/hooks/usePatients';
 import { useApp } from '@/lib/context';
@@ -26,6 +27,7 @@ export default function NewPatientPage() {
     nationalId: '',
     nokName: '', nokRelationship: '', nokPhone: '', nokAddress: '',
     bloodType: 'Unknown', allergies: '' as string, chronicConditions: '' as string,
+    photoUrl: '' as string,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -50,8 +52,21 @@ export default function NewPatientPage() {
       if (!form.surname.trim()) errs.surname = 'Surname is required';
       if (!form.gender) errs.gender = 'Gender is required';
       if (!form.dateOfBirth && !form.estimatedAge) errs.dateOfBirth = 'Date of birth or estimated age is required';
+      if (form.estimatedAge) {
+        const age = parseInt(form.estimatedAge, 10);
+        if (isNaN(age) || age < 0 || age > 150) errs.estimatedAge = 'Age must be between 0 and 150';
+      }
     } else if (s === 1) {
       if (!form.state) errs.state = 'State is required';
+      if (form.state && !form.county) errs.county = 'County is required';
+      if (form.phone) {
+        const ph = form.phone.replace(/\s/g, '');
+        if (ph.length > 0 && !/^\+?[\d-]{7,15}$/.test(ph)) errs.phone = 'Invalid phone number format';
+      }
+    } else if (s === 2) {
+      if (!form.nokName.trim()) errs.nokName = 'Next of kin name is required';
+      if (!form.nokRelationship) errs.nokRelationship = 'Relationship is required';
+      if (!form.nokPhone.trim()) errs.nokPhone = 'Next of kin phone is required';
     }
     return errs;
   };
@@ -69,7 +84,7 @@ export default function NewPatientPage() {
 
   const handleSubmit = async () => {
     // Validate all steps before submitting
-    const allErrors = { ...validateStep(0), ...validateStep(1) };
+    const allErrors = { ...validateStep(0), ...validateStep(1), ...validateStep(2) };
     if (Object.keys(allErrors).length > 0) {
       setErrors(allErrors);
       showToast('Please fill in all required fields', 'error');
@@ -83,7 +98,7 @@ export default function NewPatientPage() {
       const result = await createPatient({
         hospitalNumber: '',
         geocodeId,
-        householdNumber: form.householdNumber ? parseInt(form.householdNumber) : undefined,
+        householdNumber: form.householdNumber && !isNaN(parseInt(form.householdNumber, 10)) ? parseInt(form.householdNumber, 10) : undefined,
         nationalId: form.nationalId || undefined,
         bomaCode: form.bomaCode || undefined,
         firstName: form.firstName.trim(),
@@ -91,7 +106,7 @@ export default function NewPatientPage() {
         surname: form.surname.trim(),
         maidenName: form.maidenName.trim(),
         dateOfBirth: form.dateOfBirth,
-        estimatedAge: form.estimatedAge ? parseInt(form.estimatedAge) : undefined,
+        estimatedAge: form.estimatedAge && !isNaN(parseInt(form.estimatedAge, 10)) ? parseInt(form.estimatedAge, 10) : undefined,
         gender: form.gender as 'Male' | 'Female',
         tribe: form.tribe,
         primaryLanguage: form.primaryLanguage,
@@ -108,8 +123,9 @@ export default function NewPatientPage() {
         nokPhone: form.nokPhone,
         nokAddress: form.nokAddress,
         bloodType: form.bloodType,
-        allergies: form.allergies ? form.allergies.split(',').map(a => a.trim()) : ['None known'],
-        chronicConditions: form.chronicConditions ? form.chronicConditions.split(',').map(c => c.trim()) : ['None'],
+        allergies: form.allergies ? form.allergies.split(',').map(a => a.trim()).filter(a => a.length > 0) : ['None known'],
+        chronicConditions: form.chronicConditions ? form.chronicConditions.split(',').map(c => c.trim()).filter(c => c.length > 0) : ['None'],
+        photoUrl: form.photoUrl || undefined,
         registrationHospital: currentUser?.hospitalId || '',
         registrationDate: today,
         registeredAt: nowIso,
@@ -176,10 +192,10 @@ export default function NewPatientPage() {
               <div className="space-y-5">
                 <h3 className="text-base font-semibold mb-4">Patient Demographics</h3>
                 <div className="flex gap-3 items-start">
-                  <div className="w-28 h-28 rounded-md border-2 border-dashed flex flex-col items-center justify-center cursor-pointer hover:border-[var(--taban-blue)] transition-colors" style={{ borderColor: 'var(--border-medium)', background: 'var(--overlay-subtle)' }}>
-                    <Camera className="w-6 h-6 mb-1" style={{ color: 'var(--text-muted)' }} />
-                    <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Add Photo</span>
-                  </div>
+                  <PhotoCapture
+                    value={form.photoUrl || undefined}
+                    onChange={(base64) => update('photoUrl', base64 || '')}
+                  />
                   <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div>
                       <label htmlFor="pt-firstName">First Name *</label>

@@ -2,7 +2,7 @@
 
 import {
   Stethoscope, FlaskConical, Pill, Syringe, ArrowRightLeft, HeartPulse,
-  Baby, Skull, AlertTriangle, FileText, Activity,
+  FileText, Activity,
 } from 'lucide-react';
 import type {
   MedicalRecordDoc, LabResultDoc, PrescriptionDoc, ImmunizationDoc,

@@ -4,6 +4,7 @@ import type { DataScope } from './data-scope';
 import { filterByScope } from './data-scope';
 import { v4 as uuidv4 } from 'uuid';
 import { logAudit } from './audit-service';
+import { validatePrescription, ValidationError } from '../validation';
 
 export async function getAllPrescriptions(scope?: DataScope): Promise<PrescriptionDoc[]> {
   const db = prescriptionsDB();
@@ -23,6 +24,12 @@ export async function getPrescriptionsByPatient(patientId: string): Promise<Pres
 export async function createPrescription(
   data: Omit<PrescriptionDoc, '_id' | '_rev' | 'type' | 'createdAt' | 'updatedAt'>
 ): Promise<PrescriptionDoc> {
+  // Validate required prescription fields
+  const errors = validatePrescription(data as unknown as Record<string, unknown>);
+  if (Object.keys(errors).length > 0) {
+    throw new ValidationError(errors);
+  }
+
   const db = prescriptionsDB();
   const now = new Date().toISOString();
   const doc: PrescriptionDoc = {
@@ -34,7 +41,9 @@ export async function createPrescription(
   } as PrescriptionDoc;
   const resp = await db.put(doc);
   doc._rev = resp.rev;
-  logAudit('CREATE_PRESCRIPTION', undefined, undefined, `Prescription ${doc._id}: ${doc.medication} for ${doc.patientName}`).catch(() => {});
+  logAudit('PRESCRIPTION_CREATED', undefined, doc.prescribedBy,
+    `Rx ${doc._id}: ${doc.medication} ${doc.dose} for ${doc.patientName}`
+  ).catch(() => {});
   return doc;
 }
 
@@ -45,16 +54,23 @@ export async function updatePrescription(id: string, data: Partial<PrescriptionD
     const updated = { ...existing, ...data, _id: existing._id, _rev: existing._rev, updatedAt: new Date().toISOString() };
     const resp = await db.put(updated);
     updated._rev = resp.rev;
-    logAudit('UPDATE_PRESCRIPTION', undefined, undefined, `Prescription ${id} status: ${updated.status}`).catch(() => {});
+    logAudit('PRESCRIPTION_UPDATED', undefined, undefined, `Prescription ${id} status: ${updated.status}`).catch(() => {});
     return updated;
   } catch {
     return null;
   }
 }
 
-export async function dispensePrescription(id: string): Promise<PrescriptionDoc | null> {
-  return updatePrescription(id, {
+export async function dispensePrescription(id: string, dispensedBy?: string): Promise<PrescriptionDoc | null> {
+  const now = new Date().toISOString();
+  const result = await updatePrescription(id, {
     status: 'dispensed',
-    dispensedAt: new Date().toISOString(),
+    dispensedAt: now,
   });
+  if (result) {
+    logAudit('PRESCRIPTION_DISPENSED', undefined, dispensedBy || 'unknown',
+      `Dispensed ${result.medication} ${result.dose} to ${result.patientName} (Rx: ${id})`
+    ).catch(() => {});
+  }
+  return result;
 }

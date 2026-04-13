@@ -60,7 +60,7 @@ function createFallbackToken(payload: Record<string, unknown>): string {
     iss: JWT_ISSUER,
     aud: JWT_AUDIENCE,
     iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + 86400, // 24h
+    exp: Math.floor(Date.now() / 1000) + 28800, // 8h
   }));
   return `${header}.${body}.dev-fallback`;
 }
@@ -99,7 +99,7 @@ export async function createToken(user: { _id: string; username: string; role: s
       .setIssuedAt()
       .setIssuer(JWT_ISSUER)
       .setAudience(JWT_AUDIENCE)
-      .setExpirationTime('24h')
+      .setExpirationTime('8h')
       .sign(JWT_SECRET);
   }
 

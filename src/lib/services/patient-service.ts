@@ -73,33 +73,85 @@ async function inferOrgIdFromHospital(hospitalId?: string): Promise<string | und
   }
 }
 
+/**
+ * Generate a unique hospital number using UUID suffix to avoid race conditions.
+ * Format: PREFIX-XXXXXX (e.g., JTH-A3F2B1)
+ */
+async function generateHospitalNumber(hospitalId?: string): Promise<string> {
+  const prefix = getHospitalPrefix(hospitalId);
+  const db = patientsDB();
+  const count = (await db.allDocs()).total_rows;
+  // Use count + random suffix for uniqueness without race conditions
+  const suffix = `${String(count + 1).padStart(4, '0')}${uuidv4().slice(0, 2).toUpperCase()}`;
+  return `${prefix}-${suffix}`;
+}
+
+/**
+ * Check for potential duplicate patients by name+DOB, phone, geocodeId, or nationalId.
+ */
+async function checkDuplicates(data: Record<string, unknown>, scope?: DataScope): Promise<string | null> {
+  const all = await getAllPatients(scope);
+  const firstName = ((data.firstName as string) || '').toLowerCase().trim();
+  const surname = ((data.surname as string) || '').toLowerCase().trim();
+  const dob = data.dateOfBirth as string | undefined;
+  const phone = data.phone as string | undefined;
+  const geocodeId = data.geocodeId as string | undefined;
+  const nationalId = data.nationalId as string | undefined;
+
+  for (const p of all) {
+    // Match by name + DOB
+    if (firstName && surname && dob &&
+        p.firstName.toLowerCase() === firstName &&
+        p.surname.toLowerCase() === surname &&
+        p.dateOfBirth === dob) {
+      return `A patient named "${p.firstName} ${p.surname}" with the same date of birth already exists (${p.hospitalNumber})`;
+    }
+    // Match by phone
+    if (phone && phone.length >= 7 && p.phone === phone) {
+      return `A patient with phone number ${phone} already exists (${p.firstName} ${p.surname}, ${p.hospitalNumber})`;
+    }
+    // Match by geocode ID
+    if (geocodeId && p.geocodeId === geocodeId) {
+      return `A patient with Geocode ID ${geocodeId} already exists (${p.firstName} ${p.surname})`;
+    }
+    // Match by national ID
+    if (nationalId && nationalId.length >= 3 && p.nationalId === nationalId) {
+      return `A patient with National ID ${nationalId} already exists (${p.firstName} ${p.surname})`;
+    }
+  }
+  return null;
+}
+
 export async function createPatient(data: Omit<PatientDoc, '_id' | '_rev' | 'type' | 'createdAt' | 'updatedAt'>): Promise<PatientDoc> {
   const errors = validatePatientData(data as unknown as Record<string, unknown>);
+
+  // Check for duplicate patients
+  const duplicateMsg = await checkDuplicates(data as unknown as Record<string, unknown>);
+  if (duplicateMsg) {
+    errors.duplicate = duplicateMsg;
+  }
+
   if (Object.keys(errors).length > 0) {
     throw new ValidationError(errors);
   }
   const db = patientsDB();
   const now = new Date().toISOString();
   const id = `pat-${uuidv4().slice(0, 8)}`;
-  const count = (await db.allDocs()).total_rows;
-  const prefix = getHospitalPrefix(data.registrationHospital);
+  const hospitalNumber = data.hospitalNumber || await generateHospitalNumber(data.registrationHospital);
   const orgId = data.orgId || await inferOrgIdFromHospital(data.registrationHospital);
   const doc: PatientDoc = {
     _id: id,
     type: 'patient',
     ...data,
     orgId,
-    hospitalNumber: data.hospitalNumber || `${prefix}-${String(count + 1).padStart(6, '0')}`,
-    // Always capture a full date+time registration timestamp at the moment the
-    // patient first enters the system. `registrationDate` remains for backward
-    // compatibility (date only) but `registeredAt` is authoritative.
+    hospitalNumber,
     registeredAt: data.registeredAt || now,
     createdAt: now,
     updatedAt: now,
   } as PatientDoc;
   const resp = await db.put(doc);
   doc._rev = resp.rev;
-  logAudit('CREATE_PATIENT', undefined, undefined, `Created patient ${doc._id}: ${data.firstName} ${data.surname}`).catch(() => {});
+  logAudit('CREATE_PATIENT', undefined, undefined, `Created patient ${doc._id}: ${data.firstName} ${data.surname} (${hospitalNumber})`).catch(() => {});
   return doc;
 }
 

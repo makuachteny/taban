@@ -9,20 +9,41 @@ export async function logAudit(
   details: string,
   success: boolean = true
 ): Promise<void> {
-  const db = auditLogDB();
-  const now = new Date().toISOString();
-  const doc: AuditLogDoc = {
-    _id: `audit-${uuidv4()}`,
-    type: 'audit_log',
-    action,
+  try {
+    const db = auditLogDB();
+    const now = new Date().toISOString();
+    const doc: AuditLogDoc = {
+      _id: `audit-${uuidv4()}`,
+      type: 'audit_log',
+      action,
+      userId,
+      username,
+      details,
+      success,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await db.put(doc);
+  } catch (err) {
+    // Never let audit logging failures break the main flow
+    console.error('[Audit] Failed to write audit log:', err);
+  }
+}
+
+/** Log a data access event for compliance tracking */
+export async function logDataAccess(
+  userId: string | undefined,
+  username: string | undefined,
+  resource: string,
+  resourceId: string,
+  action: 'VIEW' | 'CREATE' | 'UPDATE' | 'DELETE' | 'EXPORT'
+): Promise<void> {
+  await logAudit(
+    `DATA_${action}`,
     userId,
     username,
-    details,
-    success,
-    createdAt: now,
-    updatedAt: now,
-  };
-  await db.put(doc);
+    `${action} ${resource}: ${resourceId}`
+  );
 }
 
 export async function getRecentAuditLogs(limit: number = 50): Promise<AuditLogDoc[]> {

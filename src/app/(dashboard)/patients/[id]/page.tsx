@@ -27,6 +27,7 @@ import { usePatientAppointments } from '@/lib/hooks/useAppointments';
 import { usePrescriptions } from '@/lib/hooks/usePrescriptions';
 import { useTriage } from '@/lib/hooks/useTriage';
 import { usePermissions } from '@/lib/hooks/usePermissions';
+import PatientQRCode from '@/components/PatientQRCode';
 
 export default function PatientDetailPage({ params }: { params: { id: string } }) {
   const { id } = params;
@@ -776,6 +777,22 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                         </button>
                       );
                     })}
+                  </div>
+                </div>
+
+                {/* ── Patient QR Code ── */}
+                <div className="card-elevated no-print">
+                  <div className="px-5 py-3 border-b flex items-center gap-2" style={{ borderColor: 'var(--border-light)' }}>
+                    <Search className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
+                    <h3 className="font-semibold text-sm">Patient QR Code</h3>
+                  </div>
+                  <div className="p-5 flex justify-center">
+                    <PatientQRCode
+                      patientId={patient._id}
+                      patientName={`${patient.firstName} ${patient.surname}`}
+                      hospitalNumber={patient.hospitalNumber}
+                      size={140}
+                    />
                   </div>
                 </div>
 

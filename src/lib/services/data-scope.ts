@@ -17,8 +17,8 @@ export function filterByScope<T extends Record<string, any>>(
   // Everyone else is filtered by orgId
   let filtered = docs;
   if (scope.orgId) {
-    // Allow legacy docs without orgId so reporting stays consistent
-    filtered = filtered.filter(d => !d.orgId || d.orgId === scope.orgId);
+    // Require orgId match — reject docs without orgId for data isolation
+    filtered = filtered.filter(d => d.orgId === scope.orgId);
   }
 
   // Non-admin roles that have a hospitalId are further scoped
@@ -33,7 +33,8 @@ export function filterByScope<T extends Record<string, any>>(
         d.fromHospitalId === hospId ||
         d.toHospitalId === hospId ||
         d.facilityId === hospId;
-      return matches || !d.hospitalId;
+      // Only allow docs that explicitly match this hospital or have no hospital field
+      return matches || (!d.hospitalId && !d.registrationHospital && !d.facilityId);
     });
   }
 

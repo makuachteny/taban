@@ -717,8 +717,8 @@ export default function DashboardPage() {
                 { Icon: UserCheck, label: 'Nursing', count: totalNurses, color: 'var(--accent-primary)' },
               ].map(r => (
                 <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 30, height: 30, borderRadius: 8, background: `${r.color}12`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <r.Icon className="w-3.5 h-3.5" style={{ color: r.color }} />
+                  <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <r.Icon className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
                   </div>
                   <span style={{ fontSize: 13, color: 'var(--text-secondary)', flex: 1 }}>{r.label}</span>
                   <span className="stat-value" style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>{r.count}</span>
@@ -732,13 +732,13 @@ export default function DashboardPage() {
             <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 14 }}>Quick Overview</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {[
-                { Icon: SendHorizontal, label: 'Pending Referrals', value: pendingReferrals.length, color: 'var(--color-warning)' },
-                { Icon: AlertTriangle, label: 'Active Alerts', value: activeAlerts.length, color: 'var(--color-danger)' },
-                { Icon: Syringe, label: 'Immunizations', value: immStats?.totalVaccinations || 0, color: 'var(--accent-primary)' },
-                { Icon: Baby, label: 'ANC / Births', value: `${ancStats?.totalVisits || 0} / ${birthStats?.total || 0}`, color: 'var(--accent-primary)' },
+                { Icon: SendHorizontal, label: 'Pending Referrals', value: pendingReferrals.length, color: 'var(--color-warning)', bg: 'rgba(252,211,77,0.12)' },
+                { Icon: AlertTriangle, label: 'Active Alerts', value: activeAlerts.length, color: 'var(--color-danger)', bg: 'rgba(229,46,66,0.12)' },
+                { Icon: Syringe, label: 'Immunizations', value: immStats?.totalVaccinations || 0, color: 'var(--accent-primary)', bg: 'var(--accent-light)' },
+                { Icon: Baby, label: 'ANC / Births', value: `${ancStats?.totalVisits || 0} / ${birthStats?.total || 0}`, color: 'var(--accent-primary)', bg: 'var(--accent-light)' },
               ].map(item => (
                 <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 7, background: `${item.color}10`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: 7, background: item.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <item.Icon className="w-3.5 h-3.5" style={{ color: item.color }} />
                   </div>
                   <span style={{ fontSize: 13, color: 'var(--text-secondary)', flex: 1 }}>{item.label}</span>

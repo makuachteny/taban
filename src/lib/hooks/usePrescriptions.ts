@@ -35,7 +35,7 @@ export function usePrescriptions() {
     let cancelled = false;
     const changes = prescriptionsDB().changes({ since: 'now', live: true, include_docs: false })
       .on('change', () => { if (!cancelled) loadPrescriptions(); })
-      .on('error', () => { /* swallow */ });
+      .on('error', (err) => { console.warn('Prescriptions subscription error:', err); });
     return () => {
       cancelled = true;
       try { changes.cancel(); } catch { /* noop */ }

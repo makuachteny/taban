@@ -41,9 +41,12 @@ export function useMedicalRecords(patientId?: string) {
       .on('change', (change) => {
         if (cancelled) return;
         const doc = change.doc as MedicalRecordDoc | undefined;
-        if (!doc || doc.patientId === patientId || change.deleted) loadRecords();
+        // Reload when: doc is for this patient, doc was deleted, or doc is missing (safety)
+        if (!doc || doc.patientId === patientId || change.deleted) {
+          loadRecords();
+        }
       })
-      .on('error', () => { /* swallow */ });
+      .on('error', (err) => { console.warn('Medical records subscription error:', err); });
     return () => {
       cancelled = true;
       try { changes.cancel(); } catch { /* noop */ }

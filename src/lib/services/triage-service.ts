@@ -33,6 +33,15 @@ export function calculatePriority(data: {
   return 'GREEN';
 }
 
+// Valid triage status transitions (state machine)
+const VALID_TRANSITIONS: Record<string, string[]> = {
+  pending: ['seen', 'admitted', 'discharged', 'referred'],
+  seen: ['admitted', 'discharged', 'referred'],
+  admitted: ['discharged', 'referred'],
+  discharged: [],
+  referred: ['discharged'],
+};
+
 export async function getAllTriage(scope?: DataScope): Promise<TriageDoc[]> {
   const db = triageDB();
   const result = await db.allDocs({ include_docs: true });
@@ -52,7 +61,7 @@ export async function getTriageByPatient(patientId: string): Promise<TriageDoc[]
 /** Active (pending) triages for the current facility — feeds the nurse queue. */
 export async function getActiveTriage(scope?: DataScope): Promise<TriageDoc[]> {
   const all = await getAllTriage(scope);
-  return all.filter(t => t.status === 'pending');
+  return all.filter(t => t.status === 'pending' || t.status === 'seen');
 }
 
 export async function createTriage(
@@ -82,9 +91,23 @@ export async function updateTriage(
   const db = triageDB();
   try {
     const existing = await db.get(id) as TriageDoc;
+
+    // Enforce valid status transitions
+    if (updates.status && updates.status !== existing.status) {
+      const allowed = VALID_TRANSITIONS[existing.status] || [];
+      if (!allowed.includes(updates.status)) {
+        throw new Error(`Invalid triage status transition: ${existing.status} → ${updates.status}`);
+      }
+    }
+
     const updated: TriageDoc = { ...existing, ...updates, updatedAt: new Date().toISOString() };
     const resp = await db.put(updated);
     updated._rev = resp.rev;
+    if (updates.status) {
+      logAudit('TRIAGE_STATUS_CHANGE', updates.handoffTo, updates.handoffToName,
+        `Triage ${id}: ${existing.status} → ${updates.status} for ${existing.patientName}`
+      ).catch(() => {});
+    }
     return updated;
   } catch {
     return null;

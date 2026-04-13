@@ -143,8 +143,8 @@ export async function POST(request: NextRequest) {
     response.cookies.set('taban-token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24, // 24 hours
+      sameSite: 'strict',
+      maxAge: 60 * 60 * 8, // 8 hours
       path: '/',
     });
 
