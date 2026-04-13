@@ -19,6 +19,9 @@ import {
   getImmunizationStats,
   getDefaulters,
   getVaccineCoverage,
+  getDefaultersByBoma,
+  getDefaulterStats,
+  getCoverageByAgeCohort,
 } from '@/lib/services/immunization-service';
 
 const makeImmData = (overrides: Record<string, unknown> = {}) => ({
@@ -200,5 +203,242 @@ describe('immunization-service', () => {
     expect(measles).toBeDefined();
     expect(measles!.count).toBe(1);
     expect(measles!.percentage).toBe(50); // 1/2
+  });
+
+  test('getDefaultersByBoma filters by facility name', async () => {
+    // Create defaulters from different facilities
+    const pastDate = '2024-01-01';
+    await createImmunization(makeImmData({
+      patientId: 'child-G',
+      vaccine: 'Penta',
+      doseNumber: 2,
+      status: 'overdue',
+      dateGiven: pastDate,
+      nextDueDate: pastDate,
+      dateOfBirth: '2023-06-01',
+      facilityName: 'Juba Teaching Hospital',
+    }));
+
+    await createImmunization(makeImmData({
+      patientId: 'child-H',
+      vaccine: 'Measles',
+      doseNumber: 1,
+      status: 'overdue',
+      dateGiven: pastDate,
+      nextDueDate: pastDate,
+      dateOfBirth: '2023-06-01',
+      facilityName: 'Wau State Hospital',
+    }));
+
+    // Filter by facility
+    const jubaDefaulters = await getDefaultersByBoma('Juba');
+    const wauDefaulters = await getDefaultersByBoma('Wau');
+    const allDefaulters = await getDefaultersByBoma();
+
+    expect(jubaDefaulters.length).toBeGreaterThanOrEqual(1);
+    expect(wauDefaulters.length).toBeGreaterThanOrEqual(1);
+    expect(allDefaulters.length).toBeGreaterThanOrEqual(2);
+    expect(jubaDefaulters.some(d => d.patientId === 'child-G')).toBe(true);
+    expect(wauDefaulters.some(d => d.patientId === 'child-H')).toBe(true);
+  });
+
+  test('getDefaulterStats aggregates stats correctly', async () => {
+    const veryPastDate = new Date();
+    veryPastDate.setDate(veryPastDate.getDate() - 60);
+    const moderatePastDate = new Date();
+    moderatePastDate.setDate(moderatePastDate.getDate() - 20);
+
+    // Critical (>30 days)
+    await createImmunization(makeImmData({
+      patientId: 'critical-child',
+      vaccine: 'BCG',
+      status: 'overdue',
+      dateGiven: veryPastDate.toISOString().slice(0, 10),
+      nextDueDate: veryPastDate.toISOString().slice(0, 10),
+      dateOfBirth: '2023-01-01',
+    }));
+
+    // High (>14 days)
+    await createImmunization(makeImmData({
+      patientId: 'high-child',
+      vaccine: 'Penta',
+      status: 'overdue',
+      dateGiven: moderatePastDate.toISOString().slice(0, 10),
+      nextDueDate: moderatePastDate.toISOString().slice(0, 10),
+      dateOfBirth: '2023-02-01',
+    }));
+
+    // Medium
+    const recentDate = new Date();
+    recentDate.setDate(recentDate.getDate() - 5);
+    await createImmunization(makeImmData({
+      patientId: 'medium-child',
+      vaccine: 'Measles',
+      status: 'overdue',
+      dateGiven: recentDate.toISOString().slice(0, 10),
+      nextDueDate: recentDate.toISOString().slice(0, 10),
+      dateOfBirth: '2023-03-01',
+    }));
+
+    const stats = await getDefaulterStats();
+    expect(stats.critical).toBeGreaterThanOrEqual(1);
+    expect(stats.high).toBeGreaterThanOrEqual(1);
+    expect(stats.medium).toBeGreaterThanOrEqual(1);
+    expect(stats.totalDefaulters).toBeGreaterThanOrEqual(3);
+    expect(stats.uniqueChildren).toBeGreaterThanOrEqual(3);
+    expect(stats.byVaccine['BCG']).toBeGreaterThanOrEqual(1);
+    expect(stats.byVaccine['Penta']).toBeGreaterThanOrEqual(1);
+  });
+
+  test('getCoverageByAgeCohort groups children by age', async () => {
+    // Child <6 months
+    const recentDOB = new Date();
+    recentDOB.setMonth(recentDOB.getMonth() - 2);
+    await createImmunization(makeImmData({
+      patientId: 'child-<6mo',
+      vaccine: 'BCG',
+      status: 'completed',
+      dateOfBirth: recentDOB.toISOString().slice(0, 10),
+    }));
+
+    // Child 6-12 months
+    const oldDOB = new Date();
+    oldDOB.setMonth(oldDOB.getMonth() - 9);
+    await createImmunization(makeImmData({
+      patientId: 'child-6-12mo',
+      vaccine: 'BCG',
+      status: 'completed',
+      dateOfBirth: oldDOB.toISOString().slice(0, 10),
+    }));
+
+    const rows = await getCoverageByAgeCohort();
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.some(r => r.vaccine === 'BCG')).toBe(true);
+    expect(rows.some(r => r.cohort === '<6mo')).toBe(true);
+    expect(rows.some(r => r.cohort === '6-12mo')).toBe(true);
+
+    // Check coverage calculations
+    const bcgRows = rows.filter(r => r.vaccine === 'BCG');
+    bcgRows.forEach(row => {
+      if (row.total > 0) {
+        expect(row.percentage).toBeGreaterThanOrEqual(0);
+        expect(row.percentage).toBeLessThanOrEqual(100);
+      }
+    });
+  });
+
+  test('getCoverageByAgeCohort handles cohorts 1-2y, 2-5y, 5y+', async () => {
+    // Child 1-2 years
+    const dob1y = new Date();
+    dob1y.setMonth(dob1y.getMonth() - 18);
+    await createImmunization(makeImmData({
+      patientId: 'child-1-2y',
+      vaccine: 'Penta',
+      status: 'completed',
+      dateOfBirth: dob1y.toISOString().slice(0, 10),
+    }));
+
+    // Child 2-5 years
+    const dob2_5y = new Date();
+    dob2_5y.setMonth(dob2_5y.getMonth() - 36);
+    await createImmunization(makeImmData({
+      patientId: 'child-2-5y',
+      vaccine: 'Penta',
+      status: 'completed',
+      dateOfBirth: dob2_5y.toISOString().slice(0, 10),
+    }));
+
+    // Child 5+ years
+    const dob5y = new Date();
+    dob5y.setMonth(dob5y.getMonth() - 72);
+    await createImmunization(makeImmData({
+      patientId: 'child-5y+',
+      vaccine: 'Penta',
+      status: 'completed',
+      dateOfBirth: dob5y.toISOString().slice(0, 10),
+    }));
+
+    const rows = await getCoverageByAgeCohort();
+    expect(rows.some(r => r.cohort === '1-2y')).toBe(true);
+    expect(rows.some(r => r.cohort === '2-5y')).toBe(true);
+    expect(rows.some(r => r.cohort === '5y+')).toBe(true);
+  });
+
+  test('getDefaulters handles scheduled records with past nextDueDate', async () => {
+    const pastDate = '2024-01-01';
+    await createImmunization(makeImmData({
+      patientId: 'child-scheduled-overdue',
+      vaccine: 'OPV',
+      doseNumber: 2,
+      status: 'scheduled',
+      nextDueDate: pastDate,
+      dateGiven: '2023-12-01',
+      dateOfBirth: '2023-06-01',
+    }));
+
+    const defaulters = await getDefaulters();
+    expect(defaulters.some(d => d.patientId === 'child-scheduled-overdue')).toBe(true);
+  });
+
+  test('getImmunizationStats includes all vaccine types', async () => {
+    // Ensure we test with various vaccines
+    const vaccines = ['BCG', 'OPV', 'Penta', 'PCV', 'Rota', 'Measles', 'Yellow Fever', 'Vitamin A'];
+    for (let i = 0; i < vaccines.length; i++) {
+      await createImmunization(makeImmData({
+        patientId: `child-${vaccines[i]}`,
+        vaccine: vaccines[i],
+        status: 'completed',
+      }));
+    }
+
+    const coverage = await getVaccineCoverage();
+    expect(coverage.length).toBe(8);
+    vaccines.forEach(vaccine => {
+      expect(coverage.some(c => c.vaccine === vaccine)).toBe(true);
+    });
+  });
+
+  test('getVaccineCoverage handles zero total children', async () => {
+    const coverage = await getVaccineCoverage();
+    // With no records, totalChildren = 0, percentage should be 0
+    coverage.forEach(c => {
+      expect(c.percentage).toBe(0);
+      expect(c.count).toBe(0);
+    });
+  });
+
+  test('getDefaulters skips records with zero days overdue', async () => {
+    // Create a scheduled record with future nextDueDate (should be skipped)
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 30);
+
+    await createImmunization(makeImmData({
+      patientId: 'child-future',
+      vaccine: 'OPV',
+      status: 'scheduled',
+      nextDueDate: futureDate.toISOString().slice(0, 10),
+      dateGiven: '2026-01-01',
+      dateOfBirth: '2025-01-01',
+    }));
+
+    const defaulters = await getDefaulters();
+    expect(defaulters.some(d => d.patientId === 'child-future')).toBe(false);
+  });
+
+  test('getDefaultersByBoma handles case-insensitive filtering', async () => {
+    const pastDate = '2024-01-01';
+    await createImmunization(makeImmData({
+      patientId: 'child-case-test',
+      vaccine: 'Penta',
+      status: 'overdue',
+      dateGiven: pastDate,
+      nextDueDate: pastDate,
+      dateOfBirth: '2023-06-01',
+      facilityName: 'JUBA TEACHING HOSPITAL',
+    }));
+
+    // Test lowercase filter
+    const results = await getDefaultersByBoma('juba');
+    expect(results.some(d => d.patientId === 'child-case-test')).toBe(true);
   });
 });

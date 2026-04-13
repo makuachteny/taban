@@ -69,6 +69,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
 
+    const { sanitizePayload } = await import('@/lib/validation');
+    body = sanitizePayload(body);
+
     // Check if this is a payment recording action
     if (body.action === 'record_payment') {
       const { recordPayment } = await import('@/lib/services/billing-service');

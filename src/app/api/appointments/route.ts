@@ -89,6 +89,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
 
+    const { sanitizePayload } = await import('@/lib/validation');
+    body = sanitizePayload(body);
+
     // Status update action
     if (body.action === 'update_status') {
       if (!body.appointmentId || !body.status) {

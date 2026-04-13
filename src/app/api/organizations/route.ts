@@ -1,0 +1,161 @@
+/**
+ * API: /api/organizations
+ * GET  — List organizations, get by ID or slug, get stats
+ * POST — Create organization, update organization, or deactivate organization
+ */
+import { NextRequest, NextResponse } from 'next/server';
+import {
+  getAuthPayload, unauthorized, forbidden, hasRole, serverError,
+} from '@/lib/api-auth';
+import type { UserRole } from '@/lib/db-types';
+
+const READ_ROLES: UserRole[] = [
+  'super_admin', 'org_admin',
+];
+
+const WRITE_ROLES: UserRole[] = [
+  'super_admin',
+];
+
+export async function GET(request: NextRequest) {
+  try {
+    const auth = await getAuthPayload(request);
+    if (!auth) return unauthorized();
+    if (!hasRole(auth, READ_ROLES)) return forbidden();
+
+    const {
+      getAllOrganizations,
+      getOrganizationById,
+      getOrganizationBySlug,
+      getOrganizationStats,
+    } = await import('@/lib/services/organization-service');
+
+    const id = request.nextUrl.searchParams.get('id');
+    const slug = request.nextUrl.searchParams.get('slug');
+    const orgId = request.nextUrl.searchParams.get('orgId');
+    const withStats = request.nextUrl.searchParams.get('stats') === 'true';
+
+    let data;
+
+    if (id) {
+      const org = await getOrganizationById(id);
+      if (!org) return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+      if (withStats) {
+        const stats = await getOrganizationStats(id);
+        return NextResponse.json({ organization: org, stats });
+      }
+      return NextResponse.json({ organization: org });
+    }
+
+    if (slug) {
+      const org = await getOrganizationBySlug(slug);
+      if (!org) return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+      if (withStats) {
+        const stats = await getOrganizationStats(org._id);
+        return NextResponse.json({ organization: org, stats });
+      }
+      return NextResponse.json({ organization: org });
+    }
+
+    if (orgId && withStats) {
+      const stats = await getOrganizationStats(orgId);
+      return NextResponse.json({ stats });
+    }
+
+    const organizations = await getAllOrganizations();
+    return NextResponse.json({ organizations });
+  } catch (err) {
+    console.error('[API /organizations GET]', err);
+    return serverError();
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const auth = await getAuthPayload(request);
+    if (!auth) return unauthorized();
+    if (!hasRole(auth, WRITE_ROLES)) return forbidden();
+
+    let body: Record<string, unknown>;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+
+    const { sanitizePayload } = await import('@/lib/validation');
+    body = sanitizePayload(body);
+
+    const action = body.action as string;
+
+    // Deactivate organization
+    if (action === 'deactivate') {
+      if (!body.orgId) {
+        return NextResponse.json(
+          { error: 'orgId is required' },
+          { status: 400 }
+        );
+      }
+      const { deactivateOrganization } = await import('@/lib/services/organization-service');
+      await deactivateOrganization(body.orgId as string, auth.sub, auth.username);
+      return NextResponse.json({ success: true });
+    }
+
+    // Update existing organization
+    if (action === 'update' && body.orgId) {
+      const { updateOrganization } = await import('@/lib/services/organization-service');
+      const updated = await updateOrganization(
+        body.orgId as string,
+        {
+          name: body.name as string | undefined,
+          slug: body.slug as string | undefined,
+        },
+        auth.sub,
+        auth.username
+      );
+      return NextResponse.json({ organization: updated });
+    }
+
+    // Create new organization
+    if (!body.name || !body.slug || !body.contactEmail || !body.country) {
+      return NextResponse.json(
+        { error: 'name, slug, contactEmail, and country are required' },
+        { status: 400 }
+      );
+    }
+
+    const { createOrganization } = await import('@/lib/services/organization-service');
+    const org = await createOrganization(
+      {
+        name: body.name as string,
+        slug: body.slug as string,
+        contactEmail: body.contactEmail as string,
+        country: body.country as string,
+        primaryColor: (body.primaryColor as string) || '#000000',
+        secondaryColor: (body.secondaryColor as string) || '#ffffff',
+        accentColor: body.accentColor as string | undefined,
+        subscriptionStatus: (body.subscriptionStatus as any) || 'trial',
+        subscriptionPlan: (body.subscriptionPlan as any) || 'basic',
+        maxUsers: (body.maxUsers !== undefined ? Number(body.maxUsers) : 50),
+        maxHospitals: (body.maxHospitals !== undefined ? Number(body.maxHospitals) : 10),
+        featureFlags: body.featureFlags as any || {
+          epidemicIntelligence: false,
+          mchAnalytics: false,
+          dhis2Export: false,
+          aiClinicalSupport: false,
+          communityHealth: false,
+          facilityAssessments: false,
+        },
+        orgType: (body.orgType as any) || 'public',
+        isActive: true,
+      },
+      auth.sub,
+      auth.username
+    );
+
+    return NextResponse.json({ organization: org }, { status: 201 });
+  } catch (err) {
+    console.error('[API /organizations POST]', err);
+    return serverError();
+  }
+}
