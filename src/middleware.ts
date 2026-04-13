@@ -112,6 +112,33 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // CSRF protection for state-changing API requests
+  if (pathname.startsWith('/api/')) {
+    const method = request.method.toUpperCase();
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+      const origin = request.headers.get('origin');
+      const host = request.headers.get('host');
+      const isProd = process.env.NODE_ENV === 'production';
+
+      // In production, require Origin header for state-changing API calls
+      if (isProd && !origin) {
+        return NextResponse.json({ error: 'Missing Origin header' }, { status: 403 });
+      }
+
+      // Verify Origin matches Host when both are present
+      if (origin && host) {
+        try {
+          const originHost = new URL(origin).host;
+          if (originHost !== host) {
+            return NextResponse.json({ error: 'Origin mismatch' }, { status: 403 });
+          }
+        } catch {
+          return NextResponse.json({ error: 'Invalid Origin' }, { status: 403 });
+        }
+      }
+    }
+  }
+
   // Login page — always public
   if (pathname === '/login') {
     return NextResponse.next();

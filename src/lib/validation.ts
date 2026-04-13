@@ -30,10 +30,35 @@ export class ValidationError extends Error {
   }
 }
 
+/**
+ * Sanitize a string for safe storage: strip control characters and
+ * HTML/script injection vectors. This is defense-in-depth — the
+ * application uses React (which auto-escapes on render), but we
+ * also sanitize at the data layer to prevent stored XSS if raw
+ * values are ever rendered outside React.
+ */
 function sanitizeString(val: unknown): string {
   if (typeof val !== 'string') return '';
-  // Remove control characters and trim
-  return val.replace(/[\x00-\x1F\x7F]/g, '').trim();
+  return val
+    .replace(/[\x00-\x1F\x7F]/g, '')     // Control chars
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Script tags
+    .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')                       // Event handlers
+    .replace(/javascript:/gi, '')                                        // JS protocol
+    .trim();
+}
+
+/**
+ * Deep-sanitize all string values in a flat object.
+ * Used by API routes to clean incoming JSON payloads.
+ */
+export function sanitizePayload<T extends Record<string, unknown>>(data: T): T {
+  const cleaned = { ...data } as Record<string, unknown>;
+  for (const key of Object.keys(cleaned)) {
+    if (typeof cleaned[key] === 'string') {
+      cleaned[key] = sanitizeString(cleaned[key]);
+    }
+  }
+  return cleaned as T;
 }
 
 function validatePhone(value: unknown, fieldName: string): string | null {

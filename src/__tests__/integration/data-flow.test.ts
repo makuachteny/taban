@@ -293,6 +293,8 @@ describe('Integration: data-flow', () => {
     await createPatient(makePatientData({
       firstName: 'Nyabol',
       surname: 'Kuol',
+      dateOfBirth: '1996-02-20',
+      phone: '+211912345001',
       registrationHospital: 'hosp-001',
     }));
 
@@ -300,6 +302,7 @@ describe('Integration: data-flow', () => {
     await createPatient(makePatientData({
       firstName: 'Mayen',
       surname: 'Garang',
+      dateOfBirth: '1990-08-10',
       registrationHospital: 'hosp-002',
       phone: '+211988776655',
     }));
@@ -308,6 +311,8 @@ describe('Integration: data-flow', () => {
     await createPatient(makePatientData({
       firstName: 'Deng',
       surname: 'Bol',
+      dateOfBirth: '2001-11-05',
+      phone: '+211912345003',
       registrationHospital: 'hosp-005',
       boma: 'Luri',
     }));

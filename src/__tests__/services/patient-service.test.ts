@@ -124,7 +124,7 @@ describe('patient-service', () => {
   // ---- searchPatients ----
   test('searchPatients finds by name', async () => {
     await createPatient(validPatient());
-    await createPatient({ ...validPatient(), firstName: 'Nyabol', surname: 'Kuol' });
+    await createPatient({ ...validPatient(), firstName: 'Nyabol', surname: 'Kuol', phone: '+211912345999', dateOfBirth: '1998-03-10' });
 
     const results = await searchPatients('Achol');
     expect(results).toHaveLength(1);
@@ -166,7 +166,7 @@ describe('patient-service', () => {
   // ---- getPatientsByHospital ----
   test('getPatientsByHospital filters correctly', async () => {
     await createPatient({ ...validPatient(), registrationHospital: 'hosp-001' });
-    await createPatient({ ...validPatient(), firstName: 'Nyabol', registrationHospital: 'hosp-002' });
+    await createPatient({ ...validPatient(), firstName: 'Nyabol', surname: 'Kuol', phone: '+211912345888', dateOfBirth: '1997-01-20', registrationHospital: 'hosp-002' });
 
     const hospA = await getPatientsByHospital('hosp-001');
     const hospB = await getPatientsByHospital('hosp-002');

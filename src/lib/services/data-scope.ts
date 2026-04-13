@@ -40,3 +40,18 @@ export function filterByScope<T extends Record<string, any>>(
 
   return filtered;
 }
+
+/**
+ * Build a DataScope from a JWT auth payload (used by API routes).
+ */
+export function buildScopeFromAuth(auth: {
+  role: string;
+  orgId?: string;
+  hospitalId?: string;
+}): DataScope {
+  return {
+    role: auth.role as UserRole,
+    orgId: auth.orgId,
+    hospitalId: auth.hospitalId,
+  };
+}
