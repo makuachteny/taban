@@ -17,7 +17,7 @@ import {
   Skull, HelpCircle, Send, Loader2, Mic, MicOff,
   Wifi, WifiOff, Navigation,
   Syringe, UtensilsCrossed, CalendarClock,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 import { evaluatePatient, type PatientInput } from '@/lib/ai/diagnosis-engine';
 import type { AIEvaluation } from '@/lib/db-types';
 
@@ -39,19 +39,19 @@ const VISIT_TEMPLATES = [
 
 const CONDITIONS = [
   { id: 'malaria', label: 'Malaria', icon: Thermometer, color: 'var(--color-danger)' },
-  { id: 'diarrhea', label: 'Diarrhea', icon: Droplets, color: '#3B82F6' },
+  { id: 'diarrhea', label: 'Diarrhea', icon: Droplets, color: '#2E9E7E' },
   { id: 'pneumonia', label: 'Pneumonia', icon: Stethoscope, color: '#8B5CF6' },
   { id: 'malnutrition', label: 'Malnutrition', icon: Apple, color: 'var(--color-warning)' },
   { id: 'pregnancy', label: 'Pregnancy Issue', icon: Baby, color: '#EC4899' },
   { id: 'injury', label: 'Injury', icon: Bandage, color: '#FB923C' },
   { id: 'mental', label: 'Mental Health', icon: Brain, color: '#06B6D4' },
-  { id: 'other', label: 'Other', icon: CircleAlert, color: '#64748B' },
+  { id: 'other', label: 'Other', icon: CircleAlert, color: '#5A7370' },
 ];
 
 const SYMPTOM_GROUPS = [
   { id: 'fever', label: 'Fever / Hot Body', icon: Thermometer, color: 'var(--color-danger)', bg: 'rgba(239,68,68,0.1)', keywords: 'fever headache chills sweating body ache' },
   { id: 'diarrhea', label: 'Diarrhea / Vomiting', icon: Droplets, color: 'var(--color-warning)', bg: 'rgba(245,158,11,0.1)', keywords: 'diarrhea vomiting watery stool dehydration loose stool' },
-  { id: 'cough', label: 'Cough / Breathing', icon: Wind, color: '#3B82F6', bg: 'rgba(59,130,246,0.1)', keywords: 'cough difficulty breathing shortness of breath chest pain' },
+  { id: 'cough', label: 'Cough / Breathing', icon: Wind, color: '#2E9E7E', bg: 'rgba(59,130,246,0.1)', keywords: 'cough difficulty breathing shortness of breath chest pain' },
   { id: 'skin', label: 'Rash / Skin Problem', icon: Activity, color: '#EC4899', bg: 'rgba(236,72,153,0.1)', keywords: 'rash skin red eyes measles itching swelling' },
   { id: 'weakness', label: 'Weakness / Pale', icon: Heart, color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)', keywords: 'fatigue weakness pale pallor dizzy weight loss' },
   { id: 'pregnancy', label: 'Pregnancy Problem', icon: Baby, color: '#EC4899', bg: 'rgba(236,72,153,0.1)', keywords: 'pregnant bleeding swelling headache blurred vision edema' },
@@ -426,7 +426,7 @@ export default function BomaDashboardPage() {
 
         {/* FOLLOW-UP REMINDERS - DUE TODAY */}
         {dueTodayFollowUps.length > 0 && formStep === 'closed' && (
-          <div className="rounded-2xl mb-4 overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid #F59E0B30', boxShadow: 'var(--card-shadow)' }}>
+          <div className="dash-card mb-4 overflow-hidden" style={{ border: '1px solid #F59E0B30' }}>
             <div className="flex items-center justify-between px-4 py-2.5" style={{ background: '#F59E0B10', borderBottom: '1px solid #F59E0B20' }}>
               <div className="flex items-center gap-2">
                 <CalendarClock className="w-4 h-4" style={{ color: 'var(--color-warning)' }} />
@@ -452,7 +452,7 @@ export default function BomaDashboardPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{fu.patientName}</p>
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px]" style={{ color: CONDITIONS.find(c => c.label === fu.condition)?.color || '#64748B' }}>{fu.condition}</span>
+                        <span className="text-[10px]" style={{ color: CONDITIONS.find(c => c.label === fu.condition)?.color || '#5A7370' }}>{fu.condition}</span>
                         {fu.scheduledDate && <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{new Date(fu.scheduledDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>}
                       </div>
                     </div>
@@ -502,7 +502,7 @@ export default function BomaDashboardPage() {
 
         {/* VISIT FORM */}
         {formStep !== 'closed' && formStep !== 'done' && (
-          <div className="rounded-2xl mb-4 overflow-hidden" style={{ background: 'var(--bg-card)', border: `2px solid ${ACCENT}`, boxShadow: `0 4px 24px ${ACCENT}20` }}>
+          <div className="dash-card mb-4 overflow-hidden" style={{ border: `2px solid ${ACCENT}`, boxShadow: `0 4px 24px ${ACCENT}20` }}>
             <div className="flex items-center justify-between px-4 py-3" style={{ background: `${ACCENT}10` }}>
               <div className="flex items-center gap-2">
                 {formStep === 'search' ? <Search className="w-5 h-5" style={{ color: 'var(--accent-primary)' }} /> : <Plus className="w-5 h-5" style={{ color: 'var(--accent-primary)' }} />}
@@ -512,9 +512,9 @@ export default function BomaDashboardPage() {
               </div>
               <div className="flex items-center gap-3">
                 {gpsStatus !== 'idle' && (
-                  <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: gpsStatus === 'captured' ? '#05966910' : gpsStatus === 'capturing' ? '#3B82F610' : '#EF444410' }}>
-                    <Navigation className="w-3 h-3" style={{ color: gpsStatus === 'captured' ? 'var(--color-success)' : gpsStatus === 'capturing' ? '#3B82F6' : 'var(--color-danger)' }} />
-                    <span className="text-[9px] font-bold" style={{ color: gpsStatus === 'captured' ? 'var(--color-success)' : gpsStatus === 'capturing' ? '#3B82F6' : 'var(--color-danger)' }}>
+                  <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: gpsStatus === 'captured' ? '#05966910' : gpsStatus === 'capturing' ? '#2E9E7E10' : '#EF444410' }}>
+                    <Navigation className="w-3 h-3" style={{ color: gpsStatus === 'captured' ? 'var(--color-success)' : gpsStatus === 'capturing' ? '#2E9E7E' : 'var(--color-danger)' }} />
+                    <span className="text-[9px] font-bold" style={{ color: gpsStatus === 'captured' ? 'var(--color-success)' : gpsStatus === 'capturing' ? '#2E9E7E' : 'var(--color-danger)' }}>
                       {gpsStatus === 'captured' ? 'GPS Captured' : gpsStatus === 'capturing' ? 'Getting GPS...' : 'No GPS'}
                     </span>
                   </div>
@@ -633,7 +633,7 @@ export default function BomaDashboardPage() {
                       </div>
                     ))}
                   </div>
-                  {aiEvaluation.recommendedTests.length > 0 && (<div className="mb-3"><p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>Recommended Tests</p><div className="flex flex-wrap gap-1.5">{aiEvaluation.recommendedTests.map(test => (<span key={test} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium" style={{ background: 'rgba(59,130,246,0.1)', color: '#3B82F6', border: '1px solid rgba(59,130,246,0.15)' }}><FlaskConical className="w-2.5 h-2.5" /> {test}</span>))}</div></div>)}
+                  {aiEvaluation.recommendedTests.length > 0 && (<div className="mb-3"><p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>Recommended Tests</p><div className="flex flex-wrap gap-1.5">{aiEvaluation.recommendedTests.map(test => (<span key={test} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium" style={{ background: 'rgba(59,130,246,0.1)', color: '#2E9E7E', border: '1px solid rgba(59,130,246,0.15)' }}><FlaskConical className="w-2.5 h-2.5" /> {test}</span>))}</div></div>)}
                   <div className="p-3 rounded-xl mb-4" style={{ background: 'rgba(5,150,105,0.05)', border: '1px solid rgba(5,150,105,0.15)' }}><p className="text-xs font-bold mb-1" style={{ color: 'var(--color-success)' }}><ChevronRight className="w-3 h-3 inline" /> What should I do?</p><p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{aiEvaluation.severityAssessment.includes('HIGH') ? 'REFER IMMEDIATELY to the nearest facility. Give first aid and arrange transport.' : aiEvaluation.severityAssessment.includes('MODERATE') ? 'Consider referral if you cannot treat. Monitor closely. Follow up within 24 hours.' : 'You can treat at community level. Follow the suggestions above. Follow up in 2-3 days.'}</p></div>
                   <button onClick={() => setFormStep('action')} className="w-full py-4 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all active:scale-[0.98]" style={{ background: 'var(--accent-primary)', minHeight: '56px', fontSize: '16px' }}>Next: Take Action <ArrowRight className="w-5 h-5" /></button>
                   <p className="text-[9px] mt-2 text-center" style={{ color: 'var(--text-muted)' }}>AI suggestion based on WHO/IMCI guidelines. Use your clinical judgment.</p>
@@ -659,7 +659,7 @@ export default function BomaDashboardPage() {
         {showSuccess && (<div className="rounded-2xl p-5 mb-4 flex items-center gap-3" style={{ background: 'var(--accent-primary)', color: 'white' }}><CheckCircle2 className="w-8 h-8" /><div><p className="font-bold text-lg">{visitForm.action === 'referred' ? 'Visit Saved & Referral Sent' : 'Visit Saved'}</p><p className="text-sm opacity-80">{visitForm.patientName} &mdash; {CONDITIONS.find(c => c.id === visitForm.condition)?.label}{visitForm.action === 'referred' && visitForm.referredTo ? ` | Referral sent to ${visitForm.referredTo}` : ''}</p></div></div>)}
 
         {showSymptomChecker && (
-          <div className="mb-4 rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)' }}>
+          <div className="dash-card mb-4 overflow-hidden">
             <div className="flex items-center justify-between px-3 py-2" style={{ background: `${ACCENT}08`, borderBottom: '1px solid var(--border-light)' }}>
               <div className="flex items-center gap-1.5"><Stethoscope className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} /><span className="text-xs font-bold" style={{ color: 'var(--accent-primary)' }}>AI Symptom Checker</span></div>
               <button onClick={() => setShowSymptomChecker(false)}><X className="w-4 h-4" style={{ color: 'var(--text-muted)' }} /></button>
@@ -671,7 +671,7 @@ export default function BomaDashboardPage() {
         {/* TWO-COLUMN LAYOUT */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* FOLLOW-UP QUEUE */}
-          <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)' }}>
+          <div className="dash-card overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
               <div className="flex items-center gap-2"><Clock className="w-4 h-4" style={{ color: 'var(--color-warning)' }} /><span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Follow-Up Queue</span><span className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: '#F59E0B20', color: 'var(--color-warning)' }}>{followUpsLoading ? '\u2014' : pendingFollowUps.length}</span></div>
               <button onClick={() => setShowFuModal(true)} className="text-[10px] font-bold px-2.5 py-1 rounded-md flex items-center gap-1" style={{ background: 'var(--accent-light)', color: 'var(--accent-primary)' }}>+ Schedule</button>
@@ -682,7 +682,7 @@ export default function BomaDashboardPage() {
                 <div key={fu._id} className="p-3 rounded-xl" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
                   <div className="flex items-center justify-between mb-2">
                     <div><p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{fu.patientName}</p><p className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>{fu.geocodeId || '\u2014'}</p></div>
-                    <div className="text-right"><p className="text-xs font-medium" style={{ color: CONDITIONS.find(c => c.label === fu.condition)?.color || '#64748B' }}>{fu.condition}</p><p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{fu.scheduledDate ? Math.floor((Date.now() - new Date(fu.scheduledDate).getTime()) / 86400000) : 0} days ago</p></div>
+                    <div className="text-right"><p className="text-xs font-medium" style={{ color: CONDITIONS.find(c => c.label === fu.condition)?.color || '#5A7370' }}>{fu.condition}</p><p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{fu.scheduledDate ? Math.floor((Date.now() - new Date(fu.scheduledDate).getTime()) / 86400000) : 0} days ago</p></div>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                     <button onClick={() => handleFollowUpAction(fu._id, 'recovered')} className="py-2.5 rounded-lg flex flex-col items-center gap-1 transition-all active:scale-95" style={{ background: `${ACCENT}15`, border: `1px solid ${ACCENT}30`, minHeight: '48px' }}><Heart className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} /><span className="text-[9px] font-bold" style={{ color: 'var(--accent-primary)' }}>WELL</span></button>
@@ -698,7 +698,7 @@ export default function BomaDashboardPage() {
           {/* SCHEDULE FOLLOW-UP MODAL */}
           {showFuModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }} onClick={() => !fuSubmitting && setShowFuModal(false)}>
-              <div className="card-elevated p-5 w-full max-w-md" style={{ margin: '20px' }} onClick={e => e.stopPropagation()}>
+              <div className="dash-card p-5 w-full max-w-md" style={{ margin: '20px' }} onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-base font-semibold flex items-center gap-2"><Clock className="w-4 h-4" style={{ color: 'var(--color-warning)' }} /> Schedule Follow-Up</h3>
                   <button onClick={() => setShowFuModal(false)} className="p-1 rounded-lg" style={{ background: 'var(--overlay-subtle)' }}><X className="w-4 h-4" /></button>
@@ -748,7 +748,7 @@ export default function BomaDashboardPage() {
           )}
 
           {/* TODAY'S VISITS LOG */}
-          <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)' }}>
+          <div className="dash-card overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
               <div className="flex items-center gap-2"><Stethoscope className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} /><span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Today&apos;s Visits</span><span className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: `${ACCENT}15`, color: 'var(--accent-primary)' }}>{todaysVisits.length}</span></div>
             </div>

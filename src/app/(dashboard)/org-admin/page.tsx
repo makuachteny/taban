@@ -9,7 +9,7 @@ import {
   Users, Building2, UserCheck, CreditCard, Shield,
   TrendingUp, TrendingDown, CheckCircle, XCircle, Zap, BarChart3,
   Activity, Clock, ArrowUpDown, Minus, AlertTriangle,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 import type { OrganizationDoc, AuditLogDoc, HospitalDoc } from '@/lib/db-types';
 
 interface OrgStats {
@@ -283,7 +283,7 @@ export default function OrgAdminDashboard() {
               >
                 <div className="flex items-center gap-3 mb-3">
                   <div
-                    className="w-10 h-10 rounded-lg flex items-center justify-center"
+                    className="icon-box-sm"
                     style={{ background: `${card.color}${card.bgOpacity}` }}
                   >
                     <Icon className="w-5 h-5" style={{ color: card.color }} />
@@ -308,6 +308,7 @@ export default function OrgAdminDashboard() {
               Usage This Month
             </h2>
           </div>
+          <hr className="section-divider" />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* Patients registered */}
             <div className="p-4 rounded-xl" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
@@ -428,7 +429,7 @@ export default function OrgAdminDashboard() {
               </h2>
             </div>
 
-            <div className="space-y-3">
+            <div className="data-row-divider-sm">
               <div className="flex justify-between items-center py-2" style={{ borderBottom: '1px solid var(--border-light)' }}>
                 <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Plan</span>
                 <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
@@ -491,7 +492,7 @@ export default function OrgAdminDashboard() {
               </h2>
             </div>
 
-            <div className="space-y-3">
+            <div className="data-row-divider-sm">
               {featureFlags.map((flag) => (
                 <div
                   key={flag.key}
@@ -601,6 +602,7 @@ export default function OrgAdminDashboard() {
             </h2>
           </div>
 
+          <hr className="section-divider" />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
               { href: '/org-admin/users', label: 'Manage Users', icon: Users, desc: 'Create, edit, or deactivate users' },
@@ -619,7 +621,7 @@ export default function OrgAdminDashboard() {
                   }}
                 >
                   <div
-                    className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                    className="icon-box-sm flex-shrink-0"
                     style={{ background: `${brandColor}15` }}
                   >
                     <Icon className="w-4 h-4" style={{ color: brandColor }} />

@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Building2, Users, Wifi, ArrowRight, ChevronRight } from 'lucide-react';
+import { Eye, EyeOff, Building2, Users, Wifi, ArrowRight, ChevronRight } from '@/components/icons/lucide';
 import { hospitals } from '@/data/mock';
 import { useApp } from '@/lib/context';
 import { getDefaultDashboard } from '@/lib/permissions';
 
-const BLUE = '#0077D7';
+const BLUE = '#2E9E7E';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -42,7 +42,7 @@ export default function LoginPage() {
           <div className="w-12 h-12 flex items-center justify-center" style={{
             background: BLUE,
             borderRadius: '8px',
-            boxShadow: '0 4px 16px rgba(0,119,215,0.25)',
+            boxShadow: '0 4px 16px rgba(46,158,126,0.25)',
           }}>
             <svg className="animate-spin w-6 h-6 text-white" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
           </div>
@@ -75,11 +75,11 @@ export default function LoginPage() {
     { role: 'Super Admin', user: 'superadmin', pass: 'Super@Taban2026!', desc: 'Platform-wide access', color: '#DC2626', hospital: '' },
     { role: 'Org Admin', user: 'org.admin', pass: 'OrgAdmin@Mercy2026', desc: 'Mercy Hospital Group', color: '#7C3AED', hospital: '' },
     { role: 'Doctor', user: 'dr.wani', pass: 'Dr.Wani@JTH2026', desc: 'Juba Teaching Hospital', color: BLUE, hospital: 'hosp-001' },
-    { role: 'Doctor (2)', user: 'dr.achol', pass: 'Dr.Achol@JTH2026', desc: 'Juba Teaching Hospital', color: '#005FBC', hospital: 'hosp-001' },
+    { role: 'Doctor (2)', user: 'dr.achol', pass: 'Dr.Achol@JTH2026', desc: 'Juba Teaching Hospital', color: '#1E4D4A', hospital: 'hosp-001' },
     { role: 'Clinical Officer', user: 'co.deng', pass: 'CO.Deng@WTH2026', desc: 'Wau State Hospital', color: '#0891B2', hospital: 'hosp-002' },
     { role: 'Nurse', user: 'nurse.stella', pass: 'Nurse.Stella@MTH2026', desc: 'Malakal Teaching Hospital', color: '#EC4899', hospital: 'hosp-003' },
     { role: 'Lab Tech', user: 'lab.gatluak', pass: 'Lab.Gat@BSH2026', desc: 'Bentiu State Hospital', color: '#8B5CF6', hospital: 'hosp-004' },
-    { role: 'Pharmacist', user: 'pharma.rose', pass: 'Pharma.Rose@JTH2026', desc: 'Juba Teaching Hospital', color: '#F59E0B', hospital: 'hosp-001' },
+    { role: 'Pharmacist', user: 'pharma.rose', pass: 'Pharma.Rose@JTH2026', desc: 'Juba Teaching Hospital', color: '#E4A84B', hospital: 'hosp-001' },
     { role: 'Front Desk', user: 'desk.amira', pass: 'Desk.Amira@JTH2026', desc: 'Juba Teaching Hospital', color: '#6366F1', hospital: 'hosp-001' },
     { role: 'Doctor (Private)', user: 'dr.mercy', pass: 'Dr.Mercy@2026!', desc: 'Mercy Org · Juba Teaching', color: '#4F46E5', hospital: 'hosp-001' },
     { role: 'Payam Supervisor', user: 'sup.mary', pass: 'Sup.Mary@KJ2026', desc: 'Kajo-keji PHCC', color: '#D97706', hospital: 'phcc-001' },
@@ -126,9 +126,9 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/assets/taban-logo.svg" alt="TABAN" className="w-16 h-16" />
+            <img src="/assets/taban-logo.svg" alt="Taban" className="w-16 h-16" />
           </div>
-          <h1 className="text-[22px] font-bold tracking-[0.12em]" style={{ color: 'var(--text-primary)', fontFamily: "'Space Grotesk', 'DM Sans', sans-serif" }}>TABAN</h1>
+          <h1 className="text-[24px] font-extrabold" style={{ color: 'var(--text-primary)', fontFamily: "'Space Grotesk', 'DM Sans', sans-serif", letterSpacing: -0.4 }}>Taban</h1>
           <p className="text-[10px] font-medium tracking-[0.2em] uppercase mt-1" style={{ color: 'var(--text-muted)', fontFamily: "'DM Sans', 'Inter', sans-serif" }}>
             Republic of South Sudan · Digital Health Records
           </p>
@@ -156,8 +156,8 @@ export default function LoginPage() {
 
             {!dbReady && (
               <div className="mb-4 p-3 rounded-lg text-center" style={{
-                background: 'rgba(43,111,224,0.08)',
-                border: '1px solid rgba(43,111,224,0.15)',
+                background: 'rgba(46,158,126,0.08)',
+                border: '1px solid rgba(46,158,126,0.15)',
               }}>
                 <p className="text-xs" style={{ color: BLUE }}>
                   <svg className="animate-spin w-3 h-3 inline mr-1.5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
@@ -254,7 +254,7 @@ export default function LoginPage() {
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                     className="absolute right-0 top-1/2 -translate-y-1/2 p-2 rounded-md transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-                    style={{ color: '#94a3b8' }}
+                    style={{ color: '#8A9E9A' }}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -282,7 +282,7 @@ export default function LoginPage() {
                   boxShadow: '0 2px 8px rgba(0,119,215,0.25)',
                   opacity: !dbReady ? 0.5 : undefined,
                 }}
-                onMouseEnter={(e) => { if (dbReady && !loading) { e.currentTarget.style.background = '#005FBC'; e.currentTarget.style.borderColor = '#005FBC'; e.currentTarget.style.transform = 'translateY(-1px)'; } }}
+                onMouseEnter={(e) => { if (dbReady && !loading) { e.currentTarget.style.background = '#1E4D4A'; e.currentTarget.style.borderColor = '#1E4D4A'; e.currentTarget.style.transform = 'translateY(-1px)'; } }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = BLUE; e.currentTarget.style.borderColor = BLUE; e.currentTarget.style.transform = 'translateY(0)'; }}
               >
                 {loading ? (
@@ -391,7 +391,7 @@ export default function LoginPage() {
               <div className="w-px h-5" style={{ background: 'var(--border-medium)' }} />
               <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/assets/taban-icon.svg" alt="TABAN" className="w-8 h-8" />
+                <img src="/assets/taban-icon.svg" alt="Taban" className="w-8 h-8" />
               </div>
             </div>
             <p className="text-[9px]" style={{ color: 'var(--text-muted)' }}>
@@ -405,7 +405,7 @@ export default function LoginPage() {
         .login-input:focus,
         .login-select:focus {
           border-color: ${BLUE};
-          box-shadow: 0 0 0 3px rgba(0,119,215,0.1);
+          box-shadow: 0 0 0 3px rgba(46,158,126,0.1);
         }
         .login-input::placeholder {
           color: var(--text-muted);

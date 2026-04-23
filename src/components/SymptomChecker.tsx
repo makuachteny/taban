@@ -5,7 +5,7 @@ import {
   Thermometer, Droplets, Wind, Brain, Baby, Heart,
   AlertTriangle, CheckCircle2, Stethoscope, Pill, FlaskConical,
   ChevronRight, X, Loader2, Activity,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 import { evaluatePatient, type PatientInput } from '@/lib/ai/diagnosis-engine';
 import type { AIEvaluation } from '@/lib/db-types';
 

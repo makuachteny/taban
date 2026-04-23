@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Menu, X, User, Moon, Sun, LogOut } from 'lucide-react';
+import { Menu, X, User, Moon, Sun, LogOut } from '@/components/icons/lucide';
 import { useApp } from '@/lib/context';
 
 export default function PatientPortalLayout({ children }: { children: React.ReactNode }) {
@@ -42,7 +42,7 @@ export default function PatientPortalLayout({ children }: { children: React.Reac
           <Link href="/patient-portal" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/assets/taban-logo.svg" alt="Taban" style={{ width: 28, height: 28 }} />
-            <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.04em' }}>TABAN</span>
+            <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.04em' }}>Taban</span>
             <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--accent-primary)', padding: '3px 8px', borderRadius: 6, background: 'var(--accent-light)' }}>Patient</span>
           </Link>
 

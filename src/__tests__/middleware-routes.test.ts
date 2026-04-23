@@ -8,15 +8,15 @@ import type { UserRole } from '../lib/db-types';
 // Mirror of the middleware route map (must stay in sync)
 const MIDDLEWARE_ROLE_ROUTES: Record<string, { allowed: string[]; defaultDashboard: string }> = {
   doctor: {
-    allowed: ['/dashboard', '/patients', '/consultation', '/referrals', '/messages', '/lab', '/pharmacy', '/immunizations', '/anc', '/births', '/deaths', '/surveillance', '/reports', '/hospitals', '/settings', '/epidemic-intelligence', '/mch-analytics', '/my-facility', '/appointments', '/telehealth'],
+    allowed: ['/dashboard', '/patients', '/consultation', '/referrals', '/messages', '/lab', '/pharmacy', '/immunizations', '/anc', '/births', '/deaths', '/surveillance', '/reports', '/hospitals', '/settings', '/epidemic-intelligence', '/mch-analytics', '/my-facility', '/appointments', '/telehealth', '/payments', '/wards', '/feedback', '/hr'],
     defaultDashboard: '/dashboard',
   },
   clinical_officer: {
-    allowed: ['/dashboard', '/patients', '/consultation', '/referrals', '/messages', '/lab', '/pharmacy', '/immunizations', '/anc', '/births', '/deaths', '/surveillance', '/settings', '/my-facility', '/appointments'],
+    allowed: ['/dashboard', '/patients', '/consultation', '/referrals', '/messages', '/lab', '/pharmacy', '/immunizations', '/anc', '/births', '/deaths', '/surveillance', '/settings', '/my-facility', '/appointments', '/payments', '/wards', '/feedback'],
     defaultDashboard: '/dashboard',
   },
   nurse: {
-    allowed: ['/dashboard/nurse', '/patients', '/messages', '/lab', '/immunizations', '/anc', '/births', '/deaths', '/settings', '/my-facility', '/appointments'],
+    allowed: ['/dashboard/nurse', '/patients', '/messages', '/lab', '/immunizations', '/anc', '/births', '/deaths', '/settings', '/my-facility', '/appointments', '/payments', '/wards', '/feedback', '/hr'],
     defaultDashboard: '/dashboard/nurse',
   },
   lab_tech: {
@@ -28,7 +28,7 @@ const MIDDLEWARE_ROLE_ROUTES: Record<string, { allowed: string[]; defaultDashboa
     defaultDashboard: '/dashboard/pharmacy',
   },
   front_desk: {
-    allowed: ['/dashboard/front-desk', '/patients', '/referrals', '/messages', '/settings', '/my-facility', '/appointments'],
+    allowed: ['/dashboard/front-desk', '/patients', '/referrals', '/messages', '/settings', '/my-facility', '/appointments', '/payments', '/wards', '/feedback'],
     defaultDashboard: '/dashboard/front-desk',
   },
   government: {
@@ -40,12 +40,12 @@ const MIDDLEWARE_ROLE_ROUTES: Record<string, { allowed: string[]; defaultDashboa
     defaultDashboard: '/dashboard/data-entry',
   },
   medical_superintendent: {
-    allowed: ['/dashboard', '/patients', '/consultation', '/referrals', '/messages', '/lab', '/pharmacy', '/immunizations', '/anc', '/births', '/deaths', '/surveillance', '/reports', '/hospitals', '/settings', '/epidemic-intelligence', '/mch-analytics', '/my-facility', '/appointments', '/telehealth', '/facility-assessments', '/data-quality'],
+    allowed: ['/dashboard', '/patients', '/consultation', '/referrals', '/messages', '/lab', '/pharmacy', '/immunizations', '/anc', '/births', '/deaths', '/surveillance', '/reports', '/hospitals', '/settings', '/epidemic-intelligence', '/mch-analytics', '/my-facility', '/appointments', '/telehealth', '/facility-assessments', '/data-quality', '/payments', '/wards', '/equipment', '/hr', '/feedback', '/dashboard/hr'],
     defaultDashboard: '/dashboard',
   },
   hrio: {
-    allowed: ['/dashboard/data-entry', '/patients', '/facility-assessments', '/data-quality', '/reports', '/vital-statistics', '/immunizations', '/anc', '/births', '/deaths', '/hospitals', '/messages', '/settings', '/my-facility'],
-    defaultDashboard: '/dashboard/data-entry',
+    allowed: ['/dashboard/hr', '/dashboard/data-entry', '/patients', '/facility-assessments', '/data-quality', '/reports', '/vital-statistics', '/immunizations', '/anc', '/births', '/deaths', '/hospitals', '/messages', '/settings', '/my-facility', '/hr', '/feedback'],
+    defaultDashboard: '/dashboard/hr',
   },
   community_health_volunteer: {
     allowed: ['/dashboard/boma', '/patients', '/messages', '/immunizations', '/anc', '/births', '/deaths'],

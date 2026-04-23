@@ -12,7 +12,7 @@ import {
   ArrowUpRight, SendHorizontal,
   X, ClipboardList, TestTube, Bell, Clock,
   CheckCircle2, ChevronDown, ChevronUp, Search
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
@@ -213,7 +213,7 @@ function ChartTooltip({ active, payload, label }: {
 }) {
   if (!active || !payload) return null;
   return (
-    <div className="card-elevated p-3" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)', fontSize: '0.75rem', borderRadius: '12px' }}>
+    <div className="dash-card p-3" style={{ fontSize: '0.75rem' }}>
       <p className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>{label}</p>
       {payload.map((entry, i) => (
         <div key={i} className="flex items-center gap-2 py-0.5">
@@ -226,7 +226,7 @@ function ChartTooltip({ active, payload, label }: {
   );
 }
 
-const SATISFACTION_COLORS = ['var(--color-success)', '#60A5FA', 'var(--color-warning)', '#F87171'];
+const SATISFACTION_COLORS = ['var(--color-success)', '#5CB8A8', 'var(--color-warning)', '#F87171'];
 
 // ═══════════════════════════════════════════════════
 // MODAL OVERLAY COMPONENT
@@ -400,7 +400,7 @@ export default function DashboardPage() {
   // Patient satisfaction data
   const satisfactionData = [
     { name: 'Excellent', value: 54, color: 'var(--color-success)' },
-    { name: 'Good', value: 23, color: '#60A5FA' },
+    { name: 'Good', value: 23, color: '#5CB8A8' },
     { name: 'Average', value: 20, color: 'var(--color-warning)' },
     { name: 'Poor', value: 3, color: '#F87171' },
   ];
@@ -425,7 +425,7 @@ export default function DashboardPage() {
   const bedChartData = [
     { status: 'ICU', beds: hospital?.icuBeds || 8, color: 'var(--color-danger)' },
     { status: 'Maternity', beds: hospital?.maternityBeds || 30, color: '#EC4899' },
-    { status: 'Pediatric', beds: hospital?.pediatricBeds || 20, color: '#60A5FA' },
+    { status: 'Pediatric', beds: hospital?.pediatricBeds || 20, color: '#5CB8A8' },
     { status: 'General', beds: Math.max(0, bedTotal - (hospital?.icuBeds || 0) - (hospital?.maternityBeds || 0) - (hospital?.pediatricBeds || 0)), color: 'var(--color-success)' },
     { status: 'Available', beds: Math.max(0, bedTotal - bedOccupancy), color: 'var(--text-muted)' },
   ];
@@ -440,12 +440,12 @@ export default function DashboardPage() {
 
   // ── Disease catalog with monthly trend data ──
   const DISEASE_COLORS: Record<string, string> = {
-    'Malaria': '#EF4444', 'Pneumonia': '#F59E0B', 'Diarrheal': '#3B82F6', 'HIV/AIDS': '#8B5CF6',
+    'Malaria': '#EF4444', 'Pneumonia': '#F59E0B', 'Diarrheal': '#2E9E7E', 'HIV/AIDS': '#8B5CF6',
     'Tuberculosis': '#6366F1', 'Typhoid': '#EC4899', 'Measles': '#14B8A6', 'Cholera': '#06B6D4',
     'Hypertension': '#F97316', 'Diabetes': '#A855F7', 'Malnutrition': '#EAB308', 'Meningitis': '#DC2626',
-    'Hepatitis B': '#059669', 'Sickle Cell': '#D946EF', 'Leishmaniasis': '#0EA5E9', 'Epilepsy': '#64748B',
+    'Hepatitis B': '#059669', 'Sickle Cell': '#D946EF', 'Leishmaniasis': '#0EA5E9', 'Epilepsy': '#5A7370',
     'Asthma': '#10B981', 'UTI': '#E11D48', 'Maternal': '#EC4899', 'Snakebite': '#84CC16',
-    'Burns': '#FB923C', 'Other': '#94A3B8',
+    'Burns': '#FB923C', 'Other': '#8A9E9A',
   };
   const MONTHS_LABEL = ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'];
   const pLen = Math.max(patients.length, 1);
@@ -490,7 +490,7 @@ export default function DashboardPage() {
   // Donut data from selected diseases
   const diseaseDistribution = Array.from(selectedDiseases).map(name => {
     const d = allDiseases.find(x => x.name === name);
-    return { name, value: d?.currentCases || 0, color: DISEASE_COLORS[name] || '#94A3B8' };
+    return { name, value: d?.currentCases || 0, color: DISEASE_COLORS[name] || '#8A9E9A' };
   });
   const totalCases = diseaseDistribution.reduce((s, d) => s + d.value, 0);
 
@@ -501,7 +501,7 @@ export default function DashboardPage() {
     { name: 'Operational', value: 72, color: 'var(--color-success)' },
     { name: 'Needs Repair', value: 15, color: 'var(--color-warning)' },
     { name: 'Out of Service', value: 8, color: '#F87171' },
-    { name: 'On Order', value: 5, color: '#60A5FA' },
+    { name: 'On Order', value: 5, color: '#5CB8A8' },
   ];
   const equipmentRate = 72;
 
@@ -510,12 +510,12 @@ export default function DashboardPage() {
     { name: 'OPD', value: 35, color: 'var(--color-success)' },
     { name: 'Emergency', value: 25, color: '#F87171' },
     { name: 'Maternity', value: 22, color: '#EC4899' },
-    { name: 'Pediatrics', value: 18, color: '#60A5FA' },
+    { name: 'Pediatrics', value: 18, color: '#5CB8A8' },
   ];
 
   // Average wait time data
   const waitTimeData = [
-    { name: 'OPD', value: 45, color: '#60A5FA' },
+    { name: 'OPD', value: 45, color: '#5CB8A8' },
     { name: 'Emergency', value: 12, color: '#F87171' },
     { name: 'Lab', value: 30, color: '#A855F7' },
     { name: 'Pharmacy', value: 20, color: 'var(--color-success)' },
@@ -550,7 +550,7 @@ export default function DashboardPage() {
 
         {/* ═══ CLINICAL ALERTS BANNER ═══ */}
         {totalAlertCount > 0 && (
-          <div className="mb-4 rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
+          <div className="mb-4 dash-card overflow-hidden">
             <button
               onClick={() => setAlertsExpanded(!alertsExpanded)}
               className="w-full flex items-center justify-between p-3 px-4"
@@ -652,7 +652,7 @@ export default function DashboardPage() {
                 {overdueImmunizations.length > 0 && (
                   <div
                     className="flex items-center gap-3 p-2.5 rounded-xl"
-                    style={{ background: 'rgba(43,111,224,0.06)', border: '1px solid var(--accent-border)' }}
+                    style={{ background: 'rgba(46,158,126,0.06)', border: '1px solid var(--accent-border)' }}
                   >
                     <Syringe className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--accent-primary)' }} />
                     <div className="flex-1 min-w-0">
@@ -679,14 +679,20 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
 
           {/* ── Admitted Patients ── */}
-          <div className="card-elevated" style={{ padding: '16px 18px' }}>
+          <div className="dash-card" style={{ padding: '14px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Admitted Patients</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div className="icon-box-sm" style={{ background: 'var(--accent-light)' }}>
+                  <Users className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
+                </div>
+                <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Admitted Patients</p>
+              </div>
               <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-success)', display: 'inline-flex', alignItems: 'center', gap: 2 }}><ArrowUpRight className="w-3 h-3" />2%</span>
             </div>
             <div className="stat-value text-3xl font-bold mb-3.5" style={{ color: 'var(--text-primary)', lineHeight: 1 }}>{patients.length || 0}</div>
+            <hr className="section-divider" />
             <div style={{ display: 'flex', gap: 14, marginBottom: 14 }}>
-              {[{ n: maleCount, l: 'Male', c: '#60A5FA' }, { n: femaleCount, l: 'Female', c: '#EC4899' }].map(g => (
+              {[{ n: maleCount, l: 'Male', c: '#5CB8A8' }, { n: femaleCount, l: 'Female', c: '#EC4899' }].map(g => (
                 <div key={g.l} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ width: 7, height: 7, borderRadius: '50%', background: g.c }} />
                   <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}><span className="stat-value" style={{ fontWeight: 700, color: 'var(--text-primary)', marginRight: 3 }}>{g.n}</span>{g.l}</span>
@@ -708,17 +714,23 @@ export default function DashboardPage() {
           </div>
 
           {/* ── Active Staff ── */}
-          <div className="card-elevated" style={{ padding: '16px 18px' }}>
-            <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 12 }}>Active Staff</p>
-            <div className="stat-value text-3xl font-bold mb-4" style={{ color: 'var(--text-primary)', lineHeight: 1 }}>{totalDoctors + totalNurses}</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="dash-card" style={{ padding: '14px 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <div className="icon-box-sm" style={{ background: 'var(--accent-light)' }}>
+                <UserCheck className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
+              </div>
+              <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Active Staff</p>
+            </div>
+            <div className="stat-value text-3xl font-bold" style={{ color: 'var(--text-primary)', lineHeight: 1 }}>{totalDoctors + totalNurses}</div>
+            <hr className="section-divider" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
               {[
                 { Icon: Stethoscope, label: 'Doctors', count: totalDoctors, color: 'var(--accent-primary)' },
                 { Icon: UserCheck, label: 'Nursing', count: totalNurses, color: 'var(--accent-primary)' },
-              ].map(r => (
-                <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <r.Icon className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
+              ].map((r, i) => (
+                <div key={r.label} style={{ display: 'flex', alignItems: 'center', gap: 10, paddingTop: i > 0 ? 10 : 0, marginTop: i > 0 ? 10 : 0, borderTop: i > 0 ? '1px solid var(--border-light)' : 'none' }}>
+                  <div className="icon-box-sm" style={{ background: 'var(--accent-light)' }}>
+                    <r.Icon className="w-3.5 h-3.5" style={{ color: r.color }} />
                   </div>
                   <span style={{ fontSize: 13, color: 'var(--text-secondary)', flex: 1 }}>{r.label}</span>
                   <span className="stat-value" style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>{r.count}</span>
@@ -727,30 +739,56 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* ── Quick Overview ── */}
-          <div className="card-elevated" style={{ padding: '16px 18px' }}>
-            <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', marginBottom: 14 }}>Quick Overview</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {/* ── Quick Overview — keep red border when alerts present, otherwise inherit green ── */}
+          <div
+            className="dash-card"
+            style={activeAlerts.length > 0
+              ? { padding: '14px 16px', border: '1.5px solid #C44536' }
+              : { padding: '14px 16px' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+              <div className="icon-box-sm" style={{ background: 'var(--accent-light)' }}>
+                <ClipboardList className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
+              </div>
+              <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)' }}>Quick Overview</p>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
               {[
-                { Icon: SendHorizontal, label: 'Pending Referrals', value: pendingReferrals.length, color: 'var(--color-warning)', bg: 'rgba(252,211,77,0.12)' },
-                { Icon: AlertTriangle, label: 'Active Alerts', value: activeAlerts.length, color: 'var(--color-danger)', bg: 'rgba(229,46,66,0.12)' },
-                { Icon: Syringe, label: 'Immunizations', value: immStats?.totalVaccinations || 0, color: 'var(--accent-primary)', bg: 'var(--accent-light)' },
-                { Icon: Baby, label: 'ANC / Births', value: `${ancStats?.totalVisits || 0} / ${birthStats?.total || 0}`, color: 'var(--accent-primary)', bg: 'var(--accent-light)' },
-              ].map(item => (
-                <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 7, background: item.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                { Icon: SendHorizontal, label: 'Pending Referrals', value: pendingReferrals.length, color: '#B8741C', bg: 'rgba(228, 168, 75, 0.16)', alarm: false },
+                { Icon: AlertTriangle, label: 'Active Alerts', value: activeAlerts.length, color: '#C44536', bg: 'rgba(196, 69, 54, 0.14)', alarm: activeAlerts.length > 0 },
+                { Icon: Syringe, label: 'Immunizations', value: immStats?.totalVaccinations || 0, color: 'var(--accent-primary)', bg: 'var(--accent-light)', alarm: false },
+                { Icon: Baby, label: 'ANC / Births', value: `${ancStats?.totalVisits || 0} / ${birthStats?.total || 0}`, color: 'var(--accent-primary)', bg: 'var(--accent-light)', alarm: false },
+              ].map((item, i) => (
+                <div
+                  key={item.label}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: item.alarm ? '6px 8px' : 0,
+                    margin: item.alarm ? `${i > 0 ? 6 : 0}px -4px 0 -4px` : 0,
+                    paddingTop: item.alarm ? 6 : i > 0 ? 8 : 0,
+                    marginTop: item.alarm ? (i > 0 ? 6 : 0) : (i > 0 ? 8 : 0),
+                    borderRadius: item.alarm ? 8 : 0,
+                    borderTop: !item.alarm && i > 0 ? '1px solid var(--border-light)' : 'none',
+                    background: item.alarm ? 'rgba(196, 69, 54, 0.08)' : 'transparent',
+                    border: item.alarm ? '1px solid rgba(196, 69, 54, 0.28)' : 'none',
+                    boxShadow: item.alarm ? '0 0 0 1px rgba(196, 69, 54, 0.10) inset' : 'none',
+                    position: 'relative',
+                  }}
+                >
+                  {item.alarm && <span className="data-tile__alarm-pulse" aria-hidden="true" />}
+                  <div className="icon-box-sm" style={{ background: item.bg }}>
                     <item.Icon className="w-3.5 h-3.5" style={{ color: item.color }} />
                   </div>
-                  <span style={{ fontSize: 13, color: 'var(--text-secondary)', flex: 1 }}>{item.label}</span>
-                  <span className="stat-value" style={{ fontSize: 15, fontWeight: 700, color: item.color }}>{item.value}</span>
+                  <span style={{ fontSize: 13, color: item.alarm ? '#8B2E24' : 'var(--text-secondary)', flex: 1, fontWeight: item.alarm ? 600 : 400 }}>{item.label}</span>
+                  <span className="stat-value" style={{ fontSize: 15, fontWeight: 700, color: item.color, fontVariantNumeric: 'tabular-nums' }}>{item.value}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* ── Insights Card (tabbed) ── */}
-          <div className="card-elevated" style={{ padding: '16px 18px' }}>
-            <div style={{ display: 'flex', gap: 0, marginBottom: 10, borderBottom: '1px solid var(--border-light)' }}>
+          <div className="dash-card" style={{ padding: '14px 16px' }}>
+            <div style={{ display: 'flex', gap: 0, marginBottom: 12, borderBottom: '1px solid var(--border-light)', paddingBottom: 0 }}>
               {TABS.map(tab => (
                 <button key={tab} onClick={() => setActiveTab(tab)} style={{
                   padding: '4px 8px 6px', fontSize: 10, fontWeight: 700, textTransform: 'uppercase' as const,
@@ -791,7 +829,7 @@ export default function DashboardPage() {
         </div>
 
         {/* ═══ RECENTLY ADMITTED PATIENTS TABLE ═══ */}
-        <div className="card-elevated mb-6 overflow-hidden">
+        <div className="dash-card mb-6 overflow-hidden">
           <div className="flex items-center justify-between p-4 pb-3" style={{ borderBottom: '1px solid var(--border-light)' }}>
             <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Recently Admitted Patients</h3>
             <div className="flex items-center gap-3">
@@ -861,7 +899,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
           {/* Disease Trend Explorer */}
-          <div className="glass-section lg:col-span-2">
+          <div className="glass-section">
             <div className="glass-section-header">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Disease Trends</span>
@@ -907,8 +945,8 @@ export default function DashboardPage() {
                           style={{ background: isSelected ? 'var(--accent-light)' : 'transparent' }}
                         >
                           <span className="w-3 h-3 rounded flex-shrink-0 flex items-center justify-center" style={{
-                            background: isSelected ? (DISEASE_COLORS[d.name] || '#94A3B8') : 'transparent',
-                            border: `2px solid ${DISEASE_COLORS[d.name] || '#94A3B8'}`,
+                            background: isSelected ? (DISEASE_COLORS[d.name] || '#8A9E9A') : 'transparent',
+                            border: `2px solid ${DISEASE_COLORS[d.name] || '#8A9E9A'}`,
                           }}>
                             {isSelected && <CheckCircle2 size={8} style={{ color: '#fff' }} />}
                           </span>
@@ -932,12 +970,12 @@ export default function DashboardPage() {
                     onClick={() => setSelectedDiseases(prev => { const next = new Set(prev); next.delete(name); return next; })}
                     className="flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium transition-colors"
                     style={{
-                      background: `${DISEASE_COLORS[name] || '#94A3B8'}15`,
-                      color: DISEASE_COLORS[name] || '#94A3B8',
-                      border: `1px solid ${DISEASE_COLORS[name] || '#94A3B8'}30`,
+                      background: `${DISEASE_COLORS[name] || '#8A9E9A'}15`,
+                      color: DISEASE_COLORS[name] || '#8A9E9A',
+                      border: `1px solid ${DISEASE_COLORS[name] || '#8A9E9A'}30`,
                     }}
                   >
-                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: DISEASE_COLORS[name] || '#94A3B8' }} />
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ background: DISEASE_COLORS[name] || '#8A9E9A' }} />
                     {name}
                     <X size={10} />
                   </button>
@@ -955,7 +993,7 @@ export default function DashboardPage() {
                     <YAxis tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={{ stroke: 'var(--border-light)' }} tickLine={false} />
                     <Tooltip content={<ChartTooltip />} />
                     {Array.from(selectedDiseases).map(name => (
-                      <Area key={name} type="monotone" dataKey={name} stroke={DISEASE_COLORS[name] || '#94A3B8'} fill={`${DISEASE_COLORS[name] || '#94A3B8'}15`} strokeWidth={2} dot={{ r: 3, fill: DISEASE_COLORS[name] || '#94A3B8' }} />
+                      <Area key={name} type="monotone" dataKey={name} stroke={DISEASE_COLORS[name] || '#8A9E9A'} fill={`${DISEASE_COLORS[name] || '#8A9E9A'}15`} strokeWidth={2} dot={{ r: 3, fill: DISEASE_COLORS[name] || '#8A9E9A' }} />
                     ))}
                   </AreaChart>
                 </ResponsiveContainer>
@@ -1091,26 +1129,28 @@ export default function DashboardPage() {
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
 
           {/* Quick Actions */}
-          <div className="lg:col-span-2 card-elevated p-4">
+          <div className="lg:col-span-2 dash-card p-4">
             <p className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>Quick Actions</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[
-                { label: 'New Patient', icon: Users, action: () => router.push('/patients/new'), color: 'var(--accent-primary)' },
-                { label: 'New Consultation', icon: ClipboardList, action: () => setSoapModalOpen(true), color: 'var(--accent-primary)' },
-                { label: 'Quick Prescribe', icon: Pill, action: () => setPrescribeModalOpen(true), color: 'var(--accent-primary)' },
-                { label: 'Quick Lab Order', icon: TestTube, action: () => setLabModalOpen(true), color: 'var(--accent-primary)' },
-                { label: 'Immunization', icon: Syringe, action: () => router.push('/immunizations'), color: 'var(--accent-primary)' },
-                { label: 'ANC Visit', icon: HeartPulse, action: () => router.push('/anc'), color: 'var(--accent-primary)' },
-                { label: 'Birth Reg.', icon: Baby, action: () => router.push('/births'), color: 'var(--accent-primary)' },
-                { label: 'Referral', icon: SendHorizontal, action: () => router.push('/referrals'), color: 'var(--accent-primary)' },
+                { label: 'New Patient', icon: Users, action: () => router.push('/patients/new'), color: 'var(--accent-primary)', bg: 'rgba(46,158,126,0.10)' },
+                { label: 'New Consultation', icon: ClipboardList, action: () => setSoapModalOpen(true), color: 'var(--accent-primary)', bg: 'rgba(46,158,126,0.10)' },
+                { label: 'Quick Prescribe', icon: Pill, action: () => setPrescribeModalOpen(true), color: '#0D9488', bg: 'rgba(13,148,136,0.10)' },
+                { label: 'Quick Lab Order', icon: TestTube, action: () => setLabModalOpen(true), color: '#7C3AED', bg: 'rgba(124,58,237,0.10)' },
+                { label: 'Immunization', icon: Syringe, action: () => router.push('/immunizations'), color: '#059669', bg: 'rgba(5,150,105,0.10)' },
+                { label: 'ANC Visit', icon: HeartPulse, action: () => router.push('/anc'), color: '#EC4899', bg: 'rgba(236,72,153,0.10)' },
+                { label: 'Birth Reg.', icon: Baby, action: () => router.push('/births'), color: 'var(--accent-primary)', bg: 'rgba(46,158,126,0.10)' },
+                { label: 'Referral', icon: SendHorizontal, action: () => router.push('/referrals'), color: '#F59E0B', bg: 'rgba(245,158,11,0.10)' },
               ].map(action => (
                 <button
                   key={action.label}
                   onClick={action.action}
-                  className="flex items-center gap-2 p-2.5 rounded-xl transition-all hover:shadow-sm"
-                  style={{ background: `${action.color}08`, border: `1px solid ${action.color}15` }}
+                  className="flex flex-col items-center gap-2 p-3 rounded-xl transition-all hover:shadow-sm"
+                  style={{ background: `${action.bg}`, border: `1px solid var(--border-light)` }}
                 >
-                  <action.icon className="w-4 h-4" style={{ color: action.color }} />
+                  <div className="icon-box" style={{ background: action.bg }}>
+                    <action.icon className="w-4 h-4" style={{ color: action.color }} />
+                  </div>
                   <span className="text-[11px] font-medium" style={{ color: 'var(--text-primary)' }}>{action.label}</span>
                 </button>
               ))}
@@ -1118,7 +1158,7 @@ export default function DashboardPage() {
           </div>
 
           {/* DHIS2 Status Mini Card */}
-          <div className="card-elevated p-4">
+          <div className="dash-card p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Globe className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
@@ -1128,7 +1168,7 @@ export default function DashboardPage() {
                 Open <ArrowUpRight className="w-3 h-3" />
               </button>
             </div>
-            <div className="space-y-2.5">
+            <div className="data-row-divider-sm" style={{ display: 'flex', flexDirection: 'column' }}>
               <div className="flex items-center justify-between">
                 <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Connection</span>
                 <span className="flex items-center gap-1 text-[10px] font-bold" style={{ color: 'var(--color-success)' }}>
@@ -1150,8 +1190,8 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="mt-3 p-2 rounded-lg text-center" style={{
-              background: 'rgba(43,111,224,0.06)',
-              border: '1px solid rgba(43,111,224,0.1)',
+              background: 'rgba(46,158,126,0.06)',
+              border: '1px solid rgba(46,158,126,0.1)',
             }}>
               <span className="text-[9px] font-medium" style={{ color: 'var(--text-muted)' }}>
                 hmis.southsudan.health
@@ -1403,8 +1443,8 @@ export default function DashboardPage() {
                         onClick={() => handleToggleLabTest(test.id)}
                         className="flex items-center gap-3 p-2.5 rounded-xl text-left transition-all"
                         style={{
-                          background: isSelected ? 'rgba(43,111,224,0.08)' : 'var(--bg-secondary)',
-                          border: isSelected ? '2px solid #0077D7' : '1px solid var(--border-light)',
+                          background: isSelected ? 'rgba(46,158,126,0.08)' : 'var(--bg-secondary)',
+                          border: isSelected ? '2px solid #2E9E7E' : '1px solid var(--border-light)',
                         }}
                       >
                         <div
@@ -1420,7 +1460,7 @@ export default function DashboardPage() {
                           <p className="text-[12px] font-medium" style={{ color: 'var(--text-primary)' }}>{test.name}</p>
                           <div className="flex items-center gap-2">
                             <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>{test.specimen}</span>
-                            <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(43,111,224,0.06)', color: 'var(--accent-primary)' }}>
+                            <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(46,158,126,0.06)', color: 'var(--accent-primary)' }}>
                               {test.category}
                             </span>
                           </div>
@@ -1433,7 +1473,7 @@ export default function DashboardPage() {
 
               {/* Selected summary */}
               {selectedLabTests.size > 0 && (
-                <div className="mb-4 p-3 rounded-xl" style={{ background: 'rgba(43,111,224,0.04)', border: '1px solid rgba(43,111,224,0.12)' }}>
+                <div className="mb-4 p-3 rounded-xl" style={{ background: 'rgba(46,158,126,0.04)', border: '1px solid rgba(46,158,126,0.12)' }}>
                   <p className="text-[11px] font-medium mb-1" style={{ color: 'var(--accent-primary)' }}>
                     {selectedLabTests.size} test(s) selected:
                   </p>

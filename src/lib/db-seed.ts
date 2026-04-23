@@ -5,6 +5,8 @@ import {
   messagesDB, birthsDB, deathsDB, facilityAssessmentsDB,
   immunizationsDB, ancDB, bomaVisitsDB, followUpsDB,
   organizationsDB,
+  paymentsDB, insurancePoliciesDB, chargesDB, claimsDB,
+  paymentPlansDB, ledgerDB,
   isSeeded, markSeeded, resetAllDatabases
 } from './db';
 import {
@@ -17,6 +19,10 @@ import type {
   BirthRegistrationDoc, DeathRegistrationDoc, FacilityAssessmentDoc,
   ImmunizationDoc, ANCVisitDoc, BomaVisitDoc, FollowUpDoc, OrganizationDoc
 } from './db-types';
+import type {
+  PaymentDoc, InsurancePolicyDoc, ChargeDoc, ClaimDoc,
+  PaymentPlanDoc, LedgerEntryDoc
+} from './db-types-payments';
 
 // Default org IDs
 const PUBLIC_ORG_ID = 'org-moh-ss';
@@ -28,9 +34,9 @@ const defaultOrganizations: Omit<OrganizationDoc, '_rev'>[] = [
     type: 'organization',
     name: 'Republic of South Sudan',
     slug: 'moh-ss',
-    primaryColor: '#0077D7',
-    secondaryColor: '#005FBC',
-    accentColor: '#0077D7',
+    primaryColor: '#2E9E7E',
+    secondaryColor: '#1E4D4A',
+    accentColor: '#2E9E7E',
     subscriptionStatus: 'active',
     subscriptionPlan: 'enterprise',
     maxUsers: 1000,
@@ -292,6 +298,250 @@ async function safePut(db: PouchDB.Database, doc: Record<string, unknown>): Prom
   }
 }
 
+// ═══ Payment & Billing Seed Data ══════════════════════════════════
+// 5 patients with diverse payment scenarios for workflow testing
+
+const seedCharges: Omit<ChargeDoc, '_rev' | 'createdBy'>[] = [
+  // Patient 1 (pat-00001 Deng Mabior Garang) — Cash payment, fully paid
+  { _id: 'chg-001', type: 'charge', encounterId: 'enc-pay-001', patientId: 'pat-00001', description: 'Outpatient Consultation', category: 'consultation', units: 1, billedAmount: 5000, status: 'approved', serviceDate: '2026-03-10', providerId: 'user-dr.wani', providerName: 'Dr. James Wani Igga', facilityId: 'hosp-001', createdAt: '2026-03-10T08:00:00Z', updatedAt: '2026-03-10T08:00:00Z' },
+  { _id: 'chg-002', type: 'charge', encounterId: 'enc-pay-001', patientId: 'pat-00001', description: 'Malaria RDT', category: 'laboratory', units: 1, billedAmount: 2000, status: 'approved', serviceDate: '2026-03-10', providerId: 'user-lab.gatluak', providerName: 'Lab Tech Gatluak Puok', facilityId: 'hosp-001', createdAt: '2026-03-10T08:30:00Z', updatedAt: '2026-03-10T08:30:00Z' },
+  { _id: 'chg-003', type: 'charge', encounterId: 'enc-pay-001', patientId: 'pat-00001', description: 'Coartem (Artemether-Lumefantrine)', category: 'pharmacy', units: 1, billedAmount: 3000, status: 'approved', serviceDate: '2026-03-10', providerId: 'user-pharma.rose', providerName: 'Pharmacist Rose Gbudue', facilityId: 'hosp-001', createdAt: '2026-03-10T09:00:00Z', updatedAt: '2026-03-10T09:00:00Z' },
+
+  // Patient 2 (pat-00005 Nyamal Koang Gatdet) — Mobile money (M-Pesa), paid
+  { _id: 'chg-004', type: 'charge', encounterId: 'enc-pay-002', patientId: 'pat-00005', description: 'Antenatal Visit', category: 'consultation', units: 1, billedAmount: 3500, status: 'approved', serviceDate: '2026-03-12', providerId: 'user-dr.achol', providerName: 'Dr. Achol Mayen Deng', facilityId: 'hosp-001', createdAt: '2026-03-12T10:00:00Z', updatedAt: '2026-03-12T10:00:00Z' },
+  { _id: 'chg-005', type: 'charge', encounterId: 'enc-pay-002', patientId: 'pat-00005', description: 'Full Blood Count', category: 'laboratory', units: 1, billedAmount: 3000, status: 'approved', serviceDate: '2026-03-12', providerId: 'user-lab.gatluak', providerName: 'Lab Tech Gatluak Puok', facilityId: 'hosp-001', createdAt: '2026-03-12T10:30:00Z', updatedAt: '2026-03-12T10:30:00Z' },
+  { _id: 'chg-006', type: 'charge', encounterId: 'enc-pay-002', patientId: 'pat-00005', description: 'Iron + Folic Acid Supplements', category: 'pharmacy', units: 1, billedAmount: 1500, status: 'approved', serviceDate: '2026-03-12', providerId: 'user-pharma.rose', providerName: 'Pharmacist Rose Gbudue', facilityId: 'hosp-001', createdAt: '2026-03-12T11:00:00Z', updatedAt: '2026-03-12T11:00:00Z' },
+
+  // Patient 3 (pat-00012 Gatluak Ruot Nyuon) — Insurance claim (Health Pooled Fund)
+  { _id: 'chg-007', type: 'charge', encounterId: 'enc-pay-003', patientId: 'pat-00012', description: 'HIV Follow-up Consultation', category: 'consultation', units: 1, billedAmount: 4000, status: 'submitted', serviceDate: '2026-03-15', providerId: 'user-dr.wani', providerName: 'Dr. James Wani Igga', facilityId: 'hosp-001', createdAt: '2026-03-15T09:00:00Z', updatedAt: '2026-03-15T09:00:00Z' },
+  { _id: 'chg-008', type: 'charge', encounterId: 'enc-pay-003', patientId: 'pat-00012', description: 'CD4 Count', category: 'laboratory', units: 1, billedAmount: 5000, status: 'submitted', serviceDate: '2026-03-15', providerId: 'user-lab.gatluak', providerName: 'Lab Tech Gatluak Puok', facilityId: 'hosp-001', createdAt: '2026-03-15T09:30:00Z', updatedAt: '2026-03-15T09:30:00Z' },
+  { _id: 'chg-009', type: 'charge', encounterId: 'enc-pay-003', patientId: 'pat-00012', description: 'ARV Regimen (TDF/3TC/DTG) 90-day supply', category: 'pharmacy', units: 1, billedAmount: 15000, status: 'submitted', serviceDate: '2026-03-15', providerId: 'user-pharma.rose', providerName: 'Pharmacist Rose Gbudue', facilityId: 'hosp-001', createdAt: '2026-03-15T10:00:00Z', updatedAt: '2026-03-15T10:00:00Z' },
+
+  // Patient 4 (pat-00018 Rose Tombura Gbudue) — Outstanding balance, payment plan
+  { _id: 'chg-010', type: 'charge', encounterId: 'enc-pay-004', patientId: 'pat-00018', description: 'Emergency Room Visit', category: 'consultation', units: 1, billedAmount: 8000, status: 'approved', serviceDate: '2026-02-20', providerId: 'user-dr.achol', providerName: 'Dr. Achol Mayen Deng', facilityId: 'hosp-001', createdAt: '2026-02-20T14:00:00Z', updatedAt: '2026-02-20T14:00:00Z' },
+  { _id: 'chg-011', type: 'charge', encounterId: 'enc-pay-004', patientId: 'pat-00018', description: 'Blood Glucose Test (Fasting)', category: 'laboratory', units: 1, billedAmount: 2500, status: 'approved', serviceDate: '2026-02-20', providerId: 'user-lab.gatluak', providerName: 'Lab Tech Gatluak Puok', facilityId: 'hosp-001', createdAt: '2026-02-20T14:30:00Z', updatedAt: '2026-02-20T14:30:00Z' },
+  { _id: 'chg-012', type: 'charge', encounterId: 'enc-pay-004', patientId: 'pat-00018', description: 'Metformin 500mg (30-day)', category: 'pharmacy', units: 1, billedAmount: 2000, status: 'approved', serviceDate: '2026-02-20', providerId: 'user-pharma.rose', providerName: 'Pharmacist Rose Gbudue', facilityId: 'hosp-001', createdAt: '2026-02-20T15:00:00Z', updatedAt: '2026-02-20T15:00:00Z' },
+  { _id: 'chg-013', type: 'charge', encounterId: 'enc-pay-004', patientId: 'pat-00018', description: 'IV Fluids & Administration', category: 'procedure', units: 1, billedAmount: 5500, status: 'approved', serviceDate: '2026-02-20', providerId: 'user-nurse.stella', providerName: 'Nurse Stella Keji Lemi', facilityId: 'hosp-001', createdAt: '2026-02-20T15:30:00Z', updatedAt: '2026-02-20T15:30:00Z' },
+
+  // Patient 5 (pat-00022 Kuol Akot Ajith) — Bank transfer payment, partially paid
+  { _id: 'chg-014', type: 'charge', encounterId: 'enc-pay-005', patientId: 'pat-00022', description: 'Inpatient Admission (3 days)', category: 'inpatient', units: 3, billedAmount: 30000, status: 'approved', serviceDate: '2026-03-01', providerId: 'user-dr.wani', providerName: 'Dr. James Wani Igga', facilityId: 'hosp-001', createdAt: '2026-03-01T06:00:00Z', updatedAt: '2026-03-01T06:00:00Z' },
+  { _id: 'chg-015', type: 'charge', encounterId: 'enc-pay-005', patientId: 'pat-00022', description: 'Blood Transfusion (2 units)', category: 'procedure', units: 2, billedAmount: 20000, status: 'approved', serviceDate: '2026-03-01', providerId: 'user-dr.achol', providerName: 'Dr. Achol Mayen Deng', facilityId: 'hosp-001', createdAt: '2026-03-01T08:00:00Z', updatedAt: '2026-03-01T08:00:00Z' },
+  { _id: 'chg-016', type: 'charge', encounterId: 'enc-pay-005', patientId: 'pat-00022', description: 'Hemoglobin Test', category: 'laboratory', units: 1, billedAmount: 2000, status: 'approved', serviceDate: '2026-03-01', providerId: 'user-lab.gatluak', providerName: 'Lab Tech Gatluak Puok', facilityId: 'hosp-001', createdAt: '2026-03-01T10:00:00Z', updatedAt: '2026-03-01T10:00:00Z' },
+];
+
+const seedInsurancePolicies: Omit<InsurancePolicyDoc, '_rev' | 'createdBy'>[] = [
+  // Patient 3 — Donor-funded coverage (Health Pooled Fund)
+  {
+    _id: 'ins-001', type: 'insurance_policy', patientId: 'pat-00012',
+    payerType: 'donor', payerName: 'Health Pooled Fund', payerCode: 'HPF-SS',
+    memberId: 'HPF-2026-00412', policyNumber: 'HPF-JTH-2026-0412',
+    subscriberName: 'Gatluak Ruot Nyuon', subscriberRelationship: 'self',
+    effectiveDate: '2026-01-01', terminationDate: '2026-12-31',
+    isPrimary: true, copayAmount: 0, coinsurancePct: 0,
+    deductibleAmount: 0, deductibleRemaining: 0,
+    coverageNotes: 'Full coverage under HPF donor program for HIV/AIDS patients',
+    isActive: true, donorProgramId: 'hpf-hiv-2026', donorCoverageType: 'full',
+    facilityId: 'hosp-001', orgId: 'org-moh-ss',
+    createdAt: '2026-01-05T10:00:00Z', updatedAt: '2026-01-05T10:00:00Z',
+  },
+  // Patient 5 — Private insurance (partial)
+  {
+    _id: 'ins-002', type: 'insurance_policy', patientId: 'pat-00022',
+    payerType: 'private', payerName: 'AAR Insurance', payerCode: 'AAR-SS',
+    memberId: 'AAR-110235', groupNumber: 'GRP-CORP-042', policyNumber: 'AAR-2026-110235',
+    subscriberName: 'Kuol Akot Ajith', subscriberRelationship: 'self',
+    effectiveDate: '2026-01-01', terminationDate: '2026-12-31',
+    isPrimary: true, copayAmount: 2000, coinsurancePct: 20,
+    deductibleAmount: 10000, deductibleRemaining: 0,
+    oopMax: 100000, oopUsed: 42000,
+    coverageNotes: 'Corporate plan. 80/20 coinsurance after deductible.',
+    isActive: true,
+    facilityId: 'hosp-001', orgId: 'org-moh-ss',
+    createdAt: '2026-01-10T14:00:00Z', updatedAt: '2026-03-01T10:00:00Z',
+  },
+];
+
+const seedClaims: Omit<ClaimDoc, '_rev' | 'createdBy'>[] = [
+  // Patient 3 — Donor claim (paid in full)
+  {
+    _id: 'clm-001', type: 'claim', encounterId: 'enc-pay-003', patientId: 'pat-00012',
+    patientName: 'Gatluak Ruot Nyuon', policyId: 'ins-001',
+    payerName: 'Health Pooled Fund', payerType: 'donor',
+    claimNumber: 'HPF-CLM-2026-0078',
+    chargeIds: ['chg-007', 'chg-008', 'chg-009'],
+    totalBilled: 24000, totalAllowed: 24000, totalApproved: 24000,
+    totalDenied: 0, totalWriteOff: 0, patientResponsibility: 0,
+    submittedDate: '2026-03-16', adjudicatedDate: '2026-03-20',
+    status: 'paid', denialReasons: [],
+    donorReportingPeriod: 'Q1-2026',
+    submittedBy: 'user-desk.amira',
+    facilityId: 'hosp-001', facilityName: 'Juba Teaching Hospital', orgId: 'org-moh-ss',
+    createdAt: '2026-03-16T08:00:00Z', updatedAt: '2026-03-20T14:00:00Z',
+  },
+  // Patient 5 — Private insurance claim (partial approval)
+  {
+    _id: 'clm-002', type: 'claim', encounterId: 'enc-pay-005', patientId: 'pat-00022',
+    patientName: 'Kuol Akot Ajith', policyId: 'ins-002',
+    payerName: 'AAR Insurance', payerType: 'private',
+    claimNumber: 'AAR-CLM-2026-4521',
+    chargeIds: ['chg-014', 'chg-015', 'chg-016'],
+    totalBilled: 52000, totalAllowed: 45000, totalApproved: 36000,
+    totalDenied: 0, totalWriteOff: 7000, patientResponsibility: 9000,
+    submittedDate: '2026-03-04', adjudicatedDate: '2026-03-10',
+    status: 'partial', denialReasons: [],
+    remarkCodes: ['CO-45'],
+    submittedBy: 'user-desk.amira',
+    facilityId: 'hosp-001', facilityName: 'Juba Teaching Hospital', orgId: 'org-moh-ss',
+    createdAt: '2026-03-04T09:00:00Z', updatedAt: '2026-03-10T16:00:00Z',
+  },
+];
+
+const seedPayments: Omit<PaymentDoc, '_rev' | 'createdBy'>[] = [
+  // Patient 1 — Cash payment (fully paid)
+  {
+    _id: 'pay-001', type: 'payment', patientId: 'pat-00001', patientName: 'Deng Mabior Garang',
+    encounterId: 'enc-pay-001', method: 'cash', amount: 10000, currency: 'SSP',
+    reference: 'RCT-20260310-001',
+    status: 'posted', processedAt: '2026-03-10T09:30:00Z',
+    processedBy: 'user-desk.amira', processedByName: 'Amira Juma Hassan',
+    notes: 'Full payment at checkout. Cash received, change given.',
+    allocations: [
+      { encounterId: 'enc-pay-001', amount: 5000, chargeId: 'chg-001' },
+      { encounterId: 'enc-pay-001', amount: 2000, chargeId: 'chg-002' },
+      { encounterId: 'enc-pay-001', amount: 3000, chargeId: 'chg-003' },
+    ],
+    facilityId: 'hosp-001', orgId: 'org-moh-ss',
+    createdAt: '2026-03-10T09:30:00Z', updatedAt: '2026-03-10T09:30:00Z',
+  },
+  // Patient 2 — M-Pesa mobile money
+  {
+    _id: 'pay-002', type: 'payment', patientId: 'pat-00005', patientName: 'Nyamal Koang Gatdet',
+    encounterId: 'enc-pay-002', method: 'mpesa', amount: 8000, currency: 'SSP',
+    reference: 'MPESA-TXN-SL4K9R2',
+    mobileMoneyPhone: '+211-955-123-456',
+    status: 'posted', processedAt: '2026-03-12T11:30:00Z',
+    processedBy: 'user-desk.amira', processedByName: 'Amira Juma Hassan',
+    notes: 'M-Pesa payment confirmed via SMS.',
+    allocations: [
+      { encounterId: 'enc-pay-002', amount: 3500, chargeId: 'chg-004' },
+      { encounterId: 'enc-pay-002', amount: 3000, chargeId: 'chg-005' },
+      { encounterId: 'enc-pay-002', amount: 1500, chargeId: 'chg-006' },
+    ],
+    facilityId: 'hosp-001', orgId: 'org-moh-ss',
+    createdAt: '2026-03-12T11:30:00Z', updatedAt: '2026-03-12T11:30:00Z',
+  },
+  // Patient 3 — Insurance payment (from donor)
+  {
+    _id: 'pay-003', type: 'payment', patientId: 'pat-00012', patientName: 'Gatluak Ruot Nyuon',
+    encounterId: 'enc-pay-003', method: 'insurance', amount: 24000, currency: 'SSP',
+    reference: 'HPF-ERA-2026-0078',
+    status: 'posted', processedAt: '2026-03-20T14:00:00Z',
+    processedBy: 'user-desk.amira', processedByName: 'Amira Juma Hassan',
+    notes: 'Health Pooled Fund claim paid in full. Zero patient responsibility.',
+    allocations: [
+      { encounterId: 'enc-pay-003', amount: 4000, chargeId: 'chg-007' },
+      { encounterId: 'enc-pay-003', amount: 5000, chargeId: 'chg-008' },
+      { encounterId: 'enc-pay-003', amount: 15000, chargeId: 'chg-009' },
+    ],
+    facilityId: 'hosp-001', orgId: 'org-moh-ss',
+    createdAt: '2026-03-20T14:00:00Z', updatedAt: '2026-03-20T14:00:00Z',
+  },
+  // Patient 4 — Partial cash payment (has outstanding balance on payment plan)
+  {
+    _id: 'pay-004', type: 'payment', patientId: 'pat-00018', patientName: 'Rose Tombura Gbudue',
+    encounterId: 'enc-pay-004', method: 'cash', amount: 6000, currency: 'SSP',
+    reference: 'RCT-20260220-004',
+    status: 'posted', processedAt: '2026-02-20T16:00:00Z',
+    processedBy: 'user-desk.amira', processedByName: 'Amira Juma Hassan',
+    notes: 'Partial payment. Remaining SSP 12,000 placed on payment plan.',
+    allocations: [
+      { encounterId: 'enc-pay-004', amount: 6000, chargeId: 'chg-010' },
+    ],
+    facilityId: 'hosp-001', orgId: 'org-moh-ss',
+    createdAt: '2026-02-20T16:00:00Z', updatedAt: '2026-02-20T16:00:00Z',
+  },
+  // Patient 4 — Payment plan installment 1 (cash)
+  {
+    _id: 'pay-005', type: 'payment', patientId: 'pat-00018', patientName: 'Rose Tombura Gbudue',
+    paymentPlanId: 'plan-001', method: 'cash', amount: 4000, currency: 'SSP',
+    reference: 'RCT-20260315-005',
+    status: 'posted', processedAt: '2026-03-15T10:00:00Z',
+    processedBy: 'user-desk.amira', processedByName: 'Amira Juma Hassan',
+    notes: 'Payment plan installment #1.',
+    facilityId: 'hosp-001', orgId: 'org-moh-ss',
+    createdAt: '2026-03-15T10:00:00Z', updatedAt: '2026-03-15T10:00:00Z',
+  },
+  // Patient 5 — Bank transfer (partial, after insurance)
+  {
+    _id: 'pay-006', type: 'payment', patientId: 'pat-00022', patientName: 'Kuol Akot Ajith',
+    encounterId: 'enc-pay-005', method: 'insurance', amount: 36000, currency: 'SSP',
+    reference: 'AAR-ERA-2026-4521',
+    status: 'posted', processedAt: '2026-03-10T16:00:00Z',
+    processedBy: 'user-desk.amira', processedByName: 'Amira Juma Hassan',
+    notes: 'AAR Insurance payment. Patient responsibility: SSP 9,000.',
+    facilityId: 'hosp-001', orgId: 'org-moh-ss',
+    createdAt: '2026-03-10T16:00:00Z', updatedAt: '2026-03-10T16:00:00Z',
+  },
+  {
+    _id: 'pay-007', type: 'payment', patientId: 'pat-00022', patientName: 'Kuol Akot Ajith',
+    encounterId: 'enc-pay-005', method: 'bank_transfer', amount: 5000, currency: 'SSP',
+    reference: 'ECO-TRF-2026-03112',
+    status: 'posted', processedAt: '2026-03-12T09:00:00Z',
+    processedBy: 'user-desk.amira', processedByName: 'Amira Juma Hassan',
+    notes: 'Bank transfer for patient responsibility portion. SSP 4,000 still outstanding.',
+    facilityId: 'hosp-001', orgId: 'org-moh-ss',
+    createdAt: '2026-03-12T09:00:00Z', updatedAt: '2026-03-12T09:00:00Z',
+  },
+];
+
+const seedPaymentPlans: Omit<PaymentPlanDoc, '_rev' | 'createdBy'>[] = [
+  // Patient 4 — 3-month interest-free plan for emergency visit balance
+  {
+    _id: 'plan-001', type: 'payment_plan', patientId: 'pat-00018',
+    patientName: 'Rose Tombura Gbudue',
+    totalBalance: 12000, termMonths: 3, monthlyAmount: 4000, apr: 0,
+    startDate: '2026-03-01', endDate: '2026-05-31',
+    status: 'active', nextDueDate: '2026-04-15',
+    paidToDate: 4000, remainingBalance: 8000, missedPayments: 0,
+    lastPaymentDate: '2026-03-15',
+    autoPayEnabled: false,
+    encounterIds: ['enc-pay-004'],
+    installments: [
+      { number: 1, dueDate: '2026-03-15', amount: 4000, status: 'paid', paidAmount: 4000, paidDate: '2026-03-15', paymentId: 'pay-005' },
+      { number: 2, dueDate: '2026-04-15', amount: 4000, status: 'pending' },
+      { number: 3, dueDate: '2026-05-15', amount: 4000, status: 'pending' },
+    ],
+    createdByStaff: 'user-desk.amira', createdByStaffName: 'Amira Juma Hassan',
+    facilityId: 'hosp-001', orgId: 'org-moh-ss',
+    createdAt: '2026-02-20T16:30:00Z', updatedAt: '2026-03-15T10:00:00Z',
+  },
+];
+
+const seedLedgerEntries: Omit<LedgerEntryDoc, '_rev' | 'createdBy'>[] = [
+  // ── Patient 1: Deng Mabior Garang — Fully paid (balance: 0) ──
+  { _id: 'led-001', type: 'ledger_entry', patientId: 'pat-00001', encounterId: 'enc-pay-001', entryType: 'charge', amount: 10000, runningBalance: 10000, description: 'Consultation + Malaria RDT + Coartem', referenceId: 'chg-001', referenceType: 'charge', currency: 'SSP', facilityId: 'hosp-001', createdAt: '2026-03-10T09:00:00Z', updatedAt: '2026-03-10T09:00:00Z' },
+  { _id: 'led-002', type: 'ledger_entry', patientId: 'pat-00001', encounterId: 'enc-pay-001', entryType: 'payment', amount: -10000, runningBalance: 0, description: 'Cash payment — RCT-20260310-001', referenceId: 'pay-001', referenceType: 'payment', method: 'cash', currency: 'SSP', facilityId: 'hosp-001', createdAt: '2026-03-10T09:30:00Z', updatedAt: '2026-03-10T09:30:00Z' },
+
+  // ── Patient 2: Nyamal Koang Gatdet — Fully paid via M-Pesa (balance: 0) ──
+  { _id: 'led-003', type: 'ledger_entry', patientId: 'pat-00005', encounterId: 'enc-pay-002', entryType: 'charge', amount: 8000, runningBalance: 8000, description: 'ANC Visit + FBC + Iron/Folic Acid', referenceId: 'chg-004', referenceType: 'charge', currency: 'SSP', facilityId: 'hosp-001', createdAt: '2026-03-12T11:00:00Z', updatedAt: '2026-03-12T11:00:00Z' },
+  { _id: 'led-004', type: 'ledger_entry', patientId: 'pat-00005', encounterId: 'enc-pay-002', entryType: 'payment', amount: -8000, runningBalance: 0, description: 'M-Pesa payment — MPESA-TXN-SL4K9R2', referenceId: 'pay-002', referenceType: 'payment', method: 'mpesa', currency: 'SSP', facilityId: 'hosp-001', createdAt: '2026-03-12T11:30:00Z', updatedAt: '2026-03-12T11:30:00Z' },
+
+  // ── Patient 3: Gatluak Ruot Nyuon — Donor-paid, zero patient balance ──
+  { _id: 'led-005', type: 'ledger_entry', patientId: 'pat-00012', encounterId: 'enc-pay-003', entryType: 'charge', amount: 24000, runningBalance: 24000, description: 'HIV Follow-up + CD4 + ARVs', referenceId: 'chg-007', referenceType: 'charge', currency: 'SSP', facilityId: 'hosp-001', createdAt: '2026-03-15T10:00:00Z', updatedAt: '2026-03-15T10:00:00Z' },
+  { _id: 'led-006', type: 'ledger_entry', patientId: 'pat-00012', encounterId: 'enc-pay-003', entryType: 'insurance_payment', amount: -24000, runningBalance: 0, description: 'Health Pooled Fund claim paid — HPF-ERA-2026-0078', referenceId: 'pay-003', referenceType: 'payment', method: 'insurance', currency: 'SSP', facilityId: 'hosp-001', createdAt: '2026-03-20T14:00:00Z', updatedAt: '2026-03-20T14:00:00Z' },
+
+  // ── Patient 4: Rose Tombura Gbudue — Outstanding balance SSP 8,000 on plan ──
+  { _id: 'led-007', type: 'ledger_entry', patientId: 'pat-00018', encounterId: 'enc-pay-004', entryType: 'charge', amount: 18000, runningBalance: 18000, description: 'ER Visit + Glucose Test + Metformin + IV Fluids', referenceId: 'chg-010', referenceType: 'charge', currency: 'SSP', facilityId: 'hosp-001', createdAt: '2026-02-20T15:30:00Z', updatedAt: '2026-02-20T15:30:00Z' },
+  { _id: 'led-008', type: 'ledger_entry', patientId: 'pat-00018', encounterId: 'enc-pay-004', entryType: 'payment', amount: -6000, runningBalance: 12000, description: 'Cash partial payment — RCT-20260220-004', referenceId: 'pay-004', referenceType: 'payment', method: 'cash', currency: 'SSP', facilityId: 'hosp-001', createdAt: '2026-02-20T16:00:00Z', updatedAt: '2026-02-20T16:00:00Z' },
+  { _id: 'led-009', type: 'ledger_entry', patientId: 'pat-00018', entryType: 'payment', amount: -4000, runningBalance: 8000, description: 'Payment plan installment #1 — RCT-20260315-005', referenceId: 'pay-005', referenceType: 'payment', method: 'cash', currency: 'SSP', facilityId: 'hosp-001', createdAt: '2026-03-15T10:00:00Z', updatedAt: '2026-03-15T10:00:00Z' },
+
+  // ── Patient 5: Kuol Akot Ajith — Outstanding balance SSP 4,000 ──
+  { _id: 'led-010', type: 'ledger_entry', patientId: 'pat-00022', encounterId: 'enc-pay-005', entryType: 'charge', amount: 52000, runningBalance: 52000, description: 'Inpatient (3 days) + Blood Transfusion + Hb Test', referenceId: 'chg-014', referenceType: 'charge', currency: 'SSP', facilityId: 'hosp-001', createdAt: '2026-03-01T10:00:00Z', updatedAt: '2026-03-01T10:00:00Z' },
+  { _id: 'led-011', type: 'ledger_entry', patientId: 'pat-00022', encounterId: 'enc-pay-005', entryType: 'adjustment', amount: -7000, runningBalance: 45000, description: 'Contractual write-off (AAR allowed amount)', referenceId: 'clm-002', referenceType: 'claim', currency: 'SSP', facilityId: 'hosp-001', createdAt: '2026-03-10T15:00:00Z', updatedAt: '2026-03-10T15:00:00Z' },
+  { _id: 'led-012', type: 'ledger_entry', patientId: 'pat-00022', encounterId: 'enc-pay-005', entryType: 'insurance_payment', amount: -36000, runningBalance: 9000, description: 'AAR Insurance payment — AAR-ERA-2026-4521', referenceId: 'pay-006', referenceType: 'payment', method: 'insurance', currency: 'SSP', facilityId: 'hosp-001', createdAt: '2026-03-10T16:00:00Z', updatedAt: '2026-03-10T16:00:00Z' },
+  { _id: 'led-013', type: 'ledger_entry', patientId: 'pat-00022', encounterId: 'enc-pay-005', entryType: 'payment', amount: -5000, runningBalance: 4000, description: 'Bank transfer — ECO-TRF-2026-03112', referenceId: 'pay-007', referenceType: 'payment', method: 'bank_transfer', currency: 'SSP', facilityId: 'hosp-001', createdAt: '2026-03-12T09:00:00Z', updatedAt: '2026-03-12T09:00:00Z' },
+];
+
 const IS_DEMO = process.env.NEXT_PUBLIC_DEMO_MODE !== 'false';
 
 /**
@@ -309,9 +559,9 @@ async function seedProduction(): Promise<void> {
     type: 'organization',
     name: process.env.NEXT_PUBLIC_ORG_NAME || 'My Organization',
     slug: 'default',
-    primaryColor: '#0077D7',
-    secondaryColor: '#005FBC',
-    accentColor: '#0077D7',
+    primaryColor: '#2E9E7E',
+    secondaryColor: '#1E4D4A',
+    accentColor: '#2E9E7E',
     subscriptionStatus: 'active',
     subscriptionPlan: 'enterprise',
     maxUsers: 500,
@@ -546,6 +796,37 @@ export async function seedDatabase(): Promise<void> {
   const fuDB = followUpsDB();
   for (const fu of seedFollowUps) {
     await safePut(fuDB, { ...fu, orgId: PUBLIC_ORG_ID } as unknown as Record<string, unknown>);
+  }
+
+  // Seed payment & billing data (all public org)
+  const chgDB = chargesDB();
+  for (const chg of seedCharges) {
+    await safePut(chgDB, { ...chg, orgId: PUBLIC_ORG_ID } as unknown as Record<string, unknown>);
+  }
+
+  const insDB = insurancePoliciesDB();
+  for (const ins of seedInsurancePolicies) {
+    await safePut(insDB, ins as unknown as Record<string, unknown>);
+  }
+
+  const clmDB = claimsDB();
+  for (const clm of seedClaims) {
+    await safePut(clmDB, clm as unknown as Record<string, unknown>);
+  }
+
+  const payDB = paymentsDB();
+  for (const pay of seedPayments) {
+    await safePut(payDB, pay as unknown as Record<string, unknown>);
+  }
+
+  const plnDB = paymentPlansDB();
+  for (const pln of seedPaymentPlans) {
+    await safePut(plnDB, pln as unknown as Record<string, unknown>);
+  }
+
+  const ledDB = ledgerDB();
+  for (const led of seedLedgerEntries) {
+    await safePut(ledDB, led as unknown as Record<string, unknown>);
   }
 
   await markSeeded();

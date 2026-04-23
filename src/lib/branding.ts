@@ -9,10 +9,10 @@ export interface OrgBranding {
 }
 
 export const DEFAULT_BRANDING: OrgBranding = {
-  name: 'TABAN',
-  primaryColor: '#0077D7',
-  secondaryColor: '#005FBC',
-  accentColor: '#0077D7',
+  name: 'Taban',
+  primaryColor: '#2E9E7E',
+  secondaryColor: '#1E4D4A',
+  accentColor: '#2E9E7E',
 };
 
 export function getOrgBranding(org?: OrganizationDoc | null): OrgBranding {

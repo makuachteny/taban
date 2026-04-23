@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { useApp } from '@/lib/context';
 import { isRouteAllowed, getDefaultDashboard } from '@/lib/permissions';
-import { ShieldAlert, ArrowLeft, Loader2 } from 'lucide-react';
+import { ShieldAlert, ArrowLeft, Loader2 } from '@/components/icons/lucide';
 
 export default function RoleGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

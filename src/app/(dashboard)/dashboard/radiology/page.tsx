@@ -9,7 +9,7 @@ import {
   Scan, Upload, CheckCircle2, Clock, AlertTriangle,
   FileText, BarChart3, TrendingUp, Eye,
   Image, Activity,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 
 const ACCENT = '#7C3AED';
 
@@ -80,7 +80,7 @@ export default function RadiologyDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
 
           {/* Study worklist */}
-          <div className="lg:col-span-2 glass-section">
+          <div className="lg:col-span-2 dash-card" style={{ padding: '16px', maxHeight: 'none', overflow: 'auto' }}>
             <div className="glass-section-header">
               <div className="flex items-center gap-2">
                 <Scan className="w-4 h-4" style={{ color: ACCENT }} />
@@ -126,7 +126,7 @@ export default function RadiologyDashboard() {
                       </p>
                     </div>
                     <span className="text-[10px] font-bold px-2 py-1 rounded-full" style={{
-                      background: study.status === 'completed' ? '#05966915' : study.status === 'in_progress' ? '#0077D715' : '#D9770615',
+                      background: study.status === 'completed' ? '#05966915' : study.status === 'in_progress' ? '#2E9E7E15' : '#D9770615',
                       color: study.status === 'completed' ? 'var(--color-success)' : study.status === 'in_progress' ? 'var(--accent-primary)' : 'var(--color-warning)',
                     }}>{study.status.replace('_', ' ')}</span>
                   </div>
@@ -174,12 +174,10 @@ export default function RadiologyDashboard() {
           <div className="flex flex-col gap-3">
 
             {/* Modality breakdown */}
-            <div className="glass-section">
-              <div className="glass-section-header">
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4" style={{ color: ACCENT }} />
-                  <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>By Modality</span>
-                </div>
+            <div className="dash-card">
+              <div className="flex items-center gap-2 mb-4 pb-3" style={{ borderBottom: '1px solid var(--border-light)' }}>
+                <BarChart3 className="w-4 h-4" style={{ color: ACCENT }} />
+                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>By Modality</span>
               </div>
               <div className="p-4 space-y-3">
                 {MODALITIES.map(mod => {
@@ -201,12 +199,10 @@ export default function RadiologyDashboard() {
             </div>
 
             {/* Body parts studied */}
-            <div className="glass-section">
-              <div className="glass-section-header">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
-                  <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Body Regions</span>
-                </div>
+            <div className="dash-card">
+              <div className="flex items-center gap-2 mb-4 pb-3" style={{ borderBottom: '1px solid var(--border-light)' }}>
+                <FileText className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
+                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Body Regions</span>
               </div>
               <div className="p-4 space-y-1">
                 {[...new Set(studies.map(s => s.bodyPart))].map(part => (
@@ -219,12 +215,10 @@ export default function RadiologyDashboard() {
             </div>
 
             {/* Quick stats */}
-            <div className="glass-section">
-              <div className="glass-section-header">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4" style={{ color: 'var(--color-success)' }} />
-                  <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Performance</span>
-                </div>
+            <div className="dash-card">
+              <div className="flex items-center gap-2 mb-4 pb-3" style={{ borderBottom: '1px solid var(--border-light)' }}>
+                <TrendingUp className="w-4 h-4" style={{ color: 'var(--color-success)' }} />
+                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Performance</span>
               </div>
               <div className="p-4 grid grid-cols-2 gap-3">
                 {[

@@ -18,7 +18,7 @@ A comprehensive, offline-first healthcare information system built for South Sud
 - [Testing](#testing)
 - [Environment Variables](#environment-variables)
 - [Scripts](#scripts)
-- [Demo Accounts](#demo-accounts)
+- [Demo Credentials](#demo-credentials)
 
 ---
 
@@ -58,43 +58,140 @@ The system works entirely offline and syncs when connectivity is available.
 
 ### Prerequisites
 
-- Node.js 18+
-- npm, yarn, pnpm, or bun
+- **Node.js** >= 18.0.0 ([download](https://nodejs.org))
+- **npm** >= 9.0.0 (comes with Node.js)
+- **Git** ([download](https://git-scm.com))
+- **PostgreSQL** 12+ (optional, for national analytics)
+- **CouchDB** 3+ (optional, for multi-facility sync)
+
+Works on **Windows**, **macOS**, and **Linux**.
 
 ### Installation
 
+The platform is distributed as a downloadable archive (`.tar.gz` or `.zip`). Contact [hello@taban.health](mailto:hello@taban.health) to obtain a license key and download link.
+
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd taban
+# 1. Extract the archive
+tar -xzf taban-platform-<version>.tar.gz    # Linux/macOS
+# Or unzip taban-platform-<version>.zip      # Windows
 
-# Install dependencies
-npm install
+# 2. Navigate into the folder
+cd taban-platform-<version>
 
-# Copy environment variables
-cp .env.example .env.local
+# 3. Run the setup script (verifies license, installs deps, configures env)
+npm run setup
+```
 
-# Start the development server
+The setup script will:
+
+- Ask for your **license key** (issued by Taban Health Technologies)
+- Install all dependencies
+- Generate a secure JWT secret
+- Create your `.env.local` configuration file
+
+Then start the server:
+
+```bash
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-The application seeds demo data automatically on first load, including sample patients, hospitals, users, and health records.
+The app seeds demo data automatically on first load — sample patients, hospitals, users, and health records are created in your browser's local database.
+
+### Demo Credentials
+
+When running in demo mode (default), use any of these accounts:
+
+| Username | Password | Role |
+|----------|----------|------|
+| `admin` | `TabanGov#2026!Ss` | Government Admin |
+| `dr.wani` | `Dr.Wani@JTH2026` | Doctor |
+| `dr.achol` | `Dr.Achol@JTH2026` | Doctor |
+| `co.deng` | `CO.Deng@WTH2026` | Clinical Officer |
+| `nurse.stella` | `Nurse.Stella@MTH2026` | Nurse |
+| `lab.gatluak` | `Lab.Gat@BSH2026` | Lab Technician |
+| `pharma.rose` | `Pharma.Rose@JTH2026` | Pharmacist |
+| `desk.amira` | `Desk.Amira@JTH2026` | Front Desk |
+| `bhw.akol` | `BHW.Akol@KJ2026` | Boma Health Worker |
+
+### Docker Installation
+
+Run the entire stack with Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+This starts:
+
+- **Platform** on port 3000
+- **Website** on port 3001
+- **CouchDB** on port 5984
+
+### Optional: PostgreSQL (National Analytics)
+
+PostgreSQL is only needed for government dashboards and cross-facility analytics. The app works fully without it using browser-local PouchDB.
+
+```bash
+# 1. Create the database
+createdb safeguard_junub
+
+# 2. Run the schema
+psql safeguard_junub < src/lib/db/schema.sql
+
+# 3. Set the connection string in .env.local
+#    DATABASE_URL=postgresql://user:password@localhost:5432/safeguard_junub
+```
+
+Or use the shorthand (after setting DATABASE_URL in .env.local):
+
+```bash
+npm run db:init
+```
 
 ### Optional: CouchDB Sync
 
-To enable server sync for multi-device use:
+CouchDB enables multi-device sync across facilities. Without it, the app runs fully offline in the browser.
 
-1. Install and run CouchDB
-2. Set `NEXT_PUBLIC_SYNC_ENABLED=true` in `.env.local`
-3. Configure `NEXT_PUBLIC_COUCHDB_URL` with your CouchDB endpoint
+```bash
+# 1. Start CouchDB (via Docker or native install)
+docker run -d -p 5984:5984 -e COUCHDB_USER=admin -e COUCHDB_PASSWORD=taban2026 couchdb:3
+
+# 2. Run the setup script to create databases and configure CORS
+COUCHDB_URL=http://admin:taban2026@localhost:5984 bash scripts/setup-couchdb.sh
+
+# 3. Enable sync in .env.local
+#    NEXT_PUBLIC_SYNC_ENABLED=true
+#    NEXT_PUBLIC_COUCHDB_URL=http://admin:taban2026@localhost:5984
+```
+
+> **Windows users**: The CouchDB setup script requires bash. Use WSL2, Git Bash, or run CouchDB via Docker.
+
+### Production Deployment
+
+```bash
+# Build the production bundle
+npm run build
+
+# Start the production server
+npm start
+```
+
+**Production checklist:**
+
+- [ ] Set `NEXT_PUBLIC_DEMO_MODE=false`
+- [ ] Set `JWT_SECRET` to a random 48+ character string
+- [ ] Set `DATABASE_URL` to your PostgreSQL instance
+- [ ] Set `NEXT_PUBLIC_ADMIN_NAME` and `NEXT_PUBLIC_ADMIN_PASSWORD`
+- [ ] Configure HTTPS (required for secure cookies and CSP headers)
+- [ ] Set `COUCHDB_WEBHOOK_SECRET` if using sync
 
 ---
 
 ## Project Structure
 
-```
+```text
 src/
 ├── app/
 │   ├── (dashboard)/           # Protected dashboard routes (26+ pages)
@@ -356,30 +453,29 @@ Tests use Jest 30 with ts-jest for TypeScript support and JSDOM for browser envi
 
 ## Environment Variables
 
-Copy `.env.example` to `.env.local` and configure:
+Run `npm run setup` to configure automatically, or copy `.env.example` to `.env.local` and edit manually. See `.env.example` for all available variables with documentation.
 
-```env
-# CouchDB Sync (optional)
-NEXT_PUBLIC_SYNC_ENABLED=false
-NEXT_PUBLIC_COUCHDB_URL=http://localhost:5984
-COUCHDB_ADMIN_USER=admin
-COUCHDB_ADMIN_PASSWORD=password
+**Required for production:**
 
-# PostgreSQL (server-side analytics)
-DATABASE_URL=postgresql://user:password@localhost:5432/taban
+| Variable | Purpose | How to generate |
+|----------|---------|-----------------|
+| `JWT_SECRET` | Session token signing | `openssl rand -base64 48` |
+| `NEXT_PUBLIC_DEMO_MODE` | Set to `false` for production | |
+| `NEXT_PUBLIC_ADMIN_NAME` | Initial admin full name | |
+| `NEXT_PUBLIC_ADMIN_PASSWORD` | Initial admin password | |
 
-# Authentication
-JWT_SECRET=your-secret-key
+**Optional:**
 
-# Demo Request Emails (required for production demo form)
-DEMO_FROM_EMAIL=demo@yourdomain.com
-DEMO_FROM_NAME=Taban Demo
-DEMO_NOTIFY_EMAIL=tenymakuach@gmail.com
-DEMO_SCHEDULING_URL=https://calendly.com/your-handle/taban-demo
-RESEND_API_KEY=your-resend-key
-# Or use SendGrid instead of Resend:
-# SENDGRID_API_KEY=your-sendgrid-key
-```
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `DATABASE_URL` | PostgreSQL connection string | _(none, app uses PouchDB)_ |
+| `NEXT_PUBLIC_SYNC_ENABLED` | Enable CouchDB sync | `false` |
+| `NEXT_PUBLIC_COUCHDB_URL` | CouchDB server URL | `http://localhost:5984` |
+| `COUCHDB_WEBHOOK_SECRET` | Sync webhook HMAC secret | |
+| `RESEND_API_KEY` | Email via Resend | |
+| `SENDGRID_API_KEY` | Email via SendGrid | |
+| `FLUTTERWAVE_SECRET_HASH` | Payment webhook secret | |
+| `NEXT_PUBLIC_APP_URL` | Base URL for payment links | |
 
 ---
 
@@ -387,27 +483,17 @@ RESEND_API_KEY=your-resend-key
 
 | Command | Description |
 |---------|-------------|
+| `npm run setup` | First-time setup (license, deps, env config) |
 | `npm run dev` | Start development server on `localhost:3000` |
 | `npm run build` | Create production build |
 | `npm start` | Run production server |
 | `npm run lint` | Run ESLint checks |
-| `npm test` | Run Jest test suite |
+| `npm test` | Run Jest test suite (1,261 tests) |
 | `npm run test:ci` | Run tests with coverage reporting |
-
----
-
-## Demo Accounts
-
-The application seeds the following demo accounts on first load:
-
-| Username | Password | Role |
-|----------|----------|------|
-| `superadmin` | `Super@Taban2026!` | Super Admin |
-| `org.admin` | `OrgAdmin@Mercy2026` | Organization Admin |
-| `dr.wani` | `Dr.Wani@JTH2026` | Doctor |
-| `admin` | `TabanGov#2026!Ss` | Government |
-| `bhw.akol` | `BHW.Akol@KJ2026` | Boma Health Worker |
-| `sup.mary` | `Sup.Mary@KJ2026` | Payam Supervisor |
+| `npm run db:init` | Initialize PostgreSQL schema (requires DATABASE_URL) |
+| `npm run license:generate` | Generate a license key (admin only) |
+| `npm run license:verify` | Verify a license key |
+| `npm run release` | Package a distributable release archive |
 
 ---
 

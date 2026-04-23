@@ -1,5 +1,15 @@
-import type { LucideIcon } from 'lucide-react';
-import type { ReactNode } from 'react';
+import type { ComponentType, ReactNode, SVGProps, CSSProperties } from 'react';
+
+type IconComponent = ComponentType<
+  Omit<SVGProps<SVGSVGElement>, 'color'> & {
+    size?: number | string;
+    strokeWidth?: number | string;
+    color?: string;
+    style?: CSSProperties;
+    className?: string;
+    absoluteStrokeWidth?: boolean;
+  }
+>;
 
 /**
  * Unified page header used across every dashboard route so the look is
@@ -13,7 +23,7 @@ import type { ReactNode } from 'react';
  * right-side action slot is optional — pass it as a ReactNode fragment.
  */
 export interface PageHeaderProps {
-  icon: LucideIcon;
+  icon: IconComponent;
   title: string;
   subtitle?: string;
   actions?: ReactNode;
@@ -25,7 +35,7 @@ export default function PageHeader({ icon: Icon, title, subtitle, actions }: Pag
       <div className="page-header">
         <div className="page-header__top">
           <div className="page-header__icon">
-            <Icon size={20} strokeWidth={2.2} />
+            <Icon size={26} strokeWidth={1.8} />
           </div>
           <h1 className="page-header__title">{title}</h1>
         </div>

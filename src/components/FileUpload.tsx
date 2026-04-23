@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import { Upload, X, FileText, Image as ImageIcon, Eye, AlertTriangle } from 'lucide-react';
+import { Upload, X, FileText, Image as ImageIcon, Eye, AlertTriangle } from '@/components/icons/lucide';
 import type { Attachment } from '@/data/mock';
 import { validateAttachment, MAX_FILE_SIZE_BYTES } from '@/lib/validation';
 

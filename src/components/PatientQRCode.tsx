@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Download, Printer } from 'lucide-react';
+import { Download, Printer } from '@/components/icons/lucide';
 
 interface PatientQRCodeProps {
   patientId: string;
@@ -22,7 +22,7 @@ export default function PatientQRCode({ patientId, patientName, hospitalNumber, 
 
       // Encode patient lookup data as JSON in the QR code
       const payload = JSON.stringify({
-        type: 'TABAN_PATIENT',
+        type: 'Taban_PATIENT',
         id: patientId,
         hn: hospitalNumber,
       });

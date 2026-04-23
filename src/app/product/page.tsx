@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 /* ═══════════════════════════════════════════════════════════════════
-   TABAN — Main Landing Page
+   Taban — Main Landing Page
    Aesthetic: clean clinical editorial, deep blue accents,
    IBM Plex Sans, generous whitespace, section cards with real imagery
    ═══════════════════════════════════════════════════════════════════ */
@@ -79,56 +79,56 @@ const FEATURE_CATEGORIES = [
   {
     title: "Configurable for Any Clinical Program",
     icon: Stethoscope,
-    color: "#0077D7",
+    color: "#2E9E7E",
     desc: "Flexible and configurable for any clinical area. Today Taban is used in a wide variety of areas: from Primary Care for Outpatients; to Specialty Centers for NCD, MCH/ANC, HIV, TB, Malaria, and more; to large Hospital-based Inpatient care.",
     highlights: ["Primary Care & Outpatient", "MCH / ANC / Immunization", "NCD, HIV, TB, Malaria", "Inpatient & Surgery"],
   },
   {
     title: "Clinical Documentation & Flexible Forms",
     icon: FileText,
-    color: "#0A5FC2",
+    color: "#246860",
     desc: "Triage and track your patients' history. Write orders electronically. Create and customize all the forms your providers might need, for any clinical area. Non-developers can build new forms easily with the user-friendly Form Builder.",
     highlights: ["Electronic clinical notes", "Customizable form builder", "ICD-10/ICD-11 coding", "Diagnosis & treatment tracking"],
   },
   {
     title: "Registration, Appointments, Queues & Billing",
     icon: Calendar,
-    color: "#0A3D6B",
+    color: "#1A3A3A",
     desc: "Manage your patient lists and bookings in one location or across multiple sites. Connect your registration to national patient databases. Handle bills, inventory, labs, and dispensing directly or through integration.",
     highlights: ["Patient registration & search", "Appointment scheduling", "Queue management", "Billing & stock management"],
   },
   {
     title: "Interoperable Locally and Nationally",
     icon: Network,
-    color: "#0077D7",
+    color: "#2E9E7E",
     desc: "The Taban REST and FHIR-ready APIs enable integration with other end-user tools, such as ERP Systems, Lab Systems, DHIS2, and more; or, with National Health Exchanges.",
     highlights: ["DHIS2 automated export", "REST API", "FHIR-ready architecture", "National system integration"],
   },
   {
     title: "Privileges & User Management",
     icon: Lock,
-    color: "#0A5FC2",
+    color: "#246860",
     desc: "Role-based access and deeper permissions granularity, such as by location or data types. Audit logging enables follow up on actions taken. 11+ distinct user roles from CHW to Ministry admin.",
     highlights: ["11+ user roles (RBAC)", "Location-based access", "Audit logging", "Session management"],
   },
   {
     title: "Language Translation",
     icon: Languages,
-    color: "#0A3D6B",
+    color: "#1A3A3A",
     desc: "Taban has configurable translation tools so your team can set up the languages your users need — including supporting multiple different languages at once, and Right-to-Left language support.",
     highlights: ["Multi-language interface", "60+ South Sudan languages", "RTL support", "Icon-driven for low-literacy"],
   },
   {
     title: "Clinical Data Reporting & Exports",
     icon: BarChart3,
-    color: "#0077D7",
+    color: "#2E9E7E",
     desc: "Track and analyze clinical data: See your impact, report to stakeholders, and monitor key metrics. Generate IDSR reports, MCH analytics, and donor-ready outputs.",
     highlights: ["IDSR weekly reports", "MCH analytics dashboard", "Custom report builder", "Donor-ready exports"],
   },
   {
     title: "AI-Powered Clinical Decision Support",
     icon: Brain,
-    color: "#0A5FC2",
+    color: "#246860",
     desc: "Rule-based clinical decision support running entirely in the browser. WHO/IMCI guideline-aligned. Suggests diagnoses, treatments, and lab orders — no internet required.",
     highlights: ["WHO/IMCI guidelines", "15+ priority diseases", "Offline AI inference", "Severity triage"],
   },
@@ -142,7 +142,7 @@ const SHOWCASE_SECTIONS = [
     cta: "See key features below",
     ctaId: "features",
     visual: "features",
-    color: "#0077D7",
+    color: "#2E9E7E",
   },
   {
     eyebrow: "Roadmap",
@@ -151,7 +151,7 @@ const SHOWCASE_SECTIONS = [
     cta: "Go to our roadmap",
     ctaId: "roadmap",
     visual: "roadmap",
-    color: "#0A5FC2",
+    color: "#246860",
   },
   {
     eyebrow: "Releases",
@@ -160,7 +160,7 @@ const SHOWCASE_SECTIONS = [
     cta: "View release notes",
     ctaId: "releases",
     visual: "releases",
-    color: "#0A3D6B",
+    color: "#1A3A3A",
   },
   {
     eyebrow: "Deploy",
@@ -169,7 +169,7 @@ const SHOWCASE_SECTIONS = [
     cta: "Try the Demo",
     ctaHref: "/login",
     visual: "download",
-    color: "#0077D7",
+    color: "#2E9E7E",
   },
 ];
 
@@ -244,7 +244,7 @@ export default function ProductPage() {
           <Link href="/" className="p-logo">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/assets/taban-icon.svg" alt="Taban" className="p-logo__icon" />
-            <span className="p-logo__text">TABAN</span>
+            <span className="p-logo__text">Taban</span>
           </Link>
 
           <nav className="p-nav">
@@ -661,7 +661,7 @@ export default function ProductPage() {
               <div className="p-logo" style={{ marginBottom: 16 }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/assets/taban-icon.svg" alt="Taban" className="p-logo__icon" />
-                <span className="p-logo__text" style={{ color: "#fff" }}>TABAN</span>
+                <span className="p-logo__text" style={{ color: "#fff" }}>Taban</span>
               </div>
               <p className="p-footer__tagline">&ldquo;Hope&rdquo; in Dinka. Purpose-built digital health records for the world&apos;s hardest health environments.</p>
             </div>
@@ -759,23 +759,23 @@ const productCSS = `
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 :root {
-  --p-blue: #0077D7;
-  --p-blue-hover: #005FBC;
-  --p-blue-dark: #0A3D6B;
-  --p-blue-mid: #0A5FC2;
+  --p-blue: #2E9E7E;
+  --p-blue-hover: #1E4D4A;
+  --p-blue-dark: #1A3A3A;
+  --p-blue-mid: #246860;
   --p-blue-light: #E8F3FD;
   --p-blue-pale: #F5FAFF;
 
-  --p-text: #0F172A;
-  --p-text-secondary: #475569;
-  --p-text-muted: #64748B;
+  --p-text: #1A3A3A;
+  --p-text-secondary: #3D5854;
+  --p-text-muted: #5A7370;
 
   --p-bg: #FFFFFF;
-  --p-bg-warm: #F8FAFC;
+  --p-bg-warm: #F2F0EB;
   --p-bg-cool: #F1F5F9;
-  --p-bg-section: #F8FAFC;
+  --p-bg-section: #F2F0EB;
 
-  --p-border: #E2E8F0;
+  --p-border: #D4CFC5;
   --p-border-light: #F1F5F9;
 
   --p-radius: 8px;

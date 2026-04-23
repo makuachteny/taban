@@ -3,7 +3,7 @@
 import TopBar from '@/components/TopBar';
 import PageHeader from '@/components/PageHeader';
 import { useVitalStatistics } from '@/lib/hooks/useVitalStatistics';
-import { Baby, Skull, AlertTriangle, Activity } from 'lucide-react';
+import { Baby, Skull, AlertTriangle, Activity } from '@/components/icons/lucide';
 
 export default function VitalStatisticsPage() {
   const { data, loading } = useVitalStatistics();
@@ -33,7 +33,7 @@ export default function VitalStatisticsPage() {
             { label: 'Caesarean Rate', value: `${birthStats.total ? Math.round(birthStats.byDeliveryType.caesarean / birthStats.total * 100) : 0}%`, icon: Activity, color: 'var(--color-warning)', bg: 'rgba(252,211,77,0.12)' },
           ].map(stat => (
             <div key={stat.label} className="kpi">
-              <div className="kpi__icon" style={{ background: stat.bg }}>
+              <div className="icon-box-sm" style={{ background: stat.bg }}>
                 <stat.icon style={{ color: stat.color }} />
               </div>
               <div className="kpi__body">
@@ -48,7 +48,8 @@ export default function VitalStatisticsPage() {
         {Object.keys(birthStats.byState).length > 0 && (
           <div className="card-elevated p-4 mb-6">
             <h3 className="font-semibold text-sm mb-3">Births by State</h3>
-            <div className="space-y-2">
+            <hr className="section-divider" />
+            <div className="space-y-2 data-row-divider-sm">
               {Object.entries(birthStats.byState).sort(([, a], [, b]) => b - a).map(([state, count]) => (
                 <div key={state} className="flex items-center gap-3">
                   <span className="text-xs w-48 truncate" style={{ color: 'var(--text-secondary)' }}>{state}</span>
@@ -73,7 +74,7 @@ export default function VitalStatisticsPage() {
             { label: 'ICD-11 Coded', value: `${deathStats.total ? Math.round(deathStats.withICD11Code / deathStats.total * 100) : 0}%`, icon: Activity, color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)' },
           ].map(stat => (
             <div key={stat.label} className="kpi">
-              <div className="kpi__icon" style={{ background: stat.bg }}>
+              <div className="icon-box-sm" style={{ background: stat.bg }}>
                 <stat.icon style={{ color: stat.color }} />
               </div>
               <div className="kpi__body">
@@ -88,7 +89,8 @@ export default function VitalStatisticsPage() {
         <div className="grid grid-cols-2 gap-3 mb-6">
           <div className="card-elevated p-4">
             <h3 className="font-semibold text-sm mb-3 flex items-center gap-2"><AlertTriangle className="w-4 h-4" style={{ color: 'var(--color-danger)' }} /> CRVS Registration Gaps</h3>
-            <div className="space-y-3">
+            <hr className="section-divider" />
+            <div className="space-y-3 data-row-divider-sm">
               <div>
                 <div className="flex justify-between text-xs mb-1"><span style={{ color: 'var(--text-secondary)' }}>Death Notification Rate</span><span className="font-bold">{deathStats.total ? Math.round(deathStats.notified / deathStats.total * 100) : 0}%</span></div>
                 <div className="w-full h-2 rounded-full" style={{ background: 'var(--overlay-light)' }}><div className="h-full rounded-full" style={{ width: `${deathStats.total ? (deathStats.notified / deathStats.total) * 100 : 0}%`, background: 'var(--color-warning)' }} /></div>
@@ -106,7 +108,8 @@ export default function VitalStatisticsPage() {
 
           <div className="card-elevated p-4">
             <h3 className="font-semibold text-sm mb-3">Top Causes of Death</h3>
-            <div className="space-y-2">
+            <hr className="section-divider" />
+            <div className="space-y-2 data-row-divider-sm">
               {deathStats.topCauses.slice(0, 5).map((c, i) => (
                 <div key={c.code} className="flex items-center gap-2">
                   <span className="text-xs font-bold w-5" style={{ color: 'var(--text-muted)' }}>{i + 1}</span>

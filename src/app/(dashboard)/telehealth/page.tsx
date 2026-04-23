@@ -10,7 +10,7 @@ import {
   Star, Shield, X, WifiOff,
   Calendar, DollarSign, Lock,
   Filter, UserPlus, ExternalLink,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 import { useTelehealth, useTelehealthStats } from '@/lib/hooks/useTelehealth';
 import { useAppointments } from '@/lib/hooks/useAppointments';
 import { usePatients } from '@/lib/hooks/usePatients';
@@ -188,9 +188,9 @@ export default function TelehealthPage() {
   const goToday = () => { setCalMonth(todayObj.getMonth()); setCalYear(todayObj.getFullYear()); setSelectedDate(today); };
 
   return (
-    <div>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
       <TopBar />
-      <main className="page-container page-enter">
+      <main className="page-container page-enter" style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         <PageHeader
           icon={Video}
           title="Telehealth"
@@ -270,7 +270,7 @@ export default function TelehealthPage() {
 
         {/* ═══ Calendar ═══ */}
         {view === 'calendar' && (
-          <div className="card-elevated" style={{ overflow: 'hidden', marginBottom: 16 }}>
+          <div className="card-elevated" style={{ overflow: 'hidden', marginBottom: 16, flex: 1, display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid var(--border-medium)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <button onClick={prevMonth} style={calBtn}><ChevronLeft size={16} /></button>
@@ -284,13 +284,13 @@ export default function TelehealthPage() {
                 <div key={d} style={{ padding: '8px 0', textAlign: 'center', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: '1px solid var(--border-medium)' }}>{d}</div>
               ))}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', flex: 1, gridAutoRows: '1fr' }}>
               {calDays.map((day, i) => {
                 const ev = eventsByDate[day.date];
                 const isSel = selectedDate === day.date;
                 return (
                   <button key={i} onClick={() => setSelectedDate(isSel ? null : day.date)} style={{
-                    padding: '8px 4px', minHeight: 72, border: 'none', cursor: 'pointer',
+                    padding: '10px 4px', minHeight: 0, border: 'none', cursor: 'pointer',
                     background: isSel ? 'var(--accent-light)' : day.isToday ? 'rgba(16,185,129,0.04)' : 'transparent',
                     borderRight: (i + 1) % 7 !== 0 ? '1px solid var(--border-medium)' : 'none',
                     borderBottom: '1px solid var(--border-medium)',
@@ -436,7 +436,7 @@ export default function TelehealthPage() {
                             <Btn c="#D97706" onClick={() => update(session._id, { connectionDrops: session.connectionDrops + 1 })}><WifiOff size={13} /> Drop</Btn>
                           </>}
                           {(session.status === 'in_session' || session.status === 'completed') && (
-                            <Btn c="#0077D7" onClick={() => { setNotesId(session._id); setNotesText(session.clinicalNotes || ''); setNotesDx(session.diagnosis || ''); setNotesIcd(session.icd10Code || ''); }}><FileText size={13} /> Notes</Btn>
+                            <Btn c="#2E9E7E" onClick={() => { setNotesId(session._id); setNotesText(session.clinicalNotes || ''); setNotesDx(session.diagnosis || ''); setNotesIcd(session.icd10Code || ''); }}><FileText size={13} /> Notes</Btn>
                           )}
                           {session.status === 'completed' && !session.patientRating && <Btn c="#F59E0B" onClick={() => setRatingId(session._id)}><Star size={13} /> Rate</Btn>}
                           {session.status === 'completed' && session.paymentStatus === 'pending' && <Btn c="#10B981" onClick={() => update(session._id, { paymentStatus: 'paid' })}><DollarSign size={13} /> Paid</Btn>}

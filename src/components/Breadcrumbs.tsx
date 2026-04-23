@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronRight, Home } from 'lucide-react';
+import { ChevronRight, Home } from '@/components/icons/lucide';
 
 const SEGMENT_NAMES: Record<string, string> = {
   dashboard: 'Dashboard',

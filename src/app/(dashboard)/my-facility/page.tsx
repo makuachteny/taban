@@ -8,7 +8,7 @@ import { useHospitals } from '@/lib/hooks/useHospitals';
 import {
   Building2, BedDouble, Users, Zap,
   Activity, Save, CheckCircle, AlertTriangle, Loader2,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 
 export default function MyFacilityPage() {
   const { currentUser } = useApp();
@@ -135,9 +135,11 @@ export default function MyFacilityPage() {
   };
 
   const sectionClass = 'card-elevated p-5 space-y-4';
-  const sectionTitle = (icon: React.ReactNode, title: string) => (
+  const sectionTitle = (icon: React.ReactNode, title: string, iconBg: string = 'var(--accent-light)') => (
     <div className="flex items-center gap-2 pb-3 mb-1" style={{ borderBottom: '1px solid var(--border-light)' }}>
-      {icon}
+      <div className="icon-box-sm" style={{ background: iconBg }}>
+        {icon}
+      </div>
       <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</h3>
     </div>
   );
@@ -205,7 +207,7 @@ export default function MyFacilityPage() {
                 disabled={saving}
                 className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold text-white transition-all"
                 style={{
-                  background: saving ? 'var(--text-muted)' : 'linear-gradient(135deg, #0077D7, #005FBC)',
+                  background: saving ? 'var(--text-muted)' : 'linear-gradient(135deg, #2E9E7E, #1E4D4A)',
                   boxShadow: '0 2px 8px rgba(0,119,215,0.3)',
                 }}
               >
@@ -221,7 +223,7 @@ export default function MyFacilityPage() {
 
           {/* Operational Status */}
           <div className={sectionClass}>
-            {sectionTitle(<Activity className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />, 'Operational Status')}
+            {sectionTitle(<Activity className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />, 'Operational Status')}
             <div>
               <label className="block text-xs font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Current Status</label>
               <select
@@ -240,7 +242,8 @@ export default function MyFacilityPage() {
                 <option value="non_functional">Non-Functional</option>
                 <option value="closed">Closed</option>
               </select>
-              <div className="mt-2">
+              <hr className="section-divider" />
+              <div>
                 <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold px-2.5 py-1 rounded-full" style={{
                   background: statusColors[operationalStatus]?.bg,
                   color: statusColors[operationalStatus]?.color,
@@ -254,7 +257,7 @@ export default function MyFacilityPage() {
 
           {/* Bed Capacity */}
           <div className={sectionClass}>
-            {sectionTitle(<BedDouble className="w-4 h-4" style={{ color: 'var(--color-warning)' }} />, 'Bed Capacity')}
+            {sectionTitle(<BedDouble className="w-3.5 h-3.5" style={{ color: 'var(--color-warning)' }} />, 'Bed Capacity', 'rgba(252,211,77,0.12)')}
             <div className="grid grid-cols-2 gap-3">
               {numberInput('Total Beds', totalBeds, setTotalBeds)}
               {numberInput('ICU Beds', icuBeds, setIcuBeds)}
@@ -265,7 +268,7 @@ export default function MyFacilityPage() {
 
           {/* Staffing */}
           <div className={sectionClass}>
-            {sectionTitle(<Users className="w-4 h-4" style={{ color: '#60A5FA' }} />, 'Staffing')}
+            {sectionTitle(<Users className="w-3.5 h-3.5" style={{ color: '#5CB8A8' }} />, 'Staffing', 'rgba(92,184,168,0.12)')}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {numberInput('Doctors', doctors, setDoctors)}
               {numberInput('Nurses', nurses, setNurses)}
@@ -277,8 +280,8 @@ export default function MyFacilityPage() {
 
           {/* Infrastructure */}
           <div className={sectionClass}>
-            {sectionTitle(<Zap className="w-4 h-4" style={{ color: 'var(--color-warning)' }} />, 'Infrastructure')}
-            <div className="space-y-1">
+            {sectionTitle(<Zap className="w-3.5 h-3.5" style={{ color: 'var(--color-warning)' }} />, 'Infrastructure', 'rgba(252,211,77,0.12)')}
+            <div className="data-row-divider-sm" style={{ display: 'flex', flexDirection: 'column' }}>
               {toggle('Has Electricity', hasElectricity, setHasElectricity)}
               {hasElectricity && (
                 <div className="pl-4 pb-2">
@@ -287,6 +290,9 @@ export default function MyFacilityPage() {
               )}
               {toggle('Has Generator', hasGenerator, setHasGenerator)}
               {toggle('Has Solar Power', hasSolar, setHasSolar)}
+            </div>
+            <hr className="section-divider" />
+            <div className="data-row-divider-sm" style={{ display: 'flex', flexDirection: 'column' }}>
               {toggle('Has Internet', hasInternet, setHasInternet)}
               {hasInternet && (
                 <div className="pl-4 pb-2">
@@ -319,8 +325,8 @@ export default function MyFacilityPage() {
           {/* Services */}
           <div className="lg:col-span-2">
             <div className={sectionClass}>
-              {sectionTitle(<CheckCircle className="w-4 h-4" style={{ color: 'var(--color-success)' }} />, 'Services Offered')}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-1">
+              {sectionTitle(<CheckCircle className="w-3.5 h-3.5" style={{ color: 'var(--color-success)' }} />, 'Services Offered', 'rgba(74,222,128,0.12)')}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-1 data-row-divider-sm">
                 {toggle('EPI (Immunization)', serviceFlags.epi, () => toggleService('epi'))}
                 {toggle('Antenatal Care', serviceFlags.anc, () => toggleService('anc'))}
                 {toggle('Delivery Services', serviceFlags.delivery, () => toggleService('delivery'))}

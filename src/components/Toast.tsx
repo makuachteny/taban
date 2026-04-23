@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, createContext, useContext, ReactNode } from 'react';
-import { CheckCircle2, AlertTriangle, X } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, X } from '@/components/icons/lucide';
 
 interface Toast {
   id: number;
@@ -51,9 +51,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             className="flex items-center gap-3 px-4 py-3 shadow-lg animate-fadeInUp"
             style={{
               background: toast.type === 'success' ? 'var(--color-success)' : 'var(--color-danger)',
-              backdropFilter: 'blur(12px)',
               color: 'white',
-              border: `1px solid rgba(255,255,255,0.15)`,
+              border: `1px solid ${toast.type === 'success' ? '#15B8A6' : '#F87171'}`,
               borderRadius: 'var(--card-radius)',
             }}
           >

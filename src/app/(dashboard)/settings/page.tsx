@@ -12,7 +12,7 @@ import type { UserRole } from '@/lib/db-types';
 import {
   Users, Building2, Plus, Search, Edit3, KeyRound, UserX, UserCheck,
   X, Eye, EyeOff, RefreshCw, Check
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 
 const ROLES: { value: UserRole; label: string }[] = [
   { value: 'doctor', label: 'Doctor' },
@@ -246,7 +246,7 @@ export default function SettingsPage() {
   };
   const selectStyle: React.CSSProperties = {
     ...inputStyle, appearance: 'none' as const, paddingRight: '36px',
-    backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2394A3B8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+    backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%238A9E9A' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
     backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center',
   };
   const btnPrimary: React.CSSProperties = {
@@ -291,7 +291,7 @@ export default function SettingsPage() {
               className="flex items-center gap-2 px-5 py-3 font-medium text-sm transition-colors"
               style={{
                 color: activeTab === tab.key ? 'var(--accent-primary)' : 'var(--text-muted)',
-                borderBottom: activeTab === tab.key ? '2px solid #0077D7' : '2px solid transparent',
+                borderBottom: activeTab === tab.key ? '2px solid #2E9E7E' : '2px solid transparent',
                 marginBottom: '-1px',
                 background: 'transparent', border: 'none', borderBottomStyle: 'solid',
                 borderBottomWidth: '2px',
@@ -730,7 +730,7 @@ export default function SettingsPage() {
                       <input type="checkbox"
                         checked={hospitalForm[f.key as keyof typeof hospitalForm] as boolean}
                         onChange={e => setHospitalForm(p => ({ ...p, [f.key]: e.target.checked }))}
-                        className="w-4 h-4 rounded accent-[#0077D7]"
+                        className="w-4 h-4 rounded accent-[#2E9E7E]"
                       />
                       {f.label}
                     </label>

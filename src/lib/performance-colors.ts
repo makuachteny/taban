@@ -4,10 +4,10 @@
 
 /** Discrete 4-stop color: red(<40), amber(40-59), yellow(60-79), green(80+) */
 export function getPerformanceColor(value: number): string {
-  if (value < 40) return '#EF4444';   // red
-  if (value < 60) return '#F59E0B';   // amber
+  if (value < 40) return '#C44536';   // red
+  if (value < 60) return '#E4A84B';   // amber
   if (value < 80) return '#EAB308';   // yellow
-  return '#3ECF8E';                    // green
+  return '#1B9E77';                    // green
 }
 
 /** Smooth RGB gradient: red(0) → yellow(50) → green(100) */
@@ -32,10 +32,10 @@ export function getMetricColorInterpolated(value: number): string {
 
 /** Background tint at 14% opacity for metric cards */
 export function getPerformanceBg(value: number): string {
-  if (value < 40) return 'rgba(239,68,68,0.12)';
-  if (value < 60) return 'rgba(245,158,11,0.12)';
+  if (value < 40) return 'rgba(196,69,54,0.12)';
+  if (value < 60) return 'rgba(228,168,75,0.12)';
   if (value < 80) return 'rgba(234,179,8,0.10)';
-  return 'rgba(34,197,94,0.12)';
+  return 'rgba(27,158,119,0.12)';
 }
 
 export type PerformanceMetricKey = keyof typeof METRIC_LABELS;

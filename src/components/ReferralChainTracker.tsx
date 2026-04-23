@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, Building2, Home, Activity, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
+import { ArrowRight, Building2, Home, Activity, CheckCircle2, Clock, AlertTriangle } from '@/components/icons/lucide';
 import type { ReferralDoc } from '@/lib/db-types';
 
 interface FacilityLevel {
@@ -190,8 +190,8 @@ export default function ReferralChainTracker({ referrals, currentFacilityId, com
               <div key={ref._id} className="flex items-center gap-3 p-2.5 rounded-xl cursor-pointer transition-all"
                 onClick={() => router.push('/referrals')}
                 style={{
-                  background: ref.urgency === 'emergency' ? 'rgba(239,68,68,0.06)' : 'var(--overlay-subtle)',
-                  border: `1px solid ${ref.urgency === 'emergency' ? 'rgba(239,68,68,0.2)' : 'var(--border-light)'}`,
+                  background: ref.urgency === 'emergency' ? 'rgba(201,69,69,0.06)' : 'var(--overlay-subtle)',
+                  border: `1px solid ${ref.urgency === 'emergency' ? 'rgba(201,69,69,0.2)' : 'var(--border-light)'}`,
                 }}>
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
                   style={{ background: ref.urgency === 'emergency' ? 'var(--color-danger)' : ref.urgency === 'urgent' ? 'var(--color-warning)' : 'var(--accent-primary)' }}>
@@ -205,7 +205,7 @@ export default function ReferralChainTracker({ referrals, currentFacilityId, com
                 </div>
                 <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
                   <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{
-                    background: ref.status === 'seen' ? 'rgba(74,222,128,0.12)' : 'rgba(43,111,224,0.12)',
+                    background: ref.status === 'seen' ? 'rgba(74,222,128,0.12)' : 'rgba(46,158,126,0.12)',
                     color: ref.status === 'seen' ? 'var(--color-success)' : 'var(--accent-primary)',
                   }}>{ref.status.toUpperCase()}</span>
                   {ref.urgency && ref.urgency !== 'routine' && (

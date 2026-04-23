@@ -2,17 +2,25 @@
   "name": "taban",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
   "scripts": {
+    "setup": "node scripts/setup.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
-    "test:ci": "jest --ci --coverage"
+    "test:ci": "jest --ci --coverage",
+    "db:init": "psql $DATABASE_URL < src/lib/db/schema.sql",
+    "license:generate": "node scripts/license.mjs generate",
+    "license:verify": "node scripts/license.mjs verify",
+    "release": "node scripts/release.mjs"
   },
   "dependencies": {
-    "@next/swc-linux-arm64-gnu": "^16.2.3",
-    "@types/leaflet": "^1.9.21",
+"@types/leaflet": "^1.9.21",
     "bcryptjs": "^3.0.3",
     "html5-qrcode": "^2.3.8",
     "jose": "^6.1.3",

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import { Camera, X, RotateCcw } from 'lucide-react';
+import { Camera, X, RotateCcw } from '@/components/icons/lucide';
 
 interface PhotoCaptureProps {
   value?: string; // base64 data URL

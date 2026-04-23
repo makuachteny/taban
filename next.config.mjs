@@ -16,6 +16,9 @@ const scriptSrc = isProd
   : "script-src 'self' 'unsafe-eval' 'unsafe-inline'";
 
 const nextConfig = {
+  experimental: {
+    instrumentationHook: true,
+  },
   webpack: (config, { isServer }) => {
     // Filter managed paths that don't contain a package.json to avoid noisy
     // webpack cache warnings from empty optional dependency stubs.

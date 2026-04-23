@@ -9,7 +9,7 @@ import { usePatients } from '@/lib/hooks/usePatients';
 import { useApp } from '@/lib/context';
 import { usePermissions } from '@/lib/hooks/usePermissions';
 import { COMMON_ICD11_CODES } from '@/lib/icd11-codes';
-import { Plus, Search, X, AlertTriangle, FileText, ChevronDown, ChevronUp, UserCheck } from 'lucide-react';
+import { Plus, Search, X, AlertTriangle, FileText, ChevronDown, ChevronUp, UserCheck, Skull, Baby, Hash, ClipboardCheck } from '@/components/icons/lucide';
 
 export default function DeathsPage() {
   const { deaths, stats, register } = useDeaths();
@@ -130,23 +130,38 @@ export default function DeathsPage() {
         {stats && (
           <div className="grid grid-cols-5 gap-3 mb-6">
             <div className="card-elevated p-4">
-              <p className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Total Deaths</p>
+              <div className="flex items-center gap-2 mb-1">
+                <div className="icon-box-sm" style={{ background: 'rgba(229,46,66,0.12)', color: 'var(--color-danger)' }}><Skull className="w-3.5 h-3.5" /></div>
+                <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Total Deaths</p>
+              </div>
               <p className="text-2xl font-bold" style={{ color: 'var(--color-danger)' }}>{stats.total}</p>
             </div>
             <div className="card-elevated p-4">
-              <p className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Maternal Deaths</p>
+              <div className="flex items-center gap-2 mb-1">
+                <div className="icon-box-sm" style={{ background: 'rgba(229,46,66,0.12)', color: 'var(--color-danger)' }}><AlertTriangle className="w-3.5 h-3.5" /></div>
+                <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Maternal Deaths</p>
+              </div>
               <p className="text-2xl font-bold" style={{ color: 'var(--color-danger)' }}>{stats.maternalDeaths}</p>
             </div>
             <div className="card-elevated p-4">
-              <p className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Under-5 Deaths</p>
+              <div className="flex items-center gap-2 mb-1">
+                <div className="icon-box-sm" style={{ background: 'rgba(245,158,11,0.12)', color: 'var(--color-warning)' }}><Baby className="w-3.5 h-3.5" /></div>
+                <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Under-5 Deaths</p>
+              </div>
               <p className="text-2xl font-bold" style={{ color: 'var(--color-warning)' }}>{stats.under5Deaths}</p>
             </div>
             <div className="card-elevated p-4">
-              <p className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>With ICD-11 Code</p>
+              <div className="flex items-center gap-2 mb-1">
+                <div className="icon-box-sm" style={{ background: 'rgba(43,111,224,0.12)', color: 'var(--accent-primary)' }}><Hash className="w-3.5 h-3.5" /></div>
+                <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>With ICD-11 Code</p>
+              </div>
               <p className="text-2xl font-bold" style={{ color: 'var(--accent-primary)' }}>{stats.withICD11Code}/{stats.total}</p>
             </div>
             <div className="card-elevated p-4">
-              <p className="text-xs font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>Registered</p>
+              <div className="flex items-center gap-2 mb-1">
+                <div className="icon-box-sm" style={{ background: 'rgba(43,111,224,0.12)', color: 'var(--accent-primary)' }}><ClipboardCheck className="w-3.5 h-3.5" /></div>
+                <p className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Registered</p>
+              </div>
               <p className="text-2xl font-bold" style={{ color: 'var(--accent-primary)' }}>{stats.registered}/{stats.total}</p>
             </div>
           </div>
@@ -155,7 +170,11 @@ export default function DeathsPage() {
         {/* Top causes */}
         {stats && stats.topCauses.length > 0 && (
           <div className="card-elevated p-4 mb-6">
-            <h3 className="font-semibold text-sm mb-3 flex items-center gap-2"><AlertTriangle className="w-4 h-4" style={{ color: 'var(--color-danger)' }} /> Top Causes of Death (ICD-11)</h3>
+            <h3 className="font-semibold text-sm flex items-center gap-2">
+              <div className="icon-box-sm" style={{ background: 'rgba(229,46,66,0.12)', color: 'var(--color-danger)' }}><AlertTriangle className="w-3.5 h-3.5" /></div>
+              Top Causes of Death (ICD-11)
+            </h3>
+            <hr className="section-divider" />
             <div className="grid grid-cols-5 gap-2">
               {stats.topCauses.slice(0, 5).map(c => (
                 <div key={c.code} className="p-2 rounded-lg" style={{ background: 'rgba(229,46,66,0.08)' }}>
@@ -223,16 +242,17 @@ export default function DeathsPage() {
                 return (
                   <tr>
                     <td colSpan={8} style={{ background: 'var(--overlay-subtle)', padding: 0 }}>
-                      <div className="p-4 space-y-3">
+                      <div className="p-4">
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
                           <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Full Name</span>{d.deceasedFirstName} {d.deceasedSurname}</div>
                           <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Gender</span>{d.deceasedGender}</div>
                           <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Date of Birth</span>{d.dateOfBirth || 'N/A'}</div>
                           <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Place of Death</span>{d.placeOfDeath || d.facilityName}</div>
                         </div>
+                        <hr className="section-divider" />
                         <div className="p-3 rounded-lg" style={{ background: 'rgba(229,46,66,0.06)', border: '1px solid rgba(229,46,66,0.15)' }}>
                           <p className="text-xs font-semibold mb-2" style={{ color: 'var(--color-danger)' }}>Cause of Death Chain (WHO)</p>
-                          <div className="space-y-1 text-xs">
+                          <div className="data-row-divider-sm text-xs">
                             <p><span className="font-medium">a) Immediate:</span> {d.immediateCause} {d.immediateICD11 && <span className="font-mono text-[10px] px-1 rounded" style={{ background: 'rgba(229,46,66,0.12)', color: 'var(--color-danger)' }}>{d.immediateICD11}</span>}</p>
                             {d.antecedentCause1 && <p><span className="font-medium">b) Due to:</span> {d.antecedentCause1} {d.antecedentICD11_1 && <span className="font-mono text-[10px] px-1 rounded" style={{ background: 'rgba(229,46,66,0.12)', color: 'var(--color-danger)' }}>{d.antecedentICD11_1}</span>}</p>}
                             {d.antecedentCause2 && <p><span className="font-medium">c) Due to:</span> {d.antecedentCause2} {d.antecedentICD11_2 && <span className="font-mono text-[10px] px-1 rounded" style={{ background: 'rgba(229,46,66,0.12)', color: 'var(--color-danger)' }}>{d.antecedentICD11_2}</span>}</p>}
@@ -240,6 +260,7 @@ export default function DeathsPage() {
                             {d.contributingConditions && <p><span className="font-medium">Contributing:</span> {d.contributingConditions}</p>}
                           </div>
                         </div>
+                        <hr className="section-divider" />
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
                           <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Manner</span><span className="capitalize">{(d.mannerOfDeath || '').replace(/_/g, ' ')}</span></div>
                           <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Maternal Death</span>{d.maternalDeath ? 'Yes' : 'No'}</div>
@@ -318,6 +339,7 @@ export default function DeathsPage() {
                   )}
                 </div>
 
+                <hr className="section-divider" />
                 <h3 className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>Deceased Information</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div><label className="text-xs font-medium uppercase tracking-wider mb-1 block" style={{ color: 'var(--text-muted)' }}>First Name *</label><input type="text" value={form.deceasedFirstName} onChange={e => setForm({ ...form, deceasedFirstName: e.target.value })} className="w-full p-2 rounded-lg text-sm outline-none" style={{ background: 'var(--overlay-subtle)', color: 'var(--text-primary)', border: '1px solid var(--border-light)' }} /></div>
@@ -328,7 +350,8 @@ export default function DeathsPage() {
                   <div><label className="text-xs font-medium uppercase tracking-wider mb-1 block" style={{ color: 'var(--text-muted)' }}>Manner of Death</label><select value={form.mannerOfDeath} onChange={e => setForm({ ...form, mannerOfDeath: e.target.value as typeof form.mannerOfDeath })} className="w-full p-2 rounded-lg text-sm outline-none" style={{ background: 'var(--overlay-subtle)', color: 'var(--text-primary)', border: '1px solid var(--border-light)' }}><option value="natural">Natural</option><option value="accident">Accident</option><option value="intentional_self_harm">Intentional self-harm</option><option value="assault">Assault</option><option value="pending_investigation">Pending investigation</option><option value="unknown">Unknown</option></select></div>
                 </div>
 
-                <h3 className="text-sm font-semibold pt-2" style={{ color: 'var(--text-secondary)' }}>Cause of Death Chain (WHO Format)</h3>
+                <hr className="section-divider" />
+                <h3 className="text-sm font-semibold" style={{ color: 'var(--text-secondary)' }}>Cause of Death Chain (WHO Format)</h3>
                 <div className="p-3 rounded-lg space-y-3" style={{ background: 'rgba(229,46,66,0.05)', border: '1px solid rgba(229,46,66,0.15)' }}>
                   <div className="grid grid-cols-2 gap-3">
                     <div><label className="text-xs font-medium mb-1 block" style={{ color: 'var(--text-muted)' }}>Line a: Immediate cause *</label><input type="text" value={form.immediateCause} onChange={e => setForm({ ...form, immediateCause: e.target.value })} className="w-full p-2 rounded-lg text-sm outline-none" style={{ background: 'var(--overlay-subtle)', color: 'var(--text-primary)', border: '1px solid var(--border-light)' }} placeholder="Disease or condition directly leading to death" /></div>

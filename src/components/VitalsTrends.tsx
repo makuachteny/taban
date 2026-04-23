@@ -25,7 +25,7 @@ import { useMemo } from 'react';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceArea,
 } from 'recharts';
-import { TrendingUp, TrendingDown, Minus, AlertTriangle, Activity } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, AlertTriangle, Activity } from '@/components/icons/lucide';
 import type { MedicalRecordDoc } from '@/lib/db-types';
 
 interface VitalsTrendsProps {
@@ -197,7 +197,7 @@ function buildBPMetric(records: MedicalRecordDoc[]): MetricSummary | null {
     normalLabel: '90–120 / 60–80',
     normalRange: [90, 120],
     message,
-    color: '#60a5fa',
+    color: '#5CB8A8',
   };
 }
 
@@ -222,14 +222,14 @@ export default function VitalsTrends({ records }: VitalsTrendsProps) {
     if (bp) out.push(bp);
 
     const temp = buildMetric(
-      records, 'temperature', 'Temperature', '°C', '#f59e0b',
+      records, 'temperature', 'Temperature', '°C', '#E4A84B',
       [36.1, 37.5], '36.1–37.5°C',
       (r) => r.vitalSigns?.temperature ?? null,
     );
     if (temp) out.push(temp);
 
     const pulse = buildMetric(
-      records, 'pulse', 'Heart Rate', 'bpm', '#ef4444',
+      records, 'pulse', 'Heart Rate', 'bpm', '#C44536',
       [60, 100], '60–100 bpm',
       (r) => r.vitalSigns?.pulse ?? null,
     );
@@ -287,13 +287,21 @@ function MetricCard({ metric }: { metric: MetricSummary }) {
   } = metric;
 
   const statusBg =
-    status === 'danger' ? 'rgba(229,46,66,0.14)' :
-    status === 'warning' ? 'rgba(252,211,77,0.14)' :
-    'rgba(16,185,129,0.10)';
+    status === 'danger' ? 'rgba(196, 69, 54, 0.14)' :
+    status === 'warning' ? 'rgba(228, 168, 75, 0.16)' :
+    'rgba(27, 158, 119, 0.12)';
   const statusColor =
-    status === 'danger' ? 'var(--taban-red, #ef4444)' :
-    status === 'warning' ? 'var(--color-warning, #f59e0b)' :
-    'var(--taban-green, #10b981)';
+    status === 'danger' ? '#C44536' :
+    status === 'warning' ? '#B8741C' :
+    '#15795C';
+  // The whole trend card picks up a tinted surface when a vital is off —
+  // matches the Latest Vitals grid so readers never miss a red card.
+  const cardSurface =
+    status === 'danger'
+      ? { background: 'rgba(196, 69, 54, 0.06)', border: '1px solid rgba(196, 69, 54, 0.32)', boxShadow: '0 0 0 1px rgba(196, 69, 54, 0.18) inset, 0 4px 14px rgba(196, 69, 54, 0.08)' }
+      : status === 'warning'
+      ? { background: 'rgba(228, 168, 75, 0.06)', border: '1px solid rgba(228, 168, 75, 0.30)', boxShadow: '0 0 0 1px rgba(228, 168, 75, 0.16) inset' }
+      : undefined;
 
   const Arrow = dir === 'up' ? TrendingUp : dir === 'down' ? TrendingDown : Minus;
 
@@ -310,7 +318,8 @@ function MetricCard({ metric }: { metric: MetricSummary }) {
   })();
 
   return (
-    <div className="card-elevated p-4">
+    <div className="card-elevated p-4 relative" style={cardSurface}>
+      {status === 'danger' && <span className="data-tile__alarm-pulse" aria-hidden="true" />}
       <div className="flex items-start justify-between mb-2">
         <div>
           <p className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>

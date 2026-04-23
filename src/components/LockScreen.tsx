@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import { Lock, LogOut, ShieldCheck } from 'lucide-react';
+import { Lock, LogOut, ShieldCheck } from '@/components/icons/lucide';
 
 interface LockScreenProps {
   userName: string;

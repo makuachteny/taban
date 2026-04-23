@@ -7,7 +7,7 @@ import { useApp } from '@/lib/context';
 import { useOrganizations } from '@/lib/hooks/useOrganizations';
 import {
   BarChart3, PieChart as PieChartIcon, TrendingUp, Users, HeartPulse, Building2
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line, CartesianGrid, Legend
@@ -121,8 +121,8 @@ export default function AdminAnalyticsPage() {
             { label: 'Avg Patients/Org', value: organizations.length > 0 ? Math.round(totalPatientsAll / organizations.length) : 0, icon: TrendingUp, color: 'var(--color-warning)', bg: '#D9770615' },
           ].map(stat => (
             <div key={stat.label} className="kpi">
-              <div className="kpi__icon" style={{ background: stat.bg }}>
-                <stat.icon style={{ color: stat.color }} />
+              <div className="icon-box-sm" style={{ background: stat.bg }}>
+                <stat.icon size={16} style={{ color: stat.color }} />
               </div>
               <div className="kpi__body">
                 <div className="kpi__value">{stat.value.toLocaleString()}</div>
@@ -138,9 +138,12 @@ export default function AdminAnalyticsPage() {
           {/* Patients per Org Bar Chart */}
           <div className="lg:col-span-2 rounded-2xl p-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
             <div className="flex items-center gap-2 mb-4">
-              <BarChart3 className="w-4 h-4" style={{ color: '#2563EB' }} />
+              <div className="icon-box-sm" style={{ background: '#2563EB15' }}>
+                <BarChart3 size={14} style={{ color: '#2563EB' }} />
+              </div>
               <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Patients per Organization</span>
             </div>
+            <hr className="section-divider" />
             {dataLoading || orgsLoading ? (
               <div className="flex items-center justify-center h-64">
                 <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading chart data...</p>
@@ -166,12 +169,16 @@ export default function AdminAnalyticsPage() {
             {/* Plan Distribution */}
             <div className="rounded-2xl p-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
               <div className="flex items-center gap-2 mb-3">
-                <PieChartIcon className="w-4 h-4" style={{ color: '#7C3AED' }} />
+                <div className="icon-box-sm" style={{ background: '#7C3AED15' }}>
+                  <PieChartIcon size={14} style={{ color: '#7C3AED' }} />
+                </div>
                 <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Plans</span>
               </div>
               {planDistribution.length === 0 ? (
                 <p className="text-xs text-center py-6" style={{ color: 'var(--text-muted)' }}>No data</p>
               ) : (
+                <>
+                <hr className="section-divider" />
                 <div className="flex items-center gap-4">
                   <ResponsiveContainer width={120} height={120}>
                     <PieChart>
@@ -182,7 +189,7 @@ export default function AdminAnalyticsPage() {
                       </Pie>
                     </PieChart>
                   </ResponsiveContainer>
-                  <div className="space-y-2">
+                  <div className="data-row-divider-sm">
                     {planDistribution.map(d => (
                       <div key={d.name} className="flex items-center gap-2">
                         <span className="w-2.5 h-2.5 rounded-full" style={{ background: d.color }} />
@@ -192,18 +199,23 @@ export default function AdminAnalyticsPage() {
                     ))}
                   </div>
                 </div>
+                </>
               )}
             </div>
 
             {/* Status Distribution */}
             <div className="rounded-2xl p-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
               <div className="flex items-center gap-2 mb-3">
-                <PieChartIcon className="w-4 h-4" style={{ color: 'var(--color-success)' }} />
+                <div className="icon-box-sm" style={{ background: '#05966915' }}>
+                  <PieChartIcon size={14} style={{ color: 'var(--color-success)' }} />
+                </div>
                 <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Status</span>
               </div>
               {statusDistribution.length === 0 ? (
                 <p className="text-xs text-center py-6" style={{ color: 'var(--text-muted)' }}>No data</p>
               ) : (
+                <>
+                <hr className="section-divider" />
                 <div className="flex items-center gap-4">
                   <ResponsiveContainer width={120} height={120}>
                     <PieChart>
@@ -214,7 +226,7 @@ export default function AdminAnalyticsPage() {
                       </Pie>
                     </PieChart>
                   </ResponsiveContainer>
-                  <div className="space-y-2">
+                  <div className="data-row-divider-sm">
                     {statusDistribution.map(d => (
                       <div key={d.name} className="flex items-center gap-2">
                         <span className="w-2.5 h-2.5 rounded-full" style={{ background: d.color }} />
@@ -224,6 +236,7 @@ export default function AdminAnalyticsPage() {
                     ))}
                   </div>
                 </div>
+                </>
               )}
             </div>
           </div>
@@ -235,9 +248,12 @@ export default function AdminAnalyticsPage() {
           {/* Growth Over Time */}
           <div className="rounded-2xl p-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
             <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="w-4 h-4" style={{ color: 'var(--color-success)' }} />
+              <div className="icon-box-sm" style={{ background: '#05966915' }}>
+                <TrendingUp size={14} style={{ color: 'var(--color-success)' }} />
+              </div>
               <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Growth Trend (Simulated)</span>
             </div>
+            <hr className="section-divider" />
             <ResponsiveContainer width="100%" height={260}>
               <LineChart data={growthData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" />
@@ -255,9 +271,12 @@ export default function AdminAnalyticsPage() {
           {/* Users per Org Bar Chart */}
           <div className="rounded-2xl p-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
             <div className="flex items-center gap-2 mb-4">
-              <Users className="w-4 h-4" style={{ color: 'var(--color-warning)' }} />
+              <div className="icon-box-sm" style={{ background: '#D9770615' }}>
+                <Users size={14} style={{ color: 'var(--color-warning)' }} />
+              </div>
               <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>Users per Organization</span>
             </div>
+            <hr className="section-divider" />
             {dataLoading || orgsLoading ? (
               <div className="flex items-center justify-center h-64">
                 <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Loading...</p>

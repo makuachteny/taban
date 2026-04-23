@@ -10,7 +10,7 @@ import {
   Settings, Save, Database, ToggleLeft, ToggleRight,
   Shield, AlertTriangle, Server, HardDrive, Activity,
   RefreshCw, Clock,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 
 interface DBStats {
   name: string;

@@ -13,14 +13,14 @@ import type { ImmunizationDefaulter } from '@/lib/services/immunization-service'
 import {
   Syringe, Search, Plus, X, CheckCircle2, Clock, AlertTriangle,
   XCircle, ChevronDown, ChevronUp, Users, ExternalLink,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 
 const VACCINES = ['BCG', 'OPV', 'Penta', 'PCV', 'Rota', 'Measles', 'Yellow Fever', 'Vitamin A'];
 const SITES: Array<'left arm' | 'right arm' | 'left thigh' | 'right thigh' | 'oral'> = ['left arm', 'right arm', 'left thigh', 'right thigh', 'oral'];
 
 const statusConfig = {
-  completed: { color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)', icon: CheckCircle2, label: 'Completed' },
-  scheduled: { color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)', icon: Clock, label: 'Scheduled' },
+  completed: { color: '#059669', bg: 'rgba(5,150,105,0.12)', icon: CheckCircle2, label: 'Completed' },
+  scheduled: { color: 'var(--color-warning)', bg: 'rgba(252,211,77,0.12)', icon: Clock, label: 'Scheduled' },
   overdue: { color: 'var(--color-danger)', bg: 'rgba(229,46,66,0.12)', icon: AlertTriangle, label: 'Overdue' },
   missed: { color: 'var(--text-muted)', bg: 'rgba(100,116,139,0.12)', icon: XCircle, label: 'Missed' },
 };
@@ -187,14 +187,14 @@ export default function ImmunizationsPage() {
         {stats && (
           <div className="kpi-grid mb-6">
             {[
-              { label: 'Total Vaccinations', value: stats.totalVaccinations.toString(), color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)', icon: Syringe },
+              { label: 'Total Vaccinations', value: stats.totalVaccinations.toString(), color: '#059669', bg: 'rgba(5,150,105,0.12)', icon: Syringe },
               { label: 'Children Tracked', value: stats.totalChildren.toString(), color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)', icon: Users },
               { label: 'Overdue Doses', value: stats.overdue.toString(), color: 'var(--color-danger)', bg: 'rgba(229,46,66,0.12)', icon: AlertTriangle },
-              { label: 'Coverage Rate', value: `${stats.coverageRate}%`, color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)', icon: CheckCircle2 },
+              { label: 'Coverage Rate', value: `${stats.coverageRate}%`, color: '#059669', bg: 'rgba(5,150,105,0.12)', icon: CheckCircle2 },
             ].map(stat => (
               <div key={stat.label} className="kpi">
-                <div className="kpi__icon" style={{ background: stat.bg }}>
-                  <stat.icon style={{ color: stat.color }} />
+                <div className="icon-box-sm" style={{ background: stat.bg }}>
+                  <stat.icon className="w-4 h-4" style={{ color: stat.color }} />
                 </div>
                 <div className="kpi__body">
                   <div className="kpi__value">{stat.value}</div>
@@ -227,11 +227,14 @@ export default function ImmunizationsPage() {
         {/* Coverage by Antigen */}
         {activeTab === 'records' && coverage && (
           <div className="card-elevated p-5 mb-6">
-            <h3 className="font-semibold text-sm mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-              <Syringe className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
+            <h3 className="font-semibold text-sm mb-0 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+              <span className="icon-box-sm" style={{ background: 'rgba(5,150,105,0.12)' }}>
+                <Syringe className="w-4 h-4" style={{ color: '#059669' }} />
+              </span>
               Coverage by Antigen
             </h3>
-            <div className="space-y-3">
+            <hr className="section-divider" />
+            <div className="data-row-divider-sm">
               {coverage.map(c => (
                 <div key={c.vaccine} className="flex items-center gap-3">
                   <span className="text-xs font-medium w-24 text-right" style={{ color: 'var(--text-secondary)' }}>{c.vaccine}</span>
@@ -260,7 +263,9 @@ export default function ImmunizationsPage() {
           <div className="card-elevated p-5 mb-6">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <Syringe className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
+                <span className="icon-box-sm" style={{ background: 'rgba(5,150,105,0.12)' }}>
+                  <Syringe className="w-4 h-4" style={{ color: '#059669' }} />
+                </span>
                 <h3 className="font-semibold text-sm">Coverage by Age Cohort</h3>
               </div>
               <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>EPI schedule alignment</span>
@@ -328,8 +333,8 @@ export default function ImmunizationsPage() {
                   { label: 'Unique Children', value: defaulterStats.uniqueChildren, bg: 'rgba(43,111,224,0.08)', color: 'var(--accent-primary)', filter: 'all' as const },
                 ].map(k => (
                   <div key={k.label} className="kpi cursor-pointer" onClick={() => setDefaulterFilter(k.filter)}>
-                    <div className="kpi__icon" style={{ background: k.bg }}>
-                      <AlertTriangle style={{ color: k.color }} />
+                    <div className="icon-box-sm" style={{ background: k.bg }}>
+                      <AlertTriangle className="w-4 h-4" style={{ color: k.color }} />
                     </div>
                     <div className="kpi__body">
                       <div className="kpi__value">{k.value}</div>
@@ -343,7 +348,9 @@ export default function ImmunizationsPage() {
             <div className="card-elevated overflow-hidden">
               <div className="p-4 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-light)' }}>
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4" style={{ color: 'var(--color-danger)' }} />
+                  <span className="icon-box-sm" style={{ background: 'rgba(229,46,66,0.12)' }}>
+                    <AlertTriangle className="w-4 h-4" style={{ color: 'var(--color-danger)' }} />
+                  </span>
                   <h3 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
                     Immunization Defaulters {defaulterFilter !== 'all' && `· ${defaulterFilter}`}
                   </h3>
@@ -402,7 +409,9 @@ export default function ImmunizationsPage() {
         {activeTab === 'records' && (
         <div className="card-elevated overflow-hidden">
           <div className="p-4 border-b flex items-center gap-2" style={{ borderColor: 'var(--border-light)' }}>
-            <Syringe className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
+            <span className="icon-box-sm" style={{ background: 'rgba(5,150,105,0.12)' }}>
+              <Syringe className="w-4 h-4" style={{ color: '#059669' }} />
+            </span>
             <h3 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
               Vaccination Records ({filteredChildren.length} children)
             </h3>
@@ -458,7 +467,7 @@ export default function ImmunizationsPage() {
 
                 {isExpanded && (
                   <div className="px-4 pb-4">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2 data-row-divider-sm">
                       {VACCINES.map(vac => {
                         const doses = records.filter(r => r.vaccine === vac);
                         if (doses.length === 0) return (

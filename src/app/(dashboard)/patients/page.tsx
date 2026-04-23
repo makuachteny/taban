@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
 import PageHeader from '@/components/PageHeader';
-import { Search, Filter, ChevronRight, UserPlus, Users, ScanLine, Hash, X, ArrowRight } from 'lucide-react';
+import { Search, Filter, ChevronRight, UserPlus, Users, ScanLine, Hash, X, ArrowRight } from '@/components/icons/lucide';
 import { usePatients } from '@/lib/hooks/usePatients';
 import { useApp } from '@/lib/context';
 import { usePermissions } from '@/lib/hooks/usePermissions';
@@ -79,8 +79,40 @@ export default function PatientsPage() {
             }
           />
 
+          {/* Summary KPI strip */}
+          {(() => {
+            const now = Date.now();
+            const MS30 = 30 * 24 * 60 * 60 * 1000;
+            const visitedRecently = patients.filter(p => p.lastConsultedAt && (now - new Date(p.lastConsultedAt).getTime()) < MS30).length;
+            const withConditions = patients.filter(p => p.chronicConditions?.length && p.chronicConditions[0] !== 'None').length;
+            const withAllergies = patients.filter(p => p.allergies?.length && p.allergies[0] !== 'None known').length;
+            const kpis = [
+              { label: 'Total Patients', value: patients.length, accent: '#2E9E7E', bg: 'rgba(46, 158, 126, 0.08)', border: 'rgba(46, 158, 126, 0.22)' },
+              { label: 'Visited · last 30d', value: visitedRecently, accent: '#1B7FA8', bg: 'rgba(27, 127, 168, 0.08)', border: 'rgba(27, 127, 168, 0.22)' },
+              { label: 'Chronic Conditions', value: withConditions, accent: '#B8741C', bg: 'rgba(228, 168, 75, 0.10)', border: 'rgba(228, 168, 75, 0.28)' },
+              { label: 'Allergies Flagged', value: withAllergies, accent: '#C44536', bg: 'rgba(196, 69, 54, 0.08)', border: 'rgba(196, 69, 54, 0.28)' },
+            ];
+            return (
+              <div className="grid gap-3 mb-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))' }}>
+                {kpis.map(k => (
+                  <div key={k.label} style={{
+                    padding: '14px 16px', borderRadius: 10,
+                    background: k.bg, border: `1px solid ${k.border}`,
+                  }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: k.accent }}>
+                      {k.label}
+                    </div>
+                    <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: -0.5, fontVariantNumeric: 'tabular-nums', lineHeight: 1.1, marginTop: 2 }}>
+                      {k.value.toLocaleString()}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+
           {/* Search & Filter */}
-          <div className="card-elevated p-4 mb-4">
+          <div className="dash-card p-4 mb-4">
             <div className="flex items-center gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--text-muted)' }} />
@@ -124,7 +156,7 @@ export default function PatientsPage() {
           </div>
 
           {/* Patient Table */}
-          <div className="card-elevated overflow-hidden">
+          <div className="dash-card overflow-hidden">
             <div className="patient-table-wrap">
               <table className="data-table patient-table">
                 <thead>
@@ -142,29 +174,99 @@ export default function PatientsPage() {
                 <tbody>
                   {filtered.map(patient => {
                     const age = patient.estimatedAge || (patient.dateOfBirth ? (new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear()) : 0);
+                    const isFemale = patient.gender === 'Female';
+                    const initials = `${(patient.firstName || '?')[0]}${(patient.surname || '?')[0]}`.toUpperCase();
+                    const hasAllergy = patient.allergies?.length && patient.allergies[0] !== 'None known';
+                    const chronic = (patient.chronicConditions || []).filter(c => c && c !== 'None');
+                    const hasChronic = chronic.length > 0;
+                    const lastVisit = patient.lastConsultedAt
+                      ? new Date(patient.lastConsultedAt)
+                      : null;
+                    const daysAgo = lastVisit ? Math.floor((Date.now() - lastVisit.getTime()) / 86400000) : null;
                     return (
                       <tr key={patient._id} className="cursor-pointer" onClick={() => router.push(`/patients/${patient._id}`)}>
                         <td className="col-patient">
-                          <div className="min-w-0">
-                            <p className="font-medium text-sm truncate">{patient.firstName} {patient.surname}</p>
-                            <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{patient.tribe}</p>
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div
+                              className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold text-white"
+                              style={{
+                                background: isFemale
+                                  ? 'linear-gradient(135deg, #D96E59 0%, #C44536 100%)'
+                                  : 'linear-gradient(135deg, #2E9E7E 0%, #1A3A3A 100%)',
+                                letterSpacing: 0.3,
+                              }}
+                              aria-hidden
+                            >
+                              {initials}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-sm truncate" style={{ color: 'var(--text-primary)' }}>
+                                {patient.firstName} {patient.surname}
+                              </p>
+                              <p className="text-[11px] truncate" style={{ color: 'var(--text-muted)' }}>{patient.tribe || '—'}</p>
+                            </div>
                           </div>
                         </td>
-                        <td className="col-hospital"><span className="font-mono text-xs whitespace-nowrap" style={{ color: 'var(--accent-primary)' }}>{patient.hospitalNumber}</span></td>
-                        <td className="col-age whitespace-nowrap">{age}y · {patient.gender[0]}</td>
-                        <td className="col-state text-xs">{patient.state}</td>
-                        <td className="col-phone hide-mobile font-mono text-xs">{patient.phone}</td>
+                        <td className="col-hospital">
+                          <span
+                            className="font-mono text-[11px] whitespace-nowrap px-2 py-0.5 rounded-md"
+                            style={{ background: 'rgba(27, 127, 168, 0.10)', color: '#1B7FA8', border: '1px solid rgba(27, 127, 168, 0.20)', fontWeight: 600 }}
+                          >
+                            {patient.hospitalNumber}
+                          </span>
+                        </td>
+                        <td className="col-age whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-primary)' }}>
+                            <span
+                              aria-hidden
+                              className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                              style={{ background: isFemale ? '#D96E59' : '#2E9E7E' }}
+                            />
+                            <span className="font-semibold">{age}y</span>
+                            <span style={{ color: 'var(--text-muted)' }}>· {patient.gender[0]}</span>
+                          </span>
+                        </td>
+                        <td className="col-state text-xs" style={{ color: 'var(--text-secondary)' }}>{patient.state || '—'}</td>
+                        <td className="col-phone hide-mobile font-mono text-[11px]" style={{ color: 'var(--text-secondary)' }}>{patient.phone || '—'}</td>
                         <td className="col-visit hide-mobile text-xs">
-                          {patient.lastConsultedAt
-                            ? new Date(patient.lastConsultedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
-                            : patient.lastVisitDate || '—'}
+                          {lastVisit ? (
+                            <div>
+                              <div style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
+                                {lastVisit.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                              </div>
+                              {daysAgo != null && (
+                                <div className="text-[10px]" style={{ color: daysAgo > 90 ? '#C44536' : daysAgo > 30 ? '#B8741C' : 'var(--text-muted)' }}>
+                                  {daysAgo === 0 ? 'Today' : daysAgo === 1 ? 'Yesterday' : `${daysAgo}d ago`}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <span style={{ color: 'var(--text-muted)' }}>{patient.lastVisitDate || '—'}</span>
+                          )}
                         </td>
                         <td className="col-cond hide-mobile">
-                          {patient.chronicConditions?.length && patient.chronicConditions[0] !== 'None' ? (
-                            <span className="badge badge-warning text-[10px]">{patient.chronicConditions[0]}</span>
-                          ) : (
-                            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>—</span>
-                          )}
+                          <div className="flex flex-wrap items-center gap-1">
+                            {hasAllergy && (
+                              <span
+                                className="text-[9.5px] font-bold uppercase px-1.5 py-0.5 rounded-md whitespace-nowrap"
+                                style={{ background: 'rgba(196, 69, 54, 0.14)', color: '#8B2E24', border: '1px solid rgba(196, 69, 54, 0.30)' }}
+                                title={`Allergy: ${patient.allergies.join(', ')}`}
+                              >
+                                ⚠ Allergy
+                              </span>
+                            )}
+                            {hasChronic ? (
+                              <span
+                                className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md whitespace-nowrap"
+                                style={{ background: 'rgba(228, 168, 75, 0.14)', color: '#B8741C', border: '1px solid rgba(228, 168, 75, 0.30)' }}
+                                title={chronic.join(', ')}
+                              >
+                                {chronic[0]}{chronic.length > 1 ? ` +${chronic.length - 1}` : ''}
+                              </span>
+                            ) : !hasAllergy ? (
+                              <span className="text-xs" style={{ color: 'var(--text-muted)' }}>—</span>
+                            ) : null}
+                          </div>
                         </td>
                         <td className="col-arrow"><ChevronRight className="w-4 h-4" style={{ color: 'var(--text-muted)' }} /></td>
                       </tr>

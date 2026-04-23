@@ -1,9 +1,21 @@
 'use client';
 
-import { type LucideIcon, Inbox } from 'lucide-react';
+import type { ComponentType, CSSProperties, SVGProps } from 'react';
+import { DuotoneFileText } from '@/components/icons';
+
+type IconComponent = ComponentType<
+  Omit<SVGProps<SVGSVGElement>, 'color'> & {
+    size?: number | string;
+    strokeWidth?: number | string;
+    color?: string;
+    style?: CSSProperties;
+    className?: string;
+    absoluteStrokeWidth?: boolean;
+  }
+>;
 
 interface EmptyStateProps {
-  icon?: LucideIcon;
+  icon?: IconComponent;
   title: string;
   message: string;
   action?: {
@@ -11,6 +23,8 @@ interface EmptyStateProps {
     onClick: () => void;
   };
 }
+
+const Inbox = DuotoneFileText;
 
 export default function EmptyState({ icon: Icon = Inbox, title, message, action }: EmptyStateProps) {
   return (
@@ -28,8 +42,8 @@ export default function EmptyState({ icon: Icon = Inbox, title, message, action 
           onClick={action.onClick}
           className="mt-4 px-4 py-2 rounded-xl text-xs font-semibold text-white transition-all"
           style={{
-            background: 'linear-gradient(135deg, #0077D7, #005FBC)',
-            boxShadow: '0 2px 8px rgba(43,111,224,0.3)',
+            background: 'linear-gradient(135deg, #2E9E7E, #1E4D4A)',
+            boxShadow: '0 2px 8px rgba(46,158,126,0.3)',
           }}
         >
           {action.label}

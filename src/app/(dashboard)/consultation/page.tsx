@@ -11,7 +11,7 @@ import {
   X, AlertTriangle, UserSearch, Brain, Plus, Check,
   Activity, ShieldAlert, TestTubes, Sparkles, Paperclip,
   Mic,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 import { icd10Codes, medications } from '@/data/mock';
 import type { Attachment } from '@/data/mock';
 import FileUpload from '@/components/FileUpload';
@@ -1023,7 +1023,6 @@ export default function ConsultationPage() {
                     onChange={e => setChiefComplaint(e.target.value)}
                     rows={3}
                     placeholder="Describe the patient's main complaint, duration, and associated symptoms..."
-                    className="resize-none"
                   />
                 </div>
               )}
@@ -1121,7 +1120,6 @@ export default function ConsultationPage() {
                         onChange={e => setPhysExam(prev => ({ ...prev, [field.key]: e.target.value }))}
                         rows={2}
                         placeholder={field.placeholder}
-                        className="resize-none"
                       />
                     </div>
                   ))}
@@ -1545,7 +1543,6 @@ export default function ConsultationPage() {
                     onChange={e => setTreatmentPlan(e.target.value)}
                     rows={4}
                     placeholder="Describe the treatment plan, patient education, lifestyle recommendations, warning signs to watch for..."
-                    className="resize-none"
                   />
                 </div>
               )}
@@ -1634,7 +1631,6 @@ export default function ConsultationPage() {
                           onChange={e => setReferralReason(e.target.value)}
                           rows={2}
                           placeholder="Describe the reason for referral, what services are needed..."
-                          className="resize-none"
                         />
                       </div>
                       {referralUrgency === 'emergency' && (
@@ -1761,7 +1757,7 @@ export default function ConsultationPage() {
                               border: `1px solid ${filled ? 'var(--taban-green)' : 'var(--border-light)'}`,
                             }}>
                               {filled ? (
-                                <svg className="w-3 h-3" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-6" stroke="#0077D7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                <svg className="w-3 h-3" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-6" stroke="#2E9E7E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                               ) : (
                                 <Icon className="w-2.5 h-2.5" style={{ color: 'var(--text-muted)' }} />
                               )}

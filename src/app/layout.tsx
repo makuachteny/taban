@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AppProvider } from "@/lib/context";
 import { ToastProvider } from "@/components/Toast";
+import TextareaAutoResize from "@/components/TextareaAutoResize";
 
 export const metadata: Metadata = {
   title: "Taban — Digital Health Records for South Sudan",
@@ -21,7 +22,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#EFF3F8" },
-    { media: "(prefers-color-scheme: dark)", color: "#0F172A" },
+    { media: "(prefers-color-scheme: dark)", color: "#1A3A3A" },
   ],
 };
 
@@ -31,7 +32,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-theme="dark" suppressHydrationWarning>
+    <html lang="en" data-theme="light" suppressHydrationWarning>
       <head>
         <link rel="icon" type="image/svg+xml" href="/assets/taban-icon.svg" />
         <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.svg" />
@@ -40,6 +41,7 @@ export default function RootLayout({
       <body className="antialiased">
         <AppProvider>
           <ToastProvider>
+            <TextareaAutoResize />
             {children}
           </ToastProvider>
         </AppProvider>

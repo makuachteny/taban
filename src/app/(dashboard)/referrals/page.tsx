@@ -11,7 +11,7 @@ import {
   User, Activity, FlaskConical, Paperclip, XCircle, MessageSquarePlus,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   ClipboardCheck, Bell,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 import { useRouter } from 'next/navigation';
 import PageHeader from '@/components/PageHeader';
 import { useReferrals } from '@/lib/hooks/useReferrals';
@@ -152,10 +152,10 @@ export default function ReferralsPage() {
   ).length;
 
   const stats = [
-    { label: 'Total Referrals', value: totalReferrals, icon: ArrowRightLeft, color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)' },
+    { label: 'Total Referrals', value: totalReferrals, icon: ArrowRightLeft, color: '#F59E0B', bg: 'rgba(245,158,11,0.12)' },
     { label: 'Pending', value: pendingCount, icon: Clock, color: 'var(--color-warning)', bg: 'rgba(252,211,77,0.10)' },
-    { label: 'In Progress', value: inProgressCount, icon: Stethoscope, color: '#38BDF8', bg: 'rgba(43,111,224,0.10)' },
-    { label: 'Completed', value: completedCount, icon: CheckCircle2, color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)' },
+    { label: 'In Progress', value: inProgressCount, icon: Stethoscope, color: '#5CB8A8', bg: 'rgba(92,184,168,0.10)' },
+    { label: 'Completed', value: completedCount, icon: CheckCircle2, color: '#16A34A', bg: 'rgba(22,163,74,0.12)' },
   ];
 
   const getStatusLabel = (status: string) => {
@@ -316,11 +316,15 @@ export default function ReferralsPage() {
           </div>
         </div>
 
+        <hr className="section-divider" />
+
         {/* Referral Attachments */}
         {refAttachments && refAttachments.length > 0 && (
           <div className="p-4 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
             <div className="flex items-center gap-2 mb-3">
-              <Paperclip className="w-4 h-4" style={{ color: 'var(--taban-blue)' }} />
+              <div className="icon-box-sm" style={{ background: 'rgba(43,111,224,0.12)' }}>
+                <Paperclip className="w-4 h-4" style={{ color: 'var(--taban-blue)' }} />
+              </div>
               <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Referral Attachments ({refAttachments.length})</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -342,10 +346,14 @@ export default function ReferralsPage() {
           </div>
         )}
 
+        <hr className="section-divider" />
+
         {/* Patient Demographics */}
         <div className="p-4 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
           <div className="flex items-center gap-2 mb-3">
-            <User className="w-4 h-4" style={{ color: 'var(--taban-blue)' }} />
+            <div className="icon-box-sm" style={{ background: 'rgba(43,111,224,0.12)' }}>
+              <User className="w-4 h-4" style={{ color: 'var(--taban-blue)' }} />
+            </div>
             <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Patient Demographics</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -386,14 +394,18 @@ export default function ReferralsPage() {
           </div>
         </div>
 
+        <hr className="section-divider" />
+
         {/* Medical Records Timeline */}
         {pkg.medicalRecords.length > 0 && (
           <div className="p-4 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
             <div className="flex items-center gap-2 mb-3">
-              <Stethoscope className="w-4 h-4" style={{ color: 'var(--taban-blue)' }} />
+              <div className="icon-box-sm" style={{ background: 'rgba(92,184,168,0.12)' }}>
+                <Stethoscope className="w-4 h-4" style={{ color: '#5CB8A8' }} />
+              </div>
               <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Medical Records ({pkg.medicalRecords.length})</span>
             </div>
-            <div className="space-y-2">
+            <div className="data-row-divider-sm">
               {pkg.medicalRecords.map(rec => {
                 const isExpanded = expandedRecords.has(rec.id);
                 return (
@@ -442,9 +454,11 @@ export default function ReferralsPage() {
                         {rec.prescriptions.length > 0 && (
                           <div>
                             <p className="text-[10px] font-semibold uppercase mb-1" style={{ color: 'var(--text-muted)' }}>Prescriptions</p>
-                            {rec.prescriptions.map((rx, i) => (
-                              <p key={i} className="text-xs">{rx.drugName} — {rx.dose} {rx.route} {rx.frequency} x {rx.duration}</p>
-                            ))}
+                            <div className="data-row-divider-sm">
+                              {rec.prescriptions.map((rx, i) => (
+                                <p key={i} className="text-xs">{rx.drugName} — {rx.dose} {rx.route} {rx.frequency} x {rx.duration}</p>
+                              ))}
+                            </div>
                           </div>
                         )}
                         {rec.treatmentPlan && (
@@ -459,11 +473,15 @@ export default function ReferralsPage() {
           </div>
         )}
 
+        <hr className="section-divider" />
+
         {/* Lab Results */}
         {pkg.labResults.length > 0 && (
           <div className="p-4 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
             <div className="flex items-center gap-2 mb-3">
-              <FlaskConical className="w-4 h-4" style={{ color: 'var(--taban-blue)' }} />
+              <div className="icon-box-sm" style={{ background: 'rgba(43,111,224,0.12)' }}>
+                <FlaskConical className="w-4 h-4" style={{ color: 'var(--taban-blue)' }} />
+              </div>
               <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Lab Results ({pkg.labResults.length})</span>
             </div>
             <div className="overflow-x-auto">
@@ -503,11 +521,15 @@ export default function ReferralsPage() {
           </div>
         )}
 
+        <hr className="section-divider" />
+
         {/* All Patient Attachments */}
         {pkg.attachments.length > 0 && (
           <div className="p-4 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
             <div className="flex items-center gap-2 mb-3">
-              <ImageIcon className="w-4 h-4" style={{ color: 'var(--taban-blue)' }} />
+              <div className="icon-box-sm" style={{ background: 'rgba(43,111,224,0.12)' }}>
+                <ImageIcon className="w-4 h-4" style={{ color: 'var(--taban-blue)' }} />
+              </div>
               <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Patient Attachments ({pkg.attachments.length})</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -527,9 +549,13 @@ export default function ReferralsPage() {
           </div>
         )}
 
+        <hr className="section-divider" />
+
         {/* Package Metadata */}
         <div className="flex items-center gap-3 p-3 rounded-lg text-xs" style={{ background: 'rgba(43,111,224,0.06)', border: '1px solid var(--accent-border)' }}>
-          <Package className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--taban-blue)' }} />
+          <div className="icon-box-sm flex-shrink-0" style={{ background: 'rgba(43,111,224,0.12)' }}>
+            <Package className="w-4 h-4" style={{ color: 'var(--taban-blue)' }} />
+          </div>
           <span style={{ color: 'var(--text-muted)' }}>
             Packaged by <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{pkg.packagedBy}</span> on {new Date(pkg.packagedAt).toLocaleDateString()} at {new Date(pkg.packagedAt).toLocaleTimeString()}
           </span>
@@ -589,7 +615,9 @@ export default function ReferralsPage() {
             <div className="card-elevated p-5 mb-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <ArrowRightLeft className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
+                  <div className="icon-box-sm" style={{ background: 'rgba(245,158,11,0.12)' }}>
+                    <ArrowRightLeft className="w-4 h-4" style={{ color: '#F59E0B' }} />
+                  </div>
                   <h3 className="font-semibold text-sm">Referral Network</h3>
                 </div>
                 <div className="flex items-center gap-3 text-[11px]">
@@ -599,7 +627,7 @@ export default function ReferralsPage() {
                 </div>
               </div>
               <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Top destinations (outgoing)</p>
-              <div className="space-y-2">
+              <div className="data-row-divider-sm">
                 {networkStats.top.map(d => {
                   const acceptRate = d.sent > 0 ? Math.round((d.accepted / d.sent) * 100) : 0;
                   const completeRate = d.sent > 0 ? Math.round((d.completed / d.sent) * 100) : 0;
@@ -821,7 +849,7 @@ export default function ReferralsPage() {
           </div>
 
           {/* Referrals List */}
-          <div className="space-y-3">
+          <div className="data-row-divider-sm">
             {filteredReferrals.length === 0 ? (
               <div className="card-elevated">
                 <EmptyState
@@ -851,7 +879,9 @@ export default function ReferralsPage() {
                           <span className="font-mono text-[10px]" style={{ color: 'var(--text-muted)' }}>{ref.patientId}</span>
                         </div>
                         <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
-                          <Building2 className="w-3 h-3" />
+                          <div className="icon-box-sm" style={{ background: 'rgba(13,148,136,0.12)' }}>
+                            <Building2 className="w-3.5 h-3.5" style={{ color: '#0D9488' }} />
+                          </div>
                           {ref.fromHospital} → {ref.toHospital}
                           <span>&middot;</span>
                           <span>{ref.department}</span>
@@ -950,7 +980,9 @@ export default function ReferralsPage() {
                               <p className="text-sm whitespace-pre-wrap">{ref.notes || 'None'}</p>
                             </div>
                             <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
-                              <AlertTriangle className="w-3.5 h-3.5" />
+                              <div className="icon-box-sm" style={{ background: 'rgba(239,68,68,0.12)' }}>
+                                <AlertTriangle className="w-3.5 h-3.5" style={{ color: '#EF4444' }} />
+                              </div>
                               No data package available for this referral (created before data packaging was enabled)
                             </div>
                           </div>
@@ -981,7 +1013,7 @@ export default function ReferralsPage() {
                   onChange={e => setNoteText(e.target.value)}
                   rows={4}
                   placeholder="Enter your note..."
-                  className="w-full mb-4 resize-none"
+                  className="w-full mb-4"
                   style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: 13 }}
                 />
                 <div className="flex gap-2">
@@ -1012,7 +1044,7 @@ export default function ReferralsPage() {
                   onChange={e => setDeclineReason(e.target.value)}
                   rows={3}
                   placeholder="Reason for declining (e.g., no capacity, incorrect specialty...)"
-                  className="w-full mb-4 resize-none"
+                  className="w-full mb-4"
                   style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: 13 }}
                 />
                 <div className="flex gap-2">
@@ -1043,7 +1075,7 @@ export default function ReferralsPage() {
                   onChange={e => setCompleteOutcome(e.target.value)}
                   rows={4}
                   placeholder="Patient outcome (e.g., treated and discharged, admitted for further care...)"
-                  className="w-full mb-4 resize-none"
+                  className="w-full mb-4"
                   style={{ padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border-medium)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: 13 }}
                 />
                 <div className="flex gap-2">

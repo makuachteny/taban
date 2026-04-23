@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import TopBar from '@/components/TopBar';
 import PageHeader from '@/components/PageHeader';
-import { Pill, AlertTriangle, Search, TrendingDown, CheckCircle2, Loader2, Plus, X } from 'lucide-react';
+import { Pill, AlertTriangle, Search, TrendingDown, CheckCircle2, Loader2, Plus, X, Clock } from '@/components/icons/lucide';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/lib/context';
 import { usePermissions } from '@/lib/hooks/usePermissions';
@@ -89,16 +89,38 @@ export default function PharmacyPage() {
     }
   };
 
-  const handleReceive = async (itemId: string) => {
-    const qty = parseInt(prompt('Quantity to add to stock:') || '0');
-    if (!qty || qty <= 0) return;
+  // Restock modal state — replaces the prompt() shortcut so users can also
+  // record batch + expiry on a top-up, not just the quantity.
+  const [restockTarget, setRestockTarget] = useState<{ id: string; name: string; unit: string } | null>(null);
+  const [restockForm, setRestockForm] = useState({ qty: 0, batchNumber: '', expiryDate: '' });
+
+  const openRestock = (itemId: string) => {
     const existing = inventory.find(i => i._id === itemId);
     if (!existing) return;
-    await updateInventory(itemId, {
-      stockLevel: existing.stockLevel + qty,
-      lastReceived: new Date().toISOString(),
-    });
-    showToast(`Added ${qty} ${existing.unit} to ${existing.medicationName}`, 'success');
+    setRestockTarget({ id: existing._id, name: existing.medicationName, unit: existing.unit });
+    setRestockForm({ qty: 0, batchNumber: existing.batchNumber || '', expiryDate: existing.expiryDate || '' });
+  };
+
+  const handleRestock = async () => {
+    if (!restockTarget || restockForm.qty <= 0) {
+      showToast('Enter a quantity greater than zero', 'error');
+      return;
+    }
+    const existing = inventory.find(i => i._id === restockTarget.id);
+    if (!existing) { setRestockTarget(null); return; }
+    try {
+      await updateInventory(restockTarget.id, {
+        stockLevel: existing.stockLevel + restockForm.qty,
+        lastReceived: new Date().toISOString(),
+        ...(restockForm.batchNumber.trim() ? { batchNumber: restockForm.batchNumber.trim() } : {}),
+        ...(restockForm.expiryDate ? { expiryDate: restockForm.expiryDate } : {}),
+      });
+      showToast(`Added ${restockForm.qty} ${restockTarget.unit} to ${restockTarget.name}`, 'success');
+      setRestockTarget(null);
+    } catch (err) {
+      console.error(err);
+      showToast('Failed to update stock', 'error');
+    }
   };
 
   const pendingRx = rxQueue.filter(r => r.status === 'pending').length;
@@ -132,17 +154,17 @@ export default function PharmacyPage() {
           {/* Stats */}
           <div className="kpi-grid mb-4">
             {[
-              { label: 'Pending Prescriptions', value: pendingRx, icon: Pill, color: 'var(--color-warning)', bg: 'rgba(252,211,77,0.10)' },
+              { label: 'Pending Prescriptions', value: pendingRx, icon: Pill, color: '#14B8A6', bg: 'rgba(20,184,166,0.10)' },
               { label: 'Dispensed Today', value: dispensedRx, icon: CheckCircle2, color: 'var(--accent-primary)', bg: 'rgba(0,119,215,0.12)' },
               { label: 'Low Stock Items', value: lowStock, icon: TrendingDown, color: 'var(--color-danger)', bg: 'rgba(229,46,66,0.10)' },
-              { label: 'Expired Items', value: expiredItems, icon: AlertTriangle, color: '#F87171', bg: 'rgba(229,46,66,0.12)' },
+              { label: 'Expired Items', value: expiredItems, icon: AlertTriangle, color: 'var(--color-danger)', bg: 'rgba(229,46,66,0.12)' },
             ].map(s => (
               <div key={s.label} className="kpi cursor-pointer" onClick={() => {
                 const tabMap: Record<string, 'queue' | 'inventory'> = { 'Pending Prescriptions': 'queue', 'Dispensed Today': 'queue', 'Low Stock Items': 'inventory', 'Expired Items': 'inventory' };
                 setActiveTab(tabMap[s.label] || 'queue');
               }}>
-                <div className="kpi__icon" style={{ background: s.bg }}>
-                  <s.icon style={{ color: s.color }} />
+                <div className="icon-box-sm" style={{ background: s.bg }}>
+                  <s.icon className="w-4 h-4" style={{ color: s.color }} />
                 </div>
                 <div className="kpi__body">
                   <div className="kpi__value">{s.value}</div>
@@ -168,6 +190,14 @@ export default function PharmacyPage() {
 
           {activeTab === 'queue' && (
             <div className="card-elevated overflow-hidden">
+              <div className="flex items-center gap-2 px-4 pt-3 pb-2">
+                <div className="icon-box-sm" style={{ background: 'rgba(20,184,166,0.10)' }}>
+                  <Pill className="w-4 h-4" style={{ color: '#14B8A6' }} />
+                </div>
+                <span className="text-sm font-semibold">Prescription Queue</span>
+                <span className="text-xs ml-1" style={{ color: 'var(--text-muted)' }}>({filteredQueue.length})</span>
+              </div>
+              <hr className="section-divider" />
               {rxLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-6 h-6 animate-spin" style={{ color: 'var(--text-muted)' }} />
@@ -195,13 +225,23 @@ export default function PharmacyPage() {
                   ) : filteredQueue.map(rx => (
                     <tr key={rx._id} className="cursor-pointer hover:bg-[var(--table-row-hover)]" onClick={() => { if (rx.patientId) router.push(`/patients/${rx.patientId}`); }}>
                       <td className="font-medium text-sm" style={{ color: 'var(--accent-primary)' }}>{rx.patientName}</td>
-                      <td className="text-sm">{rx.medication}</td>
+                      <td className="text-sm">
+                        <div className="flex items-center gap-2">
+                          <div className="icon-box-sm" style={{ background: 'rgba(20,184,166,0.08)' }}>
+                            <Pill className="w-3.5 h-3.5" style={{ color: '#14B8A6' }} />
+                          </div>
+                          {rx.medication}
+                        </div>
+                      </td>
                       <td className="text-xs font-mono" style={{ color: 'var(--text-secondary)' }}>
                         {rx.dose} {rx.frequency} {rx.duration ? `x ${rx.duration}` : ''}
                       </td>
                       <td className="text-xs" style={{ color: 'var(--text-secondary)' }}>{rx.prescribedBy}</td>
                       <td className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>
-                        {rx.createdAt ? new Date(rx.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '—'}
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="w-3 h-3" style={{ color: '#F59E0B' }} />
+                          {rx.createdAt ? new Date(rx.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '—'}
+                        </div>
                       </td>
                       <td>
                         <span className={`badge text-[10px] ${rx.status === 'pending' ? 'badge-warning' : 'badge-normal'}`}>
@@ -234,6 +274,14 @@ export default function PharmacyPage() {
                 </div>
               </div>
               <div className="card-elevated overflow-hidden">
+                <div className="flex items-center gap-2 px-4 pt-3 pb-2">
+                  <div className="icon-box-sm" style={{ background: 'rgba(20,184,166,0.10)' }}>
+                    <Pill className="w-4 h-4" style={{ color: '#14B8A6' }} />
+                  </div>
+                  <span className="text-sm font-semibold">Medication Inventory</span>
+                  <span className="text-xs ml-1" style={{ color: 'var(--text-muted)' }}>({filteredInventory.length})</span>
+                </div>
+                <hr className="section-divider" />
                 <table className="data-table">
                   <thead>
                     <tr>
@@ -257,7 +305,17 @@ export default function PharmacyPage() {
                       </tr>
                     ) : filteredInventory.map(item => (
                       <tr key={item._id}>
-                        <td className="font-medium text-sm">{item.medicationName}</td>
+                        <td className="font-medium text-sm">
+                          <div className="flex items-center gap-2">
+                            <div className="icon-box-sm" style={{ background: item.status === 'expired' ? 'rgba(229,46,66,0.10)' : item.status === 'critical' ? 'rgba(229,46,66,0.10)' : item.status === 'low' ? 'rgba(245,158,11,0.10)' : 'rgba(20,184,166,0.08)' }}>
+                              {item.status === 'expired' || item.status === 'critical'
+                                ? <AlertTriangle className="w-3.5 h-3.5" style={{ color: 'var(--color-danger)' }} />
+                                : <Pill className="w-3.5 h-3.5" style={{ color: item.status === 'low' ? '#F59E0B' : '#14B8A6' }} />
+                              }
+                            </div>
+                            {item.medicationName}
+                          </div>
+                        </td>
                         <td><span className="text-xs px-2 py-0.5 rounded" style={{ background: 'var(--overlay-medium)', color: 'var(--text-secondary)' }}>{item.category}</span></td>
                         <td>
                           <div className="flex items-center gap-2">
@@ -290,7 +348,7 @@ export default function PharmacyPage() {
                         <td className="text-center font-semibold text-sm">{item.dispensedToday}</td>
                         {canDispense && (
                           <td>
-                            <button className="btn btn-secondary btn-sm" onClick={() => handleReceive(item._id)}>+ Receive</button>
+                            <button className="btn btn-secondary btn-sm" onClick={() => openRestock(item._id)}>+ Receive</button>
                           </td>
                         )}
                       </tr>
@@ -306,12 +364,18 @@ export default function PharmacyPage() {
             <div className="modal-backdrop" onClick={() => setShowStockInModal(false)}>
               <div className="modal-content card-elevated p-6 max-w-lg w-full" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base font-semibold">Receive Stock</h3>
+                  <div className="flex items-center gap-3">
+                    <div className="icon-box-sm" style={{ background: 'rgba(20,184,166,0.10)' }}>
+                      <Pill className="w-4 h-4" style={{ color: '#14B8A6' }} />
+                    </div>
+                    <h3 className="text-base font-semibold">Receive Stock</h3>
+                  </div>
                   <button onClick={() => setShowStockInModal(false)} className="p-1.5 rounded-lg" style={{ background: 'var(--overlay-subtle)' }}>
                     <X className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="space-y-3">
+                <hr className="section-divider" />
+                <div className="data-row-divider-sm">
                   <div>
                     <label className="text-xs font-semibold uppercase tracking-wider mb-1 block" style={{ color: 'var(--text-muted)' }}>Medication</label>
                     <input
@@ -355,9 +419,69 @@ export default function PharmacyPage() {
                     <input type="date" value={stockForm.expiryDate} onChange={e => setStockForm({ ...stockForm, expiryDate: e.target.value })} />
                   </div>
                 </div>
-                <div className="flex gap-2 mt-5">
+                <hr className="section-divider" />
+                <div className="flex gap-2 mt-2">
                   <button onClick={() => setShowStockInModal(false)} className="btn btn-secondary flex-1">Cancel</button>
                   <button onClick={handleStockIn} className="btn btn-primary flex-1">Save Stock Receipt</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Restock modal — top up an existing inventory line with quantity + optional batch/expiry */}
+          {restockTarget && (
+            <div className="modal-backdrop" onClick={() => setRestockTarget(null)}>
+              <div className="modal-content card-elevated p-6 max-w-md w-full" style={{ maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-base font-semibold">Receive Stock</h3>
+                    <p className="text-[12px]" style={{ color: 'var(--text-muted)' }}>{restockTarget.name}</p>
+                  </div>
+                  <button onClick={() => setRestockTarget(null)} className="p-1.5 rounded-lg" style={{ background: 'var(--overlay-subtle)' }}>
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-semibold uppercase tracking-wider mb-1 block" style={{ color: 'var(--text-muted)' }}>
+                      Quantity received ({restockTarget.unit}) <span style={{ color: 'var(--color-danger)' }}>*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      autoFocus
+                      value={restockForm.qty || ''}
+                      onChange={e => setRestockForm({ ...restockForm, qty: parseInt(e.target.value) || 0 })}
+                      placeholder="0"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-semibold uppercase tracking-wider mb-1 block" style={{ color: 'var(--text-muted)' }}>Batch No.</label>
+                      <input
+                        type="text"
+                        value={restockForm.batchNumber}
+                        onChange={e => setRestockForm({ ...restockForm, batchNumber: e.target.value })}
+                        placeholder="Auto-generate"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold uppercase tracking-wider mb-1 block" style={{ color: 'var(--text-muted)' }}>Expiry Date</label>
+                      <input
+                        type="date"
+                        value={restockForm.expiryDate}
+                        onChange={e => setRestockForm({ ...restockForm, expiryDate: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+                    Leave batch / expiry blank to keep existing values.
+                  </p>
+                </div>
+                <hr className="section-divider" />
+                <div className="flex gap-2 mt-2">
+                  <button onClick={() => setRestockTarget(null)} className="btn btn-secondary flex-1">Cancel</button>
+                  <button onClick={handleRestock} className="btn btn-primary flex-1">Add to Stock</button>
                 </div>
               </div>
             </div>

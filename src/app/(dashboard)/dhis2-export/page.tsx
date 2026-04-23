@@ -7,7 +7,7 @@ import {
   Globe, RefreshCw, CheckCircle, Clock, AlertTriangle,
   Download, FileJson, FileSpreadsheet, Upload, Loader2,
   Wifi, Database, FileText, BarChart3,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 import { usePatients } from '@/lib/hooks/usePatients';
 import { useSurveillance } from '@/lib/hooks/useSurveillance';
 import { useImmunizations } from '@/lib/hooks/useImmunizations';
@@ -60,19 +60,32 @@ export default function DHIS2ExportPage() {
   const syncedCount = DHIS2_DATA_ELEMENTS.filter(d => d.synced).length;
   const hospitalName = currentUser?.hospital?.name || currentUser?.hospitalName || '';
 
-  const handleSync = () => {
+  const handleSync = async () => {
     setSyncing(true);
     setSyncLog(prev => [
       { time: 'Now', message: 'Initiating manual sync to DHIS2...', status: 'info' as const },
       ...prev,
     ]);
-    setTimeout(() => {
+    try {
+      const { generateDHIS2Export, pushDataSetToDHIS2 } = await import('@/lib/services/dhis2-export-service');
+      const dataset = await generateDHIS2Export(period);
+      const result = await pushDataSetToDHIS2(dataset);
+      const status: 'success' | 'error' | 'info' =
+        result.status === 'pushed' ? 'success'
+        : result.status === 'failed' ? 'error'
+        : 'info';
       setSyncLog(prev => [
-        { time: 'Now', message: 'Sync completed: All data elements pushed to DHIS2', status: 'success' as const },
+        { time: 'Now', message: result.message, status },
         ...prev,
       ]);
+    } catch (err) {
+      setSyncLog(prev => [
+        { time: 'Now', message: `Sync failed: ${(err as Error).message}`, status: 'error' as const },
+        ...prev,
+      ]);
+    } finally {
       setSyncing(false);
-    }, 2500);
+    }
   };
 
   const handleExport = async (format: 'json' | 'csv') => {
@@ -129,7 +142,7 @@ export default function DHIS2ExportPage() {
               disabled={syncing}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
               style={{
-                background: syncing ? 'var(--overlay-medium)' : 'linear-gradient(135deg, #0077D7, #005FBC)',
+                background: syncing ? 'var(--overlay-medium)' : 'linear-gradient(135deg, #2E9E7E, #1E4D4A)',
                 color: syncing ? 'var(--text-muted)' : '#fff',
                 boxShadow: syncing ? 'none' : '0 4px 12px rgba(43,111,224,0.3)',
               }}
@@ -168,7 +181,7 @@ export default function DHIS2ExportPage() {
               className="flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors"
               style={{
                 color: activeTab === tab.id ? 'var(--accent-primary)' : 'var(--text-muted)',
-                borderBottom: activeTab === tab.id ? '2px solid #0077D7' : '2px solid transparent',
+                borderBottom: activeTab === tab.id ? '2px solid #2E9E7E' : '2px solid transparent',
               }}
             >
               <tab.icon className="w-4 h-4" />
@@ -314,7 +327,7 @@ export default function DHIS2ExportPage() {
               disabled={syncing}
               className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold text-white transition-all"
               style={{
-                background: 'linear-gradient(135deg, #0077D7, #005FBC)',
+                background: 'linear-gradient(135deg, #2E9E7E, #1E4D4A)',
                 boxShadow: '0 4px 12px rgba(43,111,224,0.3)',
               }}
             >

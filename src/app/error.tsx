@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { AlertTriangle, RotateCcw, Home } from 'lucide-react';
+import { AlertTriangle, RotateCcw, Home } from '@/components/icons/lucide';
 
 export default function Error({
   error,
@@ -44,8 +44,8 @@ export default function Error({
             onClick={reset}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
             style={{
-              background: 'linear-gradient(135deg, #2B6FE0, #1d5bc4)',
-              boxShadow: '0 4px 16px rgba(43,111,224,0.3)',
+              background: 'linear-gradient(135deg, #2E9E7E, #1d5bc4)',
+              boxShadow: '0 4px 16px rgba(46,158,126,0.3)',
             }}
           >
             <RotateCcw className="w-4 h-4" /> Try Again
@@ -55,7 +55,7 @@ export default function Error({
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all"
             style={{
               background: 'var(--overlay-subtle, rgba(255,255,255,0.05))',
-              color: 'var(--text-secondary, #94a3b8)',
+              color: 'var(--text-secondary, #8A9E9A)',
               border: '1px solid var(--border-light, rgba(255,255,255,0.1))',
             }}
           >

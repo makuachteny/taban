@@ -1,9 +1,15 @@
 'use client';
 
 import {
-  Stethoscope, FlaskConical, Pill, Syringe, ArrowRightLeft, HeartPulse,
-  FileText, Activity,
-} from 'lucide-react';
+  DuotoneStethoscope as Stethoscope,
+  DuotoneFlask as FlaskConical,
+  DuotonePill as Pill,
+  DuotoneVaccine as Syringe,
+  DuotoneReferral as ArrowRightLeft,
+  DuotoneMCH as HeartPulse,
+  DuotoneFileText as FileText,
+  DuotoneActivity as Activity,
+} from '@/components/icons';
 import type {
   MedicalRecordDoc, LabResultDoc, PrescriptionDoc, ImmunizationDoc,
   ReferralDoc, ANCVisitDoc, AppointmentDoc, TriageDoc,
@@ -191,13 +197,8 @@ export default function PatientTimeline(props: PatientTimelineProps) {
 
   return (
     <div className="card-elevated p-5">
-      <div className="relative pl-6">
-        {/* Vertical guide line */}
-        <div
-          className="absolute left-[15px] top-2 bottom-2 w-px"
-          style={{ background: 'var(--border-light)' }}
-        />
-        {events.map(e => {
+      <div className="relative" style={{ paddingLeft: 4 }}>
+        {events.map((e, i) => {
           const cfg = CATEGORY_CONFIG[e.category];
           const Icon = cfg.icon;
           const dateLabel = (() => {
@@ -208,38 +209,64 @@ export default function PatientTimeline(props: PatientTimelineProps) {
               });
             } catch { return e.date; }
           })();
+          // An event counts as "alarming" when its badge text reads as a
+          // clinical emergency (critical lab, high-risk triage, etc.).
+          // Color-sniffing is fragile (hexes vary), so we match the label.
+          const badgeLabel = (e.badge?.label || '').toLowerCase();
+          const badgeIsAlarm = /critical|emergency|red|severe|abnormal|high risk|overdue|hypo|hyper/.test(badgeLabel);
+          const tileBg = badgeIsAlarm ? 'rgba(196, 69, 54, 0.06)' : 'transparent';
+          const tileBorder = badgeIsAlarm ? 'rgba(196, 69, 54, 0.28)' : 'var(--border-light)';
           return (
-            <div key={e.id} className="relative mb-5 last:mb-0 pl-6">
-              <div
-                className="absolute -left-[1px] top-0 w-7 h-7 rounded-full flex items-center justify-center"
-                style={{ background: cfg.bg, border: '2px solid var(--bg-card-solid)' }}
-              >
-                <Icon className="w-3.5 h-3.5" style={{ color: cfg.color }} />
-              </div>
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: cfg.color }}>
-                      {cfg.label}
-                    </span>
-                    <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>·</span>
-                    <span className="text-[11px] font-mono" style={{ color: 'var(--text-muted)' }}>{dateLabel}</span>
-                    {e.badge && (
-                      <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full" style={{ background: e.badge.bg, color: e.badge.color }}>
-                        {e.badge.label}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm font-semibold mt-0.5" style={{ color: 'var(--text-primary)' }}>
-                    {e.title}
-                  </p>
-                  {e.subtitle && (
-                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>{e.subtitle}</p>
-                  )}
-                  {e.meta && (
-                    <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>{e.meta}</p>
-                  )}
+            <div key={e.id} className="flex gap-4" style={{ marginBottom: i === events.length - 1 ? 0 : 16 }}>
+              {/* Rail column: icon badge + connector */}
+              <div className="flex flex-col items-center" style={{ width: 38, flexShrink: 0 }}>
+                <div
+                  style={{
+                    width: 36, height: 36, borderRadius: 10,
+                    background: `${cfg.color}14`, border: `1.5px solid ${cfg.color}40`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}
+                >
+                  <Icon className="w-4 h-4" style={{ color: cfg.color }} />
                 </div>
+                {i < events.length - 1 && (
+                  <div style={{ width: 2, flex: 1, background: 'var(--border-light)', marginTop: 6, minHeight: 20 }} />
+                )}
+              </div>
+              {/* Body tile */}
+              <div
+                className="flex-1 min-w-0"
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: 10,
+                  background: tileBg,
+                  border: tileBg === 'transparent' ? 'none' : `1px solid ${tileBorder}`,
+                }}
+              >
+                <div className="flex items-baseline flex-wrap gap-2 mb-1">
+                  <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{e.title}</span>
+                  <span className="text-[10.5px] font-semibold uppercase tracking-wider" style={{ color: cfg.color }}>
+                    {cfg.label}
+                  </span>
+                  <span className="text-[11px] font-mono" style={{ color: 'var(--text-muted)' }}>{dateLabel}</span>
+                </div>
+                {e.subtitle && (
+                  <p className="text-xs" style={{ color: 'var(--text-secondary)', lineHeight: 1.45 }}>{e.subtitle}</p>
+                )}
+                {e.meta && (
+                  <p className="text-[10.5px] mt-1" style={{ color: 'var(--text-muted)' }}>{e.meta}</p>
+                )}
+                {e.badge && (
+                  <div className="mt-1.5">
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full" style={{
+                      background: e.badge.bg,
+                      color: e.badge.color,
+                      border: `1px solid ${e.badge.color}30`,
+                    }}>
+                      {e.badge.label}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           );

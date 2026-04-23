@@ -88,9 +88,27 @@ export const wardDB = () => getDB('taban_wards');
 export const staffSchedulesDB = () => getDB('taban_staff_schedules');
 export const bloodBankDB = () => getDB('taban_blood_bank');
 export const emergencyPlansDB = () => getDB('taban_emergency_plans');
+export const assetsDB = () => getDB('taban_assets');
+export const leaveRequestsDB = () => getDB('taban_leave_requests');
+export const patientFeedbackDB = () => getDB('taban_patient_feedback');
+export const payrollEntriesDB = () => getDB('taban_payroll_entries');
+export const controlledSubstanceLogDB = () => getDB('taban_controlled_substance_log');
+
+// Patient Insurance & Payments databases
+export const insurancePoliciesDB = () => getDB('taban_insurance_policies');
+export const eligibilityChecksDB = () => getDB('taban_eligibility_checks');
+export const chargesDB = () => getDB('taban_charges');
+export const claimsDB = () => getDB('taban_claims');
+export const adjustmentsDB = () => getDB('taban_adjustments');
+export const paymentsDB = () => getDB('taban_payments');
+export const refundsDB = () => getDB('taban_refunds');
+export const savedPaymentMethodsDB = () => getDB('taban_saved_payment_methods');
+export const paymentPlansDB = () => getDB('taban_payment_plans');
+export const invoicesDB = () => getDB('taban_invoices');
+export const ledgerDB = () => getDB('taban_ledger');
 
 // Bump this version to force a re-seed (destroys all data and re-creates)
-export const SEED_VERSION = 23;
+export const SEED_VERSION = 24;
 
 export async function isSeeded(): Promise<boolean> {
   try {
@@ -135,6 +153,9 @@ export async function resetAllDatabases(): Promise<void> {
     'taban_triage',
     'taban_billing', 'taban_fee_schedule', 'taban_wards',
     'taban_staff_schedules', 'taban_blood_bank',
+    'taban_insurance_policies', 'taban_eligibility_checks', 'taban_charges',
+    'taban_claims', 'taban_adjustments', 'taban_payments', 'taban_refunds',
+    'taban_saved_payment_methods', 'taban_payment_plans', 'taban_invoices', 'taban_ledger',
     'taban_meta'
   ];
   for (const name of dbNames) {

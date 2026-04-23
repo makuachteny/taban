@@ -12,23 +12,38 @@ const ROLE_ROUTES: Record<string, { allowed: string[]; defaultDashboard: string 
       '/epidemic-intelligence', '/mch-analytics', '/government',
       '/vital-statistics', '/facility-assessments', '/data-quality',
       '/dhis2-export', '/public-stats', '/appointments', '/telehealth',
+      '/payments', '/wards', '/equipment', '/hr', '/feedback', '/dashboard/hr',
     ],
     defaultDashboard: '/admin',
   },
   org_admin: {
-    allowed: ['/org-admin', '/hospitals', '/reports', '/settings', '/my-facility', '/appointments'],
+    allowed: ['/org-admin', '/hospitals', '/reports', '/settings',
+              '/my-facility', '/appointments', '/payments',
+              '/wards', '/equipment', '/hr', '/feedback', '/dashboard/hr'],
     defaultDashboard: '/org-admin',
   },
   doctor: {
-    allowed: ['/dashboard', '/patients', '/consultation', '/referrals', '/messages', '/lab', '/pharmacy', '/immunizations', '/anc', '/births', '/deaths', '/surveillance', '/reports', '/hospitals', '/settings', '/epidemic-intelligence', '/mch-analytics', '/my-facility', '/appointments', '/telehealth'],
+    allowed: ['/dashboard', '/patients', '/consultation', '/referrals',
+       '/messages', '/lab', '/pharmacy', '/immunizations', '/anc', '/births',
+       '/deaths', '/surveillance', '/reports', '/hospitals', '/settings',
+        '/epidemic-intelligence', '/mch-analytics', '/my-facility',
+         '/appointments', '/telehealth', '/payments',
+         '/wards', '/feedback', '/hr'],
     defaultDashboard: '/dashboard',
   },
   clinical_officer: {
-    allowed: ['/dashboard', '/patients', '/consultation', '/referrals', '/messages', '/lab', '/pharmacy', '/immunizations', '/anc', '/births', '/deaths', '/surveillance', '/settings', '/my-facility', '/appointments'],
+    allowed: ['/dashboard', '/patients', '/consultation', '/referrals',
+            '/messages', '/lab', '/pharmacy', '/immunizations', '/anc',
+             '/births', '/deaths', '/surveillance', '/settings', '/my-facility',
+              '/appointments', '/payments',
+              '/wards', '/feedback'],
     defaultDashboard: '/dashboard',
   },
   nurse: {
-    allowed: ['/dashboard/nurse', '/patients', '/messages', '/lab', '/immunizations', '/anc', '/births', '/deaths', '/settings', '/my-facility', '/appointments'],
+    allowed: ['/dashboard/nurse', '/patients', '/messages', '/lab',
+       '/immunizations', '/anc', '/births', '/deaths', '/settings',
+        '/my-facility', '/appointments', '/payments',
+        '/wards', '/feedback', '/hr'],
     defaultDashboard: '/dashboard/nurse',
   },
   lab_tech: {
@@ -40,11 +55,14 @@ const ROLE_ROUTES: Record<string, { allowed: string[]; defaultDashboard: string 
     defaultDashboard: '/dashboard/pharmacy',
   },
   front_desk: {
-    allowed: ['/dashboard/front-desk', '/patients', '/referrals', '/messages', '/settings', '/my-facility', '/appointments'],
+    allowed: ['/dashboard/front-desk', '/patients', '/referrals', '/messages',
+       '/settings', '/my-facility', '/appointments', '/payments',
+       '/wards', '/feedback'],
     defaultDashboard: '/dashboard/front-desk',
   },
   boma_health_worker: {
-    allowed: ['/dashboard/boma', '/patients', '/messages', '/immunizations', '/anc', '/births', '/deaths'],
+    allowed: ['/dashboard/boma', '/patients', '/messages', '/immunizations',
+       '/anc', '/births', '/deaths'],
     defaultDashboard: '/dashboard/boma',
   },
   payam_supervisor: {
@@ -60,12 +78,12 @@ const ROLE_ROUTES: Record<string, { allowed: string[]; defaultDashboard: string 
     defaultDashboard: '/dashboard/data-entry',
   },
   medical_superintendent: {
-    allowed: ['/dashboard', '/patients', '/consultation', '/referrals', '/messages', '/lab', '/pharmacy', '/immunizations', '/anc', '/births', '/deaths', '/surveillance', '/reports', '/hospitals', '/settings', '/epidemic-intelligence', '/mch-analytics', '/my-facility', '/appointments', '/telehealth', '/facility-assessments', '/data-quality'],
+    allowed: ['/dashboard', '/patients', '/consultation', '/referrals', '/messages', '/lab', '/pharmacy', '/immunizations', '/anc', '/births', '/deaths', '/surveillance', '/reports', '/hospitals', '/settings', '/epidemic-intelligence', '/mch-analytics', '/my-facility', '/appointments', '/telehealth', '/facility-assessments', '/data-quality', '/payments', '/wards', '/equipment', '/hr', '/feedback', '/dashboard/hr'],
     defaultDashboard: '/dashboard',
   },
   hrio: {
-    allowed: ['/dashboard/data-entry', '/patients', '/facility-assessments', '/data-quality', '/reports', '/vital-statistics', '/immunizations', '/anc', '/births', '/deaths', '/hospitals', '/messages', '/settings', '/my-facility'],
-    defaultDashboard: '/dashboard/data-entry',
+    allowed: ['/dashboard/hr', '/dashboard/data-entry', '/patients', '/facility-assessments', '/data-quality', '/reports', '/vital-statistics', '/immunizations', '/anc', '/births', '/deaths', '/hospitals', '/messages', '/settings', '/my-facility', '/hr', '/feedback'],
+    defaultDashboard: '/dashboard/hr',
   },
   community_health_volunteer: {
     allowed: ['/dashboard/boma', '/patients', '/messages', '/immunizations', '/anc', '/births', '/deaths'],
@@ -153,6 +171,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Patient portal API — uses its own JWT auth (not staff auth)
+  if (pathname.startsWith('/api/patient-portal/')) {
+    return NextResponse.next();
+  }
+
   // CSRF protection for state-changing API requests
   if (pathname.startsWith('/api/')) {
     const method = request.method.toUpperCase();
@@ -185,8 +208,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Public marketing pages — landing, product, public-stats
-  if (pathname === '/' || pathname === '/product' || pathname === '/public-stats' || pathname === '/patient-portal') {
+  // Public pages — product, public-stats, patient-portal
+  if (
+    pathname === '/' ||
+    pathname === '/product' ||
+    pathname === '/public-stats' ||
+    pathname === '/patient-portal'
+  ) {
     return NextResponse.next();
   }
 

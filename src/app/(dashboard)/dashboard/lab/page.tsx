@@ -9,7 +9,7 @@ import {
   Radio, TestTubes, Microscope, Droplets, FileText,
   MessageSquare, ChevronRight, Beaker, Thermometer, Loader2,
   X, Save, Table, List, BarChart3, Timer, Bell, BellOff,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 
 const ACCENT = 'var(--accent-primary)';
 
@@ -79,12 +79,12 @@ const LAB_EVENT_TYPES = [
   { label: 'Centrifuge Started', color: '#A855F7', icon: Loader2 },
   { label: 'Malaria RDT Completed', color: 'var(--color-success)', icon: Microscope },
   { label: 'Critical Hemoglobin Flagged', color: '#F87171', icon: AlertTriangle },
-  { label: 'CBC Analysis Running', color: '#60A5FA', icon: Activity },
+  { label: 'CBC Analysis Running', color: '#5CB8A8', icon: Activity },
   { label: 'Urinalysis Complete', color: 'var(--color-warning)', icon: Beaker },
   { label: 'Blood Culture Incubated', color: '#EC4899', icon: Thermometer },
   { label: 'Result Validated', color: 'var(--accent-primary)', icon: CheckCircle2 },
   { label: 'Specimen Rejected - Hemolyzed', color: 'var(--color-danger)', icon: AlertTriangle },
-  { label: 'Glucose Result Ready', color: '#38BDF8', icon: FlaskConical },
+  { label: 'Glucose Result Ready', color: '#5CB8A8', icon: FlaskConical },
 ];
 
 interface LiveEvent {
@@ -430,7 +430,7 @@ export default function LabDashboardPage() {
     { label: 'Critical Results', value: kpis.critical, icon: AlertTriangle, color: 'var(--color-danger)' },
     { label: 'Unack Critical', value: kpis.unacknowledgedCritical, icon: Bell, color: 'var(--color-danger)' },
     { label: 'Abnormal', value: kpis.abnormal, icon: AlertTriangle, color: '#FB923C' },
-    { label: 'Avg Turnaround', value: `${kpis.avgTurnaround}h`, icon: Zap, color: '#38BDF8' },
+    { label: 'Avg Turnaround', value: `${kpis.avgTurnaround}h`, icon: Zap, color: '#5CB8A8' },
     { label: 'Total Tests', value: kpis.total, icon: TestTubes, color: ACCENT },
   ];
 
@@ -438,7 +438,7 @@ export default function LabDashboardPage() {
     { label: 'Accept Order', icon: FileText, color: 'var(--color-success)', onClick: () => {} },
     { label: 'Enter Result', icon: Microscope, color: ACCENT, onClick: () => setShowResultModal(true) },
     { label: 'Batch Entry', icon: Table, color: '#A855F7', onClick: () => { setEntryMode('batch'); setShowResultModal(true); } },
-    { label: 'Message', icon: MessageSquare, color: '#60A5FA', onClick: () => {} },
+    { label: 'Message', icon: MessageSquare, color: '#5CB8A8', onClick: () => {} },
   ];
 
   return (
@@ -520,9 +520,7 @@ export default function LabDashboardPage() {
         {/* --- KPI Strip --- */}
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 mb-4">
           {kpiStrip.map((kpi) => (
-            <div key={kpi.label} className="relative px-3 py-2.5 rounded-xl transition-all cursor-pointer overflow-hidden" style={{
-              background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)',
-            }}>
+            <div key={kpi.label} className="dash-stat relative px-3 py-2.5 transition-all cursor-pointer overflow-hidden">
               <div className="flex items-center gap-1.5 mb-1">
                 <kpi.icon className="w-3 h-3" style={{ color: 'var(--accent-primary)' }} />
                 <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{kpi.label}</span>
@@ -536,9 +534,7 @@ export default function LabDashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
 
           {/* Orders Queue Table - 2 columns */}
-          <div className="md:col-span-2 rounded-2xl overflow-hidden" style={{
-            background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)',
-          }}>
+          <div className="md:col-span-2 dash-card rounded-2xl overflow-hidden">
             <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
               <div className="flex items-center gap-2">
                 <FileText className="w-4 h-4" style={{ color: ACCENT }} />
@@ -595,9 +591,7 @@ export default function LabDashboardPage() {
           </div>
 
           {/* Specimen Pipeline - 1 column */}
-          <div className="rounded-2xl overflow-hidden" style={{
-            background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)',
-          }}>
+          <div className="dash-card rounded-2xl overflow-hidden">
             <div className="px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
               <div className="flex items-center gap-2">
                 <Droplets className="w-4 h-4" style={{ color: '#EC4899' }} />
@@ -635,9 +629,7 @@ export default function LabDashboardPage() {
           {/* Right Panel: Live Feed + Quick Actions - 1 column */}
           <div className="space-y-4 flex flex-col">
             {/* Live Feed */}
-            <div className="rounded-2xl overflow-hidden flex-1 flex flex-col" style={{
-              background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)', maxHeight: '260px',
-            }}>
+            <div className="dash-card rounded-2xl overflow-hidden flex-1 flex flex-col" style={{ maxHeight: '260px' }}>
               <div className="px-3 py-2 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-light)' }}>
                 <div className="flex items-center gap-2">
                   <Radio className="w-4 h-4" style={{ color: 'var(--color-success)' }} />
@@ -678,9 +670,7 @@ export default function LabDashboardPage() {
             </div>
 
             {/* Quick Actions */}
-            <div className="rounded-2xl p-3" style={{
-              background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)',
-            }}>
+            <div className="dash-card rounded-2xl p-3">
               <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Quick Actions</p>
               <div className="grid grid-cols-2 gap-1.5">
                 {quickActions.map(action => (
@@ -697,9 +687,7 @@ export default function LabDashboardPage() {
         </div>
 
         {/* --- Bottom: Recent Completed Results --- */}
-        <div className="rounded-2xl overflow-hidden mb-4" style={{
-          background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)',
-        }}>
+        <div className="dash-card rounded-2xl overflow-hidden mb-4">
           <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4" style={{ color: 'var(--color-success)' }} />
@@ -744,12 +732,10 @@ export default function LabDashboardPage() {
         </div>
 
         {/* --- Feature 4: TAT (Turnaround Time) Dashboard --- */}
-        <div className="rounded-2xl overflow-hidden" style={{
-          background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)',
-        }}>
+        <div className="dash-card rounded-2xl overflow-hidden">
           <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
             <div className="flex items-center gap-2">
-              <Timer className="w-4 h-4" style={{ color: '#38BDF8' }} />
+              <Timer className="w-4 h-4" style={{ color: '#5CB8A8' }} />
               <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Turnaround Time (TAT) Dashboard</span>
             </div>
             <div className="flex items-center gap-3">
@@ -860,8 +846,8 @@ export default function LabDashboardPage() {
       {/* ===== Feature 1 & 3: Result Entry Modal (Single + Batch) ===== */}
       {showResultModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
-          <div className="w-full max-w-2xl mx-4 rounded-2xl overflow-hidden" style={{
-            background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
+          <div className="dash-card w-full max-w-2xl mx-4 rounded-2xl overflow-hidden" style={{
+            boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
             maxHeight: '85vh', display: 'flex', flexDirection: 'column',
           }}>
             {/* Modal Header */}

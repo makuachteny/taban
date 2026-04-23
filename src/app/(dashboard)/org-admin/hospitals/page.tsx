@@ -6,7 +6,7 @@ import PageHeader from '@/components/PageHeader';
 import { useApp } from '@/lib/context';
 import {
   Building2, Plus, X, MapPin, ChevronDown, AlertCircle, Users,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 import type { HospitalDoc, UserRole } from '@/lib/db-types';
 import type { DataScope } from '@/lib/services/data-scope';
 

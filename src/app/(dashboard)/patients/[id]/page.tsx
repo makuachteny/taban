@@ -9,25 +9,31 @@ import {
   Heart, AlertTriangle, FileText, FlaskConical,
   Pill, Activity, Brain, ChevronDown, ChevronUp,
   ShieldAlert, TestTubes, MessageSquare, ChevronRight,
-  CalendarClock, UserPlus, TrendingUp as TrendingUpIcon, ClipboardList,
-  User as UserIcon, Building2, Search, X, Printer,
-} from 'lucide-react';
+  CalendarClock, TrendingUp as TrendingUpIcon, ClipboardList,
+  User as UserIcon, Building2, Search, X, Printer, Wallet,
+} from '@/components/icons/lucide';
 import { usePatients } from '@/lib/hooks/usePatients';
 import { useMedicalRecords } from '@/lib/hooks/useMedicalRecords';
 import { useHospitals } from '@/lib/hooks/useHospitals';
 import { usePatientReferrals } from '@/lib/hooks/useReferrals';
 import { useLabResults } from '@/lib/hooks/useLabResults';
 import { useImmunizations } from '@/lib/hooks/useImmunizations';
-import { Package, Clock, Building2 as Building2Icon } from 'lucide-react';
+import { Package, Clock, Building2 as Building2Icon } from '@/components/icons/lucide';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import VitalsTrends from '@/components/VitalsTrends';
 import PatientTimeline from '@/components/PatientTimeline';
+import VitalCard from '@/components/VitalCard';
+import { Icon as DuotoneInfoIcon } from '@/components/icons';
 import { formatDateTime } from '@/lib/format-utils';
 import { usePatientAppointments } from '@/lib/hooks/useAppointments';
 import { usePrescriptions } from '@/lib/hooks/usePrescriptions';
 import { useTriage } from '@/lib/hooks/useTriage';
 import { usePermissions } from '@/lib/hooks/usePermissions';
 import PatientQRCode from '@/components/PatientQRCode';
+import { usePatientPayments } from '@/lib/hooks/usePayments';
+import { BalanceBanner, InsuranceSnapshot, PaymentHistoryTimeline, PaymentPanel, PaymentPlanWizard, EligibilityBadge } from '@/components/payments';
+import BillingTab from '@/components/patients/BillingTab';
+import BillingSidebarCard from '@/components/patients/BillingSidebarCard';
 
 export default function PatientDetailPage({ params }: { params: { id: string } }) {
   const { id } = params;
@@ -36,6 +42,8 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
   const [expandedAI, setExpandedAI] = useState<Set<string>>(new Set());
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showPaymentPanel, setShowPaymentPanel] = useState(false);
+  const [showPlanWizard, setShowPlanWizard] = useState(false);
 
   // Full History filters & expansion
   const [historySearch, setHistorySearch] = useState('');
@@ -56,6 +64,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
   const { prescriptions: allPrescriptions } = usePrescriptions();
   const { triages: patientTriages } = useTriage(patient?._id);
   const { canConsult } = usePermissions();
+  const { balance: patientBalance, reload: reloadPayments } = usePatientPayments(patient?._id);
 
   // Edit form state — initialised when modal opens
   const [editForm, setEditForm] = useState({
@@ -178,6 +187,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
     { id: 'labs', label: t('tab.labResults'), icon: FlaskConical },
     { id: 'prescriptions', label: t('tab.prescriptions'), icon: Pill },
     { id: 'referrals', label: t('tab.referrals'), icon: ArrowRightLeft },
+    { id: 'billing', label: 'Billing', icon: Wallet },
   ];
 
   // records[] is sorted newest-first by the service layer.
@@ -212,108 +222,207 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
             <ArrowLeft className="w-4 h-4" /> {t('action.back')}
           </button>
 
-          {/* Patient Header */}
-          <div className="card-elevated px-5 py-4 mb-5 relative overflow-hidden">
-            <div className="flex items-start gap-4">
-              <div className="flex-1 min-w-0">
-                {/* Name + hospital number */}
-                <div className="flex items-center gap-2.5 flex-wrap">
-                  <h1 className="text-xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-                    {patient.firstName} {patient.middleName} {patient.surname}
-                  </h1>
-                  <span
-                    className="font-mono text-[11px] px-2 py-0.5 rounded-md flex-shrink-0"
-                    style={{ background: 'var(--accent-light)', color: 'var(--taban-blue)', fontWeight: 600 }}
-                  >
-                    {patient.hospitalNumber}
-                  </span>
-                </div>
+          {/* Patient Header — Taban-style: avatar | name+pills+info-strip | action row */}
+          {(() => {
+            const initials = `${(patient.firstName || '?')[0]}${(patient.surname || '?')[0]}`.toUpperCase();
+            const isFemale = patient.gender === 'Female';
+            const hasAllergy = patient.allergies?.length > 0 && patient.allergies[0] !== 'None known';
+            // Pregnancy is signaled via active ANC visits — pull the most recent gestational age if available.
+            const ancList = ((typeof window !== 'undefined' && (window as unknown as { __ancVisits?: unknown[] }).__ancVisits) || []) as { patientId: string; gestationalAgeWeeks?: number; status?: string }[];
+            const activeANC = ancList.find(a => a.patientId === patient._id && a.status !== 'completed');
+            const isPregnant = !!activeANC;
 
-                {/* Demographics chips */}
-                <div className="flex flex-wrap items-center gap-2 mt-2">
-                  <span
-                    className="inline-flex items-center text-[11px] px-2 py-0.5 rounded-full font-medium"
-                    style={{ background: 'var(--overlay-subtle)', color: 'var(--text-secondary)' }}
-                  >
-                    {age} yrs
-                  </span>
-                  <span
-                    className="inline-flex items-center text-[11px] px-2 py-0.5 rounded-full font-medium"
+            const infoBits: { icon: 'qr' | 'patient' | 'phone' | 'mapPin' | 'clock'; label: string; value: string; accent: string; mono?: boolean }[] = [
+              { icon: 'qr', label: 'Geocode', value: patient.geocodeId || patient.hospitalNumber, accent: '#1A3A3A', mono: true },
+              { icon: 'patient', label: 'Age / Sex', value: `${age} y · ${patient.gender}`, accent: 'var(--accent-primary)' },
+              ...(patient.phone ? [{ icon: 'phone' as const, label: 'Phone', value: patient.phone, accent: '#2E9E7E', mono: true }] : []),
+              ...(patient.state ? [{ icon: 'mapPin' as const, label: 'Location', value: patient.state, accent: '#C44536' }] : []),
+              { icon: 'clock', label: 'Last Visit', value: lastConsultedDisplay, accent: '#E4A84B' },
+            ];
+
+            return (
+              <div className="card-elevated p-5 mb-5 relative overflow-hidden">
+                <div className="flex items-start gap-5">
+                  {/* Avatar */}
+                  <div
+                    className="flex-shrink-0 flex items-center justify-center font-bold text-white"
+                    aria-hidden
                     style={{
-                      background: patient.gender === 'Male' ? 'rgba(43,111,224,0.10)' : 'rgba(236,72,153,0.10)',
-                      color: patient.gender === 'Male' ? 'var(--taban-blue)' : '#BE185D',
+                      width: 88, height: 88, borderRadius: 18,
+                      background: isFemale
+                        ? 'linear-gradient(135deg, #D96E59 0%, #C44536 100%)'
+                        : 'linear-gradient(135deg, #2E9E7E 0%, #1A3A3A 100%)',
+                      fontSize: 30, letterSpacing: 0.6,
+                      boxShadow: isFemale ? '0 6px 16px rgba(196, 69, 54, 0.25)' : '0 6px 16px rgba(46, 158, 126, 0.25)',
                     }}
                   >
-                    {patient.gender}
-                  </span>
-                  {patient.state && (
-                    <span
-                      className="inline-flex items-center text-[11px] px-2 py-0.5 rounded-full font-medium"
-                      style={{ background: 'var(--overlay-subtle)', color: 'var(--text-secondary)' }}
+                    {initials}
+                  </div>
+
+                  {/* Right column */}
+                  <div className="flex-1 min-w-0">
+                    {/* Name + status pills */}
+                    <div className="flex items-center gap-2 flex-wrap mb-2">
+                      <h1 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)', letterSpacing: -0.4 }}>
+                        {patient.firstName} {patient.middleName} {patient.surname}
+                      </h1>
+                      {isPregnant && (
+                        <span className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full font-bold" style={{
+                          background: 'rgba(217, 110, 89, 0.12)', color: '#C44536', border: '1px solid rgba(217, 110, 89, 0.32)', letterSpacing: 0.2,
+                        }}>
+                          <DuotoneInfoIcon name="pregnant" size={11} color="#C44536" accent="#C44536" />
+                          Pregnant{activeANC?.gestationalAgeWeeks ? ` · ${activeANC.gestationalAgeWeeks} wk` : ''}
+                        </span>
+                      )}
+                      {hasAllergy && (
+                        <span className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full font-bold" style={{
+                          background: 'rgba(196, 69, 54, 0.12)', color: '#C44536', border: '1px solid rgba(196, 69, 54, 0.32)', letterSpacing: 0.2,
+                        }}>
+                          <AlertTriangle className="w-3 h-3" />
+                          {patient.allergies.length === 1 ? patient.allergies[0] : `${patient.allergies[0]} +${patient.allergies.length - 1}`} allergy
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Inline info strip — distributed across the full row width */}
+                    <div
+                      className="grid mb-5"
+                      style={{
+                        gridTemplateColumns: `repeat(${infoBits.length}, minmax(0, 1fr))`,
+                        gap: 16,
+                        rowGap: 12,
+                      }}
                     >
-                      {patient.state}
-                    </span>
-                  )}
-                  {patient.allergies?.length > 0 && patient.allergies[0] !== 'None known' && (
-                    <span className="badge badge-emergency text-[10px] flex-shrink-0">
-                      <AlertTriangle className="w-3 h-3" /> Allergy: {patient.allergies.join(', ')}
-                    </span>
-                  )}
-                </div>
+                      {infoBits.map(bit => (
+                        <div key={bit.label} className="flex items-center gap-2.5 min-w-0">
+                          <DuotoneInfoIcon name={bit.icon} size={18} color={bit.accent} accent={bit.accent} />
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: 0.6, textTransform: 'uppercase', color: 'var(--text-muted)', lineHeight: 1.2 }}>
+                              {bit.label}
+                            </div>
+                            <div
+                              style={{
+                                fontSize: 13, fontWeight: 600, color: 'var(--text-primary)',
+                                fontFamily: bit.mono ? 'JetBrains Mono, ui-monospace, monospace' : 'inherit',
+                                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.3,
+                              }}
+                            >
+                              {bit.value}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
 
-                {/* Timeline meta */}
-                <div
-                  className="flex flex-wrap gap-x-4 gap-y-1 mt-3 pt-3 border-t text-[11px]"
-                  style={{ color: 'var(--text-muted)', borderColor: 'var(--border-light)' }}
-                >
-                  <span className="flex items-center gap-1">
-                    <UserPlus className="w-3 h-3" />
-                    <span>Registered: <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>{registeredAtDisplay}</span></span>
-                    {patient.registeredBy && <span className="opacity-70">by {patient.registeredBy}</span>}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <CalendarClock className="w-3 h-3" />
-                    <span>Last consultation: <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>{lastConsultedDisplay}</span></span>
-                    {patient.lastConsultedBy && <span className="opacity-70">by {patient.lastConsultedBy}</span>}
-                  </span>
+                    {/* Action row — primary + secondaries spread evenly, then meta-action icons on the far right */}
+                    <div className="flex items-center justify-between gap-3 flex-wrap no-print">
+                      <div className="flex items-center gap-2 flex-wrap flex-1">
+                        {canConsult && (
+                          <button onClick={() => router.push(`/consultation?patientId=${patient._id}`)} className="btn btn-primary">
+                            <Stethoscope className="w-4 h-4" /> Start Consultation
+                          </button>
+                        )}
+                        <button onClick={() => setActiveTab('labs')} className="btn btn-secondary">
+                          <FlaskConical className="w-4 h-4" style={{ color: '#E4A84B' }} /> Order Lab
+                        </button>
+                        <button onClick={() => setActiveTab('prescriptions')} className="btn btn-secondary">
+                          <Pill className="w-4 h-4" style={{ color: '#2E9E7E' }} /> Prescribe
+                        </button>
+                        <button onClick={() => router.push('/referrals')} className="btn btn-secondary">
+                          <ArrowRightLeft className="w-4 h-4" style={{ color: '#1B7FA8' }} /> Refer
+                        </button>
+                        <button onClick={() => setShowMessageModal(true)} className="btn btn-secondary">
+                          <MessageSquare className="w-4 h-4" style={{ color: '#1A3A3A' }} /> Message
+                        </button>
+                      </div>
+
+                      {/* Meta actions — Edit | Print (which also covers "save as PDF" in browser print dialog) */}
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <button
+                          onClick={openEditModal}
+                          className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors"
+                          title="Edit demographics"
+                          style={{ background: 'transparent', border: '1px solid var(--border-light)', color: 'var(--text-muted)' }}
+                        >
+                          <DuotoneInfoIcon name="edit" size={15} />
+                        </button>
+                        <button
+                          onClick={() => { if (typeof window !== 'undefined') window.print(); }}
+                          className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors"
+                          title="Print patient summary"
+                          style={{ background: 'transparent', border: '1px solid var(--border-light)', color: 'var(--text-muted)' }}
+                        >
+                          <Printer className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (typeof window === 'undefined') return;
+                            // Real export — JSON snapshot of the patient record.
+                            const snapshot = {
+                              patient,
+                              latestRecord: records[0] || null,
+                              latestVitals,
+                              records: records.slice(0, 20),
+                              referrals: (patientReferrals || []).slice(0, 20),
+                              labResults: (allLabResults || []).filter(l => l.patientId === patient._id).slice(0, 20),
+                              exportedAt: new Date().toISOString(),
+                            };
+                            const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `patient-${patient.hospitalNumber || patient._id}-${new Date().toISOString().slice(0, 10)}.json`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                          }}
+                          className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors"
+                          title="Download patient record (JSON)"
+                          style={{ background: 'transparent', border: '1px solid var(--border-light)', color: 'var(--text-muted)' }}
+                        >
+                          <DuotoneInfoIcon name="download" size={15} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="flex gap-2 flex-shrink-0 no-print">
-                {canConsult && (
-                  <button onClick={() => router.push(`/consultation?patientId=${patient._id}`)} className="btn btn-primary btn-sm">
-                    <Stethoscope className="w-4 h-4" /> {t('action.newConsultation')}
-                  </button>
-                )}
-                <button onClick={() => setShowMessageModal(true)} className="btn btn-secondary btn-sm">
-                  <MessageSquare className="w-4 h-4" /> {t('action.sendMessage')}
-                </button>
-                <button onClick={() => router.push('/referrals')} className="btn btn-secondary btn-sm">
-                  <ArrowRightLeft className="w-4 h-4" /> {t('action.refer')}
-                </button>
-                <button onClick={openEditModal} className="btn btn-secondary btn-sm" title="Edit demographics">
-                  <UserIcon className="w-4 h-4" /> Edit
-                </button>
+            );
+          })()}
+
+          {/* Tabs — icon + label pills, tinted active surface (Taban-style) */}
+          <div
+            className="flex gap-1 mb-5 no-print overflow-x-auto"
+            style={{
+              background: 'var(--bg-card-solid)',
+              border: '1px solid var(--border-light)',
+              borderRadius: 12,
+              padding: 4,
+              boxShadow: 'var(--card-shadow)',
+            }}
+          >
+            {tabs.map(tab => {
+              const isActive = activeTab === tab.id;
+              return (
                 <button
-                  onClick={() => { if (typeof window !== 'undefined') window.print(); }}
-                  className="btn btn-secondary btn-sm"
-                  title="Print patient summary"
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className="flex items-center gap-2 transition-all whitespace-nowrap"
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: 8,
+                    fontSize: 12.5,
+                    fontWeight: isActive ? 700 : 500,
+                    background: isActive ? 'var(--bg-tinted, #F2F5F3)' : 'transparent',
+                    color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
                 >
-                  <Printer className="w-4 h-4" /> Print
+                  <tab.icon className="w-4 h-4" style={{ color: isActive ? 'var(--accent-primary)' : 'var(--text-muted)' }} />
+                  {tab.label}
                 </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Tabs */}
-          <div className="flex gap-0 border-b mb-5 no-print" style={{ borderColor: 'var(--border-light)' }}>
-            {tabs.map(tab => (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${activeTab === tab.id ? 'tab-active' : ''}`}
-                style={{ color: activeTab === tab.id ? 'var(--taban-blue)' : 'var(--text-muted)' }}>
-                <tab.icon className="w-4 h-4" />
-                {tab.label}
-              </button>
-            ))}
+              );
+            })}
           </div>
 
           {/* Overview Tab */}
@@ -523,7 +632,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                             className="text-[10px] font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5"
                             style={{ color: 'var(--text-muted)' }}
                           >
-                            <Pill className="w-3 h-3" style={{ color: 'var(--taban-blue)' }} />
+                            <Pill className="w-3 h-3" style={{ color: '#14B8A6' }} />
                             Current medications
                           </p>
                           {(latestRecord.prescriptions || []).length > 0 ? (
@@ -592,39 +701,54 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                 {/* Latest Vitals */}
                 <div className="card-elevated">
                   <div className="px-5 py-3 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-light)' }}>
-                    <h3 className="font-semibold text-sm">{t('vitals.title')}</h3>
+                    <div className="flex items-center gap-2.5">
+                      <div className="icon-box-sm" style={{ background: 'rgba(196, 69, 54, 0.12)' }}>
+                        <Activity className="w-4 h-4" style={{ color: '#C44536' }} />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-sm" style={{ letterSpacing: -0.1 }}>{t('vitals.title')}</h3>
+                        {latestVitals && (
+                          <p className="text-[11px]" style={{ color: 'var(--text-muted)', marginTop: 1 }}>
+                            Today · Updated automatically from latest consultation
+                          </p>
+                        )}
+                      </div>
+                    </div>
                     <button
                       onClick={() => setActiveTab('trends')}
-                      className="text-xs font-medium flex items-center gap-1"
-                      style={{ color: 'var(--taban-blue)' }}
+                      className="text-xs font-semibold inline-flex items-center gap-1 px-2.5 py-1 rounded-md"
+                      style={{ color: 'var(--taban-blue)', background: 'rgba(27, 127, 168, 0.08)' }}
                     >
                       <TrendingUpIcon className="w-3.5 h-3.5" /> View Trends
                     </button>
                   </div>
                   <div className="p-5">
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      {latestVitals && [
-                        { label: t('vitals.temperature'), value: `${latestVitals.temperature}°C`, warn: latestVitals.temperature > 37.5 },
-                        { label: t('vitals.bloodPressure'), value: `${latestVitals.systolic}/${latestVitals.diastolic}`, warn: latestVitals.systolic > 140 },
-                        { label: t('vitals.pulse'), value: `${latestVitals.pulse} bpm`, warn: latestVitals.pulse > 100 },
-                        { label: t('vitals.respRate'), value: `${latestVitals.respiratoryRate}/min`, warn: latestVitals.respiratoryRate > 20 },
-                        { label: t('vitals.spo2'), value: `${latestVitals.oxygenSaturation}%`, warn: latestVitals.oxygenSaturation < 95 },
-                        { label: t('vitals.weight'), value: `${latestVitals.weight} kg`, warn: false },
-                        { label: t('vitals.height'), value: `${latestVitals.height} cm`, warn: false },
-                        { label: t('vitals.bmi'), value: latestVitals.bmi.toString(), warn: latestVitals.bmi > 30 || latestVitals.bmi < 18.5 },
-                      ].map(v => (
-                        <div key={v.label} className="p-3 rounded-lg" style={{ background: v.warn ? 'rgba(229,46,66,0.14)' : 'var(--overlay-subtle)' }}>
-                          <p className="text-[10px] font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>{v.label}</p>
-                          <p className="text-lg font-bold" style={{ color: v.warn ? 'var(--taban-red)' : 'var(--text-primary)' }}>{v.value}</p>
-                        </div>
-                      ))}
-                    </div>
+                    {latestVitals ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                        <VitalCard vitalKey="pulse"            icon="heart"          label={t('vitals.pulse')}          value={latestVitals.pulse}          unit="bpm" />
+                        <VitalCard vitalKey="bp"               icon="bloodPressure"  label={t('vitals.bloodPressure')}  value={`${latestVitals.systolic}/${latestVitals.diastolic}`} systolic={latestVitals.systolic} diastolic={latestVitals.diastolic} unit="mmHg" />
+                        <VitalCard vitalKey="temperature"      icon="thermometer"    label={t('vitals.temperature')}    value={latestVitals.temperature}    unit="°C" />
+                        <VitalCard vitalKey="oxygenSaturation" icon="oxygen"         label={t('vitals.spo2')}           value={latestVitals.oxygenSaturation} unit="%" />
+                        <VitalCard vitalKey="respiratoryRate"  icon="lungs"          label={t('vitals.respRate')}       value={latestVitals.respiratoryRate} unit="/min" />
+                        <VitalCard vitalKey="bmi"              icon="weight"         label={t('vitals.bmi')}            value={latestVitals.bmi}            unit="kg/m²" />
+                        {/* Weight + height are neutral readings — no universal alarm range. */}
+                        <VitalCard vitalKey="none"             icon="weight"         label={t('vitals.weight')}         value={latestVitals.weight}         unit="kg" />
+                        <VitalCard vitalKey="none"             icon="patient"        label={t('vitals.height')}         value={latestVitals.height}         unit="cm" />
+                      </div>
+                    ) : (
+                      <div className="p-6 text-center rounded-lg" style={{ background: 'var(--overlay-subtle)' }}>
+                        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No vitals recorded yet for this patient.</p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 {/* Recent Visits */}
                 <div className="card-elevated">
-                  <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
+                  <div className="px-5 py-3 border-b flex items-center gap-2" style={{ borderColor: 'var(--border-light)' }}>
+                    <div className="icon-box-sm" style={{ background: 'var(--accent-light)' }}>
+                      <FileText className="w-3.5 h-3.5" style={{ color: 'var(--taban-blue)' }} />
+                    </div>
                     <h3 className="font-semibold text-sm">{t('encounters.recent')}</h3>
                   </div>
                   <div className="divide-y" style={{ borderColor: 'var(--table-row-border)' }}>
@@ -713,7 +837,9 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                 {/* ── Related Records (deep links) ── */}
                 <div className="card-elevated">
                   <div className="px-5 py-3 border-b flex items-center gap-2" style={{ borderColor: 'var(--border-light)' }}>
-                    <ClipboardList className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
+                    <div className="icon-box-sm" style={{ background: 'var(--accent-light)' }}>
+                      <ClipboardList className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
+                    </div>
                     <h3 className="font-semibold text-sm">Related Records</h3>
                   </div>
                   <div className="p-3 space-y-1">
@@ -723,30 +849,40 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                         label: 'Past Consultations',
                         count: consultationsCount,
                         action: () => setActiveTab('history'),
+                        iconBg: 'var(--accent-light)',
+                        iconColor: 'var(--accent-primary)',
                       },
                       {
                         icon: ArrowRightLeft,
                         label: 'Active Referrals',
                         count: activeReferralsCount,
                         action: () => setActiveTab('referrals'),
+                        iconBg: 'var(--accent-light)',
+                        iconColor: 'var(--accent-primary)',
                       },
                       {
                         icon: FlaskConical,
                         label: 'Lab Orders',
                         count: labOrdersCount,
                         action: () => setActiveTab('labs'),
+                        iconBg: 'rgba(139,92,246,0.12)',
+                        iconColor: '#8B5CF6',
                       },
                       {
                         icon: Pill,
                         label: 'Prescriptions',
                         count: prescriptionsCount,
                         action: () => setActiveTab('prescriptions'),
+                        iconBg: 'rgba(20,184,166,0.12)',
+                        iconColor: '#14B8A6',
                       },
                       {
                         icon: Heart,
                         label: 'Immunizations',
                         count: immunizationsCount,
                         action: () => router.push(`/immunizations`),
+                        iconBg: 'rgba(236,72,153,0.12)',
+                        iconColor: '#EC4899',
                       },
                     ].map((item) => {
                       const Icon = item.icon;
@@ -758,10 +894,10 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                           title={`View ${item.label}`}
                         >
                           <div
-                            className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                            style={{ background: 'var(--accent-light)' }}
+                            className="icon-box-sm flex-shrink-0"
+                            style={{ background: item.iconBg }}
                           >
-                            <Icon className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
+                            <Icon className="w-3.5 h-3.5" style={{ color: item.iconColor }} />
                           </div>
                           <span className="text-xs flex-1" style={{ color: 'var(--text-secondary)' }}>{item.label}</span>
                           <span
@@ -780,10 +916,19 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                   </div>
                 </div>
 
+                {/* ── Billing & Financial Summary ── */}
+                <BillingSidebarCard
+                  patientId={patient._id}
+                  onPayClick={() => { setActiveTab('billing'); setShowPaymentPanel(true); }}
+                  onViewBilling={() => setActiveTab('billing')}
+                />
+
                 {/* ── Patient QR Code ── */}
                 <div className="card-elevated no-print">
                   <div className="px-5 py-3 border-b flex items-center gap-2" style={{ borderColor: 'var(--border-light)' }}>
-                    <Search className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
+                    <div className="icon-box-sm" style={{ background: 'var(--accent-light)' }}>
+                      <Search className="w-3.5 h-3.5" style={{ color: 'var(--accent-primary)' }} />
+                    </div>
                     <h3 className="font-semibold text-sm">Patient QR Code</h3>
                   </div>
                   <div className="p-5 flex justify-center">
@@ -797,35 +942,65 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                 </div>
 
                 <div className="card-elevated">
-                  <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
+                  <div className="px-5 py-3 border-b flex items-center gap-2" style={{ borderColor: 'var(--border-light)' }}>
+                    <div className="icon-box-sm" style={{ background: 'rgba(43,111,224,0.12)' }}>
+                      <UserIcon className="w-3.5 h-3.5" style={{ color: 'var(--taban-blue)' }} />
+                    </div>
                     <h3 className="font-semibold text-sm">{t('patient.demographics')}</h3>
                   </div>
-                  <div className="p-5 space-y-3">
-                    {[
-                      { l: t('patient.phone'), v: patient.phone },
-                      { l: t('patient.bloodType'), v: patient.bloodType },
-                      { l: t('patient.location'), v: `${patient.county}, ${patient.state}` },
-                      { l: t('patient.tribe'), v: patient.tribe },
-                      { l: t('patient.language'), v: patient.primaryLanguage },
-                      { l: t('patient.registered'), v: registeredAtDisplay },
-                      { l: t('patient.facility'), v: regHospital?.name || 'N/A' },
-                      { l: t('patient.nextOfKin'), v: `${patient.nokName} (${patient.nokRelationship})` },
-                      { l: t('patient.nokPhone'), v: patient.nokPhone },
-                    ].map(item => (
-                      <div key={item.l} className="flex justify-between">
-                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{item.l}</span>
-                        <span className="text-xs font-medium text-right max-w-[60%] truncate">{item.v}</span>
-                      </div>
-                    ))}
+                  <div className="p-5">
+                    {/* Personal Info */}
+                    <div className="data-row-divider-sm">
+                      {[
+                        { l: t('patient.phone'), v: patient.phone },
+                        { l: t('patient.bloodType'), v: patient.bloodType },
+                        { l: t('patient.location'), v: `${patient.county}, ${patient.state}` },
+                        { l: t('patient.tribe'), v: patient.tribe },
+                        { l: t('patient.language'), v: patient.primaryLanguage },
+                      ].map(item => (
+                        <div key={item.l} className="flex justify-between">
+                          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{item.l}</span>
+                          <span className="text-xs font-medium text-right max-w-[60%] truncate">{item.v}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <hr className="section-divider" />
+                    {/* Registration Info */}
+                    <div className="data-row-divider-sm">
+                      {[
+                        { l: t('patient.registered'), v: registeredAtDisplay },
+                        { l: t('patient.facility'), v: regHospital?.name || 'N/A' },
+                      ].map(item => (
+                        <div key={item.l} className="flex justify-between">
+                          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{item.l}</span>
+                          <span className="text-xs font-medium text-right max-w-[60%] truncate">{item.v}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <hr className="section-divider" />
+                    {/* Next of Kin */}
+                    <div className="data-row-divider-sm">
+                      {[
+                        { l: t('patient.nextOfKin'), v: `${patient.nokName} (${patient.nokRelationship})` },
+                        { l: t('patient.nokPhone'), v: patient.nokPhone },
+                      ].map(item => (
+                        <div key={item.l} className="flex justify-between">
+                          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{item.l}</span>
+                          <span className="text-xs font-medium text-right max-w-[60%] truncate">{item.v}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
                 <div className="card-elevated">
                   <div className="px-5 py-3 border-b flex items-center gap-2" style={{ borderColor: 'var(--border-light)' }}>
-                    <AlertTriangle className="w-4 h-4" style={{ color: 'var(--taban-red)' }} />
+                    <div className="icon-box-sm" style={{ background: 'rgba(229,46,66,0.12)' }}>
+                      <AlertTriangle className="w-3.5 h-3.5" style={{ color: 'var(--taban-red)' }} />
+                    </div>
                     <h3 className="font-semibold text-sm">{t('patient.allergies')}</h3>
                   </div>
-                  <div className="p-5 space-y-2">
+                  <div className="p-5 data-row-divider-sm">
                     {(patient.allergies || ['None known']).map(a => (
                       <div key={a} className="px-3 py-2 rounded-lg text-sm font-medium"
                         style={{ background: a === 'None known' ? 'var(--overlay-subtle)' : 'rgba(229,46,66,0.14)', color: a === 'None known' ? 'var(--text-secondary)' : '#F87171' }}>
@@ -836,10 +1011,13 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                 </div>
 
                 <div className="card-elevated">
-                  <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
+                  <div className="px-5 py-3 border-b flex items-center gap-2" style={{ borderColor: 'var(--border-light)' }}>
+                    <div className="icon-box-sm" style={{ background: 'rgba(236,72,153,0.12)' }}>
+                      <Heart className="w-3.5 h-3.5" style={{ color: '#EC4899' }} />
+                    </div>
                     <h3 className="font-semibold text-sm">{t('patient.chronicConditions')}</h3>
                   </div>
-                  <div className="p-5 space-y-2">
+                  <div className="p-5 data-row-divider-sm">
                     {(patient.chronicConditions || ['None']).map(c => (
                       <div key={c} className="px-3 py-2 rounded-lg text-sm"
                         style={{ background: c === 'None' ? 'var(--overlay-subtle)' : 'rgba(252,211,77,0.14)', color: c === 'None' ? 'var(--text-secondary)' : 'var(--color-warning)' }}>
@@ -850,10 +1028,13 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                 </div>
 
                 <div className="card-elevated">
-                  <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
+                  <div className="px-5 py-3 border-b flex items-center gap-2" style={{ borderColor: 'var(--border-light)' }}>
+                    <div className="icon-box-sm" style={{ background: 'rgba(20,184,166,0.12)' }}>
+                      <Pill className="w-3.5 h-3.5" style={{ color: '#14B8A6' }} />
+                    </div>
                     <h3 className="font-semibold text-sm">{t('patient.medications')}</h3>
                   </div>
-                  <div className="p-5 space-y-2">
+                  <div className="p-5 data-row-divider-sm">
                     {records[0]?.prescriptions?.map((p, i) => (
                       <div key={i} className="px-3 py-2.5 rounded-lg" style={{ background: 'var(--overlay-subtle)' }}>
                         <p className="text-sm font-medium">{p.drugName}</p>
@@ -1221,7 +1402,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                             {(rec.prescriptions || []).length > 0 && (
                               <div>
                                 <p className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>
-                                  <Pill className="w-3 h-3" style={{ color: 'var(--taban-blue)' }} />
+                                  <Pill className="w-3 h-3" style={{ color: '#14B8A6' }} />
                                   Prescriptions ({rec.prescriptions!.length})
                                 </p>
                                 <ul className="space-y-1">
@@ -1240,7 +1421,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                             {(rec.labResults || []).length > 0 && (
                               <div>
                                 <p className="text-[10px] font-semibold uppercase tracking-wider mb-1.5 flex items-center gap-1.5" style={{ color: 'var(--text-muted)' }}>
-                                  <FlaskConical className="w-3 h-3" style={{ color: 'var(--taban-blue)' }} />
+                                  <FlaskConical className="w-3 h-3" style={{ color: '#8B5CF6' }} />
                                   Lab results ({rec.labResults!.length})
                                 </p>
                                 <ul className="space-y-1">
@@ -1315,7 +1496,12 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
           {activeTab === 'labs' && (
             <div className="card-elevated overflow-hidden">
               <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
-                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{t('lab.title')}</span>
+                <div className="flex items-center gap-2">
+                  <div className="icon-box-sm" style={{ background: 'rgba(139,92,246,0.12)' }}>
+                    <FlaskConical className="w-3.5 h-3.5" style={{ color: '#8B5CF6' }} />
+                  </div>
+                  <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{t('lab.title')}</span>
+                </div>
                 <button onClick={() => router.push('/lab')} className="text-xs font-medium flex items-center gap-1" style={{ color: 'var(--taban-blue)' }}>
                   View in Lab Module <ChevronRight className="w-3.5 h-3.5" />
                 </button>
@@ -1361,7 +1547,12 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
           {activeTab === 'prescriptions' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between px-1 mb-1">
-                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Prescriptions</span>
+                <div className="flex items-center gap-2">
+                  <div className="icon-box-sm" style={{ background: 'rgba(20,184,166,0.12)' }}>
+                    <Pill className="w-3.5 h-3.5" style={{ color: '#14B8A6' }} />
+                  </div>
+                  <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Prescriptions</span>
+                </div>
                 <button onClick={() => router.push('/pharmacy')} className="text-xs font-medium flex items-center gap-1" style={{ color: 'var(--taban-blue)' }}>
                   View in Pharmacy <ChevronRight className="w-3.5 h-3.5" />
                 </button>
@@ -1375,10 +1566,12 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                     </div>
                     <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{rec.providerName}</span>
                   </div>
-                  <div className="divide-y" style={{ borderColor: 'var(--table-row-border)' }}>
+                  <div className="divide-y data-row-divider-sm" style={{ borderColor: 'var(--table-row-border)' }}>
                     {(rec.prescriptions || []).map((rx, i) => (
                       <div key={i} className="px-5 py-3 flex items-center gap-4">
-                        <Pill className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--taban-blue)' }} />
+                        <div className="icon-box-sm flex-shrink-0" style={{ background: 'rgba(20,184,166,0.12)' }}>
+                          <Pill className="w-3.5 h-3.5" style={{ color: '#14B8A6' }} />
+                        </div>
                         <div className="flex-1">
                           <p className="text-sm font-medium">{rx.drugName}</p>
                           <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
@@ -1437,7 +1630,12 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
           {activeTab === 'referrals' && (
             <div className="space-y-3">
               <div className="flex items-center justify-between px-1 mb-1">
-                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{t('referral.title')}</span>
+                <div className="flex items-center gap-2">
+                  <div className="icon-box-sm" style={{ background: 'var(--accent-light)' }}>
+                    <ArrowRightLeft className="w-3.5 h-3.5" style={{ color: 'var(--taban-blue)' }} />
+                  </div>
+                  <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{t('referral.title')}</span>
+                </div>
                 <button onClick={() => router.push('/referrals')} className="text-xs font-medium flex items-center gap-1" style={{ color: 'var(--taban-blue)' }}>
                   View in Referrals <ChevronRight className="w-3.5 h-3.5" />
                 </button>
@@ -1498,6 +1696,18 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                 })
               )}
             </div>
+          )}
+
+          {activeTab === 'billing' && (
+            <BillingTab
+              patient={patient}
+              patientBalance={patientBalance}
+              showPaymentPanel={showPaymentPanel}
+              showPlanWizard={showPlanWizard}
+              setShowPaymentPanel={setShowPaymentPanel}
+              setShowPlanWizard={setShowPlanWizard}
+              reloadPayments={reloadPayments}
+            />
           )}
       </main>
 

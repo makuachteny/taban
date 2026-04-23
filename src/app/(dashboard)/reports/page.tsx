@@ -6,7 +6,7 @@ import PageHeader from '@/components/PageHeader';
 import {
   FileText, Download, Users, Activity, Pill, BedDouble, TrendingUp,
   ChevronUp, Loader2, BarChart3, AlertTriangle
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 import { usePatients } from '@/lib/hooks/usePatients';
 import { useHospitals } from '@/lib/hooks/useHospitals';
 import { useReferrals } from '@/lib/hooks/useReferrals';
@@ -510,7 +510,7 @@ export default function ReportsPage() {
             { label: 'Total Patients', value: totalPatients, icon: Users, color: 'var(--taban-blue)', bg: 'rgba(43,111,224,0.12)' },
             { label: 'Total Referrals', value: totalReferrals, icon: BedDouble, color: '#8b5cf6', bg: 'rgba(139,92,246,0.12)' },
             { label: 'Lab Results', value: totalLabResults, icon: FileText, color: '#10b981', bg: 'rgba(16,185,129,0.12)' },
-            { label: 'Disease Alerts', value: totalDiseaseAlerts, icon: Activity, color: '#f59e0b', bg: 'rgba(245,158,11,0.12)' },
+            { label: 'Disease Alerts', value: totalDiseaseAlerts, icon: Activity, color: '#E4A84B', bg: 'rgba(245,158,11,0.12)' },
           ].map(stat => (
             <div key={stat.label} className="kpi">
               <div className="kpi__icon" style={{ background: stat.bg }}>

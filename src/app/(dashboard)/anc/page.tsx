@@ -11,8 +11,8 @@ import { useApp } from '@/lib/context';
 import { usePermissions } from '@/lib/hooks/usePermissions';
 import {
   HeartPulse, Search, Plus, X, Users, AlertTriangle,
-  Calendar, Activity, ChevronRight, ExternalLink,
-} from 'lucide-react';
+  Calendar, Activity, ChevronRight, ExternalLink, CheckCircle,
+} from '@/components/icons/lucide';
 
 const RISK_FACTOR_OPTIONS = [
   'hypertension', 'anemia', 'previous_csection', 'multiple_pregnancy',
@@ -192,12 +192,12 @@ export default function ANCPage() {
           <div className="kpi-grid mb-6">
             {[
               { label: 'Mothers Enrolled', value: stats.totalMothers.toString(), color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)', icon: Users },
-              { label: 'ANC4+ Rate', value: `${stats.anc4PlusRate}%`, color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)', icon: Activity },
-              { label: 'High Risk', value: stats.highRiskCount.toString(), color: 'var(--color-danger)', bg: 'rgba(229,46,66,0.12)', icon: AlertTriangle },
-              { label: 'This Month', value: stats.thisMonthVisits.toString(), color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)', icon: Calendar },
+              { label: 'ANC4+ Rate', value: `${stats.anc4PlusRate}%`, color: '#22C55E', bg: 'rgba(34,197,94,0.12)', icon: CheckCircle },
+              { label: 'High Risk', value: stats.highRiskCount.toString(), color: '#EF4444', bg: 'rgba(229,46,66,0.12)', icon: AlertTriangle },
+              { label: 'This Month', value: stats.thisMonthVisits.toString(), color: '#6366F1', bg: 'rgba(99,102,241,0.12)', icon: Calendar },
             ].map(stat => (
               <div key={stat.label} className="kpi">
-                <div className="kpi__icon" style={{ background: stat.bg }}>
+                <div className="icon-box-sm" style={{ background: stat.bg }}>
                   <stat.icon style={{ color: stat.color }} />
                 </div>
                 <div className="kpi__body">
@@ -214,7 +214,7 @@ export default function ANCPage() {
           <div className="card-elevated p-5 mb-4">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <HeartPulse className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
+                <HeartPulse className="w-4 h-4" style={{ color: '#EC4899' }} />
                 <h3 className="font-semibold text-sm">ANC Continuum of Care</h3>
               </div>
               <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>
@@ -286,13 +286,13 @@ export default function ANCPage() {
           {/* Mother List */}
           <div className="lg:col-span-2 card-elevated overflow-hidden">
             <div className="p-4 border-b flex items-center gap-2" style={{ borderColor: 'var(--border-light)' }}>
-              <HeartPulse className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
+              <HeartPulse className="w-4 h-4" style={{ color: '#EC4899' }} />
               <h3 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
                 Mothers Enrolled ({filteredMothers.length})
               </h3>
             </div>
 
-            <div className="divide-y" style={{ borderColor: 'var(--table-row-border)' }}>
+            <div className="divide-y data-row-divider-sm" style={{ borderColor: 'var(--table-row-border)' }}>
               {filteredMothers.map(({ latest, visitCount }) => {
                 const risk = riskColors[latest.riskLevel] || riskColors.low;
                 const isSelected = selectedMother === latest.motherId;
@@ -358,10 +358,11 @@ export default function ANCPage() {
                 {/* Mother Summary */}
                 <div className="card-elevated p-4">
                   <h3 className="font-semibold text-sm mb-3 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-                    <HeartPulse className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
+                    <HeartPulse className="w-4 h-4" style={{ color: '#EC4899' }} />
                     Visit History
                   </h3>
-                  <div className="space-y-3">
+                  <hr className="section-divider" />
+                  <div className="space-y-3 data-row-divider-sm">
                     {selectedMotherVisits.map(v => {
                       const risk = riskColors[v.riskLevel] || riskColors.low;
                       return (
@@ -379,13 +380,16 @@ export default function ANCPage() {
                             <span>FHR: {v.fetalHeartRate} bpm</span>
                           </div>
                           {(v.riskFactors?.length ?? 0) > 0 && (
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {(v.riskFactors || []).map(rf => (
-                                <span key={rf} className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(229,46,66,0.1)', color: 'var(--color-danger)' }}>
-                                  {rf.replace(/_/g, ' ')}
-                                </span>
-                              ))}
-                            </div>
+                            <>
+                              <hr className="section-divider" />
+                              <div className="flex flex-wrap gap-1">
+                                {(v.riskFactors || []).map(rf => (
+                                  <span key={rf} className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(229,46,66,0.1)', color: 'var(--color-danger)' }}>
+                                    {rf.replace(/_/g, ' ')}
+                                  </span>
+                                ))}
+                              </div>
+                            </>
                           )}
                           {v.notes && (
                             <p className="text-xs mt-2 italic" style={{ color: 'var(--text-muted)' }}>{v.notes}</p>
@@ -401,8 +405,12 @@ export default function ANCPage() {
                   const latest = selectedMotherVisits[selectedMotherVisits.length - 1];
                   return (
                     <div className="card-elevated p-4">
-                      <h3 className="font-semibold text-sm mb-3" style={{ color: 'var(--text-primary)' }}>Birth Plan</h3>
-                      <div className="space-y-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      <h3 className="font-semibold text-sm mb-3 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                        <Calendar className="w-4 h-4" style={{ color: '#6366F1' }} />
+                        Birth Plan
+                      </h3>
+                      <hr className="section-divider" />
+                      <div className="space-y-2 data-row-divider-sm text-xs" style={{ color: 'var(--text-secondary)' }}>
                         <div className="flex justify-between">
                           <span>Delivery Facility</span>
                           <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{latest.birthPlan?.facility || '—'}</span>
@@ -415,6 +423,7 @@ export default function ANCPage() {
                           <span>Blood Donor</span>
                           <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{latest.birthPlan?.bloodDonor || '—'}</span>
                         </div>
+                        <hr className="section-divider" />
                         <div className="flex justify-between">
                           <span>Next Visit</span>
                           <span className="font-medium" style={{ color: 'var(--accent-primary)' }}>{latest.nextVisitDate || '—'}</span>
@@ -426,7 +435,7 @@ export default function ANCPage() {
               </>
             ) : (
               <div className="card-elevated p-8 text-center">
-                <HeartPulse className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--text-muted)', opacity: 0.2 }} />
+                <HeartPulse className="w-12 h-12 mx-auto mb-3" style={{ color: '#EC4899', opacity: 0.2 }} />
                 <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Select a mother to view visit history</p>
               </div>
             )}

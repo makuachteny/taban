@@ -7,7 +7,7 @@ import { useApp } from '@/lib/context';
 import {
   Users, Plus, MoreVertical, KeyRound,
   UserX, X, Eye, EyeOff, ChevronDown, AlertCircle,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 import type { UserDoc, HospitalDoc, UserRole } from '@/lib/db-types';
 import type { DataScope } from '@/lib/services/data-scope';
 

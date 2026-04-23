@@ -10,18 +10,18 @@ import {
   Search, ClipboardList, Send, TrendingDown, CheckCircle2, XCircle,
   AlertOctagon, Calendar, User, History, Printer, Trash2, X, Check,
   ShoppingCart, FileText,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 
 const ACCENT = 'var(--accent-primary)';
 
 const EVENT_TYPES = [
-  { type: 'rx_received', label: 'Prescription Received', color: '#60A5FA', icon: ClipboardList },
+  { type: 'rx_received', label: 'Prescription Received', color: '#5CB8A8', icon: ClipboardList },
   { type: 'dispensed', label: 'Medication Dispensed', color: 'var(--color-success)', icon: CheckCircle2 },
   { type: 'stock_alert', label: 'Stock Alert Triggered', color: '#F87171', icon: AlertTriangle },
   { type: 'controlled', label: 'Controlled Substance Logged', color: '#A855F7', icon: ShieldCheck },
   { type: 'expired', label: 'Expired Item Flagged', color: 'var(--color-danger)', icon: XCircle },
   { type: 'pickup', label: 'Awaiting Patient Pickup', color: ACCENT, icon: Clock },
-  { type: 'restock', label: 'Restock Order Placed', color: '#38BDF8', icon: Package },
+  { type: 'restock', label: 'Restock Order Placed', color: '#5CB8A8', icon: Package },
   { type: 'message', label: 'Pharmacist Message', color: '#EC4899', icon: MessageSquare },
 ];
 
@@ -56,7 +56,7 @@ const DRUG_INTERACTIONS: DrugInteraction[] = [
 const INTERACTION_COLORS: Record<string, { bg: string; border: string; text: string }> = {
   HIGH: { bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.3)', text: 'var(--color-danger)' },
   MODERATE: { bg: 'rgba(251,191,36,0.1)', border: 'rgba(251,191,36,0.3)', text: 'var(--color-warning)' },
-  LOW: { bg: 'rgba(96,165,250,0.1)', border: 'rgba(96,165,250,0.3)', text: '#60A5FA' },
+  LOW: { bg: 'rgba(96,165,250,0.1)', border: 'rgba(96,165,250,0.3)', text: '#5CB8A8' },
 };
 
 function checkDrugInteractions(medication: string, patientMedications: string[]): DrugInteraction[] {
@@ -251,8 +251,8 @@ function DispenseModal({ rx, onConfirm, onCancel, interactions }: {
 }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
-      <div className="rounded-2xl p-5 w-full max-w-md mx-4" style={{
-        background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+      <div className="dash-card rounded-2xl p-5 w-full max-w-md mx-4" style={{
+        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
       }}>
         <div className="flex items-center gap-2 mb-4">
           <Pill className="w-5 h-5" style={{ color: ACCENT }} />
@@ -340,8 +340,8 @@ function PurchaseOrderModal({ items, onClose }: {
   };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
-      <div className="rounded-2xl p-5 w-full max-w-lg mx-4" style={{
-        background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+      <div className="dash-card rounded-2xl p-5 w-full max-w-lg mx-4" style={{
+        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
       }}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -557,13 +557,11 @@ export default function PharmacyDashboardPage() {
             { label: 'Low Stock', value: lowStockCount, icon: TrendingDown, color: 'var(--color-warning)' },
             { label: 'Expired', value: expiredCount, icon: XCircle, color: '#F87171' },
             { label: 'Expiring', value: expiringCount, icon: Calendar, color: '#F97316' },
-            { label: 'Pickup', value: awaitingPickup, icon: Clock, color: '#38BDF8' },
+            { label: 'Pickup', value: awaitingPickup, icon: Clock, color: '#5CB8A8' },
             { label: 'Controlled', value: controlledCount, icon: ShieldCheck, color: '#A855F7' },
-            { label: 'Total Meds', value: totalMeds.toLocaleString(), icon: Archive, color: '#60A5FA' },
+            { label: 'Total Meds', value: totalMeds.toLocaleString(), icon: Archive, color: '#5CB8A8' },
           ].map((kpi) => (
-            <div key={kpi.label} className="relative px-3 py-2.5 rounded-xl transition-all cursor-pointer overflow-hidden" style={{
-              background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)',
-            }}>
+            <div key={kpi.label} className="dash-card relative px-3 py-2.5 transition-all cursor-pointer overflow-hidden">
               <div className="flex items-center gap-1.5 mb-1">
                 <kpi.icon className="w-3 h-3" style={{ color: 'var(--accent-primary)' }} />
                 <span className="text-[9px] font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{kpi.label}</span>
@@ -577,9 +575,7 @@ export default function PharmacyDashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
 
           {/* Prescription Queue with One-Tap Dispense - 2 cols */}
-          <div className="md:col-span-2 rounded-2xl overflow-hidden" style={{
-            background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)',
-          }}>
+          <div className="md:col-span-2 dash-card rounded-2xl overflow-hidden">
             <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
               <div className="flex items-center gap-2">
                 <ClipboardList className="w-4 h-4" style={{ color: ACCENT }} />
@@ -615,7 +611,7 @@ export default function PharmacyDashboardPage() {
                       background: rx.status === 'dispensed' ? 'rgba(74,222,128,0.15)' :
                         rx.status === 'awaiting_pickup' ? 'rgba(56,189,248,0.15)' : `${ACCENT}15`,
                       color: rx.status === 'dispensed' ? 'var(--color-success)' :
-                        rx.status === 'awaiting_pickup' ? '#38BDF8' : ACCENT,
+                        rx.status === 'awaiting_pickup' ? '#5CB8A8' : ACCENT,
                     }}>{rx.status === 'awaiting_pickup' ? 'PICKUP' : rx.status.toUpperCase()}</span>
                     {rx.priority === 'urgent' && (
                       <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{
@@ -638,9 +634,8 @@ export default function PharmacyDashboardPage() {
           </div>
 
           {/* Stock Alerts - 1 col */}
-          <div className="rounded-2xl overflow-hidden flex flex-col" style={{
-            background: 'var(--bg-card)', border: '1px solid var(--border-light)',
-            boxShadow: 'var(--card-shadow)', maxHeight: '460px',
+          <div className="dash-card rounded-2xl overflow-hidden flex flex-col" style={{
+            maxHeight: '460px',
           }}>
             <div className="px-3 py-2 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-light)' }}>
               <div className="flex items-center gap-2">
@@ -683,9 +678,8 @@ export default function PharmacyDashboardPage() {
           </div>
 
           {/* Dispensing Activity Feed - 1 col */}
-          <div className="rounded-2xl overflow-hidden flex flex-col" style={{
-            background: 'var(--bg-card)', border: '1px solid var(--border-light)',
-            boxShadow: 'var(--card-shadow)', maxHeight: '460px',
+          <div className="dash-card rounded-2xl overflow-hidden flex flex-col" style={{
+            maxHeight: '460px',
           }}>
             <div className="px-3 py-2 border-b flex items-center justify-between" style={{ borderColor: 'var(--border-light)' }}>
               <div className="flex items-center gap-2">
@@ -732,9 +726,7 @@ export default function PharmacyDashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
 
           {/* Auto Reorder Alerts */}
-          <div className="rounded-2xl overflow-hidden" style={{
-            background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)',
-          }}>
+          <div className="dash-card rounded-2xl overflow-hidden">
             <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
               <div className="flex items-center gap-2">
                 <ShoppingCart className="w-4 h-4" style={{ color: '#F97316' }} />
@@ -782,9 +774,7 @@ export default function PharmacyDashboardPage() {
           </div>
 
           {/* Expiry Tracker (FEFO) */}
-          <div className="rounded-2xl overflow-hidden" style={{
-            background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)',
-          }}>
+          <div className="dash-card rounded-2xl overflow-hidden">
             <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" style={{ color: 'var(--color-danger)' }} />
@@ -827,9 +817,7 @@ export default function PharmacyDashboardPage() {
         </div>
 
         {/* Patient Medication History Lookup */}
-        <div className="rounded-2xl overflow-hidden mb-4" style={{
-          background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)',
-        }}>
+        <div className="dash-card rounded-2xl overflow-hidden mb-4">
           <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
             <div className="flex items-center gap-2">
               <History className="w-4 h-4" style={{ color: '#A855F7' }} />
@@ -906,7 +894,7 @@ export default function PharmacyDashboardPage() {
                               background: entry.status === 'dispensed' ? 'rgba(74,222,128,0.15)' :
                                 entry.status === 'awaiting_pickup' ? 'rgba(56,189,248,0.15)' : `${ACCENT}15`,
                               color: entry.status === 'dispensed' ? 'var(--color-success)' :
-                                entry.status === 'awaiting_pickup' ? '#38BDF8' : ACCENT,
+                                entry.status === 'awaiting_pickup' ? '#5CB8A8' : ACCENT,
                             }}>{entry.status === 'awaiting_pickup' ? 'PICKUP' : entry.status.toUpperCase()}</span>
                           </td>
                         </tr>
@@ -923,9 +911,7 @@ export default function PharmacyDashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 
           {/* Inventory Overview - 3 cols */}
-          <div className="md:col-span-2 lg:col-span-3 rounded-2xl overflow-hidden" style={{
-            background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)',
-          }}>
+          <div className="md:col-span-2 lg:col-span-3 dash-card rounded-2xl overflow-hidden">
             <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
               <div className="flex items-center gap-2">
                 <Package className="w-4 h-4" style={{ color: ACCENT }} />
@@ -939,9 +925,7 @@ export default function PharmacyDashboardPage() {
               {INVENTORY_OVERVIEW.map((cat) => {
                 const adequatePct = Math.round((cat.adequate / cat.total) * 100);
                 return (
-                  <div key={cat.category} className="p-3 rounded-xl transition-all cursor-pointer" style={{
-                    background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)',
-                  }}>
+                  <div key={cat.category} className="dash-stat rounded-xl transition-all cursor-pointer">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[11px] font-semibold" style={{ color: ACCENT }}>{cat.category}</span>
                       <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{
@@ -968,14 +952,12 @@ export default function PharmacyDashboardPage() {
           </div>
 
           {/* Quick Actions - 1 col */}
-          <div className="rounded-2xl p-3" style={{
-            background: 'var(--bg-card)', border: '1px solid var(--border-light)', boxShadow: 'var(--card-shadow)',
-          }}>
+          <div className="dash-card rounded-2xl p-3">
             <p className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>Quick Actions</p>
             <div className="grid grid-cols-2 gap-1.5">
               {[
                 { label: 'Dispense', icon: Pill, color: ACCENT },
-                { label: 'Check Stock', icon: Search, color: '#60A5FA' },
+                { label: 'Check Stock', icon: Search, color: '#5CB8A8' },
                 { label: 'Message', icon: Send, href: '/messages', color: '#EC4899' },
                 { label: 'Inventory', icon: Package, color: 'var(--color-success)' },
               ].map(action => (

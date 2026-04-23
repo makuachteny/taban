@@ -8,7 +8,7 @@ import {
   Activity, AlertTriangle, TrendingUp, TrendingDown, Minus,
   Shield, Zap, MapPin, FileText, Radio, BarChart3,
   ChevronDown, ChevronRight, Thermometer, Bug, Eye,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 
 type TabView = 'overview' | 'curves' | 'syndromic' | 'geographic' | 'idsr' | 'alerts';
 

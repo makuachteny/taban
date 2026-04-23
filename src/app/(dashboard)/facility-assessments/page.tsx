@@ -8,7 +8,7 @@ import { useHospitals } from '@/lib/hooks/useHospitals';
 import { useApp } from '@/lib/context';
 import { usePermissions } from '@/lib/hooks/usePermissions';
 import { useToast } from '@/components/Toast';
-import { Building2, ClipboardCheck, Wifi, Droplets, Users, Activity, TrendingUp, ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
+import { Building2, ClipboardCheck, Wifi, Droplets, Users, Activity, TrendingUp, ChevronDown, ChevronUp, Plus, X } from '@/components/icons/lucide';
 
 /**
  * Default values for the minimal create-assessment form. The full

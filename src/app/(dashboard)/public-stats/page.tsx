@@ -6,7 +6,7 @@ import { useVitalStatistics } from '@/lib/hooks/useVitalStatistics';
 import { useHospitals } from '@/lib/hooks/useHospitals';
 import { useDataQuality } from '@/lib/hooks/useDataQuality';
 import { useFacilityAssessments } from '@/lib/hooks/useFacilityAssessments';
-import { Globe, Baby, Skull, Activity, Heart, Shield, Building2, Users, BedDouble, Stethoscope, Wifi } from 'lucide-react';
+import { Globe, Baby, Skull, Activity, Heart, Shield, Building2, Users, BedDouble, Stethoscope, Wifi } from '@/components/icons/lucide';
 
 export default function PublicStatsPage() {
   const { data: vitalData, loading: vLoading } = useVitalStatistics();
@@ -46,7 +46,7 @@ export default function PublicStatsPage() {
               { label: 'Health Facilities', value: hospitals.length, icon: Building2, color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)' },
               { label: 'Total Patients', value: totalPop.toLocaleString(), icon: Users, color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)' },
               { label: 'Hospital Beds', value: totalBeds.toLocaleString(), icon: BedDouble, color: 'var(--color-warning)', bg: 'rgba(252,211,77,0.12)' },
-              { label: 'Health Workers', value: totalStaff.toLocaleString(), icon: Stethoscope, color: '#38BDF8', bg: 'rgba(56,189,248,0.12)' },
+              { label: 'Health Workers', value: totalStaff.toLocaleString(), icon: Stethoscope, color: '#5CB8A8', bg: 'rgba(56,189,248,0.12)' },
               { label: 'DHIS2 Coverage', value: `${dqData?.dhis2Adoption ?? 0}%`, icon: Wifi, color: scoreColor(dqData?.dhis2Adoption ?? 0), bg: 'rgba(43,111,224,0.12)' },
             ].map(stat => (
               <div key={stat.label} className="kpi">

@@ -10,7 +10,7 @@ import KeyboardShortcuts from '@/components/KeyboardShortcuts';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import LockScreen from '@/components/LockScreen';
 import { useAutoLock } from '@/lib/hooks/useAutoLock';
-import { Loader2 } from 'lucide-react';
+import { Loader2 } from '@/components/icons/lucide';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -35,7 +35,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="flex items-center justify-center min-h-screen gradient-mesh-bg">
         <div className="flex flex-col items-center gap-4 relative z-10">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/assets/taban-logo.svg" alt="TABAN" className="w-14 h-14" style={{
+          <img src="/assets/taban-logo.svg" alt="Taban" className="w-14 h-14" style={{
             filter: 'drop-shadow(0 4px 12px rgba(10, 61, 107, 0.3))',
           }} />
           <div className="flex items-center gap-2">
@@ -47,8 +47,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  // Sidebar: 240px/72px + 12px left margin = 252px/84px. Content needs matching margin.
-  const sidebarMargin = sidebarCollapsed ? '84px' : '252px';
+  // Sidebar: 256px/80px + 12px left margin = 268px/92px. Content needs matching margin.
+  const sidebarMargin = sidebarCollapsed ? '92px' : '268px';
 
   return (
     <div className="flex h-screen overflow-hidden gradient-mesh-bg">

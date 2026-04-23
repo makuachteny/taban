@@ -7,7 +7,7 @@ import {
   Clipboard, Sparkles, Thermometer, Pill, FlaskConical,
   Stethoscope, FileText, Calendar, Keyboard, X,
   AlertCircle, Heart,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 import { useClinicalScribe } from '@/lib/hooks/useClinicalScribe';
 import type { ScribeExtraction } from '@/lib/services/clinical-scribe-service';
 
@@ -184,7 +184,7 @@ export default function ClinicalScribe({ onApply, onClose }: ClinicalScribeProps
             onChange={e => setManualText(e.target.value)}
             rows={6}
             placeholder="Doctor: What brings you in today?&#10;Patient: I've been having fever and headaches for three days...&#10;Doctor: Let me check your temperature. It's 38.5 degrees celsius..."
-            className="resize-none text-xs mb-2"
+            className="text-xs mb-2"
             style={{ fontSize: '0.8rem', lineHeight: '1.5' }}
           />
           <div className="flex gap-2">
@@ -258,7 +258,7 @@ export default function ClinicalScribe({ onApply, onClose }: ClinicalScribeProps
         {activeTab === 'fields' && scribe.extraction && (
           <div className="p-3 space-y-2">
             <FieldSection
-              icon={Clipboard} label="Chief Complaint" color="#2B6FE0"
+              icon={Clipboard} label="Chief Complaint" color="#2E9E7E"
               expanded={expandedSections.has('complaint')}
               onToggle={() => toggleSection('complaint')}
               empty={!scribe.extraction.chiefComplaint}
@@ -269,7 +269,7 @@ export default function ClinicalScribe({ onApply, onClose }: ClinicalScribeProps
             </FieldSection>
 
             <FieldSection
-              icon={Thermometer} label="Vitals" color="#60A5FA"
+              icon={Thermometer} label="Vitals" color="#5CB8A8"
               expanded={expandedSections.has('vitals')}
               onToggle={() => toggleSection('vitals')}
               empty={!Object.values(scribe.extraction.vitals).some(v => v)}
@@ -289,7 +289,7 @@ export default function ClinicalScribe({ onApply, onClose }: ClinicalScribeProps
                 ] as const).map(([key, label, unit]) => {
                   const val = scribe.extraction!.vitals[key];
                   return val ? (
-                    <div key={key} className="p-2 rounded-lg" style={{ background: 'rgba(96,165,250,0.08)', border: '1px solid rgba(96,165,250,0.15)' }}>
+                    <div key={key} className="p-2 rounded-lg" style={{ background: 'rgba(92,184,168,0.08)', border: '1px solid rgba(92,184,168,0.15)' }}>
                       <p className="text-[9px] uppercase tracking-wider font-bold" style={{ color: 'var(--text-muted)' }}>{label}</p>
                       <p className="text-sm font-bold" style={{ color: 'var(--accent-primary)' }}>{val} <span className="text-[10px] font-normal">{unit}</span></p>
                     </div>
@@ -318,7 +318,7 @@ export default function ClinicalScribe({ onApply, onClose }: ClinicalScribeProps
             </FieldSection>
 
             <FieldSection
-              icon={AlertTriangle} label="Diagnoses" color="#F59E0B"
+              icon={AlertTriangle} label="Diagnoses" color="#E4A84B"
               expanded={expandedSections.has('diagnoses')}
               onToggle={() => toggleSection('diagnoses')}
               empty={scribe.extraction.diagnoses.length === 0}
@@ -328,13 +328,13 @@ export default function ClinicalScribe({ onApply, onClose }: ClinicalScribeProps
                 {scribe.extraction.diagnoses.map((dx, i) => (
                   <div key={i} className="flex items-center gap-2 p-2 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
                     {dx.icd10Hint && (
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'rgba(245,158,11,0.12)', color: 'var(--color-warning)' }}>
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded" style={{ background: 'rgba(228,168,75,0.12)', color: 'var(--color-warning)' }}>
                         {dx.icd10Hint}
                       </span>
                     )}
                     <span className="text-xs font-medium flex-1" style={{ color: 'var(--text-primary)' }}>{dx.name}</span>
                     <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{
-                      background: dx.certainty === 'confirmed' ? 'rgba(43,111,224,0.12)' : 'rgba(252,211,77,0.12)',
+                      background: dx.certainty === 'confirmed' ? 'rgba(46,158,126,0.12)' : 'rgba(252,211,77,0.12)',
                       color: dx.certainty === 'confirmed' ? 'var(--accent-primary)' : 'var(--color-warning)',
                     }}>{dx.certainty}</span>
                   </div>
@@ -362,7 +362,7 @@ export default function ClinicalScribe({ onApply, onClose }: ClinicalScribeProps
             </FieldSection>
 
             <FieldSection
-              icon={Heart} label="Allergies" color="#EF4444"
+              icon={Heart} label="Allergies" color="#C44536"
               expanded={expandedSections.has('allergies')}
               onToggle={() => toggleSection('allergies')}
               empty={scribe.extraction.allergies.length === 0}
@@ -398,7 +398,7 @@ export default function ClinicalScribe({ onApply, onClose }: ClinicalScribeProps
             </FieldSection>
 
             <FieldSection
-              icon={FileText} label="Treatment Plan" color="#2B6FE0"
+              icon={FileText} label="Treatment Plan" color="#2E9E7E"
               expanded={expandedSections.has('plan')}
               onToggle={() => toggleSection('plan')}
               empty={scribe.extraction.treatmentPlan.length === 0}

@@ -8,7 +8,7 @@ import {
   AlertTriangle, CheckCircle2, TrendingDown,
   Baby, HeartPulse, BarChart3, Activity, Scale,
   Utensils, Droplets,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 
 const ACCENT = '#EA580C';
 
@@ -93,8 +93,8 @@ export default function NutritionDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
 
           {/* Screening list */}
-          <div className="lg:col-span-2 glass-section">
-            <div className="glass-section-header">
+          <div className="lg:col-span-2 dash-card">
+            <div className="flex items-center justify-between mb-4 pb-3" style={{ borderBottom: '1px solid var(--border-light)' }}>
               <div className="flex items-center gap-2">
                 <Scale className="w-4 h-4" style={{ color: ACCENT }} />
                 <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Nutrition Screenings</span>
@@ -150,12 +150,10 @@ export default function NutritionDashboard() {
           <div className="flex flex-col gap-3">
 
             {/* MUAC classification */}
-            <div className="glass-section">
-              <div className="glass-section-header">
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4" style={{ color: ACCENT }} />
-                  <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Classification</span>
-                </div>
+            <div className="dash-card">
+              <div className="flex items-center gap-2 mb-4 pb-3" style={{ borderBottom: '1px solid var(--border-light)' }}>
+                <BarChart3 className="w-4 h-4" style={{ color: ACCENT }} />
+                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Classification</span>
               </div>
               <div className="p-4 space-y-3">
                 {[
@@ -182,12 +180,10 @@ export default function NutritionDashboard() {
             </div>
 
             {/* Supply status */}
-            <div className="glass-section">
-              <div className="glass-section-header">
-                <div className="flex items-center gap-2">
-                  <Utensils className="w-4 h-4" style={{ color: 'var(--color-success)' }} />
-                  <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Nutrition Supplies</span>
-                </div>
+            <div className="dash-card">
+              <div className="flex items-center gap-2 mb-4 pb-3" style={{ borderBottom: '1px solid var(--border-light)' }}>
+                <Utensils className="w-4 h-4" style={{ color: 'var(--color-success)' }} />
+                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Nutrition Supplies</span>
               </div>
               <div className="p-3 space-y-1">
                 {SUPPLY_ITEMS.map(item => (

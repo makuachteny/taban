@@ -10,7 +10,7 @@ import {
   MapPin, HeartPulse, X, Search, Filter, ChevronDown,
   FlaskConical, Download, Eye,
   Syringe, Baby, Pill, ShieldCheck, Microscope,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 import {
   ResponsiveContainer, LineChart, Line,
 } from 'recharts';
@@ -250,12 +250,12 @@ function HospitalsPageInner() {
 
         {/* ── KPIs ── */}
         <div className="kpi-grid" style={{ marginBottom: 16 }}>
-          <KpiCard label="Facilities" value={kpis.total} icon={Building2} color="var(--accent-primary)" />
+          <KpiCard label="Facilities" value={kpis.total} icon={Building2} color="#14B8A6" />
           <KpiCard label="Functional" value={`${kpis.pctFunctional}%`} icon={ShieldCheck} color={getPerformanceColor(kpis.pctFunctional)} />
           <KpiCard label="Reporting" value={`${kpis.avgReporting}%`} icon={Activity} color={getPerformanceColor(kpis.avgReporting)} />
           <KpiCard label="Readiness" value={`${kpis.avgReadiness}%`} icon={Stethoscope} color={getPerformanceColor(kpis.avgReadiness)} />
           <KpiCard label="Gaps" value={kpis.coverageGaps} icon={Syringe} color={kpis.coverageGaps > 5 ? 'var(--color-danger)' : 'var(--color-warning)'} />
-          <KpiCard label="Staff/Bed" value={kpis.staffPerBed} icon={Users} color="var(--accent-primary)" />
+          <KpiCard label="Staff/Bed" value={kpis.staffPerBed} icon={Users} color="#3B82F6" />
         </div>
 
         {/* ── Facility Table / Profile ── */}
@@ -317,7 +317,7 @@ function KpiCard({ label, value, icon: Icon, color }: {
 }) {
   return (
     <div className="kpi">
-      <div className="kpi__icon" style={{ background: `${color}18` }}>
+      <div className="icon-box-sm" style={{ background: `${color}18` }}>
         <Icon style={{ color }} />
       </div>
       <div className="kpi__body">
@@ -478,13 +478,17 @@ function FacilityProfile({ hospital, onClose }: {
         </button>
       </div>
 
+      <hr className="section-divider" />
+
       {/* Quick stats row */}
       <div className="kpi-grid" style={{ marginBottom: 16 }}>
-        <div className="kpi"><div className="kpi__icon" style={{ background: 'var(--accent-light)' }}><Users style={{ color: 'var(--accent-primary)' }} /></div><div className="kpi__body"><div className="kpi__value">{hospital.patientCount.toLocaleString()}</div><div className="kpi__label">Patients</div></div></div>
-        <div className="kpi"><div className="kpi__icon" style={{ background: 'var(--accent-light)' }}><Activity style={{ color: 'var(--accent-primary)' }} /></div><div className="kpi__body"><div className="kpi__value">{hospital.todayVisits}</div><div className="kpi__label">Today</div></div></div>
-        <div className="kpi"><div className="kpi__icon" style={{ background: 'rgba(252,211,77,0.08)' }}><BedDouble style={{ color: 'var(--color-warning)' }} /></div><div className="kpi__body"><div className="kpi__value">{hospital.totalBeds}</div><div className="kpi__label">Beds</div></div></div>
-        <div className="kpi"><div className="kpi__icon" style={{ background: 'rgba(168,85,247,0.08)' }}><Stethoscope style={{ color: '#A78BFA' }} /></div><div className="kpi__body"><div className="kpi__value">{totalStaff}</div><div className="kpi__label">Staff</div></div></div>
+        <div className="kpi"><div className="icon-box-sm" style={{ background: 'var(--accent-light)' }}><Users style={{ color: 'var(--accent-primary)' }} /></div><div className="kpi__body"><div className="kpi__value">{hospital.patientCount.toLocaleString()}</div><div className="kpi__label">Patients</div></div></div>
+        <div className="kpi"><div className="icon-box-sm" style={{ background: 'var(--accent-light)' }}><Activity style={{ color: 'var(--accent-primary)' }} /></div><div className="kpi__body"><div className="kpi__value">{hospital.todayVisits}</div><div className="kpi__label">Today</div></div></div>
+        <div className="kpi"><div className="icon-box-sm" style={{ background: 'rgba(168,85,247,0.08)' }}><BedDouble style={{ color: '#A78BFA' }} /></div><div className="kpi__body"><div className="kpi__value">{hospital.totalBeds}</div><div className="kpi__label">Beds</div></div></div>
+        <div className="kpi"><div className="icon-box-sm" style={{ background: 'rgba(168,85,247,0.08)' }}><Stethoscope style={{ color: '#A78BFA' }} /></div><div className="kpi__body"><div className="kpi__value">{totalStaff}</div><div className="kpi__label">Staff</div></div></div>
       </div>
+
+      <hr className="section-divider" />
 
       {/* Performance Metrics — horizontal bar chart style */}
       {hospital.performance && (
@@ -513,6 +517,8 @@ function FacilityProfile({ hospital, onClose }: {
         </div>
       )}
 
+      <hr className="section-divider" />
+
       {/* Sparkline + Services — side by side */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
         {/* Trend */}
@@ -521,7 +527,7 @@ function FacilityProfile({ hospital, onClose }: {
             <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8 }}>6-Month Trend</div>
             <ResponsiveContainer width="100%" height={50}>
               <LineChart data={hospital.monthlyTrends} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
-                <Line type="monotone" dataKey="opdVisits" stroke="#0077D7" strokeWidth={1.5} dot={false} />
+                <Line type="monotone" dataKey="opdVisits" stroke="#2E9E7E" strokeWidth={1.5} dot={false} />
                 <Line type="monotone" dataKey="reportingTimeliness" stroke="#10B981" strokeWidth={1.5} dot={false} />
               </LineChart>
             </ResponsiveContainer>
@@ -535,11 +541,11 @@ function FacilityProfile({ hospital, onClose }: {
         {/* Beds breakdown */}
         <div className="card-elevated" style={{ padding: 12 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8 }}>Beds ({hospital.totalBeds})</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div className="data-row-divider-sm" style={{ display: 'flex', flexDirection: 'column' }}>
             {[
               { label: 'ICU', value: hospital.icuBeds, color: 'var(--color-danger)' },
               { label: 'Maternity', value: hospital.maternityBeds, color: '#EC4899' },
-              { label: 'Pediatric', value: hospital.pediatricBeds, color: '#60A5FA' },
+              { label: 'Pediatric', value: hospital.pediatricBeds, color: '#5CB8A8' },
               { label: 'General', value: Math.max(0, hospital.totalBeds - hospital.icuBeds - hospital.maternityBeds - hospital.pediatricBeds), color: 'var(--text-muted)' },
             ].map(b => (
               <div key={b.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12 }}>
@@ -553,12 +559,14 @@ function FacilityProfile({ hospital, onClose }: {
         </div>
       </div>
 
+      <hr className="section-divider" />
+
       {/* Staff + Services + Infrastructure — compact */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
         {/* Staff */}
         <div className="card-elevated" style={{ padding: 12 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8 }}>Staff ({totalStaff})</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+          <div className="data-row-divider-sm" style={{ display: 'flex', flexDirection: 'column' }}>
             {[
               { label: 'Doctors', value: hospital.doctors, color: 'var(--accent-primary)' },
               { label: 'Clinical Officers', value: hospital.clinicalOfficers, color: '#A78BFA' },
@@ -581,11 +589,11 @@ function FacilityProfile({ hospital, onClose }: {
           <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8 }}>Infrastructure</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
             {hospital.hasElectricity ? <InfraBadge icon={Zap} label="Power" color="#FCD34D" bg="rgba(252,211,77,0.10)" />
-              : <InfraBadge icon={ZapOff} label="No Power" color="#94A3B8" bg="rgba(100,116,139,0.10)" />}
+              : <InfraBadge icon={ZapOff} label="No Power" color="#8A9E9A" bg="rgba(100,116,139,0.10)" />}
             {hospital.hasGenerator && <InfraBadge icon={Activity} label="Generator" color="#10B981" bg="rgba(16,185,129,0.10)" />}
             {hospital.hasSolar && <InfraBadge icon={Sun} label="Solar" color="#FCD34D" bg="rgba(252,211,77,0.08)" />}
-            {hospital.hasInternet ? <InfraBadge icon={Signal} label={hospital.internetType} color="#60A5FA" bg="rgba(96,165,250,0.10)" />
-              : <InfraBadge icon={WifiOff} label="No Internet" color="#94A3B8" bg="rgba(100,116,139,0.10)" />}
+            {hospital.hasInternet ? <InfraBadge icon={Signal} label={hospital.internetType} color="#5CB8A8" bg="rgba(96,165,250,0.10)" />
+              : <InfraBadge icon={WifiOff} label="No Internet" color="#8A9E9A" bg="rgba(100,116,139,0.10)" />}
             {hospital.hasAmbulance && <InfraBadge icon={Truck} label="Ambulance" color="#EF4444" bg="rgba(239,68,68,0.08)" />}
             {hospital.emergency24hr && <InfraBadge icon={HeartPulse} label="24hr ER" color="#EF4444" bg="rgba(239,68,68,0.08)" />}
           </div>
@@ -600,6 +608,8 @@ function FacilityProfile({ hospital, onClose }: {
           )}
         </div>
       </div>
+
+      <hr className="section-divider" />
 
       {/* Services + Sync */}
       {hospital.serviceFlags && (

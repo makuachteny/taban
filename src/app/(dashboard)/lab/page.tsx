@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
 import PageHeader from '@/components/PageHeader';
-import { FlaskConical, Clock, CheckCircle2, AlertTriangle, Search, X, Plus, TrendingUp } from 'lucide-react';
+import { FlaskConical, Clock, CheckCircle2, AlertTriangle, Search, X, Plus, TrendingUp } from '@/components/icons/lucide';
 import { useLabResults } from '@/lib/hooks/useLabResults';
 import { usePatients } from '@/lib/hooks/usePatients';
 import { useApp } from '@/lib/context';
@@ -263,7 +263,7 @@ export default function LabPage() {
                 </div>
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Slowest tests (median TAT)</p>
-                  <div className="space-y-1.5">
+                  <div className="data-row-divider-sm" style={{ display: 'flex', flexDirection: 'column' }}>
                     {tatStats.medianByTest.length === 0 ? (
                       <p className="text-xs" style={{ color: 'var(--text-muted)' }}>No completed tests yet.</p>
                     ) : tatStats.medianByTest.map(t => {
@@ -271,6 +271,9 @@ export default function LabPage() {
                       const color = t.median < 4 ? '#0D9488' : t.median < 24 ? 'var(--color-warning)' : 'var(--color-danger)';
                       return (
                         <div key={t.name} className="flex items-center justify-between gap-2 text-xs py-1 px-2 rounded" style={{ background: 'var(--overlay-subtle)' }}>
+                          <div className="icon-box-sm flex-shrink-0" style={{ background: `${color}15` }}>
+                            <FlaskConical className="w-3 h-3" style={{ color }} />
+                          </div>
                           <span className="truncate flex-1" style={{ color: 'var(--text-secondary)' }}>{t.name}</span>
                           <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>n={t.count}</span>
                           <span className="text-xs font-bold" style={{ color }}>{hoursLabel}</span>

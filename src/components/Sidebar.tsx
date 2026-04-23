@@ -3,7 +3,16 @@
 import { useRef, useCallback, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Settings, LogOut, Globe, Building2, X, ChevronsLeft, ChevronsRight, Check } from 'lucide-react';
+import {
+  DuotoneSettings as Settings,
+  DuotoneLogout as LogOut,
+  DuotoneGlobe as Globe,
+  DuotoneBuilding as Building2,
+  DuotoneClose as X,
+  DuotoneChevronLeft as ChevronsLeft,
+  DuotoneChevronRight as ChevronsRight,
+  DuotoneCheck as Check,
+} from '@/components/icons';
 import { useApp } from '@/lib/context';
 import { getRoleConfig } from '@/lib/permissions';
 import type { NavItem } from '@/lib/permissions';
@@ -60,7 +69,7 @@ export default function Sidebar() {
   const hasSections = navItems.some(i => i.section);
 
   const branding = currentUser?.branding;
-  const brandName = role === 'super_admin' ? 'TABAN' : (branding?.name || 'TABAN');
+  const brandName = role === 'super_admin' ? 'Taban' : (branding?.name || 'Taban');
   const brandLogo = branding?.logoUrl;
 
   const handleNavClick = () => {
@@ -71,13 +80,13 @@ export default function Sidebar() {
   const collapsed = sidebarCollapsed;
 
   // Drag-to-collapse/expand
-  const dragRef = useRef<{ startX: number; startWidth: number; dragging: boolean }>({ startX: 0, startWidth: 240, dragging: false });
+  const dragRef = useRef<{ startX: number; startWidth: number; dragging: boolean }>({ startX: 0, startWidth: 256, dragging: false });
   const sidebarRef = useRef<HTMLElement>(null);
 
   const handleDragStart = useCallback((clientX: number) => {
     dragRef.current = {
       startX: clientX,
-      startWidth: collapsed ? 72 : 240,
+      startWidth: collapsed ? 80 : 256,
       dragging: true,
     };
     document.body.style.cursor = 'col-resize';
@@ -91,7 +100,7 @@ export default function Sidebar() {
     // Threshold: if dragged below 140px, collapse; above 140px, expand
     if (sidebarRef.current) {
       sidebarRef.current.style.transition = 'none';
-      sidebarRef.current.style.width = `${Math.max(56, Math.min(260, newWidth))}px`;
+      sidebarRef.current.style.width = `${Math.max(64, Math.min(280, newWidth))}px`;
     }
   }, []);
 
@@ -148,11 +157,11 @@ export default function Sidebar() {
             src={brandLogo || '/assets/taban-logo.svg'}
             alt={brandName}
             className="flex-shrink-0 object-contain"
-            style={{ width: collapsed ? 36 : 42, height: collapsed ? 36 : 42 }}
+            style={{ width: collapsed ? 44 : 52, height: collapsed ? 44 : 52 }}
           />
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <h1 className="font-extrabold text-[15px] leading-tight tracking-wide truncate" style={{ color: 'var(--text-primary)' }}>
+              <h1 className="font-extrabold text-[16px] leading-tight truncate" style={{ color: 'var(--text-primary)', letterSpacing: -0.3 }}>
                 {brandName}
               </h1>
               <p className="text-[9px] uppercase tracking-[0.18em] font-semibold" style={{ color: 'var(--accent-primary)' }}>
@@ -171,7 +180,7 @@ export default function Sidebar() {
               className="lg:hidden p-2 rounded-xl transition-all hover:scale-105 min-w-[44px] min-h-[44px] flex items-center justify-center"
               style={{ background: 'var(--overlay-subtle)' }}
             >
-              <X className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+              <X className="w-5 h-5" style={{ color: 'var(--text-muted)' }} />
             </button>
           )}
         </div>
@@ -183,11 +192,15 @@ export default function Sidebar() {
           background: 'var(--overlay-subtle)',
           border: '1px solid var(--border-medium)',
         }}>
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'var(--accent-light)' }}>
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{
+              background: 'linear-gradient(135deg, var(--accent-light) 0%, transparent 100%)',
+              border: '1px solid var(--accent-border)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.3)',
+            }}>
               {isAdminLevel
-                ? <Globe className="w-3.5 h-3.5" />
-                : <Building2 className="w-3.5 h-3.5" />
+                ? <Globe className="w-5 h-5" style={{ color: 'var(--accent-primary)' }} />
+                : <Building2 className="w-5 h-5" style={{ color: 'var(--accent-primary)' }} />
               }
             </div>
             <div className="flex-1 min-w-0">
@@ -232,7 +245,7 @@ export default function Sidebar() {
                       title={collapsed ? navLabel(item) : undefined}
                       className={`nav-item ${isActive ? 'nav-item-active' : ''} ${collapsed ? 'justify-center !px-0' : ''}`}
                     >
-                      <item.icon className="w-[17px] h-[17px] flex-shrink-0" style={{ opacity: isActive ? 1 : 0.7 }} />
+                      <item.icon className="w-[22px] h-[22px] flex-shrink-0" style={{ opacity: isActive ? 1 : 0.7 }} />
                       {!collapsed && <span className="font-medium text-[13px]">{navLabel(item)}</span>}
                     </Link>
                   );
@@ -252,7 +265,7 @@ export default function Sidebar() {
                   title={collapsed ? item.label : undefined}
                   className={`nav-item ${isActive ? 'nav-item-active' : ''} ${collapsed ? 'justify-center !px-0' : ''}`}
                 >
-                  <item.icon className="w-[17px] h-[17px] flex-shrink-0" style={{ opacity: isActive ? 1 : 0.7 }} />
+                  <item.icon className="w-[22px] h-[22px] flex-shrink-0" style={{ opacity: isActive ? 1 : 0.7 }} />
                   {!collapsed && <span className="font-medium text-[13px]">{item.label}</span>}
                 </Link>
               );
@@ -274,7 +287,7 @@ export default function Sidebar() {
             <ChevronsRight className="w-[17px] h-[17px] mx-auto" />
           ) : (
             <>
-              <ChevronsLeft className="w-[17px] h-[17px]" />
+              <ChevronsLeft className="w-[22px] h-[22px]" />
               <span className="text-[13px]">Collapse</span>
             </>
           )}
@@ -289,7 +302,7 @@ export default function Sidebar() {
               className={`nav-item w-full text-left ${collapsed ? 'justify-center !px-0' : ''}`}
               style={{ color: 'var(--nav-text)' }}
             >
-              <Globe className="w-[17px] h-[17px]" style={{ opacity: 0.7 }} />
+              <Globe className="w-[22px] h-[22px]" style={{ opacity: 0.7 }} />
               {!collapsed && (
                 <span className="text-[13px] flex-1">{currentLocaleConfig?.nativeName || 'English'}</span>
               )}
@@ -332,7 +345,7 @@ export default function Sidebar() {
                   >
                     <span className="text-sm font-medium flex-1">{loc.nativeName}</span>
                     <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{loc.region || ''}</span>
-                    {loc.code === locale && <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--accent-primary)' }} />}
+                    {loc.code === locale && <Check className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--accent-primary)' }} />}
                   </button>
                 ))}
               </div>
@@ -347,7 +360,7 @@ export default function Sidebar() {
             title={collapsed ? t('nav.settings') : undefined}
             className={`nav-item ${pathname === '/settings' ? 'nav-item-active' : ''} ${collapsed ? 'justify-center !px-0' : ''}`}
           >
-            <Settings className="w-[17px] h-[17px]" style={{ opacity: pathname === '/settings' ? 1 : 0.7 }} />
+            <Settings className="w-[22px] h-[22px]" style={{ opacity: pathname === '/settings' ? 1 : 0.7 }} />
             {!collapsed && <span className="font-medium text-[13px]">{t('nav.settings')}</span>}
           </Link>
         )}
@@ -358,7 +371,7 @@ export default function Sidebar() {
           className={`nav-item w-full text-left ${collapsed ? 'justify-center !px-0' : ''}`}
           style={{ color: 'var(--nav-text)' }}
         >
-          <LogOut className="w-[17px] h-[17px]" />
+          <LogOut className="w-[22px] h-[22px]" />
           {!collapsed && <span className="text-[13px]">{t('auth.logout')}</span>}
         </button>
       </div>
@@ -402,19 +415,19 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Desktop sidebar — floating glass panel */}
+      {/* Desktop sidebar — solid floating panel */}
       <aside
         ref={sidebarRef}
         className="hidden lg:flex fixed left-0 top-0 bottom-0 flex-col z-40 overflow-hidden transition-all duration-300 ease-in-out"
         style={{
-          width: collapsed ? '72px' : '240px',
+          width: collapsed ? '80px' : '256px',
           margin: '12px',
           marginRight: '0',
           height: 'calc(100vh - 24px)',
           background: 'var(--sidebar-bg)',
           borderRadius: '10px',
           border: '1px solid var(--border-medium)',
-          boxShadow: 'var(--glass-shadow)',
+          boxShadow: 'var(--panel-shadow)',
         }}
       >
         {sidebarContent}
@@ -435,8 +448,8 @@ export default function Sidebar() {
       {/* Mobile/Tablet drawer backdrop */}
       {sidebarOpen && (
         <div
-          className="lg:hidden fixed inset-0 z-40 backdrop-blur-sm"
-          style={{ background: 'rgba(0, 0, 0, 0.3)' }}
+          className="lg:hidden fixed inset-0 z-40"
+          style={{ background: 'rgba(0, 0, 0, 0.5)' }}
           onClick={() => setSidebarOpen(false)}
         />
       )}

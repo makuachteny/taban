@@ -7,7 +7,7 @@ import { useApp } from '@/lib/context';
 import {
   Settings, Mail, CreditCard, Building2,
   CheckCircle, XCircle, Zap, Lock, Info, Shield, Timer,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 import type { OrganizationDoc } from '@/lib/db-types';
 import { useToast } from '@/components/Toast';
 

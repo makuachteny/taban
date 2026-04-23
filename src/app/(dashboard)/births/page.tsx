@@ -8,8 +8,9 @@ import { useHospitals } from '@/lib/hooks/useHospitals';
 import { useApp } from '@/lib/context';
 import { usePermissions } from '@/lib/hooks/usePermissions';
 import {
-  Baby, Plus, Search, X, ChevronDown, ChevronUp, Users, Calendar, Activity
-} from 'lucide-react';
+  Baby, Plus, Search, X, ChevronDown, ChevronUp, Users, Calendar, Activity,
+  HeartPulse, CheckCircle, AlertTriangle
+} from '@/components/icons/lucide';
 
 export default function BirthsPage() {
   const { births, stats, loading, register } = useBirths();
@@ -67,13 +68,13 @@ export default function BirthsPage() {
         {stats && (
           <div className="kpi-grid mb-6">
             {[
-              { label: 'Total Registered', value: stats.total, icon: Baby, color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)' },
-              { label: 'This Month', value: stats.thisMonth, icon: Calendar, color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)' },
-              { label: 'Male / Female', value: <><span style={{ color: 'var(--accent-primary)' }}>{stats.byGender.male}</span><span style={{ color: 'var(--text-muted)' }}> / </span><span style={{ color: 'var(--color-danger)' }}>{stats.byGender.female}</span></>, icon: Users, color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)' },
-              { label: 'Caesarean Rate', value: `${stats.total ? Math.round(stats.byDeliveryType.caesarean / stats.total * 100) : 0}%`, icon: Activity, color: 'var(--color-warning)', bg: 'rgba(252,211,77,0.12)' },
+              { label: 'Total Registered', value: stats.total, icon: Baby, color: '#EC4899', bg: 'rgba(236,72,153,0.12)' },
+              { label: 'This Month', value: stats.thisMonth, icon: HeartPulse, color: '#14B8A6', bg: 'rgba(20,184,166,0.12)' },
+              { label: 'Male / Female', value: <><span style={{ color: 'var(--accent-primary)' }}>{stats.byGender.male}</span><span style={{ color: 'var(--text-muted)' }}> / </span><span style={{ color: 'var(--color-danger)' }}>{stats.byGender.female}</span></>, icon: CheckCircle, color: '#059669', bg: 'rgba(5,150,105,0.12)' },
+              { label: 'Caesarean Rate', value: `${stats.total ? Math.round(stats.byDeliveryType.caesarean / stats.total * 100) : 0}%`, icon: AlertTriangle, color: '#DC2626', bg: 'rgba(220,38,38,0.12)' },
             ].map(stat => (
               <div key={stat.label} className="kpi">
-                <div className="kpi__icon" style={{ background: stat.bg }}>
+                <div className="icon-box-sm" style={{ background: stat.bg }}>
                   <stat.icon style={{ color: stat.color }} />
                 </div>
                 <div className="kpi__body">
@@ -138,19 +139,28 @@ export default function BirthsPage() {
                   return (
                     <tr>
                       <td colSpan={9} style={{ background: 'var(--overlay-subtle)', padding: 0 }}>
-                        <div className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-                          <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Certificate #</span>{b.certificateNumber}</div>
-                          <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Birth Type</span><span className="capitalize">{b.birthType}</span></div>
-                          <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Delivery Type</span><span className="capitalize">{b.deliveryType}</span></div>
-                          <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Birth Weight</span>{b.birthWeight}g</div>
-                          <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Mother</span>{b.motherName} (Age: {b.motherAge || 'N/A'})</div>
-                          <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Mother Nationality</span>{b.motherNationality || 'N/A'}</div>
-                          <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Father</span>{b.fatherName || 'N/A'}</div>
-                          <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Father Nationality</span>{b.fatherNationality || 'N/A'}</div>
-                          <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Place of Birth</span>{b.placeOfBirth || b.facilityName}</div>
-                          <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Attended By</span>{b.attendedBy || 'N/A'}</div>
-                          <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Registered By</span>{b.registeredBy || 'N/A'}</div>
-                          <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>County</span>{b.county || 'N/A'}, {b.state}</div>
+                        <div className="p-4 data-row-divider-sm">
+                          {/* Birth Details */}
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                            <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Certificate #</span>{b.certificateNumber}</div>
+                            <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Birth Type</span><span className="capitalize">{b.birthType}</span></div>
+                            <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Delivery Type</span><span className="capitalize">{b.deliveryType}</span></div>
+                            <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Birth Weight</span>{b.birthWeight}g</div>
+                          </div>
+                          {/* Parents */}
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                            <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Mother</span>{b.motherName} (Age: {b.motherAge || 'N/A'})</div>
+                            <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Mother Nationality</span>{b.motherNationality || 'N/A'}</div>
+                            <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Father</span>{b.fatherName || 'N/A'}</div>
+                            <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Father Nationality</span>{b.fatherNationality || 'N/A'}</div>
+                          </div>
+                          {/* Location & Registration */}
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                            <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Place of Birth</span>{b.placeOfBirth || b.facilityName}</div>
+                            <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Attended By</span>{b.attendedBy || 'N/A'}</div>
+                            <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>Registered By</span>{b.registeredBy || 'N/A'}</div>
+                            <div><span className="font-semibold block mb-0.5" style={{ color: 'var(--text-muted)' }}>County</span>{b.county || 'N/A'}, {b.state}</div>
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -170,6 +180,7 @@ export default function BirthsPage() {
                 <button onClick={() => setShowForm(false)}><X className="w-5 h-5" style={{ color: 'var(--text-muted)' }} /></button>
               </div>
               <div className="p-4 space-y-4">
+                {/* Child Information */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs font-medium uppercase tracking-wider mb-1 block" style={{ color: 'var(--text-muted)' }}>Child First Name *</label>
@@ -189,6 +200,12 @@ export default function BirthsPage() {
                     <label className="text-xs font-medium uppercase tracking-wider mb-1 block" style={{ color: 'var(--text-muted)' }}>Date of Birth</label>
                     <input type="date" value={form.dateOfBirth} onChange={e => setForm({ ...form, dateOfBirth: e.target.value })} className="w-full p-2 rounded-lg text-sm outline-none" style={{ background: 'var(--overlay-subtle)', color: 'var(--text-primary)', border: '1px solid var(--border-light)' }} />
                   </div>
+                </div>
+
+                <hr className="section-divider" />
+
+                {/* Birth Details */}
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs font-medium uppercase tracking-wider mb-1 block" style={{ color: 'var(--text-muted)' }}>Birth Weight (grams)</label>
                     <input type="number" value={form.birthWeight} onChange={e => setForm({ ...form, birthWeight: Number(e.target.value) })} className="w-full p-2 rounded-lg text-sm outline-none" style={{ background: 'var(--overlay-subtle)', color: 'var(--text-primary)', border: '1px solid var(--border-light)' }} />
@@ -199,6 +216,24 @@ export default function BirthsPage() {
                       <option value="normal">Normal</option><option value="caesarean">Caesarean</option><option value="assisted">Assisted</option>
                     </select>
                   </div>
+                  <div>
+                    <label className="text-xs font-medium uppercase tracking-wider mb-1 block" style={{ color: 'var(--text-muted)' }}>Birth Type</label>
+                    <select value={form.birthType} onChange={e => setForm({ ...form, birthType: e.target.value as 'single' | 'twin' | 'multiple' })} className="w-full p-2 rounded-lg text-sm outline-none" style={{ background: 'var(--overlay-subtle)', color: 'var(--text-primary)', border: '1px solid var(--border-light)' }}>
+                      <option value="single">Single</option><option value="twin">Twin</option><option value="multiple">Multiple</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium uppercase tracking-wider mb-1 block" style={{ color: 'var(--text-muted)' }}>Attended By</label>
+                    <select value={form.attendedBy} onChange={e => setForm({ ...form, attendedBy: e.target.value })} className="w-full p-2 rounded-lg text-sm outline-none" style={{ background: 'var(--overlay-subtle)', color: 'var(--text-primary)', border: '1px solid var(--border-light)' }}>
+                      <option value="">Select...</option><option value="Doctor">Doctor</option><option value="Midwife">Midwife</option><option value="Nurse">Nurse</option><option value="TBA">TBA</option><option value="None">None</option>
+                    </select>
+                  </div>
+                </div>
+
+                <hr className="section-divider" />
+
+                {/* Parent Information */}
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs font-medium uppercase tracking-wider mb-1 block" style={{ color: 'var(--text-muted)' }}>Mother Name *</label>
                     <input type="text" value={form.motherName} onChange={e => setForm({ ...form, motherName: e.target.value })} className="w-full p-2 rounded-lg text-sm outline-none" style={{ background: 'var(--overlay-subtle)', color: 'var(--text-primary)', border: '1px solid var(--border-light)' }} />
@@ -212,22 +247,10 @@ export default function BirthsPage() {
                     <input type="text" value={form.fatherName} onChange={e => setForm({ ...form, fatherName: e.target.value })} className="w-full p-2 rounded-lg text-sm outline-none" style={{ background: 'var(--overlay-subtle)', color: 'var(--text-primary)', border: '1px solid var(--border-light)' }} />
                   </div>
                   <div>
-                    <label className="text-xs font-medium uppercase tracking-wider mb-1 block" style={{ color: 'var(--text-muted)' }}>Attended By</label>
-                    <select value={form.attendedBy} onChange={e => setForm({ ...form, attendedBy: e.target.value })} className="w-full p-2 rounded-lg text-sm outline-none" style={{ background: 'var(--overlay-subtle)', color: 'var(--text-primary)', border: '1px solid var(--border-light)' }}>
-                      <option value="">Select...</option><option value="Doctor">Doctor</option><option value="Midwife">Midwife</option><option value="Nurse">Nurse</option><option value="TBA">TBA</option><option value="None">None</option>
-                    </select>
-                  </div>
-                  <div>
                     <label className="text-xs font-medium uppercase tracking-wider mb-1 block" style={{ color: 'var(--text-muted)' }}>Facility</label>
                     <select value={form.facilityId} onChange={e => { const h = hospitals.find(h => h._id === e.target.value); setForm({ ...form, facilityId: e.target.value, facilityName: h?.name || '', state: h?.state || '' }); }} className="w-full p-2 rounded-lg text-sm outline-none" style={{ background: 'var(--overlay-subtle)', color: 'var(--text-primary)', border: '1px solid var(--border-light)' }}>
                       <option value="">Current facility</option>
                       {hospitals.map(h => <option key={h._id} value={h._id}>{h.name}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium uppercase tracking-wider mb-1 block" style={{ color: 'var(--text-muted)' }}>Birth Type</label>
-                    <select value={form.birthType} onChange={e => setForm({ ...form, birthType: e.target.value as 'single' | 'twin' | 'multiple' })} className="w-full p-2 rounded-lg text-sm outline-none" style={{ background: 'var(--overlay-subtle)', color: 'var(--text-primary)', border: '1px solid var(--border-light)' }}>
-                      <option value="single">Single</option><option value="twin">Twin</option><option value="multiple">Multiple</option>
                     </select>
                   </div>
                 </div>

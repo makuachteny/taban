@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import TopBar from '@/components/TopBar';
 import PageHeader from '@/components/PageHeader';
@@ -10,7 +10,7 @@ import {
   Video, Stethoscope, Syringe, HeartPulse, FlaskConical,
   Building2, Bell, X, UserPlus, ClipboardList,
   Filter, ExternalLink,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 import { useAppointments, useAppointmentStats } from '@/lib/hooks/useAppointments';
 import { usePatients } from '@/lib/hooks/usePatients';
 import { useApp } from '@/lib/context';
@@ -19,18 +19,18 @@ import { useToast } from '@/components/Toast';
 import type { AppointmentType, AppointmentPriority, AppointmentStatus, FacilityLevel } from '@/lib/db-types';
 
 /* ─── Config ─── */
-const appointmentTypes: { value: AppointmentType; label: string; icon: typeof Calendar }[] = [
-  { value: 'general', label: 'General Consultation', icon: Stethoscope },
-  { value: 'follow_up', label: 'Follow-Up', icon: RefreshCw },
-  { value: 'specialist', label: 'Specialist', icon: User },
-  { value: 'anc', label: 'Antenatal Care', icon: HeartPulse },
-  { value: 'immunization', label: 'Immunization', icon: Syringe },
-  { value: 'lab', label: 'Laboratory', icon: FlaskConical },
-  { value: 'telehealth', label: 'Telehealth', icon: Video },
-  { value: 'surgical', label: 'Surgical', icon: Stethoscope },
-  { value: 'dental', label: 'Dental', icon: Stethoscope },
-  { value: 'mental_health', label: 'Mental Health', icon: HeartPulse },
-  { value: 'walk_in', label: 'Walk-In', icon: UserPlus },
+const appointmentTypes: { value: AppointmentType; label: string; icon: typeof Calendar; color: string; bg: string }[] = [
+  { value: 'general', label: 'General Consultation', icon: Stethoscope, color: '#0D9488', bg: 'rgba(13,148,136,0.12)' },
+  { value: 'follow_up', label: 'Follow-Up', icon: RefreshCw, color: '#6366F1', bg: 'rgba(99,102,241,0.12)' },
+  { value: 'specialist', label: 'Specialist', icon: User, color: '#6366F1', bg: 'rgba(99,102,241,0.12)' },
+  { value: 'anc', label: 'Antenatal Care', icon: HeartPulse, color: '#EC4899', bg: 'rgba(236,72,153,0.12)' },
+  { value: 'immunization', label: 'Immunization', icon: Syringe, color: '#059669', bg: 'rgba(5,150,105,0.12)' },
+  { value: 'lab', label: 'Laboratory', icon: FlaskConical, color: '#6366F1', bg: 'rgba(99,102,241,0.12)' },
+  { value: 'telehealth', label: 'Telehealth', icon: Video, color: '#6366F1', bg: 'rgba(99,102,241,0.12)' },
+  { value: 'surgical', label: 'Surgical', icon: Stethoscope, color: '#0D9488', bg: 'rgba(13,148,136,0.12)' },
+  { value: 'dental', label: 'Dental', icon: Stethoscope, color: '#0D9488', bg: 'rgba(13,148,136,0.12)' },
+  { value: 'mental_health', label: 'Mental Health', icon: HeartPulse, color: '#EC4899', bg: 'rgba(236,72,153,0.12)' },
+  { value: 'walk_in', label: 'Walk-In', icon: UserPlus, color: '#7C3AED', bg: 'rgba(124,58,237,0.12)' },
 ];
 
 const departments = [
@@ -93,6 +93,7 @@ export default function AppointmentsPage() {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [patientInsurance, setPatientInsurance] = useState<Record<string, boolean>>({});
 
   // Calendar state
   const todayObj = new Date();
@@ -157,6 +158,25 @@ export default function AppointmentsPage() {
     }
     return days;
   }, [calYear, calMonth, today]);
+
+  // Load insurance status for all patients
+  useEffect(() => {
+    const loadInsurance = async () => {
+      try {
+        const { getPatientInsurancePolicies } = await import('@/lib/services/payment-service');
+        const insuranceMap: Record<string, boolean> = {};
+        const patientIds = [...new Set(appointments.map(a => a.patientId))];
+        for (const pid of patientIds) {
+          const policies = await getPatientInsurancePolicies(pid);
+          insuranceMap[pid] = policies.some((p: { isActive: boolean }) => p.isActive);
+        }
+        setPatientInsurance(insuranceMap);
+      } catch {
+        // Silently ignore errors in loading insurance
+      }
+    };
+    if (appointments.length > 0) loadInsurance();
+  }, [appointments]);
 
   // Appointment counts by date
   const appointmentsByDate = useMemo(() => {
@@ -275,9 +295,9 @@ export default function AppointmentsPage() {
   const goToday = () => { setCalMonth(todayObj.getMonth()); setCalYear(todayObj.getFullYear()); setSelectedDate(today); };
 
   return (
-    <div>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflow: 'hidden' }}>
       <TopBar />
-      <main className="page-container page-enter">
+      <main className="page-container page-enter" style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         <PageHeader
           icon={Calendar}
           title="Appointments"
@@ -288,15 +308,17 @@ export default function AppointmentsPage() {
         {stats && (
           <div className="stat-grid" style={{ marginBottom: 20 }}>
             {[
-              { label: "Today's Appointments", value: stats.todayTotal, icon: Calendar, color: 'var(--accent-primary)' },
-              { label: 'Pending Approval', value: pendingApprovals.length, icon: Clock, color: 'var(--color-warning)' },
-              { label: 'Walk-Ins Today', value: walkIns.length, icon: UserPlus, color: 'var(--accent-primary)' },
-              { label: 'Completed', value: stats.todayCompleted, icon: CheckCircle2, color: 'var(--color-success)' },
-              { label: 'No-Show Rate', value: `${stats.noShowRate}%`, icon: XCircle, color: 'var(--color-danger)' },
+              { label: "Today's Appointments", value: stats.todayTotal, icon: Calendar, color: '#6366F1', bg: 'rgba(99,102,241,0.12)' },
+              { label: 'Pending Approval', value: pendingApprovals.length, icon: Clock, color: '#D97706', bg: 'rgba(217,119,6,0.12)' },
+              { label: 'Walk-Ins Today', value: walkIns.length, icon: UserPlus, color: 'var(--accent-primary)', bg: 'var(--accent-light)' },
+              { label: 'Completed', value: stats.todayCompleted, icon: CheckCircle2, color: 'var(--color-success)', bg: 'rgba(5,150,105,0.12)' },
+              { label: 'No-Show Rate', value: `${stats.noShowRate}%`, icon: XCircle, color: 'var(--color-danger)', bg: 'rgba(239,68,68,0.12)' },
             ].map((c, i) => (
               <div key={i} className="card-elevated" style={{ padding: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                  <c.icon size={16} style={{ color: c.color, opacity: 0.8 }} />
+                  <div className="icon-box-sm" style={{ background: c.bg }}>
+                    <c.icon size={15} style={{ color: c.color }} />
+                  </div>
                   <span className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{c.label}</span>
                 </div>
                 <div className="stat-value text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{c.value}</div>
@@ -376,7 +398,7 @@ export default function AppointmentsPage() {
 
         {/* ═══ Calendar View ═══ */}
         {view === 'calendar' && (
-          <div className="card-elevated" style={{ padding: 0, overflow: 'hidden', marginBottom: 20 }}>
+          <div className="card-elevated" style={{ padding: 0, overflow: 'hidden', marginBottom: 20, flex: 1, display: 'flex', flexDirection: 'column' }}>
             {/* Calendar header */}
             <div style={{
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -396,7 +418,7 @@ export default function AppointmentsPage() {
 
             {/* ── Month View ── */}
             {calView === 'month' && (
-              <>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
                   {WEEKDAYS.map(d => (
                     <div key={d} style={{
@@ -406,13 +428,13 @@ export default function AppointmentsPage() {
                     }}>{d}</div>
                   ))}
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', flex: 1, gridAutoRows: '1fr' }}>
                   {calendarDays.map((day, i) => {
                     const counts = appointmentsByDate[day.date];
                     const isSelected = selectedDate === day.date;
                     return (
                       <button key={i} onClick={() => { const d = isSelected ? null : day.date; setSelectedDate(d); if (d) { setShowDayPopup(true); setFormDate(d); } else { setShowDayPopup(false); } }} style={{
-                        padding: '8px 4px', minHeight: 72, border: 'none', cursor: 'pointer',
+                        padding: '10px 4px', minHeight: 0, border: 'none', cursor: 'pointer',
                         background: isSelected ? 'var(--accent-light)' : day.isToday ? 'rgba(16,185,129,0.04)' : 'transparent',
                         borderRight: (i + 1) % 7 !== 0 ? '1px solid var(--border-medium)' : 'none',
                         borderBottom: '1px solid var(--border-medium)',
@@ -438,7 +460,7 @@ export default function AppointmentsPage() {
                     );
                   })}
                 </div>
-              </>
+              </div>
             )}
 
             {/* ── Week View ── */}
@@ -454,7 +476,7 @@ export default function AppointmentsPage() {
               });
               const hours = Array.from({ length: 12 }, (_, i) => i + 7); // 7am to 6pm
               return (
-                <div style={{ display: 'grid', gridTemplateColumns: '60px repeat(7, 1fr)', minHeight: 480 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '60px repeat(7, 1fr)', flex: 1, minHeight: 480 }}>
                   {/* Header row */}
                   <div style={{ borderBottom: '1px solid var(--border-medium)', borderRight: '1px solid var(--border-medium)', padding: 4 }} />
                   {weekDays.map(wd => (
@@ -564,7 +586,9 @@ export default function AppointmentsPage() {
           <div className="card-elevated" style={{
             padding: '12px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12,
           }}>
-            <Clock size={18} style={{ color: 'var(--color-warning)', flexShrink: 0 }} />
+            <div className="icon-box-sm" style={{ background: 'rgba(217,119,6,0.12)', flexShrink: 0 }}>
+              <Clock size={15} style={{ color: '#D97706' }} />
+            </div>
             <div style={{ flex: 1 }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
                 {pendingApprovals.length} appointment{pendingApprovals.length > 1 ? 's' : ''} pending approval
@@ -589,7 +613,7 @@ export default function AppointmentsPage() {
 
         {/* ═══ Appointment List ═══ */}
         {(view === 'list' || selectedDate) && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div className="data-row-divider-sm" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {filteredAppointments.length === 0 ? (
               <div className="card-elevated" style={{ textAlign: 'center', padding: 48 }}>
                 <Calendar size={40} style={{ color: 'var(--text-muted)', opacity: 0.3, marginBottom: 12 }} />
@@ -619,14 +643,13 @@ export default function AppointmentsPage() {
                         <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>{apt.appointmentTime}</div>
                         <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>{apt.duration}min</div>
                       </div>
-                      <div style={{
-                        width: 34, height: 34, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        background: sc.bg, flexShrink: 0,
+                      <div className="icon-box-sm" style={{
+                        background: typeInfo?.bg || sc.bg, flexShrink: 0,
                       }}>
-                        {typeInfo ? <typeInfo.icon size={16} style={{ color: sc.color }} /> : <Calendar size={16} style={{ color: sc.color }} />}
+                        {typeInfo ? <typeInfo.icon size={15} style={{ color: typeInfo.color }} /> : <Calendar size={15} style={{ color: '#6366F1' }} />}
                       </div>
                       <div style={{ flex: 1, minWidth: 120 }}>
-                        <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                           {apt.patientId ? (
                             <Link
                               href={`/patients/${apt.patientId}`}
@@ -642,6 +665,12 @@ export default function AppointmentsPage() {
                             apt.patientName
                           )}
                           {isWalkIn && <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 4, background: 'rgba(124,58,237,0.1)', color: 'var(--accent-primary)' }}>WALK-IN</span>}
+                          {patientInsurance[apt.patientId] && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                              style={{ background: '#05966915', color: 'var(--color-success)' }}>
+                              Insured
+                            </span>
+                          )}
                         </div>
                         <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                           {typeInfo?.label || apt.appointmentType} &middot; {apt.department}
@@ -655,7 +684,7 @@ export default function AppointmentsPage() {
 
                     {isExpanded && (
                       <div style={{ padding: '0 16px 16px', borderTop: '1px solid var(--border-medium)', paddingTop: 14 }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 14 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
                           <Detail label="Reason" value={apt.reason} />
                           {apt.notes && <Detail label="Notes" value={apt.notes} />}
                           <Detail label="Provider" value={`Dr. ${apt.providerName}`} />
@@ -666,6 +695,8 @@ export default function AppointmentsPage() {
                           {apt.reminderSent && <Detail label="Reminder" value="Sent" icon={<Bell size={13} />} />}
                         </div>
                         {apt.status !== 'completed' && apt.status !== 'cancelled' && apt.status !== 'no_show' && (
+                          <>
+                          <hr className="section-divider" />
                           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                             {apt.status === 'scheduled' && <ActionBtn color="#7C3AED" icon={<CheckCircle2 size={13} />} label="Approve" onClick={() => handleStatusChange(apt._id, 'confirmed')} />}
                             {(apt.status === 'scheduled' || apt.status === 'confirmed') && <ActionBtn color="#D97706" icon={<User size={13} />} label="Check In" onClick={() => handleStatusChange(apt._id, 'checked_in')} />}
@@ -675,11 +706,15 @@ export default function AppointmentsPage() {
                             {(apt.status === 'scheduled' || apt.status === 'confirmed') && <ActionBtn color="#6B7280" icon={<XCircle size={13} />} label="No Show" onClick={() => handleStatusChange(apt._id, 'no_show')} />}
                             <ActionBtn color="#EF4444" icon={<X size={13} />} label="Cancel" onClick={() => setCancelId(apt._id)} />
                           </div>
+                          </>
                         )}
                         {apt.status === 'cancelled' && apt.cancelledReason && (
-                          <div style={{ padding: 10, background: 'rgba(239,68,68,0.04)', borderRadius: 8, fontSize: 12, color: 'var(--color-danger)' }}>
-                            <strong>Cancellation:</strong> {apt.cancelledReason}
-                          </div>
+                          <>
+                            <hr className="section-divider" />
+                            <div style={{ padding: 10, background: 'rgba(239,68,68,0.04)', borderRadius: 8, fontSize: 12, color: 'var(--color-danger)' }}>
+                              <strong>Cancellation:</strong> {apt.cancelledReason}
+                            </div>
+                          </>
                         )}
                       </div>
                     )}
@@ -798,7 +833,7 @@ export default function AppointmentsPage() {
                 </div>
               );
               return (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div className="data-row-divider-sm" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>{dayApts.length} appointment{dayApts.length > 1 ? 's' : ''}</p>
                   {dayApts.map(apt => {
                     const sc = statusConfig[apt.status];
@@ -811,8 +846,8 @@ export default function AppointmentsPage() {
                           <div className="stat-value" style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{apt.appointmentTime}</div>
                           <div style={{ fontSize: 9, color: 'var(--text-muted)' }}>{apt.duration}m</div>
                         </div>
-                        <div style={{ width: 28, height: 28, borderRadius: 6, background: sc.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          {typeInfo ? <typeInfo.icon size={14} style={{ color: sc.color }} /> : <Calendar size={14} style={{ color: sc.color }} />}
+                        <div className="icon-box-sm" style={{ background: typeInfo?.bg || sc.bg, flexShrink: 0 }}>
+                          {typeInfo ? <typeInfo.icon size={14} style={{ color: typeInfo.color }} /> : <Calendar size={14} style={{ color: '#6366F1' }} />}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 4 }}>

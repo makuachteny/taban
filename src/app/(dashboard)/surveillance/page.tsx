@@ -7,7 +7,7 @@ import {
   AlertTriangle, Shield, Eye, Bell, TrendingUp, TrendingDown,
   Minus, MapPin, Activity, FileText, Calendar, ChevronRight,
   Download, Plus, X,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 import { weeklyDiseaseData, casesByState, states } from '@/data/mock';
 import { useSurveillance } from '@/lib/hooks/useSurveillance';
 import { useHospitals } from '@/lib/hooks/useHospitals';
@@ -24,7 +24,7 @@ const COLORS = {
   malaria: 'var(--accent-primary)',
   cholera: 'var(--color-danger)',
   measles: 'var(--color-warning)',
-  pneumonia: '#38BDF8',
+  pneumonia: '#5CB8A8',
   diarrhea: 'var(--color-success)',
   tb: '#D4A843',
   hiv: '#7C3AED',
@@ -208,7 +208,7 @@ export default function SurveillancePage() {
     { label: 'Total Alerts', value: totalAlerts.toString(), icon: Bell, color: 'var(--accent-primary)', bg: 'rgba(43,111,224,0.12)' },
     { label: 'Emergencies', value: emergencies.toString(), icon: AlertTriangle, color: 'var(--color-danger)', bg: 'rgba(229,46,66,0.10)' },
     { label: 'Warnings', value: warnings.toString(), icon: Shield, color: 'var(--color-warning)', bg: 'rgba(252,211,77,0.10)' },
-    { label: 'Watch Items', value: watchItems.toString(), icon: Eye, color: '#38BDF8', bg: 'rgba(43,111,224,0.10)' },
+    { label: 'Watch Items', value: watchItems.toString(), icon: Eye, color: '#5CB8A8', bg: 'rgba(43,111,224,0.10)' },
   ];
 
   return (
@@ -254,7 +254,9 @@ export default function SurveillancePage() {
           <div className="card-elevated p-4 mb-6 flex items-center justify-between">
             <div className="flex items-center gap-8">
               <div className="flex items-center gap-2">
-                <Activity className="w-4 h-4" style={{ color: 'var(--taban-blue)' }} />
+                <div className="icon-box-sm" style={{ background: 'rgba(20,184,166,0.12)' }}>
+                  <Activity className="w-3.5 h-3.5" style={{ color: '#5CB8A8' }} />
+                </div>
                 <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Total Cases This Week:</span>
                 <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{totalCases.toLocaleString()}</span>
               </div>
@@ -373,9 +375,9 @@ export default function SurveillancePage() {
                               <rect x={pos.x - 80} y={pos.y - 58} width="160" height="48"
                                 rx="6" ry="6" fill="#0F1A2E" />
                               <text x={pos.x} y={pos.y - 40} textAnchor="middle" fontSize="10.5"
-                                fontWeight="600" fill="#E2E8F0">{h.name}</text>
+                                fontWeight="600" fill="#D4CFC5">{h.name}</text>
                               <text x={pos.x} y={pos.y - 27} textAnchor="middle" fontSize="9"
-                                fill="#94A3B8">{h.state}</text>
+                                fill="#8A9E9A">{h.state}</text>
                               <text x={pos.x} y={pos.y - 15} textAnchor="middle" fontSize="9"
                                 fill={dotColor} fontWeight="500">
                                 {alertLevel.toUpperCase()} -- {h.patientCount.toLocaleString()} patients
@@ -426,7 +428,7 @@ export default function SurveillancePage() {
               <div className="card-elevated">
                 <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
                   <h3 className="font-semibold text-sm flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-                    <Activity className="w-4 h-4" style={{ color: 'var(--taban-earth)' }} />
+                    <Activity className="w-4 h-4" style={{ color: '#5CB8A8' }} />
                     Disease Cases by State (Cumulative 2026)
                   </h3>
                   <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>Top 5 diseases shown</span>
@@ -459,7 +461,7 @@ export default function SurveillancePage() {
               <div className="card-elevated">
                 <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
                   <h3 className="font-semibold text-sm flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
-                    <AlertTriangle className="w-4 h-4" style={{ color: 'var(--taban-red)' }} />
+                    <AlertTriangle className="w-4 h-4" style={{ color: 'var(--color-danger)' }} />
                     Active Disease Alerts
                   </h3>
                   <select
@@ -480,13 +482,22 @@ export default function SurveillancePage() {
                     ))}
                   </select>
                 </div>
-                <div className="p-3 space-y-2" style={{ maxHeight: '480px', overflowY: 'auto' }}>
+                <div className="p-3 data-row-divider-sm" style={{ maxHeight: '480px', overflowY: 'auto' }}>
                   {filteredAlerts.map(alert => {
                     const config = alertLevelConfig[alert.alertLevel];
                     return (
                       <div key={alert._id} className="p-3 rounded-lg cursor-pointer" onClick={() => setSelectedDisease(alert.disease)} style={{ background: config.bg }}>
                         <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{alert.disease}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="icon-box-sm" style={{ background: config.bg }}>
+                              {alert.alertLevel === 'normal' ? (
+                                <Shield className="w-3.5 h-3.5" style={{ color: 'var(--color-success)' }} />
+                              ) : (
+                                <AlertTriangle className="w-3.5 h-3.5" style={{ color: config.iconColor }} />
+                              )}
+                            </div>
+                            <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{alert.disease}</span>
+                          </div>
                           <span className={`badge badge-${alert.alertLevel} text-[10px]`}>
                             {alert.alertLevel.toUpperCase()}
                           </span>
@@ -518,7 +529,8 @@ export default function SurveillancePage() {
                             </span>
                           </div>
                         </div>
-                        <p className="text-[10px] mt-1.5" style={{ color: 'var(--text-muted)' }}>
+                        <hr className="section-divider" />
+                        <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
                           Reported: {new Date(alert.reportDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                         </p>
                       </div>
@@ -650,7 +662,9 @@ export default function SurveillancePage() {
                 </div>
                 <div className="px-4 py-3 border-t" style={{ borderColor: 'var(--border-light)' }}>
                   <button className="flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--taban-blue)' }}>
-                    <FileText className="w-3.5 h-3.5" />
+                    <div className="icon-box-sm" style={{ background: 'rgba(43,111,224,0.12)' }}>
+                      <FileText className="w-3.5 h-3.5" />
+                    </div>
                     View Full IDSR Report
                     <ChevronRight className="w-3.5 h-3.5" />
                   </button>
@@ -665,13 +679,16 @@ export default function SurveillancePage() {
               <div className="modal-content card-elevated p-6 max-w-lg w-full" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5" style={{ color: 'var(--color-danger)' }} />
+                    <div className="icon-box-sm" style={{ background: 'rgba(229,46,66,0.12)' }}>
+                      <AlertTriangle className="w-3.5 h-3.5" style={{ color: 'var(--color-danger)' }} />
+                    </div>
                     <h3 className="text-base font-semibold">Report Disease Alert</h3>
                   </div>
                   <button onClick={() => setShowNewAlert(false)} className="p-1.5 rounded-lg" style={{ background: 'var(--overlay-subtle)' }}>
                     <X className="w-4 h-4" />
                   </button>
                 </div>
+                <hr className="section-divider" />
                 <div className="space-y-3">
                   <div>
                     <label className="text-xs font-semibold uppercase tracking-wider mb-1 block" style={{ color: 'var(--text-muted)' }}>Disease</label>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Camera, X, ScanLine } from 'lucide-react';
+import { Camera, X, ScanLine } from '@/components/icons/lucide';
 
 interface QRScannerProps {
   onScan: (data: { id: string; hospitalNumber?: string }) => void;
@@ -22,10 +22,10 @@ export default function QRScanner({ onScan, onClose }: QRScannerProps) {
 
     try {
       const data = JSON.parse(decodedText);
-      if (data.type === 'TABAN_PATIENT' && data.id) {
+      if (data.type === 'Taban_PATIENT' && data.id) {
         onScan({ id: data.id, hospitalNumber: data.hn });
       } else {
-        setError('Invalid QR code. Please scan a TABAN patient QR code.');
+        setError('Invalid QR code. Please scan a Taban patient QR code.');
         hasProcessed.current = false;
       }
     } catch {

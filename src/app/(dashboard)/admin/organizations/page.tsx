@@ -9,7 +9,7 @@ import type { OrganizationDoc } from '@/lib/db-types';
 import {
   Plus, Search, X, Edit3, Ban,
   ToggleLeft, ToggleRight
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 
 type OrgFormData = {
   name: string;
@@ -178,7 +178,7 @@ export default function AdminOrganizationsPage() {
   };
   const selectStyle: React.CSSProperties = {
     ...inputStyle, appearance: 'none' as const, paddingRight: '36px',
-    backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2394A3B8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+    backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%238A9E9A' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
     backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center',
   };
   const labelStyle: React.CSSProperties = {

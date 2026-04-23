@@ -1,6 +1,10 @@
 /* ═══════════════════════════════════════════════════════════════════
-   TABAN — Root Landing Page
-   Renders the product landing page at "/" (main entry).
+   Taban — Root Entry Point
+   Redirects to the login page.
    ═══════════════════════════════════════════════════════════════════ */
 
-export { default } from "./product/page";
+import { redirect } from "next/navigation";
+
+export default function RootPage() {
+  redirect("/login");
+}

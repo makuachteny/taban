@@ -7,7 +7,7 @@ import { useApp } from '@/lib/context';
 import {
   Palette, Save, Upload, X, Eye, RotateCcw, Building2, Users,
   LayoutDashboard, BarChart3, Settings, MessageSquare,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 import type { OrganizationDoc } from '@/lib/db-types';
 
 export default function OrgBrandingPage() {

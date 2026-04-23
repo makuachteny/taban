@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { MessageCircle, X, Send, Brain, Trash2, Sparkles } from 'lucide-react';
+import { MessageCircle, X, Send, Brain, Trash2, Sparkles } from '@/components/icons/lucide';
 import { getAssistantResponse, type AssistantMessage } from '@/lib/ai/medical-assistant';
 
 export default function AssistantChat() {

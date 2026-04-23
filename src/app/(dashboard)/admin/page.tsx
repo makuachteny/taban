@@ -10,7 +10,7 @@ import {
   Building2, Users, HeartPulse, CreditCard, ChevronRight, ChevronLeft,
   TrendingUp, Shield, Activity, Settings, BarChart3,
   Search, Clock, Database, RefreshCw,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 import type { AuditLogDoc } from '@/lib/db-types';
 
 export default function AdminDashboardPage() {
@@ -249,7 +249,7 @@ export default function AdminDashboardPage() {
               if (routes[stat.label]) router.push(routes[stat.label]);
             }} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
               <div className="flex items-center justify-between mb-3">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${stat.accent}15` }}>
+                <div className="icon-box-sm" style={{ background: `${stat.accent}15` }}>
                   <stat.icon className="w-5 h-5" style={{ color: stat.accent }} />
                 </div>
                 <TrendingUp className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
@@ -316,6 +316,8 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
+          <hr className="section-divider" />
+
           {/* DB Size per database */}
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2">
             {dbStats.slice(0, 12).map(db => (
@@ -333,7 +335,8 @@ export default function AdminDashboardPage() {
 
           {/* Org Sync Statuses */}
           {syncStatuses.length > 0 && (
-            <div className="mt-4">
+            <div className="mt-0">
+              <hr className="section-divider" />
               <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Organization Sync</p>
               <div className="flex flex-wrap gap-2">
                 {syncStatuses.map(s => (
@@ -427,7 +430,7 @@ export default function AdminDashboardPage() {
             {/* Quick Links */}
             <div className="rounded-xl p-4" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
               <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>Quick Actions</p>
-              <div className="space-y-1.5">
+              <div className="data-row-divider-sm">
                 {quickLinks.map(link => (
                   <button
                     key={link.label}
@@ -446,7 +449,7 @@ export default function AdminDashboardPage() {
             {/* Plan Distribution */}
             <div className="rounded-xl p-4" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
               <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>Plan Distribution</p>
-              <div className="space-y-3">
+              <div className="data-row-divider-sm">
                 {[
                   { plan: 'Enterprise', count: planCounts.enterprise, color: '#7C3AED' },
                   { plan: 'Professional', count: planCounts.professional, color: '#2563EB' },

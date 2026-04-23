@@ -12,7 +12,7 @@ export default function GlobalError({
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '24px' }}>
           <div style={{ maxWidth: '400px', textAlign: 'center' }}>
             <h2 style={{ fontSize: '20px', fontWeight: 700, marginBottom: '8px' }}>Critical Error</h2>
-            <p style={{ fontSize: '14px', color: '#94a3b8', marginBottom: '24px' }}>
+            <p style={{ fontSize: '14px', color: '#8A9E9A', marginBottom: '24px' }}>
               The application encountered a critical error. Your data is safe.
             </p>
             <button

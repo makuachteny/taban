@@ -397,6 +397,42 @@ export interface PharmacyInventoryDoc extends BaseDoc {
   lastReceived?: string;             // ISO datetime of last stock-in
   lastDispensed?: string;            // ISO datetime of last decrement
   dispensedToday: number;
+  /**
+   * Drug control schedule. Schedule II/III/IV require two-staff
+   * witness sign-off on every movement (intake, dispense, waste).
+   * Sourced from the South Sudan Drug & Food Control Authority list.
+   */
+  controlledSchedule?: 'I' | 'II' | 'III' | 'IV' | 'V';
+  /** When true, dispense flow forces a witness staff selection. */
+  requiresWitness?: boolean;
+  orgId?: string;
+}
+
+/**
+ * Audit log entry for every controlled-substance movement.
+ * Two staff signatures (operator + witness) are mandatory by SSDFCA rules.
+ */
+export interface ControlledSubstanceLogDoc extends BaseDoc {
+  type: 'controlled_substance_log';
+  inventoryId: string;
+  medicationName: string;
+  schedule: 'I' | 'II' | 'III' | 'IV' | 'V';
+  movement: 'intake' | 'dispense' | 'waste' | 'reconciliation' | 'transfer';
+  quantity: number;
+  unit: string;
+  beforeBalance: number;
+  afterBalance: number;
+  patientId?: string;        // for dispense
+  patientName?: string;
+  prescriptionId?: string;
+  // Two-signature audit
+  operatorId: string;
+  operatorName: string;
+  witnessId: string;
+  witnessName: string;
+  reason?: string;
+  facilityId: string;
+  facilityName: string;
   orgId?: string;
 }
 

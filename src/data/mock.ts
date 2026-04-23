@@ -1,5 +1,5 @@
 // ============================================
-// TABAN - Mock Data for South Sudan Hospitals
+// Taban - Mock Data for South Sudan Hospitals
 // ============================================
 
 export interface Hospital {

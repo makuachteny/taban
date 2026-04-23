@@ -11,7 +11,7 @@ import { usePatients } from '@/lib/hooks/usePatients';
 import {
   MessageSquare, Search, Plus, Smartphone, Radio,
   CheckCircle2, Clock, XCircle, Filter
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 
 export default function MessagesPage() {
   const { messages, loading } = useMessages();
@@ -41,9 +41,9 @@ export default function MessagesPage() {
 
   const channelLabel = (ch: string) => {
     switch (ch) {
-      case 'app': return <span className="flex items-center gap-1 text-xs"><Smartphone className="w-3 h-3" /> App</span>;
-      case 'sms': return <span className="flex items-center gap-1 text-xs"><MessageSquare className="w-3 h-3" /> SMS</span>;
-      case 'both': return <span className="flex items-center gap-1 text-xs"><Radio className="w-3 h-3" /> Both</span>;
+      case 'app': return <span className="flex items-center gap-2 text-xs"><span className="icon-box-sm" style={{ background: 'rgba(43,111,224,0.12)' }}><Smartphone className="w-3.5 h-3.5" style={{ color: 'var(--taban-blue)' }} /></span> App</span>;
+      case 'sms': return <span className="flex items-center gap-2 text-xs"><span className="icon-box-sm" style={{ background: 'rgba(5,150,105,0.12)' }}><MessageSquare className="w-3.5 h-3.5" style={{ color: '#059669' }} /></span> SMS</span>;
+      case 'both': return <span className="flex items-center gap-2 text-xs"><span className="icon-box-sm" style={{ background: 'rgba(168,85,247,0.12)' }}><Radio className="w-3.5 h-3.5" style={{ color: '#A855F7' }} /></span> Both</span>;
       default: return ch;
     }
   };
@@ -107,6 +107,8 @@ export default function MessagesPage() {
           </div>
         </div>
 
+        <hr className="section-divider" />
+
         {/* Messages Table */}
         <div className="card-elevated overflow-hidden">
           {loading ? (
@@ -142,7 +144,7 @@ export default function MessagesPage() {
                       </div>
                     </td>
                     <td>
-                      <div className="max-w-xs">
+                      <div className="max-w-xs data-row-divider-sm">
                         <p className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{msg.subject}</p>
                         <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{msg.body}</p>
                       </div>
@@ -174,7 +176,7 @@ export default function MessagesPage() {
               <button onClick={() => { setShowPatientPicker(false); setPatientSearch(''); }} className="text-xs" style={{ color: 'var(--text-muted)' }}>Cancel</button>
             </div>
             <div className="p-3">
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg mb-2" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: 'var(--overlay-subtle)', border: '1px solid var(--border-light)' }}>
                 <Search className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
                 <input
                   type="text"
@@ -186,7 +188,8 @@ export default function MessagesPage() {
                   autoFocus
                 />
               </div>
-              <div className="max-h-60 overflow-y-auto space-y-1">
+              <hr className="section-divider" />
+              <div className="max-h-60 overflow-y-auto data-row-divider-sm">
                 {filteredPatients.map(p => (
                   <button key={p._id} onClick={() => handleSelectPatient(p)}
                     className="w-full flex items-center gap-3 p-2.5 rounded-lg text-left hover:bg-white/[0.05] transition-colors">

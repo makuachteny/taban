@@ -3,7 +3,7 @@
 import TopBar from '@/components/TopBar';
 import PageHeader from '@/components/PageHeader';
 import { useDataQuality } from '@/lib/hooks/useDataQuality';
-import { Database, Wifi, Users, TrendingUp, BarChart3, Clock, CheckCircle2, Activity } from 'lucide-react';
+import { Database, Wifi, Users, TrendingUp, BarChart3, Clock, CheckCircle2, Activity } from '@/components/icons/lucide';
 
 export default function DataQualityPage() {
   const { data, loading } = useDataQuality();

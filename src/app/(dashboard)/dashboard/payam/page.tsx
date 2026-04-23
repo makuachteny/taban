@@ -11,7 +11,7 @@ import {
   FileText, UserCheck, ArrowRightLeft,
   CheckCircle2, Building2, Eye, Flag, Clock, Home,
   Search, Check, MessageSquare, ThumbsUp,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
@@ -53,7 +53,7 @@ function ChartTooltip({ active, payload, label }: {
   );
 }
 
-const SATISFACTION_COLORS = ['var(--color-success)', '#60A5FA', 'var(--color-warning)', '#F87171'];
+const SATISFACTION_COLORS = ['var(--color-success)', '#5CB8A8', 'var(--color-warning)', '#F87171'];
 
 export default function PayamSupervisorDashboard() {
   const router = useRouter();
@@ -196,7 +196,7 @@ export default function PayamSupervisorDashboard() {
 
   const satisfactionData = [
     { name: 'Excellent', value: 54, color: 'var(--color-success)' },
-    { name: 'Good', value: 23, color: '#60A5FA' },
+    { name: 'Good', value: 23, color: '#5CB8A8' },
     { name: 'Average', value: 20, color: 'var(--color-warning)' },
     { name: 'Poor', value: 3, color: '#F87171' },
   ];
@@ -219,7 +219,7 @@ export default function PayamSupervisorDashboard() {
   const bedChartData = [
     { status: 'ICU', beds: hospital?.icuBeds || 8, color: 'var(--color-danger)' },
     { status: 'Maternity', beds: hospital?.maternityBeds || 30, color: '#EC4899' },
-    { status: 'Pediatric', beds: hospital?.pediatricBeds || 20, color: '#60A5FA' },
+    { status: 'Pediatric', beds: hospital?.pediatricBeds || 20, color: '#5CB8A8' },
     { status: 'General', beds: Math.max(0, bedTotal - (hospital?.icuBeds || 0) - (hospital?.maternityBeds || 0) - (hospital?.pediatricBeds || 0)), color: 'var(--color-success)' },
     { status: 'Available', beds: Math.max(0, bedTotal - bedOccupancy), color: 'var(--text-muted)' },
   ];
@@ -234,7 +234,7 @@ export default function PayamSupervisorDashboard() {
   const diseaseDistribution = [
     { name: 'Malaria', value: Math.floor(patients.length * 0.35), color: 'var(--color-danger)' },
     { name: 'Respiratory', value: Math.floor(patients.length * 0.2), color: 'var(--color-warning)' },
-    { name: 'Diarrheal', value: Math.floor(patients.length * 0.15), color: '#60A5FA' },
+    { name: 'Diarrheal', value: Math.floor(patients.length * 0.15), color: '#5CB8A8' },
     { name: 'Maternal', value: Math.floor(patients.length * 0.12), color: '#EC4899' },
     { name: 'Other', value: Math.floor(patients.length * 0.18), color: 'var(--text-muted)' },
   ];
@@ -264,7 +264,7 @@ export default function PayamSupervisorDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" style={{ gridAutoRows: '1fr' }}>
 
           {/* Total Admitted Patients */}
-          <div className="card-elevated p-4 flex flex-col">
+          <div className="dash-card p-4 flex flex-col">
             <p className="text-[11px] font-medium mb-2" style={{ color: 'var(--text-muted)' }}>Total Admitted Patients</p>
             <div className="flex items-end gap-2 mb-2">
               <span className="text-2xl font-bold leading-none" style={{ color: 'var(--text-primary)' }}>{patients.length || 0}</span>
@@ -275,7 +275,7 @@ export default function PayamSupervisorDashboard() {
             <div className="flex items-center gap-3 mb-2">
               <div className="flex items-center gap-1">
                 <span className="w-3 h-3 rounded flex items-center justify-center" style={{ background: 'rgba(96,165,250,0.15)' }}>
-                  <Users className="w-2 h-2" style={{ color: '#60A5FA' }} />
+                  <Users className="w-2 h-2" style={{ color: '#5CB8A8' }} />
                 </span>
                 <span className="text-[10px] font-semibold" style={{ color: 'var(--text-primary)' }}>{maleCount}</span>
                 <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Male</span>
@@ -305,13 +305,13 @@ export default function PayamSupervisorDashboard() {
           </div>
 
           {/* Total Active Staff */}
-          <div className="card-elevated p-4 flex flex-col">
+          <div className="dash-card p-4 flex flex-col">
             <p className="text-[11px] font-medium mb-2" style={{ color: 'var(--text-muted)' }}>Total Active Staff</p>
             <span className="text-2xl font-bold leading-none" style={{ color: 'var(--text-primary)' }}>{totalDoctors + totalNurses}</span>
             <div className="mt-auto space-y-2 pt-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Stethoscope className="w-3.5 h-3.5" style={{ color: '#60A5FA' }} />
+                  <Stethoscope className="w-3.5 h-3.5" style={{ color: '#5CB8A8' }} />
                   <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>Doctors</span>
                 </div>
                 <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{totalDoctors}</span>
@@ -334,7 +334,7 @@ export default function PayamSupervisorDashboard() {
           </div>
 
           {/* Quick Stats — includes incoming Boma referrals count */}
-          <div className="card-elevated p-4 flex flex-col">
+          <div className="dash-card p-4 flex flex-col">
             <p className="text-[11px] font-medium mb-2" style={{ color: 'var(--text-muted)' }}>Quick Overview</p>
             <div className="mt-auto space-y-2">
               {[
@@ -362,7 +362,7 @@ export default function PayamSupervisorDashboard() {
           </div>
 
           {/* Patient Satisfaction Donut */}
-          <div className="card-elevated p-4 flex flex-col">
+          <div className="dash-card p-4 flex flex-col">
             <div className="flex gap-0 mb-2 border-b" style={{ borderColor: 'var(--border-light)' }}>
               {TABS.map(tab => (
                 <button
@@ -371,7 +371,7 @@ export default function PayamSupervisorDashboard() {
                   className="px-1.5 py-1 text-[9px] font-semibold uppercase tracking-wider transition-colors"
                   style={{
                     color: activeTab === tab ? 'var(--accent-primary)' : 'var(--text-muted)',
-                    borderBottom: activeTab === tab ? '2px solid #0077D7' : '2px solid transparent',
+                    borderBottom: activeTab === tab ? '2px solid #2E9E7E' : '2px solid transparent',
                   }}
                 >
                   {tab === 'satisfaction' ? 'Satisfaction' : tab === 'equipment' ? 'Equipment' : tab === 'department' ? 'Dept' : 'Avg Wait'}
@@ -409,7 +409,7 @@ export default function PayamSupervisorDashboard() {
 
         {/* ═══ INCOMING BOMA TRANSFERS ═══ */}
         {incomingBomaTransfers.length > 0 && (
-          <div className="card-elevated mb-6 overflow-hidden">
+          <div className="dash-card mb-6 overflow-hidden">
             <div className="flex items-center justify-between p-4 pb-3" style={{ borderBottom: '1px solid var(--border-light)' }}>
               <div className="flex items-center gap-2">
                 <ArrowRightLeft className="w-4 h-4" style={{ color: ACCENT }} />
@@ -478,7 +478,7 @@ export default function PayamSupervisorDashboard() {
         )}
 
         {/* ═══ RECENTLY ADMITTED PATIENTS TABLE ═══ */}
-        <div className="card-elevated mb-6 overflow-hidden">
+        <div className="dash-card mb-6 overflow-hidden">
           <div className="flex items-center justify-between p-4 pb-3" style={{ borderBottom: '1px solid var(--border-light)' }}>
             <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Recently Admitted Patients</h3>
             <div className="flex items-center gap-3">
@@ -643,7 +643,7 @@ export default function PayamSupervisorDashboard() {
         </div>
 
         {/* ═══ QUICK ACTIONS ═══ */}
-        <div className="mt-6 card-elevated p-4">
+        <div className="mt-6 dash-card p-4">
           <p className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>Quick Actions</p>
           <div className="grid grid-cols-3 sm:grid-cols-7 gap-2">
             {[
@@ -653,7 +653,7 @@ export default function PayamSupervisorDashboard() {
               { label: 'Immunization', icon: Syringe, href: '/immunizations', color: '#A855F7' },
               { label: 'ANC Visit', icon: HeartPulse, href: '/anc', color: '#EC4899' },
               { label: 'Birth Reg.', icon: Baby, href: '/births', color: 'var(--color-warning)' },
-              { label: 'Lab Results', icon: FlaskConical, href: '/lab', color: '#38BDF8' },
+              { label: 'Lab Results', icon: FlaskConical, href: '/lab', color: '#5CB8A8' },
             ].map(action => (
               <button
                 key={action.label}
@@ -752,7 +752,7 @@ export default function PayamSupervisorDashboard() {
 
                       <div className="grid grid-cols-5 gap-2">
                         {[
-                          { label: 'This Week', value: bhw.thisWeekVisits, color: '#3B82F6' },
+                          { label: 'This Week', value: bhw.thisWeekVisits, color: '#2E9E7E' },
                           { label: 'Total Visits', value: bhw.totalVisits, color: 'var(--color-success)' },
                           { label: 'Treated', value: bhw.treated, color: 'var(--color-success)' },
                           { label: 'Referred', value: bhw.referred, color: 'var(--color-warning)' },

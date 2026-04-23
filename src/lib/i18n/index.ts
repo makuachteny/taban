@@ -13,7 +13,7 @@
  *   - Tier 3 (South Sudan): apd (Juba Arabic), din (Dinka), nus (Nuer)
  */
 
-export type Locale = 'en' | 'fr' | 'ar' | 'sw' | 'am' | 'ha' | 'so' | 'pt' | 'apd' | 'din';
+export type Locale = 'en' | 'fr' | 'ar' | 'sw' | 'am' | 'ha' | 'so' | 'pt' | 'apd' | 'din' | 'nus';
 
 export interface LocaleConfig {
   code: Locale;
@@ -37,6 +37,7 @@ export const SUPPORTED_LOCALES: LocaleConfig[] = [
   // South Sudan
   { code: 'apd', name: 'Juba Arabic', nativeName: 'عربي جوبا', dir: 'rtl', region: 'South Sudan' },
   { code: 'din', name: 'Dinka', nativeName: 'Thuɔŋjäŋ', dir: 'ltr', region: 'South Sudan' },
+  { code: 'nus', name: 'Nuer', nativeName: 'Thok Naath', dir: 'ltr', region: 'South Sudan' },
 ];
 
 export const DEFAULT_LOCALE: Locale = 'en';

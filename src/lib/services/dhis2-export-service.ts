@@ -184,6 +184,81 @@ export function exportToJSON(dataset: DHIS2DataSet): string {
   return JSON.stringify(dataset, null, 2);
 }
 
+/**
+ * Push a generated dataset to the configured DHIS2 server.
+ * Reads NEXT_PUBLIC_DHIS2_BASE_URL (e.g. https://hmis.southsudan.health) and
+ * sends the dataset as a `dataValueSets` POST. Returns a structured outcome
+ * so the UI can show "queued for retry" on a flaky network without a
+ * try/catch wrapper at every call site.
+ */
+export interface DHIS2PushResult {
+  ok: boolean;
+  status: 'pushed' | 'queued' | 'unconfigured' | 'failed';
+  pushed?: number;
+  message: string;
+}
+
+export async function pushDataSetToDHIS2(
+  dataset: DHIS2DataSet,
+  options: { baseUrl?: string; authHeader?: string; signal?: AbortSignal } = {},
+): Promise<DHIS2PushResult> {
+  const baseUrl = options.baseUrl
+    || (typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_DHIS2_BASE_URL : '')
+    || '';
+  if (!baseUrl) {
+    return {
+      ok: true,
+      status: 'unconfigured',
+      message: 'No DHIS2 server configured (NEXT_PUBLIC_DHIS2_BASE_URL unset). Export prepared locally — sync when online.',
+    };
+  }
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    return {
+      ok: true,
+      status: 'queued',
+      message: 'Offline — sync queued for retry when network returns.',
+    };
+  }
+
+  try {
+    const url = `${baseUrl.replace(/\/$/, '')}/api/dataValueSets`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options.authHeader ? { Authorization: options.authHeader } : {}),
+      },
+      body: JSON.stringify({
+        period: dataset.period,
+        orgUnit: dataset.orgUnit,
+        completeDate: dataset.exportDate,
+        dataValues: dataset.dataValues,
+      }),
+      signal: options.signal,
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      return {
+        ok: false,
+        status: 'failed',
+        message: `DHIS2 server responded ${res.status}${body ? ': ' + body.slice(0, 200) : ''}`,
+      };
+    }
+    return {
+      ok: true,
+      status: 'pushed',
+      pushed: dataset.dataValues?.length ?? 0,
+      message: `Pushed ${dataset.dataValues?.length ?? 0} data values to DHIS2.`,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      status: 'failed',
+      message: `Network error: ${(err as Error).message}`,
+    };
+  }
+}
+
 function escapeCSV(val: string): string {
   if (val.includes(',') || val.includes('"') || val.includes('\n')) {
     return `"${val.replace(/"/g, '""')}"`;

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
 import PageHeader from '@/components/PageHeader';
-import { Check, ArrowLeft, ArrowRight, Users } from 'lucide-react';
+import { Check, ArrowLeft, ArrowRight, Users } from '@/components/icons/lucide';
 import PhotoCapture from '@/components/PhotoCapture';
 import { statesAndCounties, states, tribes, languages, bloodTypes } from '@/data/mock';
 import { usePatients } from '@/lib/hooks/usePatients';
@@ -332,7 +332,7 @@ export default function NewPatientPage() {
                   </div>
                   <div className="mt-4">
                     <label htmlFor="pt-address">Residential Address</label>
-                    <textarea id="pt-address" value={form.address} onChange={e => update('address', e.target.value)} rows={2} placeholder="Detailed address description" className="resize-none" />
+                    <textarea id="pt-address" value={form.address} onChange={e => update('address', e.target.value)} rows={2} placeholder="Detailed address description" />
                   </div>
                 </div>
               </div>
@@ -382,11 +382,11 @@ export default function NewPatientPage() {
                 </div>
                 <div>
                   <label>Known Allergies</label>
-                  <textarea value={form.allergies} onChange={e => update('allergies', e.target.value)} rows={2} placeholder="List known allergies (e.g. Penicillin, Sulfa drugs). Write 'None known' if no known allergies." className="resize-none" />
+                  <textarea value={form.allergies} onChange={e => update('allergies', e.target.value)} rows={2} placeholder="List known allergies (e.g. Penicillin, Sulfa drugs). Write 'None known' if no known allergies." />
                 </div>
                 <div>
                   <label>Chronic Conditions</label>
-                  <textarea value={form.chronicConditions} onChange={e => update('chronicConditions', e.target.value)} rows={2} placeholder="List chronic conditions (e.g. HIV, Hypertension, Diabetes). Write 'None' if none." className="resize-none" />
+                  <textarea value={form.chronicConditions} onChange={e => update('chronicConditions', e.target.value)} rows={2} placeholder="List chronic conditions (e.g. HIV, Hypertension, Diabetes). Write 'None' if none." />
                 </div>
                 <div className="p-4 rounded-lg" style={{ background: 'rgba(252,211,77,0.10)', border: '1px solid rgba(252,211,77,0.2)' }}>
                   <p className="text-xs font-medium" style={{ color: 'var(--color-warning)' }}>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Keyboard } from 'lucide-react';
+import { X, Keyboard } from '@/components/icons/lucide';
 
 const SHORTCUTS = [
   { keys: ['Alt', 'N'], altKeys: ['Ctrl', 'N'], description: 'New patient', action: '/patients/new' },
@@ -93,15 +93,14 @@ export default function KeyboardShortcuts() {
   return (
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
+      style={{ background: 'rgba(15,23,42,0.6)' }}
       onClick={() => setShowHelp(false)}
     >
       <div
         className="w-full max-w-md mx-4 overflow-hidden"
         style={{
           background: 'var(--bg-card)',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid var(--border-glass)',
+          border: '1px solid var(--border-panel)',
           borderRadius: 'var(--card-radius)',
           boxShadow: 'var(--card-shadow-xl)',
         }}

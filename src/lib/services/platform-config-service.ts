@@ -12,8 +12,8 @@ const DEFAULT_CONFIG: Omit<PlatformConfigDoc, '_id' | '_rev' | 'createdAt' | 'up
     trialDays: 30,
     maxOrganizations: 100,
   },
-  defaultPrimaryColor: '#2B6FE0',
-  defaultSecondaryColor: '#0F47AF',
+  defaultPrimaryColor: '#2E9E7E',
+  defaultSecondaryColor: '#1E4D4A',
 };
 
 export async function getPlatformConfig(): Promise<PlatformConfigDoc> {

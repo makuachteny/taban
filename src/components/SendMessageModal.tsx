@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Send, MessageSquare, Smartphone, Radio } from 'lucide-react';
+import { X, Send, MessageSquare, Smartphone, Radio } from '@/components/icons/lucide';
 import { useMessages } from '@/lib/hooks/useMessages';
 import { useApp } from '@/lib/context';
 
@@ -165,7 +165,7 @@ export default function SendMessageModal({ isOpen, onClose, patient }: SendMessa
               onChange={e => setBody(e.target.value)}
               placeholder="Type your message..."
               rows={4}
-              className="w-full p-3 rounded-lg text-sm outline-none resize-none"
+              className="w-full p-3 rounded-lg text-sm outline-none"
               style={{ background: 'var(--overlay-subtle)', color: 'var(--text-primary)', border: '1px solid var(--border-light)' }}
             />
             {isSMS && charCount > 160 && (

@@ -13,7 +13,7 @@ import {
   BedDouble, Stethoscope, Users, Zap, Save, Plus,
   Thermometer, Pill, FlaskConical, Droplets,
   ShieldCheck, Truck, FileText,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 
 const ACCENT = '#0891B2';
 
@@ -232,7 +232,7 @@ export default function DataEntryDashboard() {
 
         {/* Facility banner */}
         {myHospital && (
-          <div className="card-elevated p-4 mb-4">
+          <div className="dash-card mb-4">
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-lg flex items-center justify-center" style={{ background: `${ACCENT}15` }}>
                 <Building2 className="w-5 h-5" style={{ color: ACCENT }} />
@@ -280,7 +280,7 @@ export default function DataEntryDashboard() {
         </div>
 
         {/* Quick actions */}
-        <div className="card-elevated p-4 mb-4">
+        <div className="dash-card mb-4">
           <h3 className="text-xs font-bold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>Data Collection</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {[
@@ -444,7 +444,7 @@ export default function DataEntryDashboard() {
             </div>
           </div>
         ) : (
-          <div className="card-elevated p-8 mb-4 text-center">
+          <div className="dash-card p-8 mb-4 text-center">
             <ClipboardCheck className="w-10 h-10 mx-auto mb-3" style={{ color: 'var(--text-muted)', opacity: 0.3 }} />
             <p className="text-sm font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>No census reports yet</p>
             <p className="text-xs mb-4" style={{ color: 'var(--text-muted)' }}>Start your first daily facility census to see data here.</p>
@@ -457,12 +457,10 @@ export default function DataEntryDashboard() {
 
         {/* Previous reports */}
         {savedReports.length > 0 && (
-          <div className="glass-section mb-4">
-            <div className="glass-section-header">
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4" style={{ color: 'var(--color-success)' }} />
-                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Previous Reports ({savedReports.length})</span>
-              </div>
+          <div className="dash-card mb-4">
+            <div className="flex items-center gap-2 mb-4 pb-3" style={{ borderBottom: '1px solid var(--border-light)' }}>
+              <Clock className="w-4 h-4" style={{ color: 'var(--color-success)' }} />
+              <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Previous Reports ({savedReports.length})</span>
             </div>
             <div className="p-3 space-y-1">
               {savedReports.slice(0, 7).map((r, i) => (
@@ -585,7 +583,7 @@ export default function DataEntryDashboard() {
                 </div>
 
                 {/* 7. Notes */}
-                {sectionHeader(FileText, 'Daily Notes', '#64748B')}
+                {sectionHeader(FileText, 'Daily Notes', '#5A7370')}
                 {textField('Challenges', 'challenges', 'Any issues faced today...')}
                 {textField('Achievements', 'achievements', 'What went well...')}
                 {textField('Urgent Needs', 'urgentNeeds', 'Critical items needed...')}

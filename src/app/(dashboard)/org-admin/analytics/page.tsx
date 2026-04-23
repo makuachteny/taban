@@ -7,7 +7,7 @@ import { useApp } from '@/lib/context';
 import {
   BarChart3, Users, FlaskConical, ArrowRightLeft, Building2, TrendingUp,
   Activity,
-} from 'lucide-react';
+} from '@/components/icons/lucide';
 import type { HospitalDoc, PatientDoc, LabResultDoc, ReferralDoc, UserRole } from '@/lib/db-types';
 import type { DataScope } from '@/lib/services/data-scope';
 
@@ -251,7 +251,7 @@ export default function OrgAnalyticsPage() {
               </div>
 
               <div className="space-y-3">
-                <ProgressRow label="Completed" count={labCompleted} total={labTotal} color="#0077D7" />
+                <ProgressRow label="Completed" count={labCompleted} total={labTotal} color="#2E9E7E" />
                 <ProgressRow label="In Progress" count={labInProgress} total={labTotal} color="#F59E0B" />
                 <ProgressRow label="Pending" count={labPending} total={labTotal} color="#E52E42" />
               </div>
