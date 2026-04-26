@@ -25,7 +25,7 @@ describe('Platform Config Service', () => {
     expect(config.type).toBe('platform_config');
     expect(config.platformName).toBe('Taban');
     expect(config.maintenanceMode).toBe(false);
-    expect(config.defaultPrimaryColor).toBe('#2E9E7E');
+    expect(config.defaultPrimaryColor).toBe('#1B7FA8');
     expect(config.defaultSecondaryColor).toBe('#1E4D4A');
   });
 

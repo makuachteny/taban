@@ -73,15 +73,18 @@ export async function POST(request: NextRequest) {
     // Update alert
     if (action === 'update' && body.alertId) {
       const { updateAlert } = await import('@/lib/services/surveillance-service');
-      const updated = await updateAlert(body.alertId as string, {
-        diseaseName: body.diseaseName as string | undefined,
-        description: body.description as string | undefined,
-        alertLevel: body.alertLevel as string | undefined,
-        location: body.location as string | undefined,
-        reportedBy: body.reportedBy as string | undefined,
-        reportDate: body.reportDate as string | undefined,
-        affectedCount: body.affectedCount !== undefined ? Number(body.affectedCount) : undefined,
-      } as any);
+      const update: Parameters<typeof updateAlert>[1] = {};
+      if (body.diseaseName !== undefined) update.disease = body.diseaseName as string;
+      if (body.alertLevel !== undefined) update.alertLevel = body.alertLevel as 'normal' | 'watch' | 'warning' | 'emergency';
+      if (body.location !== undefined) update.county = body.location as string;
+      if (body.reportedBy !== undefined) update.reportedBy = body.reportedBy as string;
+      if (body.reportDate !== undefined) update.reportDate = body.reportDate as string;
+      if (body.affectedCount !== undefined) update.cases = Number(body.affectedCount);
+      if (body.state !== undefined) update.state = body.state as string;
+      if (body.county !== undefined) update.county = body.county as string;
+      if (body.deaths !== undefined) update.deaths = Number(body.deaths);
+      if (body.trend !== undefined) update.trend = body.trend as 'increasing' | 'stable' | 'decreasing';
+      const updated = await updateAlert(body.alertId as string, update);
       if (!updated) return NextResponse.json({ error: 'Alert not found' }, { status: 404 });
       return NextResponse.json({ alert: updated });
     }
@@ -95,17 +98,20 @@ export async function POST(request: NextRequest) {
     }
 
     const { createAlert } = await import('@/lib/services/surveillance-service');
+    // Map HTTP body to DiseaseAlertDoc shape with sensible defaults.
+    // Backward compatible: clients can still send diseaseName/description/affectedCount/location.
     const alert = await createAlert({
-      diseaseName: body.diseaseName as string,
-      description: body.description as string,
-      alertLevel: body.alertLevel as string,
-      location: body.location as string,
-      reportedBy: body.reportedBy as string,
-      reportDate: body.reportDate as string,
-      affectedCount: body.affectedCount !== undefined ? Number(body.affectedCount) : 0,
-      hospitalId: body.hospitalId as string | undefined,
-      orgId: body.orgId as string | undefined,
-    } as any);
+      disease: body.diseaseName as string,
+      state: (body.state as string) || '',
+      county: (body.county as string) || (body.location as string) || '',
+      cases: body.affectedCount !== undefined ? Number(body.affectedCount) : (body.cases !== undefined ? Number(body.cases) : 0),
+      deaths: body.deaths !== undefined ? Number(body.deaths) : 0,
+      alertLevel: (body.alertLevel as 'normal' | 'watch' | 'warning' | 'emergency') || 'watch',
+      reportDate: (body.reportDate as string) || new Date().toISOString().slice(0, 10),
+      trend: (body.trend as 'increasing' | 'stable' | 'decreasing') || 'stable',
+      reportedBy: (body.reportedBy as string) || auth.sub,
+      orgId: (body.orgId as string) || auth.orgId,
+    });
 
     return NextResponse.json({ alert }, { status: 201 });
   } catch (err) {

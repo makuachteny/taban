@@ -142,13 +142,14 @@ export async function POST(request: NextRequest) {
     if (!body.facilityId && auth.hospitalId) body.facilityId = auth.hospitalId;
 
     const { createAppointment } = await import('@/lib/services/appointment-service');
-    const appointment = await createAppointment(body as any);
+    const appointment = await createAppointment(body as Parameters<typeof createAppointment>[0]);
 
     return NextResponse.json({ appointment }, { status: 201 });
-  } catch (err: any) {
+  } catch (err: unknown) {
     // Scheduling conflict errors should return 409
-    if (err?.message?.toLowerCase()?.includes('conflict')) {
-      return NextResponse.json({ error: err.message }, { status: 409 });
+    const message = err instanceof Error ? err.message : '';
+    if (message.toLowerCase().includes('conflict')) {
+      return NextResponse.json({ error: message }, { status: 409 });
     }
     console.error('[API /appointments POST]', err);
     return serverError();

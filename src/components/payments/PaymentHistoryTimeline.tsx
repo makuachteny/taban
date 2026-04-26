@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RefreshCcw, ArrowUpRight, ArrowDownLeft } from '@/components/icons/lucide';
+import { ArrowUpRight, ArrowDownLeft } from '@/components/icons/lucide';
 import { getMethodConfig } from '@/lib/payment-method-config';
 
 interface PaymentHistoryTimelineProps {

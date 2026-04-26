@@ -222,7 +222,7 @@ export default function ClaimsPage() {
       <TopBar title="Claims Management" />
 
       {/* KPI Cards - Premium Style with Top Border Accents */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', alignItems: 'stretch', gap: '1.5rem', marginBottom: '2.5rem' }}>
         {/* Total Claims KPI */}
         <div style={{
           background: 'var(--bg-card)',
@@ -410,7 +410,7 @@ export default function ClaimsPage() {
         {/* Search Input */}
         <div style={{ position: 'relative', flex: 1, minWidth: '280px' }}>
           <Search
-            size={18}
+            size={44}
             style={{
               position: 'absolute',
               left: '12px',
@@ -519,7 +519,7 @@ export default function ClaimsPage() {
             alignItems: 'center',
             gap: '1rem',
           }}>
-            <AlertTriangle size={40} color="var(--text-muted)" />
+            <AlertTriangle size={56} color="var(--text-muted)" />
             <div>
               <p style={{ margin: 0, fontWeight: '600', color: 'var(--text-primary)' }}>No claims found</p>
               <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>

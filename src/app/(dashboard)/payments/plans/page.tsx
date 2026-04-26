@@ -37,7 +37,7 @@ const KPICard: React.FC<KPICardProps> = ({ icon, label, value, color }) => {
     warning: { bg: 'var(--color-warning-bg)', border: 'var(--color-warning)', text: 'var(--color-warning)' },
   };
 
-  const { bg, border, text } = colorMap[color];
+  const { bg, border } = colorMap[color];
 
   return (
     <div
@@ -305,30 +305,31 @@ export default function PaymentPlansPage() {
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+          alignItems: 'stretch',
           gap: '1.5rem',
           marginBottom: '2rem',
         }}
       >
         <KPICard
-          icon={<BarChart3 size={20} style={{ color: 'var(--color-success)' }} />}
+          icon={<BarChart3 size={34} style={{ color: 'var(--color-success)' }} />}
           label="Active Plans"
           value={kpis.activePlans}
           color="success"
         />
         <KPICard
-          icon={<Wallet size={20} style={{ color: 'var(--accent-primary)' }} />}
+          icon={<Wallet size={34} style={{ color: 'var(--accent-primary)' }} />}
           label="Total Outstanding"
           value={`SSP ${kpis.totalOutstanding.toLocaleString()}`}
           color="primary"
         />
         <KPICard
-          icon={<AlertTriangle size={20} style={{ color: 'var(--color-danger)' }} />}
+          icon={<AlertTriangle size={34} style={{ color: 'var(--color-danger)' }} />}
           label="Delinquent Plans"
           value={kpis.delinquentPlans}
           color="danger"
         />
         <KPICard
-          icon={<CheckCircle size={20} style={{ color: 'var(--color-warning)' }} />}
+          icon={<CheckCircle size={34} style={{ color: 'var(--color-warning)' }} />}
           label="Completed This Month"
           value={kpis.completedThisMonth}
           color="warning"

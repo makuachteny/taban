@@ -71,11 +71,11 @@ export function VitalCard({
         <div
           style={{
             width: 32, height: 32, borderRadius: 9,
-            background: severity === 'normal' ? 'rgba(46, 158, 126, 0.12)' : tokens.badge,
+            background: severity === 'normal' ? 'rgba(27, 127, 168, 0.12)' : tokens.badge,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
         >
-          <Icon name={icon} size={18} color={tokens.accent} accent={tokens.accent} />
+          <Icon name={icon} size={44} color={tokens.accent} accent={tokens.accent} />
         </div>
         {severity !== 'normal' && (
           <div

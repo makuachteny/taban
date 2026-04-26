@@ -18,7 +18,7 @@ export async function getUpcomingReminders(daysAhead?: number, facilityId?: stri
   future.setDate(future.getDate() + effectiveDays);
   const futureDate = future.toISOString().slice(0, 10);
 
-  let upcoming = all.filter(a =>
+  const upcoming = all.filter(a =>
     a.appointmentDate >= today &&
     a.appointmentDate <= futureDate &&
     a.status !== 'cancelled' &&

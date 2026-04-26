@@ -405,13 +405,13 @@ export default function AppointmentsPage() {
               padding: '14px 20px', borderBottom: '1px solid var(--border-medium)',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <button onClick={prevMonth} style={calNavBtn}><ChevronLeft size={18} /></button>
+                <button onClick={prevMonth} style={calNavBtn}><ChevronLeft size={44} /></button>
                 <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', minWidth: 160, textAlign: 'center' }}>
                   {calView === 'day' && selectedDate
                     ? new Date(selectedDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
                     : `${MONTHS[calMonth]} ${calYear}`}
                 </h3>
-                <button onClick={nextMonth} style={calNavBtn}><ChevronRight size={18} /></button>
+                <button onClick={nextMonth} style={calNavBtn}><ChevronRight size={44} /></button>
               </div>
               <button onClick={goToday} className="btn btn-secondary btn-sm">Today</button>
             </div>
@@ -616,7 +616,7 @@ export default function AppointmentsPage() {
           <div className="data-row-divider-sm" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {filteredAppointments.length === 0 ? (
               <div className="card-elevated" style={{ textAlign: 'center', padding: 48 }}>
-                <Calendar size={40} style={{ color: 'var(--text-muted)', opacity: 0.3, marginBottom: 12 }} />
+                <Calendar size={56} style={{ color: 'var(--text-muted)', opacity: 0.3, marginBottom: 12 }} />
                 <p style={{ color: 'var(--text-secondary)', marginBottom: 12 }}>No appointments {selectedDate ? 'on this date' : 'found'}</p>
                 <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
                   {canBookAppointments && <button onClick={() => setShowNewForm(true)} className="btn btn-primary btn-sm" style={{ gap: 4 }}>
@@ -684,7 +684,7 @@ export default function AppointmentsPage() {
 
                     {isExpanded && (
                       <div style={{ padding: '0 16px 16px', borderTop: '1px solid var(--border-medium)', paddingTop: 14 }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', alignItems: 'stretch', gap: 14 }}>
                           <Detail label="Reason" value={apt.reason} />
                           {apt.notes && <Detail label="Notes" value={apt.notes} />}
                           <Detail label="Provider" value={`Dr. ${apt.providerName}`} />
@@ -738,16 +738,16 @@ export default function AppointmentsPage() {
                   {patients.map(p => <option key={p._id} value={p._id}>{p.firstName} {p.surname} {p.hospitalNumber ? `(${p.hospitalNumber})` : ''}</option>)}
                 </select>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', alignItems: 'stretch', gap: 12 }}>
                 <div><label>Date *</label><input type="date" value={formDate} onChange={e => setFormDate(e.target.value)} min={today} /></div>
                 <div><label>Time *</label><select value={formTime} onChange={e => setFormTime(e.target.value)}>{timeSlots.map(t => <option key={t} value={t}>{t}</option>)}</select></div>
                 <div><label>Duration</label><select value={formDuration} onChange={e => setFormDuration(Number(e.target.value))}>{[15, 20, 30, 45, 60, 90].map(d => <option key={d} value={d}>{d} min</option>)}</select></div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', alignItems: 'stretch', gap: 12 }}>
                 <div><label>Type</label><select value={formType} onChange={e => setFormType(e.target.value as AppointmentType)}>{appointmentTypes.filter(t => t.value !== 'walk_in').map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></div>
                 <div><label>Priority</label><select value={formPriority} onChange={e => setFormPriority(e.target.value as AppointmentPriority)}><option value="routine">Routine</option><option value="urgent">Urgent</option><option value="emergency">Emergency</option></select></div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', alignItems: 'stretch', gap: 12 }}>
                 <div><label>Department</label><select value={formDepartment} onChange={e => setFormDepartment(e.target.value)}>{departments.map(d => <option key={d} value={d}>{d}</option>)}</select></div>
                 <div><label>Provider</label><input value={formProvider} onChange={e => setFormProvider(e.target.value)} placeholder="Doctor name" /></div>
               </div>
@@ -766,7 +766,7 @@ export default function AppointmentsPage() {
 
         {/* Walk-In */}
         {showWalkIn && (
-          <Modal onClose={() => setShowWalkIn(false)} title="Register Walk-In" icon={<UserPlus size={20} style={{ color: 'var(--accent-primary)' }} />}>
+          <Modal onClose={() => setShowWalkIn(false)} title="Register Walk-In" icon={<UserPlus size={34} style={{ color: 'var(--accent-primary)' }} />}>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
               Register a walk-in patient for immediate attention. They will be automatically checked in.
             </p>
@@ -778,7 +778,7 @@ export default function AppointmentsPage() {
                   {patients.map(p => <option key={p._id} value={p._id}>{p.firstName} {p.surname}</option>)}
                 </select>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', alignItems: 'stretch', gap: 12 }}>
                 <div><label>Department</label><select value={wiDepartment} onChange={e => setWiDepartment(e.target.value)}>{departments.map(d => <option key={d} value={d}>{d}</option>)}</select></div>
                 <div><label>Priority</label><select value={wiPriority} onChange={e => setWiPriority(e.target.value as AppointmentPriority)}><option value="routine">Routine</option><option value="urgent">Urgent</option><option value="emergency">Emergency</option></select></div>
               </div>
@@ -802,7 +802,7 @@ export default function AppointmentsPage() {
 
         {/* Cancel */}
         {cancelId && (
-          <Modal onClose={() => { setCancelId(null); setCancelReason(''); }} title="Cancel Appointment" titleColor="#EF4444" icon={<AlertTriangle size={20} style={{ color: 'var(--color-danger)' }} />} size="sm">
+          <Modal onClose={() => { setCancelId(null); setCancelReason(''); }} title="Cancel Appointment" titleColor="#EF4444" icon={<AlertTriangle size={34} style={{ color: 'var(--color-danger)' }} />} size="sm">
             <div><label>Reason for cancellation</label><textarea value={cancelReason} onChange={e => setCancelReason(e.target.value)} rows={3} placeholder="Why is this being cancelled?" /></div>
             <ModalActions onCancel={() => { setCancelId(null); setCancelReason(''); }} onConfirm={handleCancel} confirmLabel="Cancel Appointment" confirmColor="#EF4444" cancelLabel="Go Back" />
           </Modal>
@@ -828,7 +828,7 @@ export default function AppointmentsPage() {
               const dayApts = appointments.filter(a => a.appointmentDate === selectedDate).sort((a, b) => a.appointmentTime.localeCompare(b.appointmentTime));
               if (dayApts.length === 0) return (
                 <div style={{ textAlign: 'center', padding: 32, color: 'var(--text-muted)' }}>
-                  <Calendar size={32} style={{ opacity: 0.3, marginBottom: 8 }} />
+                  <Calendar size={44} style={{ opacity: 0.3, marginBottom: 8 }} />
                   <p style={{ fontSize: 13 }}>No appointments on this date</p>
                 </div>
               );
@@ -906,16 +906,16 @@ export default function AppointmentsPage() {
           return (
             <Modal onClose={() => setEditingApt(null)} title="Edit Appointment" size="lg">
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', alignItems: 'stretch', gap: 12 }}>
                   <div><label>Date</label><input type="date" value={formDate} onChange={e => setFormDate(e.target.value)} /></div>
                   <div><label>Time</label><select value={formTime} onChange={e => setFormTime(e.target.value)}>{timeSlots.map(t => <option key={t} value={t}>{t}</option>)}</select></div>
                   <div><label>Duration</label><select value={formDuration} onChange={e => setFormDuration(Number(e.target.value))}>{[15, 20, 30, 45, 60, 90].map(d => <option key={d} value={d}>{d} min</option>)}</select></div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', alignItems: 'stretch', gap: 12 }}>
                   <div><label>Type</label><select value={formType} onChange={e => setFormType(e.target.value as AppointmentType)}>{appointmentTypes.filter(t => t.value !== 'walk_in').map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></div>
                   <div><label>Priority</label><select value={formPriority} onChange={e => setFormPriority(e.target.value as AppointmentPriority)}><option value="routine">Routine</option><option value="urgent">Urgent</option><option value="emergency">Emergency</option></select></div>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', alignItems: 'stretch', gap: 12 }}>
                   <div><label>Department</label><select value={formDepartment} onChange={e => setFormDepartment(e.target.value)}>{departments.map(d => <option key={d} value={d}>{d}</option>)}</select></div>
                   <div><label>Provider</label><input value={formProvider} onChange={e => setFormProvider(e.target.value)} placeholder="Doctor name" /></div>
                 </div>

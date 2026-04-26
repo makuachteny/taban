@@ -12,9 +12,9 @@ import { teardownTestDBs, putDoc } from '../helpers/test-db';
 import { getNationalDataQuality } from '@/lib/services/data-quality-service';
 import { hospitalsDB } from '@/lib/db';
 import { createAssessment } from '@/lib/services/facility-assessment-service';
-import type { HospitalDoc, FacilityAssessmentDoc } from '@/lib/db-types';
+import type { HospitalDoc } from '@/lib/db-types';
 
-const makeHospital = (overrides: Record<string, unknown> = {}): any => ({
+const makeHospital = (overrides: Partial<HospitalDoc> = {}): HospitalDoc => ({
   _id: `hosp-${String(Math.random()).slice(2, 7)}`,
   type: 'hospital',
   name: 'Test Hospital',
@@ -24,7 +24,7 @@ const makeHospital = (overrides: Record<string, unknown> = {}): any => ({
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
   ...overrides,
-});
+} as HospitalDoc);
 
 const makeAssessmentData = (facilityId: string, overrides: Record<string, unknown> = {}) => ({
   facilityId,

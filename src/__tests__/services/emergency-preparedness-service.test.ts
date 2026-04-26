@@ -23,10 +23,13 @@ import {
   getSurgeAlerts,
   getEmergencyDashboard,
 } from '@/lib/services/emergency-preparedness-service';
+import type { DataScope } from '@/lib/services/data-scope';
+
+type CreatePlanInput = Parameters<typeof createPlan>[0];
 
 afterEach(async () => { await teardownTestDBs(); uuidCounter = 0; });
 
-function validPlan(overrides: Record<string, unknown> = {}) {
+function validPlan(overrides: Partial<CreatePlanInput> = {}): CreatePlanInput {
   return {
     planName: 'Cholera Response Plan',
     emergencyType: 'cholera_outbreak' as const,
@@ -67,7 +70,7 @@ describe('Emergency Preparedness Service', () => {
   // ===== CRUD =====
 
   test('creates an emergency plan', async () => {
-    const plan = await createPlan(validPlan() as any);
+    const plan = await createPlan(validPlan());
     expect(plan._id).toMatch(/^emerg-/);
     expect(plan.type).toBe('emergency_plan');
     expect(plan.planName).toBe('Cholera Response Plan');
@@ -78,10 +81,10 @@ describe('Emergency Preparedness Service', () => {
   });
 
   test('retrieves all plans sorted by phase then severity', async () => {
-    await createPlan(validPlan({ phase: 'preparedness', severity: 'level_1', planName: 'Prep L1' }) as any);
-    await createPlan(validPlan({ phase: 'response', severity: 'level_3', planName: 'Response L3' }) as any);
-    await createPlan(validPlan({ phase: 'alert', severity: 'level_2', planName: 'Alert L2' }) as any);
-    await createPlan(validPlan({ phase: 'closed', severity: 'level_1', planName: 'Closed' }) as any);
+    await createPlan(validPlan({ phase: 'preparedness', severity: 'level_1', planName: 'Prep L1' }));
+    await createPlan(validPlan({ phase: 'response', severity: 'level_3', planName: 'Response L3' }));
+    await createPlan(validPlan({ phase: 'alert', severity: 'level_2', planName: 'Alert L2' }));
+    await createPlan(validPlan({ phase: 'closed', severity: 'level_1', planName: 'Closed' }));
 
     const all = await getAllPlans();
     expect(all).toHaveLength(4);
@@ -92,31 +95,31 @@ describe('Emergency Preparedness Service', () => {
   });
 
   test('getAllPlans with scope', async () => {
-    await createPlan(validPlan() as any);
-    const plans = await getAllPlans({ role: 'nurse' as any });
+    await createPlan(validPlan());
+    const plans = await getAllPlans({ role: 'nurse' } as DataScope);
     expect(Array.isArray(plans)).toBe(true);
   });
 
   test('getActivePlans returns only alert and response plans', async () => {
-    await createPlan(validPlan({ phase: 'preparedness' }) as any);
-    await createPlan(validPlan({ phase: 'response', planName: 'Active1' }) as any);
-    await createPlan(validPlan({ phase: 'alert', planName: 'Active2' }) as any);
-    await createPlan(validPlan({ phase: 'closed', planName: 'Closed' }) as any);
+    await createPlan(validPlan({ phase: 'preparedness' }));
+    await createPlan(validPlan({ phase: 'response', planName: 'Active1' }));
+    await createPlan(validPlan({ phase: 'alert', planName: 'Active2' }));
+    await createPlan(validPlan({ phase: 'closed', planName: 'Closed' }));
 
     const active = await getActivePlans();
     expect(active).toHaveLength(2);
   });
 
   test('getActivePlans filters by facility', async () => {
-    await createPlan(validPlan({ phase: 'response', facilityId: 'hosp-001' }) as any);
-    await createPlan(validPlan({ phase: 'response', facilityId: 'hosp-002', facilityName: 'Other', planName: 'P2' }) as any);
+    await createPlan(validPlan({ phase: 'response', facilityId: 'hosp-001' }));
+    await createPlan(validPlan({ phase: 'response', facilityId: 'hosp-002', facilityName: 'Other', planName: 'P2' }));
 
     const active = await getActivePlans('hosp-001');
     expect(active).toHaveLength(1);
   });
 
   test('getPlanById returns plan or null', async () => {
-    const plan = await createPlan(validPlan() as any);
+    const plan = await createPlan(validPlan());
     const found = await getPlanById(plan._id);
     expect(found).not.toBeNull();
     expect(found!.planName).toBe('Cholera Response Plan');
@@ -126,7 +129,7 @@ describe('Emergency Preparedness Service', () => {
   });
 
   test('updates a plan', async () => {
-    const plan = await createPlan(validPlan() as any);
+    const plan = await createPlan(validPlan());
     const updated = await updatePlan(plan._id, { currentLoad: 45 });
     expect(updated).not.toBeNull();
     expect(updated!.currentLoad).toBe(45);
@@ -139,7 +142,7 @@ describe('Emergency Preparedness Service', () => {
   });
 
   test('deletes a plan', async () => {
-    const plan = await createPlan(validPlan() as any);
+    const plan = await createPlan(validPlan());
     const deleted = await deletePlan(plan._id);
     expect(deleted).toBe(true);
 
@@ -155,7 +158,7 @@ describe('Emergency Preparedness Service', () => {
   // ===== Lifecycle =====
 
   test('activates a plan', async () => {
-    const plan = await createPlan(validPlan({ phase: 'preparedness' }) as any);
+    const plan = await createPlan(validPlan({ phase: 'preparedness' }));
     const activated = await activatePlan(plan._id, 'dr-garang', 'level_2');
     expect(activated).not.toBeNull();
     expect(activated!.phase).toBe('response');
@@ -165,7 +168,7 @@ describe('Emergency Preparedness Service', () => {
   });
 
   test('activating already-active plan returns it as-is', async () => {
-    const plan = await createPlan(validPlan({ phase: 'response', activatedAt: '2026-04-01' }) as any);
+    const plan = await createPlan(validPlan({ phase: 'response', activatedAt: '2026-04-01' }));
     const result = await activatePlan(plan._id, 'dr-garang');
     expect(result).not.toBeNull();
     expect(result!.phase).toBe('response');
@@ -177,13 +180,13 @@ describe('Emergency Preparedness Service', () => {
   });
 
   test('activate without severity upgrade keeps original', async () => {
-    const plan = await createPlan(validPlan({ phase: 'alert', severity: 'level_1' }) as any);
+    const plan = await createPlan(validPlan({ phase: 'alert', severity: 'level_1' }));
     const activated = await activatePlan(plan._id, 'dr-garang');
     expect(activated!.severity).toBe('level_1');
   });
 
   test('deactivates a plan to recovery phase', async () => {
-    const plan = await createPlan(validPlan({ phase: 'response' }) as any);
+    const plan = await createPlan(validPlan({ phase: 'response' }));
     const deactivated = await deactivatePlan(plan._id, 'dr-garang');
     expect(deactivated).not.toBeNull();
     expect(deactivated!.phase).toBe('recovery');
@@ -191,7 +194,7 @@ describe('Emergency Preparedness Service', () => {
   });
 
   test('deactivating already-closed plan returns it as-is', async () => {
-    const plan = await createPlan(validPlan({ phase: 'closed' }) as any);
+    const plan = await createPlan(validPlan({ phase: 'closed' }));
     const result = await deactivatePlan(plan._id, 'dr-garang');
     expect(result!.phase).toBe('closed');
   });
@@ -202,14 +205,14 @@ describe('Emergency Preparedness Service', () => {
   });
 
   test('closes a plan', async () => {
-    const plan = await createPlan(validPlan({ phase: 'recovery' }) as any);
+    const plan = await createPlan(validPlan({ phase: 'recovery' }));
     const closed = await closePlan(plan._id);
     expect(closed).not.toBeNull();
     expect(closed!.phase).toBe('closed');
   });
 
   test('full lifecycle: preparedness → alert → response → recovery → closed', async () => {
-    const plan = await createPlan(validPlan({ phase: 'preparedness' }) as any);
+    const plan = await createPlan(validPlan({ phase: 'preparedness' }));
 
     const alerted = await updatePlan(plan._id, { phase: 'alert' });
     expect(alerted!.phase).toBe('alert');
@@ -232,7 +235,7 @@ describe('Emergency Preparedness Service', () => {
       phase: 'response',
       estimatedCapacity: 100,
       currentLoad: 120,
-    }) as any);
+    }));
 
     const alerts = await getSurgeAlerts();
     const capacityAlert = alerts.find(a => a.alertType === 'capacity_critical');
@@ -244,7 +247,7 @@ describe('Emergency Preparedness Service', () => {
     await createPlan(validPlan({
       phase: 'response',
       resources: { ...validPlan().resources, availableSurgeBeds: 0 },
-    }) as any);
+    }));
 
     const alerts = await getSurgeAlerts();
     const bedAlert = alerts.find(a => a.alertType === 'beds_exhausted');
@@ -257,7 +260,7 @@ describe('Emergency Preparedness Service', () => {
       phase: 'response',
       emergencyType: 'cholera_outbreak',
       resources: { ...validPlan().resources, oralRehydrationSachets: 30 },
-    }) as any);
+    }));
 
     const alerts = await getSurgeAlerts();
     const supplyAlert = alerts.find(a => a.alertType === 'supplies_low');
@@ -270,7 +273,7 @@ describe('Emergency Preparedness Service', () => {
       phase: 'response',
       emergencyType: 'flood',
       resources: { ...validPlan().resources, oralRehydrationSachets: 30 },
-    }) as any);
+    }));
 
     const alerts = await getSurgeAlerts();
     const supplyAlert = alerts.find(a => a.alertType === 'supplies_low');
@@ -281,7 +284,7 @@ describe('Emergency Preparedness Service', () => {
     await createPlan(validPlan({
       phase: 'response',
       resources: { ...validPlan().resources, ppe: 15 },
-    }) as any);
+    }));
 
     const alerts = await getSurgeAlerts();
     const ppeAlert = alerts.find(a => a.alertType === 'ppe_low');
@@ -293,7 +296,7 @@ describe('Emergency Preparedness Service', () => {
     await createPlan(validPlan({
       phase: 'response',
       resources: { ...validPlan().resources, ppe: 3 },
-    }) as any);
+    }));
 
     const alerts = await getSurgeAlerts();
     const ppeAlert = alerts.find(a => a.alertType === 'ppe_low');
@@ -312,7 +315,7 @@ describe('Emergency Preparedness Service', () => {
         oralRehydrationSachets: 500,
         ppe: 100,
       },
-    }) as any);
+    }));
 
     const alerts = await getSurgeAlerts();
     expect(alerts).toHaveLength(0);
@@ -324,7 +327,7 @@ describe('Emergency Preparedness Service', () => {
       estimatedCapacity: 100,
       currentLoad: 120,
       resources: { ...validPlan().resources, availableSurgeBeds: 0, ppe: 15 },
-    }) as any);
+    }));
 
     const alerts = await getSurgeAlerts();
     expect(alerts.length).toBeGreaterThanOrEqual(2);
@@ -341,14 +344,14 @@ describe('Emergency Preparedness Service', () => {
       phase: 'response',
       facilityId: 'hosp-001',
       resources: { ...validPlan().resources, ppe: 3 },
-    }) as any);
+    }));
     await createPlan(validPlan({
       phase: 'response',
       facilityId: 'hosp-002',
       facilityName: 'Other',
       planName: 'P2',
       resources: { ...validPlan().resources, ppe: 3 },
-    }) as any);
+    }));
 
     const alerts = await getSurgeAlerts('hosp-001');
     expect(alerts.every(a => a.facilityName === 'Taban Hospital')).toBe(true);
@@ -358,7 +361,7 @@ describe('Emergency Preparedness Service', () => {
     await createPlan(validPlan({
       phase: 'preparedness',
       resources: { ...validPlan().resources, availableSurgeBeds: 0, ppe: 0 },
-    }) as any);
+    }));
 
     const alerts = await getSurgeAlerts();
     expect(alerts).toHaveLength(0);
@@ -374,13 +377,13 @@ describe('Emergency Preparedness Service', () => {
       totalCasesManaged: 150,
       totalDeaths: 5,
       totalReferralsOut: 20,
-    }) as any);
+    }));
     await createPlan(validPlan({
       phase: 'preparedness',
       severity: 'level_1',
       emergencyType: 'flood',
       planName: 'Flood Plan',
-    }) as any);
+    }));
     await createPlan(validPlan({
       phase: 'closed',
       severity: 'level_2',
@@ -388,7 +391,7 @@ describe('Emergency Preparedness Service', () => {
       planName: 'Measles Past',
       totalCasesManaged: 200,
       totalDeaths: 10,
-    }) as any);
+    }));
 
     const dashboard = await getEmergencyDashboard();
     expect(dashboard.totalPlans).toBe(3);
@@ -406,8 +409,8 @@ describe('Emergency Preparedness Service', () => {
   });
 
   test('getEmergencyDashboard filters by facility', async () => {
-    await createPlan(validPlan({ facilityId: 'hosp-001' }) as any);
-    await createPlan(validPlan({ facilityId: 'hosp-002', facilityName: 'Other', planName: 'P2' }) as any);
+    await createPlan(validPlan({ facilityId: 'hosp-001' }));
+    await createPlan(validPlan({ facilityId: 'hosp-002', facilityName: 'Other', planName: 'P2' }));
 
     const dashboard = await getEmergencyDashboard('hosp-001');
     expect(dashboard.totalPlans).toBe(1);
@@ -426,7 +429,7 @@ describe('Emergency Preparedness Service', () => {
       phase: 'response',
       emergencyType: 'disease_outbreak',
       resources: { ...validPlan().resources, oralRehydrationSachets: 20 },
-    }) as any);
+    }));
 
     const alerts = await getSurgeAlerts();
     const supplyAlert = alerts.find(a => a.alertType === 'supplies_low');
@@ -438,7 +441,7 @@ describe('Emergency Preparedness Service', () => {
       phase: 'response',
       estimatedCapacity: 0,
       currentLoad: 0,
-    }) as any);
+    }));
 
     const alerts = await getSurgeAlerts();
     const capacityAlert = alerts.find(a => a.alertType === 'capacity_critical');
@@ -447,8 +450,8 @@ describe('Emergency Preparedness Service', () => {
 
   test('getAllPlans handles unknown/undefined phase in sort', async () => {
     // Create plans with unusual phases
-    await createPlan(validPlan({ phase: 'response' }) as any);
-    await createPlan(validPlan({ phase: 'preparedness', planName: 'Prep2' }) as any);
+    await createPlan(validPlan({ phase: 'response' }));
+    await createPlan(validPlan({ phase: 'preparedness', planName: 'Prep2' }));
 
     const all = await getAllPlans();
     expect(all).toHaveLength(2);
@@ -458,8 +461,8 @@ describe('Emergency Preparedness Service', () => {
   });
 
   test('getAllPlans handles unknown/undefined severity in sort', async () => {
-    await createPlan(validPlan({ phase: 'response', severity: 'level_3' }) as any);
-    await createPlan(validPlan({ phase: 'response', severity: 'level_1', planName: 'Low Sev' }) as any);
+    await createPlan(validPlan({ phase: 'response', severity: 'level_3' }));
+    await createPlan(validPlan({ phase: 'response', severity: 'level_1', planName: 'Low Sev' }));
 
     const all = await getAllPlans();
     // level_3 should come before level_1
@@ -469,7 +472,7 @@ describe('Emergency Preparedness Service', () => {
 
   test('deletePlan fails gracefully for missing revision', async () => {
     // Create a plan and try to delete - should work normally
-    const plan = await createPlan(validPlan() as any);
+    const plan = await createPlan(validPlan());
     const deleted = await deletePlan(plan._id);
     expect(deleted).toBe(true);
   });
@@ -493,7 +496,7 @@ describe('Emergency Preparedness Service', () => {
       currentLoad: 120,
       resources: { ...validPlan().resources, availableSurgeBeds: 0, ppe: 25, oralRehydrationSachets: 45 },
       emergencyType: 'cholera_outbreak',
-    }) as any);
+    }));
 
     const alerts = await getSurgeAlerts();
     // Should have critical (capacity, beds) and high (supplies, ppe) alerts
@@ -504,10 +507,10 @@ describe('Emergency Preparedness Service', () => {
   });
 
   test('getEmergencyDashboard with all phases and severities', async () => {
-    await createPlan(validPlan({ phase: 'response', severity: 'level_3' }) as any);
-    await createPlan(validPlan({ phase: 'alert', severity: 'level_2', planName: 'P2' }) as any);
-    await createPlan(validPlan({ phase: 'recovery', severity: 'level_1', planName: 'P3' }) as any);
-    await createPlan(validPlan({ phase: 'closed', severity: 'level_2', planName: 'P4' }) as any);
+    await createPlan(validPlan({ phase: 'response', severity: 'level_3' }));
+    await createPlan(validPlan({ phase: 'alert', severity: 'level_2', planName: 'P2' }));
+    await createPlan(validPlan({ phase: 'recovery', severity: 'level_1', planName: 'P3' }));
+    await createPlan(validPlan({ phase: 'closed', severity: 'level_2', planName: 'P4' }));
 
     const dashboard = await getEmergencyDashboard();
     expect(dashboard.byPhase.response).toBe(1);
@@ -521,8 +524,8 @@ describe('Emergency Preparedness Service', () => {
 
   // ---- Line 34: Test phaseOrder branch for preparedness phase ----
   test('getAllPlans sorts preparedness phase correctly (line 34)', async () => {
-    await createPlan(validPlan({ phase: 'preparedness', severity: 'level_3', planName: 'Prep' }) as any);
-    await createPlan(validPlan({ phase: 'closed', severity: 'level_3', planName: 'Closed' }) as any);
+    await createPlan(validPlan({ phase: 'preparedness', severity: 'level_3', planName: 'Prep' }));
+    await createPlan(validPlan({ phase: 'closed', severity: 'level_3', planName: 'Closed' }));
 
     const all = await getAllPlans();
     // preparedness (3) should come before closed (4)
@@ -532,9 +535,9 @@ describe('Emergency Preparedness Service', () => {
 
   // ---- Line 37: Test sevOrder branch for each severity level ----
   test('getAllPlans sorts by severity when phase is same (line 37)', async () => {
-    await createPlan(validPlan({ phase: 'response', severity: 'level_1', planName: 'L1' }) as any);
-    await createPlan(validPlan({ phase: 'response', severity: 'level_2', planName: 'L2' }) as any);
-    await createPlan(validPlan({ phase: 'response', severity: 'level_3', planName: 'L3' }) as any);
+    await createPlan(validPlan({ phase: 'response', severity: 'level_1', planName: 'L1' }));
+    await createPlan(validPlan({ phase: 'response', severity: 'level_2', planName: 'L2' }));
+    await createPlan(validPlan({ phase: 'response', severity: 'level_3', planName: 'L3' }));
 
     const all = await getAllPlans();
     // level_3 (0) < level_2 (1) < level_1 (2)
@@ -551,7 +554,7 @@ describe('Emergency Preparedness Service', () => {
       currentLoad: 120,  // capacity_critical
       resources: { ...validPlan().resources, availableSurgeBeds: 0, ppe: 25, oralRehydrationSachets: 300 },
       emergencyType: 'cholera_outbreak',
-    }) as any);
+    }));
 
     const alerts = await getSurgeAlerts();
     // Should have critical alerts first
@@ -561,7 +564,7 @@ describe('Emergency Preparedness Service', () => {
 
   // ---- Line 129: Test logAudit in activatePlan when updatePlan succeeds ----
   test('activatePlan logs audit when successful (line 129-132)', async () => {
-    const plan = await createPlan(validPlan({ phase: 'preparedness' }) as any);
+    const plan = await createPlan(validPlan({ phase: 'preparedness' }));
     const activated = await activatePlan(plan._id, 'dr-test', 'level_2');
 
     expect(activated).not.toBeNull();
@@ -571,7 +574,7 @@ describe('Emergency Preparedness Service', () => {
 
   // ---- Line 149: Test logAudit in deactivatePlan when updatePlan succeeds ----
   test('deactivatePlan logs audit when successful (line 150-152)', async () => {
-    const plan = await createPlan(validPlan({ phase: 'response', activatedAt: '2026-04-01' }) as any);
+    const plan = await createPlan(validPlan({ phase: 'response', activatedAt: '2026-04-01' }));
     const deactivated = await deactivatePlan(plan._id, 'dr-test');
 
     expect(deactivated).not.toBeNull();
@@ -600,7 +603,7 @@ describe('Emergency Preparedness Service', () => {
     });
 
     // Create a normal plan for comparison
-    await createPlan(validPlan({ phase: 'preparedness' }) as any);
+    await createPlan(validPlan({ phase: 'preparedness' }));
 
     const all = await getAllPlans();
     expect(all).toHaveLength(2);
@@ -628,7 +631,7 @@ describe('Emergency Preparedness Service', () => {
     });
 
     // Create a normal plan
-    await createPlan(validPlan({ phase: 'response', severity: 'level_3' }) as any);
+    await createPlan(validPlan({ phase: 'response', severity: 'level_3' }));
 
     const all = await getAllPlans();
     expect(all).toHaveLength(2);
@@ -638,10 +641,9 @@ describe('Emergency Preparedness Service', () => {
 
   test('activatePlan returns null when updatePlan fails (line 129)', async () => {
     // When updatePlan returns null, activatePlan should return null and skip audit log
-    const plan = await createPlan(validPlan({ phase: 'preparedness' }) as any);
+    const plan = await createPlan(validPlan({ phase: 'preparedness' }));
 
     // Mock updatePlan to return null
-    const originalUpdate = require('@/lib/services/emergency-preparedness-service').updatePlan;
     jest.mock('@/lib/services/emergency-preparedness-service', () => ({
       ...jest.requireActual('@/lib/services/emergency-preparedness-service'),
       updatePlan: jest.fn().mockResolvedValueOnce(null),
@@ -654,7 +656,7 @@ describe('Emergency Preparedness Service', () => {
 
   test('deactivatePlan returns null when updatePlan fails (line 149)', async () => {
     // Similar to activatePlan test - when updatePlan returns null
-    const plan = await createPlan(validPlan({ phase: 'response' }) as any);
+    const plan = await createPlan(validPlan({ phase: 'response' }));
 
     const deactivated = await deactivatePlan(plan._id, 'dr-test');
     expect(deactivated).not.toBeNull(); // Normal path should succeed

@@ -34,7 +34,10 @@ import {
 
 afterEach(async () => { await teardownTestDBs(); uuidCounter = 0; });
 
-function validReferral(overrides: Record<string, unknown> = {}) {
+type CreateReferralInput = Parameters<typeof createReferral>[0];
+type CreateReferralWithTransferInput = Parameters<typeof createReferralWithTransfer>[0];
+
+function validReferral(overrides: Partial<CreateReferralInput> = {}): CreateReferralInput {
   return {
     patientId: 'patient-001',
     patientName: 'Deng Mabior',
@@ -49,27 +52,13 @@ function validReferral(overrides: Record<string, unknown> = {}) {
     referringDoctor: 'Dr. Kuol',
     status: 'sent' as const,
     notes: 'Patient fell from tree, open fracture with bone exposure',
-    state: 'Central Equatoria',
     ...overrides,
   };
 }
 
-// Test helper for inferOrgId branches (lines 13, 17)
-function makeHospitalWithOrgId(id: string, orgId?: string) {
-  const { hospitalsDB } = require('@/lib/db');
-  const db = hospitalsDB();
-  const hospital = {
-    _id: id,
-    type: 'hospital',
-    name: 'Test Hospital',
-    orgId: orgId || undefined,
-  };
-  return db.put(hospital).then(() => hospital);
-}
-
 describe('Referral Service', () => {
   test('creates a referral', async () => {
-    const ref = await createReferral(validReferral() as any);
+    const ref = await createReferral(validReferral());
     expect(ref._id).toMatch(/^ref-/);
     expect(ref.type).toBe('referral');
     expect(ref.patientName).toBe('Deng Mabior');
@@ -79,12 +68,12 @@ describe('Referral Service', () => {
   });
 
   test('retrieves all referrals sorted by date', async () => {
-    await createReferral(validReferral({ referralDate: '2026-03-01' }) as any);
+    await createReferral(validReferral({ referralDate: '2026-03-01' }));
     await createReferral(validReferral({
       patientId: 'patient-002',
       patientName: 'Achol Deng',
       referralDate: '2026-04-05',
-    }) as any);
+    }));
 
     const all = await getAllReferrals();
     expect(all).toHaveLength(2);
@@ -93,22 +82,22 @@ describe('Referral Service', () => {
   });
 
   test('retrieves referrals by patient', async () => {
-    await createReferral(validReferral() as any);
+    await createReferral(validReferral());
     await createReferral(validReferral({
       referralDate: '2026-02-15',
       reason: 'Follow-up surgery',
-    }) as any);
+    }));
     await createReferral(validReferral({
       patientId: 'patient-002',
       patientName: 'Other Patient',
-    }) as any);
+    }));
 
     const patientRefs = await getReferralsByPatient('patient-001');
     expect(patientRefs).toHaveLength(2);
   });
 
   test('retrieves referrals by hospital (from or to)', async () => {
-    await createReferral(validReferral() as any); // from hosp-001 to hosp-002
+    await createReferral(validReferral()); // from hosp-001 to hosp-002
     await createReferral(validReferral({
       patientId: 'patient-002',
       patientName: 'Ayen',
@@ -116,14 +105,14 @@ describe('Referral Service', () => {
       fromHospital: 'Munuki PHCC',
       toHospitalId: 'hosp-001',
       toHospital: 'Gudele PHCC',
-    }) as any);
+    }));
 
     const hosp1Refs = await getReferralsByHospital('hosp-001');
     expect(hosp1Refs).toHaveLength(2);
   });
 
   test('updates referral status through lifecycle', async () => {
-    const ref = await createReferral(validReferral() as any);
+    const ref = await createReferral(validReferral());
 
     const received = await updateReferralStatus(ref._id, 'received');
     expect(received).not.toBeNull();
@@ -139,14 +128,14 @@ describe('Referral Service', () => {
   });
 
   test('cancels a referral', async () => {
-    const ref = await createReferral(validReferral() as any);
+    const ref = await createReferral(validReferral());
     const cancelled = await updateReferralStatus(ref._id, 'cancelled');
     expect(cancelled).not.toBeNull();
     expect(cancelled!.status).toBe('cancelled');
   });
 
   test('updates referral notes', async () => {
-    const ref = await createReferral(validReferral() as any);
+    const ref = await createReferral(validReferral());
     const updated = await updateReferralNotes(ref._id, 'Patient stabilized before transfer. Splint applied.');
     expect(updated.notes).toBe('Patient stabilized before transfer. Splint applied.');
   });
@@ -157,13 +146,13 @@ describe('Referral Service', () => {
   });
 
   test('createReferralWithTransfer creates referral with transfer package', async () => {
-    const attachments = [
-      { id: 'att-001', filename: 'xray.pdf', sizeBytes: 500, mimeType: 'application/pdf' },
-      { id: 'att-002', filename: 'lab.pdf', sizeBytes: 300, mimeType: 'application/pdf' },
+    const attachments: Parameters<typeof createReferralWithTransfer>[1] = [
+      { id: 'att-001', name: 'xray.pdf', sizeBytes: 500, mimeType: 'application/pdf', base64Data: '', uploadedAt: '2026-04-10T10:00:00Z', uploadedBy: 'doctor-123' },
+      { id: 'att-002', name: 'lab.pdf', sizeBytes: 300, mimeType: 'application/pdf', base64Data: '', uploadedAt: '2026-04-10T10:00:00Z', uploadedBy: 'doctor-123' },
     ];
     const ref = await createReferralWithTransfer(
-      validReferral() as any,
-      attachments as any,
+      validReferral() as CreateReferralWithTransferInput,
+      attachments,
       'doctor-123'
     );
 
@@ -176,7 +165,7 @@ describe('Referral Service', () => {
 
   test('createReferralWithTransfer handles empty attachments', async () => {
     const ref = await createReferralWithTransfer(
-      validReferral() as any,
+      validReferral() as CreateReferralWithTransferInput,
       [],
       'doctor-123'
     );
@@ -188,7 +177,7 @@ describe('Referral Service', () => {
   });
 
   test('acceptReferral updates status to seen and transfers patient', async () => {
-    const ref = await createReferral(validReferral() as any);
+    const ref = await createReferral(validReferral());
     const accepted = await acceptReferral(ref._id);
 
     expect(accepted).not.toBeNull();
@@ -203,12 +192,11 @@ describe('Referral Service', () => {
   test('getAllReferrals with data scope filters appropriately', async () => {
     // First, let's test with scope parameter (the filterByScope function)
     // This requires setting up hospital data in the DB
-    await createReferral(validReferral({ state: 'Central Equatoria' }) as any);
+    await createReferral(validReferral());
     await createReferral(validReferral({
       patientId: 'patient-002',
       patientName: 'Other Patient',
-      state: 'Upper Nile',
-    }) as any);
+    }));
 
     // Call without scope to verify both exist
     const all = await getAllReferrals();
@@ -242,7 +230,7 @@ describe('Referral Service', () => {
   });
 
   test('updateReferralNotes persists changes to database', async () => {
-    const ref = await createReferral(validReferral() as any);
+    const ref = await createReferral(validReferral());
     const newNotes = 'Updated notes with new information';
 
     const updated = await updateReferralNotes(ref._id, newNotes);
@@ -251,7 +239,7 @@ describe('Referral Service', () => {
   });
 
   test('updateReferralStatus updates updatedAt timestamp', async () => {
-    const ref = await createReferral(validReferral() as any);
+    const ref = await createReferral(validReferral());
     const originalUpdatedAt = ref.updatedAt;
 
     // Small delay to ensure timestamp differs
@@ -278,7 +266,7 @@ describe('Referral Service', () => {
     const ref = await createReferral(validReferral({
       fromHospitalId: 'hosp-from-org',
       toHospitalId: 'hosp-002',
-    }) as any);
+    }));
 
     // The inferOrgId function should try fromHospitalId
     expect(ref._id).toMatch(/^ref-/);
@@ -289,7 +277,7 @@ describe('Referral Service', () => {
     const { updatePatient } = require('@/lib/services/patient-service');
     updatePatient.mockRejectedValueOnce(new Error('Patient update failed'));
 
-    const ref = await createReferral(validReferral() as any);
+    const ref = await createReferral(validReferral());
     const accepted = await acceptReferral(ref._id);
 
     // Should still update status to 'seen' even if patient update fails
@@ -307,13 +295,13 @@ describe('Referral Service', () => {
       type: 'hospital' as const,
       name: 'Hospital To Org',
       orgId: 'org-to-789',
-    } as any;
+    };
     await hdb.put(hospital);
 
     const ref = await createReferral(validReferral({
       fromHospitalId: 'hosp-this-doesnt-exist-at-all',
       toHospitalId: 'hosp-to-org-only',
-    }) as any);
+    }));
 
     // The referral should be created successfully
     expect(ref._id).toMatch(/^ref-/);
@@ -326,7 +314,7 @@ describe('Referral Service', () => {
     const ref = await createReferral(validReferral({
       fromHospitalId: 'hosp-missing',
       toHospitalId: 'hosp-also-missing',
-    }) as any);
+    }));
 
     expect(ref._id).toMatch(/^ref-/);
     expect(ref.orgId).toBeUndefined();
@@ -346,8 +334,8 @@ describe('Referral Service', () => {
     const ref = await createReferral(validReferral({
       fromHospitalId: 'hosp-no-org',
       toHospitalId: 'hosp-with-org',
-      orgId: undefined as any,
-    }) as any);
+      orgId: undefined as unknown as string,
+    }));
 
     // Should have inferred orgId from toHospitalId
     expect(ref.orgId).toBe('org-456');
@@ -363,8 +351,8 @@ describe('Referral Service', () => {
     const ref = await createReferral(validReferral({
       fromHospitalId: 'hosp-from-with-org',
       toHospitalId: 'hosp-to-with-org',
-      orgId: undefined as any,
-    }) as any);
+      orgId: undefined as unknown as string,
+    }));
 
     // Should use from-hospital orgId first
     expect(ref.orgId).toBe('org-from');
@@ -381,8 +369,8 @@ describe('Referral Service', () => {
       validReferral({
         fromHospitalId: 'hosp-ref-no-org',
         toHospitalId: 'hosp-ref-has-org',
-        orgId: undefined as any,
-      }) as any,
+        orgId: undefined as unknown as string,
+      }),
       [],
       'doctor-123'
     );
@@ -392,9 +380,9 @@ describe('Referral Service', () => {
 
   test('acceptReferral handles missing patientId gracefully', async () => {
     const ref = await createReferral(validReferral({
-      patientId: undefined as any,
-      toHospitalId: undefined as any,
-    }) as any);
+      patientId: undefined as unknown as string,
+      toHospitalId: undefined as unknown as string,
+    }));
     const accepted = await acceptReferral(ref._id);
     // Should still succeed but skip patient transfer
     expect(accepted).not.toBeNull();
@@ -402,8 +390,8 @@ describe('Referral Service', () => {
   });
 
   test('getAllReferrals handles missing referralDate in sort', async () => {
-    await createReferral(validReferral({ referralDate: undefined as any }) as any);
-    await createReferral(validReferral({ referralDate: '2026-04-01', patientId: 'p2', patientName: 'B' }) as any);
+    await createReferral(validReferral({ referralDate: undefined as unknown as string }));
+    await createReferral(validReferral({ referralDate: '2026-04-01', patientId: 'p2', patientName: 'B' }));
     const all = await getAllReferrals();
     expect(all).toHaveLength(2);
   });
@@ -411,7 +399,7 @@ describe('Referral Service', () => {
   test('createReferral with explicit orgId skips inferOrgId', async () => {
     const ref = await createReferral(validReferral({
       orgId: 'org-explicit',
-    }) as any);
+    }));
     expect(ref.orgId).toBe('org-explicit');
   });
 
@@ -427,8 +415,8 @@ describe('Referral Service', () => {
     const ref = await createReferral(validReferral({
       fromHospitalId: 'hosp-no-org-1',
       toHospitalId: 'hosp-no-org-2',
-      orgId: undefined as any,
-    }) as any);
+      orgId: undefined as unknown as string,
+    }));
 
     // Both hospitals have no orgId, so result should be undefined
     expect(ref.orgId).toBeUndefined();
@@ -448,10 +436,10 @@ describe('Referral Service', () => {
     });
 
     const ref = await createReferral(validReferral({
-      fromHospitalId: undefined as any, // Line 13: if (fromHospitalId) FALSE
+      fromHospitalId: undefined as unknown as string, // Line 13: if (fromHospitalId) FALSE
       toHospitalId: 'hosp-to-only',
-      orgId: undefined as any,
-    }) as any);
+      orgId: undefined as unknown as string,
+    }));
 
     expect(ref.orgId).toBe('org-to-value');
   });
@@ -470,9 +458,9 @@ describe('Referral Service', () => {
 
     const ref = await createReferral(validReferral({
       fromHospitalId: 'hosp-from-only',
-      toHospitalId: undefined as any, // Line 17: if (toHospitalId) FALSE
-      orgId: undefined as any,
-    }) as any);
+      toHospitalId: undefined as unknown as string, // Line 17: if (toHospitalId) FALSE
+      orgId: undefined as unknown as string,
+    }));
 
     expect(ref.orgId).toBe('org-from-value');
   });

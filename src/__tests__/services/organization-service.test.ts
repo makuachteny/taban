@@ -21,12 +21,14 @@ import {
 
 afterEach(async () => { await teardownTestDBs(); uuidCounter = 0; });
 
-function validOrganization(overrides: Record<string, unknown> = {}) {
+type CreateOrganizationInput = Parameters<typeof createOrganization>[0];
+
+function validOrganization(overrides: Partial<CreateOrganizationInput> = {}): CreateOrganizationInput {
   return {
     name: 'Ministry of Health',
     slug: 'moh-ss',
     logoUrl: 'https://example.com/logo.png',
-    primaryColor: '#2E9E7E',
+    primaryColor: '#1B7FA8',
     secondaryColor: '#1E4D4A',
     accentColor: '#FF6B6B',
     subscriptionStatus: 'active' as const,
@@ -51,7 +53,7 @@ function validOrganization(overrides: Record<string, unknown> = {}) {
 
 describe('Organization Service', () => {
   test('creates an organization', async () => {
-    const org = await createOrganization(validOrganization() as any, 'admin-001', 'admin');
+    const org = await createOrganization(validOrganization(), 'admin-001', 'admin');
 
     expect(org._id).toBe('org-moh-ss');
     expect(org.type).toBe('organization');
@@ -64,36 +66,36 @@ describe('Organization Service', () => {
   test('normalizes slug to lowercase and removes special characters', async () => {
     const org = await createOrganization(validOrganization({
       slug: 'Private-Hospital_ONE!',
-    }) as any);
+    }));
 
     expect(org.slug).toBe('private-hospitalone');
     expect(org._id).toBe('org-private-hospitalone');
   });
 
   test('throws error when creating organization with existing slug', async () => {
-    await createOrganization(validOrganization({ slug: 'health-org' }) as any);
+    await createOrganization(validOrganization({ slug: 'health-org' }));
 
     await expect(
       createOrganization(validOrganization({
         name: 'Different Hospital',
         slug: 'HEALTH-ORG',
-      }) as any)
+      }))
     ).rejects.toThrow(/already exists/);
   });
 
   test('retrieves all organizations', async () => {
-    await createOrganization(validOrganization({ slug: 'org-1' }) as any);
+    await createOrganization(validOrganization({ slug: 'org-1' }));
     await createOrganization(validOrganization({
       name: 'Second Org',
       slug: 'org-2',
-    }) as any);
+    }));
 
     const all = await getAllOrganizations();
     expect(all).toHaveLength(2);
   });
 
   test('retrieves organization by ID', async () => {
-    const org = await createOrganization(validOrganization() as any);
+    const org = await createOrganization(validOrganization());
     const found = await getOrganizationById(org._id);
 
     expect(found).not.toBeNull();
@@ -106,7 +108,7 @@ describe('Organization Service', () => {
   });
 
   test('retrieves organization by slug', async () => {
-    await createOrganization(validOrganization({ slug: 'test-org' }) as any);
+    await createOrganization(validOrganization({ slug: 'test-org' }));
     const found = await getOrganizationBySlug('test-org');
 
     expect(found).not.toBeNull();
@@ -119,7 +121,7 @@ describe('Organization Service', () => {
   });
 
   test('updates organization data', async () => {
-    const org = await createOrganization(validOrganization() as any);
+    const org = await createOrganization(validOrganization());
 
     const updated = await updateOrganization(
       org._id,
@@ -139,7 +141,7 @@ describe('Organization Service', () => {
   });
 
   test('deactivates organization', async () => {
-    const org = await createOrganization(validOrganization() as any);
+    const org = await createOrganization(validOrganization());
 
     await deactivateOrganization(org._id, 'admin-001', 'admin');
 
@@ -149,7 +151,7 @@ describe('Organization Service', () => {
 
   test('organization stats counts users correctly', async () => {
     const { usersDB } = require('@/lib/db');
-    const org = await createOrganization(validOrganization({ slug: 'stat-org' }) as any);
+    const org = await createOrganization(validOrganization({ slug: 'stat-org' }));
 
     // Add users for this org
     await putDoc(usersDB(), {
@@ -198,7 +200,7 @@ describe('Organization Service', () => {
 
   test('organization stats counts hospitals correctly', async () => {
     const { hospitalsDB } = require('@/lib/db');
-    const org = await createOrganization(validOrganization({ slug: 'hosp-org' }) as any);
+    const org = await createOrganization(validOrganization({ slug: 'hosp-org' }));
 
     await putDoc(hospitalsDB(), {
       _id: 'hosp-1',
@@ -238,7 +240,7 @@ describe('Organization Service', () => {
 
   test('organization stats counts patients correctly', async () => {
     const { patientsDB } = require('@/lib/db');
-    const org = await createOrganization(validOrganization({ slug: 'pat-org' }) as any);
+    const org = await createOrganization(validOrganization({ slug: 'pat-org' }));
 
     await putDoc(patientsDB(), {
       _id: 'pat-1',
@@ -271,7 +273,7 @@ describe('Organization Service', () => {
   });
 
   test('organization stats returns zeros for new organization', async () => {
-    const org = await createOrganization(validOrganization({ slug: 'empty-org' }) as any);
+    const org = await createOrganization(validOrganization({ slug: 'empty-org' }));
 
     const stats = await getOrganizationStats(org._id);
     expect(stats.userCount).toBe(0);
@@ -289,7 +291,7 @@ describe('Organization Service', () => {
         communityHealth: false,
         facilityAssessments: false,
       },
-    }) as any);
+    }));
 
     expect(org.featureFlags.epidemicIntelligence).toBe(false);
     expect(org.featureFlags.mchAnalytics).toBe(true);
@@ -297,7 +299,7 @@ describe('Organization Service', () => {
 
   test('preserves createdAt and createdBy on update', async () => {
     const org = await createOrganization(
-      validOrganization({ slug: 'preserve-org' }) as any,
+      validOrganization({ slug: 'preserve-org' }),
       'user-1',
       'user1'
     );

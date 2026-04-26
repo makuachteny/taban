@@ -11,6 +11,7 @@ jest.mock('@/lib/db', () => require('../helpers/test-db').createDBMock());
 
 import { teardownTestDBs } from '../helpers/test-db';
 import { appointmentsDB } from '@/lib/db';
+import type { AppointmentDoc } from '@/lib/db-types';
 import {
   getUpcomingReminders,
   generateReminderMessages,
@@ -26,7 +27,7 @@ const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
 const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
 const lastWeek = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
 
-function validAppointment(overrides: Record<string, unknown> = {}) {
+function validAppointment(overrides: Partial<AppointmentDoc> = {}): AppointmentDoc {
   return {
     _id: `appt-${++uuidCounter}`,
     type: 'appointment',
@@ -54,10 +55,10 @@ function validAppointment(overrides: Record<string, unknown> = {}) {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     ...overrides,
-  };
+  } as AppointmentDoc;
 }
 
-async function seedAppointment(overrides: Record<string, unknown> = {}) {
+async function seedAppointment(overrides: Partial<AppointmentDoc> = {}): Promise<AppointmentDoc> {
   const db = appointmentsDB();
   const doc = validAppointment(overrides);
   await db.put(doc);
@@ -106,13 +107,13 @@ describe('Appointment Reminder Service', () => {
 
   test('getUpcomingReminders with scope', async () => {
     await seedAppointment({ appointmentDate: tomorrow });
-    const reminders = await getUpcomingReminders(1, undefined, { role: 'nurse' as any });
+    const reminders = await getUpcomingReminders(1, undefined, { role: 'nurse' });
     expect(Array.isArray(reminders)).toBe(true);
   });
 
   test('generateReminderMessages creates messages for appointments', async () => {
     const appt = validAppointment({ appointmentDate: tomorrow });
-    const messages = await generateReminderMessages([appt as any]);
+    const messages = await generateReminderMessages([appt]);
     expect(messages).toHaveLength(1);
     expect(messages[0].appointmentId).toBe(appt._id);
     expect(messages[0].patientName).toBe('Deng Mabior');
@@ -124,7 +125,7 @@ describe('Appointment Reminder Service', () => {
 
   test('generateReminderMessages respects reminder channel', async () => {
     const appt = validAppointment({ reminderChannel: 'sms' });
-    const messages = await generateReminderMessages([appt as any]);
+    const messages = await generateReminderMessages([appt]);
     expect(messages[0].channel).toBe('sms');
   });
 
@@ -244,7 +245,7 @@ describe('Appointment Reminder Service', () => {
 
   test('generateReminderMessages uses patientPhone correctly', async () => {
     const appt = validAppointment({ patientPhone: '+211987654321' });
-    const messages = await generateReminderMessages([appt as any]);
+    const messages = await generateReminderMessages([appt]);
     expect(messages[0].patientPhone).toBe('+211987654321');
   });
 

@@ -20,7 +20,8 @@
     "release": "node scripts/release.mjs"
   },
   "dependencies": {
-"@types/leaflet": "^1.9.21",
+    "@iconify/react": "^6.0.2",
+    "@types/leaflet": "^1.9.21",
     "bcryptjs": "^3.0.3",
     "html5-qrcode": "^2.3.8",
     "jose": "^6.1.3",

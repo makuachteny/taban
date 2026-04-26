@@ -122,12 +122,12 @@ export default function WardsPage() {
         />
 
         {/* Census KPIs */}
-        <div className="grid gap-3 mb-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))' }}>
+        <div className="grid gap-3 mb-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', alignItems: 'stretch' }}>
           {[
-            { label: 'Total Beds', value: totalBeds, accent: 'var(--accent-primary)', bg: 'rgba(46, 158, 126, 0.08)', border: 'rgba(46, 158, 126, 0.22)' },
+            { label: 'Total Beds', value: totalBeds, accent: 'var(--accent-primary)', bg: 'rgba(27, 127, 168, 0.08)', border: 'rgba(27, 127, 168, 0.22)' },
             { label: 'Occupied', value: occupiedBeds, accent: '#1B7FA8', bg: 'rgba(27, 127, 168, 0.08)', border: 'rgba(27, 127, 168, 0.22)' },
             { label: 'Available', value: availableBeds, accent: '#15795C', bg: 'rgba(27, 158, 119, 0.10)', border: 'rgba(27, 158, 119, 0.30)' },
-            { label: 'Occupancy', value: `${occupancyRate}%`, accent: occupancyRate > 90 ? '#C44536' : occupancyRate > 75 ? '#B8741C' : 'var(--accent-primary)', bg: occupancyRate > 90 ? 'rgba(196, 69, 54, 0.10)' : occupancyRate > 75 ? 'rgba(228, 168, 75, 0.12)' : 'rgba(46, 158, 126, 0.08)', border: occupancyRate > 90 ? 'rgba(196, 69, 54, 0.30)' : occupancyRate > 75 ? 'rgba(228, 168, 75, 0.30)' : 'rgba(46, 158, 126, 0.22)' },
+            { label: 'Occupancy', value: `${occupancyRate}%`, accent: occupancyRate > 90 ? '#C44536' : occupancyRate > 75 ? '#B8741C' : 'var(--accent-primary)', bg: occupancyRate > 90 ? 'rgba(196, 69, 54, 0.10)' : occupancyRate > 75 ? 'rgba(228, 168, 75, 0.12)' : 'rgba(27, 127, 168, 0.08)', border: occupancyRate > 90 ? 'rgba(196, 69, 54, 0.30)' : occupancyRate > 75 ? 'rgba(228, 168, 75, 0.30)' : 'rgba(27, 127, 168, 0.22)' },
           ].map(k => (
             <div key={k.label} style={{ padding: '14px 16px', borderRadius: 10, background: k.bg, border: `1px solid ${k.border}` }}>
               <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: k.accent }}>{k.label}</div>
@@ -146,7 +146,7 @@ export default function WardsPage() {
               No wards configured for {facilityName}. Ask an administrator to set up wards in facility settings.
             </div>
           ) : (
-            <div className="p-4 grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}>
+            <div className="p-4 grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', alignItems: 'stretch' }}>
               {facilityWards.map(w => {
                 const occ = w.totalBeds > 0 ? Math.round((w.occupiedBeds / w.totalBeds) * 100) : 0;
                 const accent = occ > 90 ? '#C44536' : occ > 75 ? '#B8741C' : '#15795C';

@@ -205,7 +205,7 @@ export default function ReferralChainTracker({ referrals, currentFacilityId, com
                 </div>
                 <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
                   <span className="text-[8px] font-bold px-1.5 py-0.5 rounded" style={{
-                    background: ref.status === 'seen' ? 'rgba(74,222,128,0.12)' : 'rgba(46,158,126,0.12)',
+                    background: ref.status === 'seen' ? 'rgba(74,222,128,0.12)' : 'rgba(27,127,168,0.12)',
                     color: ref.status === 'seen' ? 'var(--color-success)' : 'var(--accent-primary)',
                   }}>{ref.status.toUpperCase()}</span>
                   {ref.urgency && ref.urgency !== 'routine' && (

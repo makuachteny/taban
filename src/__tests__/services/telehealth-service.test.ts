@@ -8,7 +8,7 @@ let uuidCounter = 0;
 jest.mock('uuid', () => ({ v4: () => `${String(++uuidCounter).padStart(8, '0')}-tele-uuid` }));
 jest.mock('@/lib/db', () => require('../helpers/test-db').createDBMock());
 
-import { teardownTestDBs, putDoc } from '../helpers/test-db';
+import { teardownTestDBs } from '../helpers/test-db';
 import {
   getAllSessions,
   getSessionsByPatient,
@@ -25,9 +25,10 @@ import {
 
 afterEach(async () => { await teardownTestDBs(); uuidCounter = 0; });
 
-function validSession(overrides: Record<string, unknown> = {}) {
+type CreateSessionInput = Parameters<typeof createSession>[0];
+
+function validSession(overrides: Partial<CreateSessionInput> = {}): CreateSessionInput {
   const today = new Date().toISOString().slice(0, 10);
-  const futureDate = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
 
   return {
     patientId: 'pat-001',
@@ -49,13 +50,14 @@ function validSession(overrides: Record<string, unknown> = {}) {
     connectionDrops: 0,
     patientConsentGiven: true,
     sessionRecorded: false,
+    state: 'Central Equatoria',
     ...overrides,
   };
 }
 
 describe('Telehealth Service', () => {
   test('creates a telehealth session', async () => {
-    const session = await createSession(validSession() as any);
+    const session = await createSession(validSession());
 
     expect(session._id).toMatch(/^tele-/);
     expect(session.type).toBe('telehealth_session');
@@ -66,11 +68,11 @@ describe('Telehealth Service', () => {
   });
 
   test('retrieves all sessions', async () => {
-    await createSession(validSession() as any);
+    await createSession(validSession());
     await createSession(validSession({
       patientName: 'Jane Doe',
       patientId: 'pat-002',
-    }) as any);
+    }));
 
     const all = await getAllSessions();
     expect(all).toHaveLength(2);
@@ -78,11 +80,11 @@ describe('Telehealth Service', () => {
   });
 
   test('retrieves sessions by patient ID', async () => {
-    await createSession(validSession() as any);
+    await createSession(validSession());
     await createSession(validSession({
       patientId: 'pat-002',
       patientName: 'Jane Doe',
-    }) as any);
+    }));
 
     const sessions = await getSessionsByPatient('pat-001');
     expect(sessions).toHaveLength(1);
@@ -90,11 +92,11 @@ describe('Telehealth Service', () => {
   });
 
   test('retrieves sessions by provider ID', async () => {
-    await createSession(validSession() as any);
+    await createSession(validSession());
     await createSession(validSession({
       providerId: 'prov-002',
       providerName: 'Dr. Jones',
-    }) as any);
+    }));
 
     const sessions = await getSessionsByProvider('prov-001');
     expect(sessions).toHaveLength(1);
@@ -109,19 +111,19 @@ describe('Telehealth Service', () => {
     await createSession(validSession({
       scheduledDate: tomorrow,
       status: 'scheduled',
-    }) as any);
+    }));
 
     // Create completed session for today
     await createSession(validSession({
       scheduledDate: today,
       status: 'completed',
-    }) as any);
+    }));
 
     // Create cancelled session
     await createSession(validSession({
       scheduledDate: tomorrow,
       status: 'cancelled',
-    }) as any);
+    }));
 
     const upcoming = await getUpcomingSessions();
     expect(upcoming).toHaveLength(1);
@@ -134,13 +136,13 @@ describe('Telehealth Service', () => {
 
     await createSession(validSession({
       scheduledDate: today,
-    }) as any);
+    }));
 
     await createSession(validSession({
       patientId: 'pat-002',
       patientName: 'Jane Doe',
       scheduledDate: tomorrow,
-    }) as any);
+    }));
 
     const todaySessions = await getTodaysSessions();
     expect(todaySessions).toHaveLength(1);
@@ -148,7 +150,7 @@ describe('Telehealth Service', () => {
   });
 
   test('updates session status to in_session and sets start time', async () => {
-    const session = await createSession(validSession() as any);
+    const session = await createSession(validSession());
     const before = new Date();
 
     const updated = await updateSessionStatus(session._id, 'in_session');
@@ -161,8 +163,7 @@ describe('Telehealth Service', () => {
   });
 
   test('updates session status to completed and calculates duration', async () => {
-    const session = await createSession(validSession() as any);
-    const startTime = new Date();
+    const session = await createSession(validSession());
 
     // First mark as in_session
     await updateSessionStatus(session._id, 'in_session');
@@ -184,7 +185,7 @@ describe('Telehealth Service', () => {
   });
 
   test('updates session with partial data', async () => {
-    const session = await createSession(validSession() as any);
+    const session = await createSession(validSession());
 
     const updated = await updateSession(session._id, {
       sessionQuality: 'good',
@@ -198,7 +199,7 @@ describe('Telehealth Service', () => {
   });
 
   test('adds clinical notes to session', async () => {
-    const session = await createSession(validSession() as any);
+    const session = await createSession(validSession());
 
     const updated = await addClinicalNotes(
       session._id,
@@ -214,7 +215,7 @@ describe('Telehealth Service', () => {
   });
 
   test('rates telehealth session', async () => {
-    const session = await createSession(validSession() as any);
+    const session = await createSession(validSession());
 
     const rated = await rateSession(session._id, 4, 'Excellent consultation');
 
@@ -231,7 +232,7 @@ describe('Telehealth Service', () => {
     await createSession(validSession({
       scheduledDate: today,
       status: 'scheduled',
-    }) as any);
+    }));
 
     // Create completed session with duration and rating
     const completed = await createSession(validSession({
@@ -239,7 +240,7 @@ describe('Telehealth Service', () => {
       patientName: 'Jane Doe',
       scheduledDate: today,
       status: 'scheduled',
-    }) as any);
+    }));
 
     await updateSessionStatus(completed._id, 'in_session');
     await new Promise(resolve => setTimeout(resolve, 100));
@@ -251,7 +252,7 @@ describe('Telehealth Service', () => {
       patientName: 'Bob Smith',
       scheduledDate: tomorrow,
       status: 'cancelled',
-    }) as any);
+    }));
 
     const stats = await getTelehealthStats();
 
@@ -265,7 +266,7 @@ describe('Telehealth Service', () => {
   test('stats with no completed sessions returns zero average', async () => {
     await createSession(validSession({
       status: 'scheduled',
-    }) as any);
+    }));
 
     const stats = await getTelehealthStats();
 
@@ -282,14 +283,14 @@ describe('Telehealth Service', () => {
       patientId: 'pat-001',
       scheduledDate: yesterday,
       scheduledTime: '09:00',
-    }) as any);
+    }));
 
     await createSession(validSession({
       patientId: 'pat-002',
       patientName: 'Jane Doe',
       scheduledDate: today,
       scheduledTime: '14:00',
-    }) as any);
+    }));
 
     const all = await getAllSessions();
     expect(all[0].scheduledDate).toBe(today);
@@ -300,7 +301,7 @@ describe('Telehealth Service', () => {
     const session = await createSession(validSession({
       followUpRequired: true,
       followUpDate: '2024-02-01',
-    }) as any);
+    }));
 
     expect(session.followUpRequired).toBe(true);
     expect(session.followUpDate).toBe('2024-02-01');
@@ -310,14 +311,13 @@ describe('Telehealth Service', () => {
     const session = await createSession(validSession({
       referralRequired: true,
       referralFacility: 'Juba Teaching Hospital',
-    }) as any);
+    }));
 
     expect(session.referralRequired).toBe(true);
     expect(session.referralFacility).toBe('Juba Teaching Hospital');
   });
 
   test('getUpcomingSessions sorts by date and time ascending', async () => {
-    const today = new Date().toISOString().slice(0, 10);
     const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
 
     // Create sessions out of order
@@ -325,14 +325,14 @@ describe('Telehealth Service', () => {
       scheduledDate: tomorrow,
       scheduledTime: '15:00',
       patientId: 'pat-001',
-    }) as any);
+    }));
 
     await createSession(validSession({
       scheduledDate: tomorrow,
       scheduledTime: '09:00',
       patientId: 'pat-002',
       patientName: 'Another Patient',
-    }) as any);
+    }));
 
     const upcoming = await getUpcomingSessions();
     // Should be sorted by date+time ascending
@@ -350,9 +350,9 @@ describe('Telehealth Service', () => {
     await createSession(validSession({
       scheduledDate: tomorrow,
       status: 'scheduled',
-    }) as any);
+    }));
 
-    const upcoming = await getUpcomingSessions({ role: 'nurse' as any });
+    const upcoming = await getUpcomingSessions({ role: 'nurse' } as Parameters<typeof getUpcomingSessions>[0]);
     expect(Array.isArray(upcoming)).toBe(true);
   });
 
@@ -361,7 +361,7 @@ describe('Telehealth Service', () => {
     await createSession(validSession({
       scheduledDate: today,
       status: 'failed',
-    }) as any);
+    }));
 
     const stats = await getTelehealthStats();
     expect(stats.failedTotal).toBe(1);

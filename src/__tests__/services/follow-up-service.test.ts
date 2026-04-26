@@ -19,11 +19,13 @@ import {
   getFollowUpStats,
 } from '@/lib/services/follow-up-service';
 
+type CreateFollowUpInput = Parameters<typeof createFollowUp>[0];
+
 afterEach(async () => { await teardownTestDBs(); uuidCounter = 0; });
 
 const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
 
-function validFollowUp(overrides: Record<string, unknown> = {}) {
+function validFollowUp(overrides: Partial<CreateFollowUpInput> = {}): CreateFollowUpInput {
   return {
     patientId: 'patient-001',
     patientName: 'Deng Mabior',
@@ -42,7 +44,7 @@ function validFollowUp(overrides: Record<string, unknown> = {}) {
 
 describe('Follow-Up Service', () => {
   test('creates a follow-up record', async () => {
-    const fu = await createFollowUp(validFollowUp() as any);
+    const fu = await createFollowUp(validFollowUp());
     expect(fu._id).toMatch(/^followup-/);
     expect(fu.type).toBe('follow_up');
     expect(fu.status).toBe('active');
@@ -50,11 +52,11 @@ describe('Follow-Up Service', () => {
   });
 
   test('retrieves all follow-ups sorted by scheduled date', async () => {
-    await createFollowUp(validFollowUp({ scheduledDate: '2026-04-20' }) as any);
+    await createFollowUp(validFollowUp({ scheduledDate: '2026-04-20' }));
     await createFollowUp(validFollowUp({
       patientId: 'patient-002', patientName: 'Achol',
       scheduledDate: '2026-04-15',
-    }) as any);
+    }));
 
     const all = await getAllFollowUps();
     expect(all).toHaveLength(2);
@@ -64,11 +66,11 @@ describe('Follow-Up Service', () => {
   });
 
   test('retrieves follow-ups by worker', async () => {
-    await createFollowUp(validFollowUp() as any);
+    await createFollowUp(validFollowUp());
     await createFollowUp(validFollowUp({
       patientId: 'patient-002', patientName: 'Achol',
       assignedWorker: 'bhw-002', assignedWorkerName: 'James',
-    }) as any);
+    }));
 
     const worker1 = await getFollowUpsByWorker('bhw-001');
     expect(worker1).toHaveLength(1);
@@ -76,45 +78,45 @@ describe('Follow-Up Service', () => {
   });
 
   test('retrieves follow-ups by patient', async () => {
-    await createFollowUp(validFollowUp() as any);
+    await createFollowUp(validFollowUp());
     await createFollowUp(validFollowUp({
       condition: 'Diarrhoea follow-up',
       scheduledDate: '2026-05-01',
-    }) as any);
+    }));
 
     const patient1 = await getFollowUpsByPatient('patient-001');
     expect(patient1).toHaveLength(2);
   });
 
   test('getPendingFollowUps returns active and missed', async () => {
-    await createFollowUp(validFollowUp({ status: 'active' }) as any);
+    await createFollowUp(validFollowUp({ status: 'active' }));
     await createFollowUp(validFollowUp({
       patientId: 'patient-002', patientName: 'Achol',
       status: 'missed',
-    }) as any);
+    }));
     await createFollowUp(validFollowUp({
       patientId: 'patient-003', patientName: 'Nyabol',
       status: 'completed',
-    }) as any);
+    }));
 
     const pending = await getPendingFollowUps();
     expect(pending).toHaveLength(2);
   });
 
   test('getPendingFollowUps filters by worker', async () => {
-    await createFollowUp(validFollowUp({ status: 'active' }) as any);
+    await createFollowUp(validFollowUp({ status: 'active' }));
     await createFollowUp(validFollowUp({
       patientId: 'patient-002', patientName: 'Achol',
       assignedWorker: 'bhw-002', assignedWorkerName: 'James',
       status: 'active',
-    }) as any);
+    }));
 
     const bhw1Pending = await getPendingFollowUps('bhw-001');
     expect(bhw1Pending).toHaveLength(1);
   });
 
   test('updates a follow-up', async () => {
-    const fu = await createFollowUp(validFollowUp() as any);
+    const fu = await createFollowUp(validFollowUp());
     const updated = await updateFollowUp(fu._id, {
       status: 'completed',
       outcome: 'recovered',
@@ -132,37 +134,37 @@ describe('Follow-Up Service', () => {
   });
 
   test('marks follow-up as missed', async () => {
-    const fu = await createFollowUp(validFollowUp() as any);
+    const fu = await createFollowUp(validFollowUp());
     const missed = await updateFollowUp(fu._id, { status: 'missed' });
     expect(missed).not.toBeNull();
     expect(missed!.status).toBe('missed');
   });
 
   test('marks follow-up as lost to follow-up', async () => {
-    const fu = await createFollowUp(validFollowUp() as any);
+    const fu = await createFollowUp(validFollowUp());
     const lost = await updateFollowUp(fu._id, { status: 'lost_to_followup' });
     expect(lost).not.toBeNull();
     expect(lost!.status).toBe('lost_to_followup');
   });
 
   test('getFollowUpStats returns correct counts', async () => {
-    await createFollowUp(validFollowUp({ status: 'active' }) as any);
+    await createFollowUp(validFollowUp({ status: 'active' }));
     await createFollowUp(validFollowUp({
       patientId: 'patient-002', patientName: 'Achol',
       status: 'completed', outcome: 'recovered',
-    }) as any);
+    }));
     await createFollowUp(validFollowUp({
       patientId: 'patient-003', patientName: 'Nyabol',
       status: 'completed', outcome: 'died',
-    }) as any);
+    }));
     await createFollowUp(validFollowUp({
       patientId: 'patient-004', patientName: 'Kuol',
       status: 'missed',
-    }) as any);
+    }));
     await createFollowUp(validFollowUp({
       patientId: 'patient-005', patientName: 'Garang',
       status: 'lost_to_followup',
-    }) as any);
+    }));
 
     const stats = await getFollowUpStats();
     expect(stats.total).toBe(5);
@@ -175,12 +177,12 @@ describe('Follow-Up Service', () => {
   });
 
   test('getFollowUpStats can filter by worker', async () => {
-    await createFollowUp(validFollowUp({ status: 'active' }) as any);
+    await createFollowUp(validFollowUp({ status: 'active' }));
     await createFollowUp(validFollowUp({
       patientId: 'patient-002', patientName: 'Achol',
       assignedWorker: 'bhw-002', assignedWorkerName: 'James',
       status: 'completed', outcome: 'recovered',
-    }) as any);
+    }));
 
     const bhw1Stats = await getFollowUpStats('bhw-001');
     expect(bhw1Stats.total).toBe(1);
@@ -193,12 +195,12 @@ describe('Follow-Up Service', () => {
     // This tests the || '' fallback where scheduledDate is falsy
     await createFollowUp(validFollowUp({
       patientId: 'patient-001',
-      scheduledDate: undefined as any,
-    }) as any);
+      scheduledDate: undefined,
+    }));
     await createFollowUp(validFollowUp({
       patientId: 'patient-002',
       scheduledDate: '2026-04-20',
-    }) as any);
+    }));
 
     const all = await getAllFollowUps();
     expect(all).toHaveLength(2);

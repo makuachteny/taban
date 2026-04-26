@@ -82,7 +82,7 @@ export default function HRDashboardPage() {
         <TopBar title="HR Dashboard" />
         <main className="page-container page-enter">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 320, color: 'var(--text-muted)' }}>
-            <Activity size={18} style={{ marginRight: 8, animation: 'spin 1s linear infinite' }} />
+            <Activity size={44} style={{ marginRight: 8, animation: 'spin 1s linear infinite' }} />
             <span>Loading HR data…</span>
           </div>
         </main>
@@ -112,12 +112,12 @@ export default function HRDashboardPage() {
         </div>
 
         {/* KPI strip */}
-        <div className="grid gap-3 mb-5" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))' }}>
+        <div className="grid gap-3 mb-5" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', alignItems: 'stretch' }}>
           {[
-            { label: 'Active Staff', value: facilityUsers.length, accent: 'var(--accent-primary)', bg: 'rgba(46, 158, 126, 0.08)', border: 'rgba(46, 158, 126, 0.22)' },
+            { label: 'Active Staff', value: facilityUsers.length, accent: 'var(--accent-primary)', bg: 'rgba(27, 127, 168, 0.08)', border: 'rgba(27, 127, 168, 0.22)' },
             { label: 'Present Today', value: presentToday, accent: '#15795C', bg: 'rgba(27, 158, 119, 0.10)', border: 'rgba(27, 158, 119, 0.26)' },
-            { label: 'On Leave Today', value: onLeaveToday.length, accent: onLeaveToday.length > 0 ? '#B8741C' : 'var(--accent-primary)', bg: onLeaveToday.length > 0 ? 'rgba(228, 168, 75, 0.12)' : 'rgba(46, 158, 126, 0.08)', border: onLeaveToday.length > 0 ? 'rgba(228, 168, 75, 0.30)' : 'rgba(46, 158, 126, 0.22)' },
-            { label: 'Pending Decisions', value: pendingLeave.length, accent: pendingLeave.length > 0 ? '#C44536' : 'var(--accent-primary)', bg: pendingLeave.length > 0 ? 'rgba(196, 69, 54, 0.10)' : 'rgba(46, 158, 126, 0.08)', border: pendingLeave.length > 0 ? 'rgba(196, 69, 54, 0.28)' : 'rgba(46, 158, 126, 0.22)' },
+            { label: 'On Leave Today', value: onLeaveToday.length, accent: onLeaveToday.length > 0 ? '#B8741C' : 'var(--accent-primary)', bg: onLeaveToday.length > 0 ? 'rgba(228, 168, 75, 0.12)' : 'rgba(27, 127, 168, 0.08)', border: onLeaveToday.length > 0 ? 'rgba(228, 168, 75, 0.30)' : 'rgba(27, 127, 168, 0.22)' },
+            { label: 'Pending Decisions', value: pendingLeave.length, accent: pendingLeave.length > 0 ? '#C44536' : 'var(--accent-primary)', bg: pendingLeave.length > 0 ? 'rgba(196, 69, 54, 0.10)' : 'rgba(27, 127, 168, 0.08)', border: pendingLeave.length > 0 ? 'rgba(196, 69, 54, 0.28)' : 'rgba(27, 127, 168, 0.22)' },
             { label: 'On Call Today', value: onCallToday, accent: '#1B7FA8', bg: 'rgba(27, 127, 168, 0.10)', border: 'rgba(27, 127, 168, 0.26)' },
           ].map(k => (
             <div key={k.label} style={{ padding: '14px 16px', borderRadius: 10, background: k.bg, border: `1px solid ${k.border}`, position: 'relative' }}>
@@ -140,7 +140,7 @@ export default function HRDashboardPage() {
             {pendingLeave.length === 0 ? (
               <div className="p-10 text-center" style={{ color: 'var(--text-muted)' }}>
                 <CheckCircle2 className="w-8 h-8 mx-auto mb-2" style={{ color: '#15795C', opacity: 0.6 }} />
-                No pending leave requests — you're all caught up.
+                No pending leave requests — you&apos;re all caught up.
               </div>
             ) : (
               <div>
@@ -148,7 +148,7 @@ export default function HRDashboardPage() {
                   const initials = r.userName.split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase();
                   return (
                     <Link key={r._id} href="/hr?tab=leave" className="data-row data-row--warning">
-                      <div className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-[11px] font-bold text-white" style={{ background: 'linear-gradient(135deg, #2E9E7E 0%, #1A3A3A 100%)' }}>{initials || '?'}</div>
+                      <div className="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center text-[11px] font-bold text-white" style={{ background: 'linear-gradient(135deg, #1B7FA8 0%, #1A3A3A 100%)' }}>{initials || '?'}</div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-baseline gap-2 flex-wrap">
                           <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{r.userName}</span>
@@ -171,7 +171,7 @@ export default function HRDashboardPage() {
           <div className="space-y-4">
             <div className="dash-card overflow-hidden">
               <div className="px-5 py-3 border-b" style={{ borderColor: 'var(--border-light)' }}>
-                <h3 className="font-semibold text-sm">Today's Shifts</h3>
+                <h3 className="font-semibold text-sm">Today&apos;s Shifts</h3>
               </div>
               <div className="p-4 space-y-2">
                 <ShiftRow label="Morning" count={morningStaff} accent="#15795C" />
@@ -229,7 +229,7 @@ export default function HRDashboardPage() {
         {/* Quick actions */}
         <div className="dash-card mt-4 p-4">
           <h3 className="font-semibold text-sm mb-3">Quick Actions</h3>
-          <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+          <div className="grid gap-2" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', alignItems: 'stretch' }}>
             <QuickAction href="/hr?tab=roster" icon={<Users className="w-4 h-4" />} label="Staff Roster" subtitle={`${facilityUsers.length} staff`} />
             <QuickAction href="/hr?tab=leave" icon={<Calendar className="w-4 h-4" />} label="Leave Queue" subtitle={`${pendingLeave.length} pending`} alarm={pendingLeave.length > 0} />
             <QuickAction href="/hr?tab=schedule" icon={<Clock className="w-4 h-4" />} label="Schedule Shifts" subtitle={`${schedules.length} today`} />

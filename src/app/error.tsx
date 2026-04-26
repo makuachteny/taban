@@ -44,8 +44,8 @@ export default function Error({
             onClick={reset}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
             style={{
-              background: 'linear-gradient(135deg, #2E9E7E, #1d5bc4)',
-              boxShadow: '0 4px 16px rgba(46,158,126,0.3)',
+              background: 'linear-gradient(135deg, #1B7FA8, #1d5bc4)',
+              boxShadow: '0 4px 16px rgba(27,127,168,0.3)',
             }}
           >
             <RotateCcw className="w-4 h-4" /> Try Again

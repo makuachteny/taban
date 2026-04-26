@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Shield, Plus, Edit3, Trash2, Building2 } from '@/components/icons/lucide';
+import { Shield, Plus, Edit3, Building2 } from '@/components/icons/lucide';
 import EligibilityBadge from './EligibilityBadge';
 
 interface InsuranceSnapshotProps {
@@ -85,7 +85,7 @@ export default function InsuranceSnapshot({ patientId, editable, onAddInsurance,
           display: 'flex', alignItems: 'center', gap: 12,
         }}>
           <span className="icon-box-sm" style={{ color: 'var(--teal, #14b8a6)', flexShrink: 0 }}>
-            <Building2 size={18} />
+            <Building2 size={44} />
           </span>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>

@@ -18,8 +18,11 @@ import {
   deleteDeath,
   getDeathStats,
 } from '@/lib/services/death-service';
+import type { DataScope } from '@/lib/services/data-scope';
 
-const makeDeathData = (overrides: Record<string, unknown> = {}) => ({
+type CreateDeathInput = Parameters<typeof createDeath>[0];
+
+const makeDeathData = (overrides: Partial<CreateDeathInput> = {}): CreateDeathInput => ({
   deceasedFirstName: 'Mabior',
   deceasedSurname: 'Garang',
   deceasedGender: 'Male' as const,
@@ -177,7 +180,7 @@ describe('death-service', () => {
   test('createDeath without patientId does not update patient', async () => {
     // When patientId is not provided, should not attempt updatePatient
     const death = await createDeath(makeDeathData({
-      patientId: undefined as any,
+      patientId: undefined,
     }));
     expect(death._id).toBeDefined();
     expect(death.type).toBe('death');
@@ -209,7 +212,7 @@ describe('death-service', () => {
 
   test('getDeathStats handles death without ageAtDeath', async () => {
     await createDeath(makeDeathData({
-      ageAtDeath: undefined as any,
+      ageAtDeath: undefined,
     }));
     const stats = await getDeathStats();
     expect(stats.under5Deaths).toBe(0);
@@ -253,7 +256,7 @@ describe('death-service', () => {
 
   test('getDeathStats handles missing mannerOfDeath', async () => {
     await createDeath(makeDeathData({
-      mannerOfDeath: undefined as any,
+      mannerOfDeath: undefined,
     }));
 
     const stats = await getDeathStats();
@@ -278,7 +281,7 @@ describe('death-service', () => {
 
   test('getDeathStats handles missing state', async () => {
     await createDeath(makeDeathData({
-      state: undefined as any,
+      state: undefined,
     }));
 
     const stats = await getDeathStats();
@@ -326,7 +329,7 @@ describe('death-service', () => {
 
   test('createDeath with missing dateOfDeath uses now as fallback', async () => {
     const death = await createDeath(makeDeathData({
-      dateOfDeath: undefined as any,
+      dateOfDeath: undefined,
     }));
     expect(death._id).toMatch(/^death-/);
     expect(death.type).toBe('death');
@@ -342,14 +345,14 @@ describe('death-service', () => {
 
   test('createDeath without patientId skips patient update', async () => {
     const death = await createDeath(makeDeathData({
-      patientId: undefined as any,
+      patientId: undefined,
     }));
     expect(death.patientId).toBeUndefined();
   });
 
   test('getDeathStats filters by thisMonth with missing dateOfDeath', async () => {
     await createDeath(makeDeathData({
-      dateOfDeath: undefined as any,
+      dateOfDeath: undefined,
     }));
 
     const stats = await getDeathStats();
@@ -359,7 +362,7 @@ describe('death-service', () => {
 
   test('getDeathStats filters by thisYear with missing dateOfDeath', async () => {
     await createDeath(makeDeathData({
-      dateOfDeath: undefined as any,
+      dateOfDeath: undefined,
     }));
 
     const stats = await getDeathStats();
@@ -369,7 +372,7 @@ describe('death-service', () => {
 
   test('getDeathStats byMannerOfDeath with missing mannerOfDeath', async () => {
     await createDeath(makeDeathData({
-      mannerOfDeath: undefined as any,
+      mannerOfDeath: undefined,
     }));
 
     const stats = await getDeathStats();
@@ -378,7 +381,7 @@ describe('death-service', () => {
 
   test('getDeathStats byState with missing state', async () => {
     await createDeath(makeDeathData({
-      state: undefined as any,
+      state: undefined,
     }));
 
     const stats = await getDeathStats();
@@ -387,7 +390,7 @@ describe('death-service', () => {
 
   test('getDeathStats with immediateCause fallback', async () => {
     await createDeath(makeDeathData({
-      underlyingCause: undefined as any,
+      underlyingCause: undefined,
       immediateCause: 'Heart failure',
     }));
 
@@ -397,8 +400,8 @@ describe('death-service', () => {
 
   test('getDeathStats with Unknown cause fallback', async () => {
     await createDeath(makeDeathData({
-      underlyingCause: undefined as any,
-      immediateCause: undefined as any,
+      underlyingCause: undefined,
+      immediateCause: undefined,
     }));
 
     const stats = await getDeathStats();
@@ -414,7 +417,7 @@ describe('death-service', () => {
   });
 
   test('getAllDeaths handles missing dateOfDeath in sort', async () => {
-    await createDeath(makeDeathData({ dateOfDeath: undefined as any }));
+    await createDeath(makeDeathData({ dateOfDeath: undefined }));
     await createDeath(makeDeathData({ dateOfDeath: '2026-04-10', deceasedFirstName: 'B', deceasedSurname: 'Test' }));
 
     const all = await getAllDeaths();
@@ -435,19 +438,19 @@ describe('death-service', () => {
 
   test('getDeathStats with scope filters correctly', async () => {
     await createDeath(makeDeathData());
-    const stats = await getDeathStats({ role: 'nurse' as any });
+    const stats = await getDeathStats({ role: 'nurse' } as DataScope);
     expect(typeof stats.total).toBe('number');
   });
 
   test('getDeathStats byMannerOfDeath with multiple manners', async () => {
-    await createDeath(makeDeathData({ mannerOfDeath: 'Natural' }));
-    await createDeath(makeDeathData({ mannerOfDeath: 'Accident', deceasedFirstName: 'B', deceasedSurname: 'Test' }));
-    await createDeath(makeDeathData({ mannerOfDeath: 'Suicide', deceasedFirstName: 'C', deceasedSurname: 'Test' }));
+    await createDeath(makeDeathData({ mannerOfDeath: 'natural' }));
+    await createDeath(makeDeathData({ mannerOfDeath: 'accident', deceasedFirstName: 'B', deceasedSurname: 'Test' }));
+    await createDeath(makeDeathData({ mannerOfDeath: 'intentional_self_harm', deceasedFirstName: 'C', deceasedSurname: 'Test' }));
 
     const stats = await getDeathStats();
-    expect(stats.byMannerOfDeath['Natural']).toBeGreaterThanOrEqual(1);
-    expect(stats.byMannerOfDeath['Accident']).toBeGreaterThanOrEqual(1);
-    expect(stats.byMannerOfDeath['Suicide']).toBeGreaterThanOrEqual(1);
+    expect(stats.byMannerOfDeath['natural']).toBeGreaterThanOrEqual(1);
+    expect(stats.byMannerOfDeath['accident']).toBeGreaterThanOrEqual(1);
+    expect(stats.byMannerOfDeath['intentional_self_harm']).toBeGreaterThanOrEqual(1);
   });
 
   // ---- Line 15: Test sort with missing dateOfDeath ----
@@ -461,7 +464,7 @@ describe('death-service', () => {
       type: 'death',
       deceasedFirstName: 'Unknown',
       deceasedSurname: 'Deceased',
-      dateOfDeath: undefined as any,
+      dateOfDeath: undefined,
       facilityId: 'hosp-001',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -475,9 +478,8 @@ describe('death-service', () => {
 
   // ---- Line 45: Test deceasedDate fallback when dateOfDeath is missing ----
   test('createDeath uses current date when dateOfDeath is missing (line 45)', async () => {
-    const today = new Date().toISOString().slice(0, 10);
     const death = await createDeath(makeDeathData({
-      dateOfDeath: undefined as any,
+      dateOfDeath: undefined,
       patientId: 'p-death-no-date',
     }));
 

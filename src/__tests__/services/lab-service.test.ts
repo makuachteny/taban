@@ -16,8 +16,11 @@ import {
   updateLabResult,
   getPendingLabResults,
 } from '@/lib/services/lab-service';
+import type { DataScope } from '@/lib/services/data-scope';
 
-const makeLabData = (overrides: Record<string, unknown> = {}) => ({
+type CreateLabInput = Parameters<typeof createLabResult>[0];
+
+const makeLabData = (overrides: Partial<CreateLabInput> = {}): CreateLabInput => ({
   patientId: 'pat-001',
   patientName: 'Achol Deng',
   hospitalNumber: 'JTH-000001',
@@ -141,7 +144,7 @@ describe('lab-service', () => {
     // When orgId is not provided, it tries to look it up from the hospital
     const lab = await createLabResult(makeLabData({
       hospitalId: 'hosp-001',
-      orgId: undefined as any,
+      orgId: undefined,
     }));
     expect(lab._id).toMatch(/^lab-/);
   });
@@ -156,20 +159,20 @@ describe('lab-service', () => {
 
   test('createLabResult with neither hospitalId nor orgId', async () => {
     const lab = await createLabResult(makeLabData({
-      hospitalId: undefined as any,
-      orgId: undefined as any,
+      hospitalId: undefined,
+      orgId: undefined,
     }));
     expect(lab._id).toMatch(/^lab-/);
   });
 
   test('getAllLabResults with scope filters correctly', async () => {
     await createLabResult(makeLabData());
-    const results = await getAllLabResults({ role: 'nurse' as any });
+    const results = await getAllLabResults({ role: 'nurse' } as DataScope);
     expect(Array.isArray(results)).toBe(true);
   });
 
   test('getAllLabResults handles empty orderedAt in sort', async () => {
-    await createLabResult(makeLabData({ orderedAt: undefined as any }));
+    await createLabResult(makeLabData({ orderedAt: undefined }));
     await createLabResult(makeLabData({ orderedAt: '2025-03-01T00:00:00Z', testName: 'B' }));
 
     const all = await getAllLabResults();
@@ -177,8 +180,8 @@ describe('lab-service', () => {
   });
 
   test('getAllLabResults with all empty orderedAt', async () => {
-    await createLabResult(makeLabData({ orderedAt: undefined as any }));
-    await createLabResult(makeLabData({ orderedAt: undefined as any, testName: 'B' }));
+    await createLabResult(makeLabData({ orderedAt: undefined }));
+    await createLabResult(makeLabData({ orderedAt: undefined, testName: 'B' }));
 
     const all = await getAllLabResults();
     expect(all).toHaveLength(2);

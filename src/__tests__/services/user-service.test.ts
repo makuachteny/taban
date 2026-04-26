@@ -91,8 +91,8 @@ describe('User Service', () => {
         username: 'baduser',
         password: 'Pass!',
         name: 'Bad User',
-        role: 'hacker' as any,
-      })
+        role: 'hacker',
+      } as unknown as Parameters<typeof createUser>[0])
     ).rejects.toThrow(/invalid role/i);
   });
 
@@ -165,7 +165,7 @@ describe('User Service', () => {
       hospitalId: 'hosp-001', hospitalName: 'Hospital',
     });
     await expect(
-      updateUser(user._id, { role: 'wizard' as any })
+      updateUser(user._id, { role: 'wizard' } as unknown as Parameters<typeof updateUser>[1])
     ).rejects.toThrow(/invalid role/i);
   });
 
@@ -229,7 +229,7 @@ describe('User Service', () => {
     const originalGet = db.get.bind(db);
     db.get = jest.fn().mockImplementationOnce(() => {
       const err = new Error('Database connection timeout');
-      (err as any).status = 500;
+      (err as Error & { status: number }).status = 500;
       throw err;
     });
 

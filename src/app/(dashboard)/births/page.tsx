@@ -8,7 +8,7 @@ import { useHospitals } from '@/lib/hooks/useHospitals';
 import { useApp } from '@/lib/context';
 import { usePermissions } from '@/lib/hooks/usePermissions';
 import {
-  Baby, Plus, Search, X, ChevronDown, ChevronUp, Users, Calendar, Activity,
+  Baby, Plus, Search, X, ChevronDown, ChevronUp,
   HeartPulse, CheckCircle, AlertTriangle
 } from '@/components/icons/lucide';
 

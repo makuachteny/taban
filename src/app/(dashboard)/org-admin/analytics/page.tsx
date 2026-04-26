@@ -251,7 +251,7 @@ export default function OrgAnalyticsPage() {
               </div>
 
               <div className="space-y-3">
-                <ProgressRow label="Completed" count={labCompleted} total={labTotal} color="#2E9E7E" />
+                <ProgressRow label="Completed" count={labCompleted} total={labTotal} color="#1B7FA8" />
                 <ProgressRow label="In Progress" count={labInProgress} total={labTotal} color="#F59E0B" />
                 <ProgressRow label="Pending" count={labPending} total={labTotal} color="#E52E42" />
               </div>

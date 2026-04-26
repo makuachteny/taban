@@ -31,7 +31,9 @@ import {
 
 afterEach(async () => { await teardownTestDBs(); uuidCounter = 0; });
 
-function makeUnit(bloodGroup: string, overrides: Record<string, unknown> = {}) {
+type AddUnitInput = Parameters<typeof addUnit>[0];
+type BloodGroup = AddUnitInput['bloodGroup'];
+function makeUnit(bloodGroup: BloodGroup, overrides: Partial<AddUnitInput> = {}): AddUnitInput {
   return {
     unitId: `UNIT-${++uuidCounter}`,
     bloodGroup,
@@ -57,14 +59,14 @@ function makeUnit(bloodGroup: string, overrides: Record<string, unknown> = {}) {
 describe('Blood Bank Workflow Integration', () => {
   test('complete donation-to-transfusion workflow', async () => {
     // 1. Community donation drive — register multiple units
-    const unitO1 = await addUnit(makeUnit('O+') as any);
-    const unitO2 = await addUnit(makeUnit('O+') as any);
-    const unitA1 = await addUnit(makeUnit('A+') as any);
-    const unitB1 = await addUnit(makeUnit('B+') as any);
+    await addUnit(makeUnit('O+'));
+    await addUnit(makeUnit('O+'));
+    await addUnit(makeUnit('A+'));
+    const unitB1 = await addUnit(makeUnit('B+'));
     // One unit with positive malaria screening (should be discarded)
     const unitContaminated = await addUnit(makeUnit('O+', {
       screeningResults: { hiv: false, hepatitisB: false, hepatitisC: false, syphilis: false, malaria: true },
-    }) as any);
+    }));
 
     // Verify all units registered
     const summary = await getBloodInventorySummary('hosp-001');
@@ -122,10 +124,10 @@ describe('Blood Bank Workflow Integration', () => {
     const nextMonth = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
 
     // Register units with different expiry dates
-    await addUnit(makeUnit('O+', { expiryDate: tomorrow }) as any);       // Expiring soon
-    await addUnit(makeUnit('A+', { expiryDate: nextWeek }) as any);       // Expiring within week
-    await addUnit(makeUnit('B+', { expiryDate: nextMonth }) as any);      // Safe
-    await addUnit(makeUnit('AB+', { expiryDate: '2020-01-01' }) as any);  // Already expired
+    await addUnit(makeUnit('O+', { expiryDate: tomorrow }));       // Expiring soon
+    await addUnit(makeUnit('A+', { expiryDate: nextWeek }));       // Expiring within week
+    await addUnit(makeUnit('B+', { expiryDate: nextMonth }));      // Safe
+    await addUnit(makeUnit('AB+', { expiryDate: '2020-01-01' }));  // Already expired
 
     // Check expiring units (7-day window)
     const expiring = await getExpiringUnits(7);
@@ -142,7 +144,7 @@ describe('Blood Bank Workflow Integration', () => {
   });
 
   test('incompatible crossmatch reverts unit to available', async () => {
-    const unit = await addUnit(makeUnit('A-') as any);
+    const unit = await addUnit(makeUnit('A-'));
 
     // Reserve for patient
     await reserveUnit(unit._id, 'patient-002');
@@ -159,12 +161,12 @@ describe('Blood Bank Workflow Integration', () => {
 
   test('multi-facility inventory tracking', async () => {
     // Taban Hospital
-    await addUnit(makeUnit('O+', { facilityId: 'hosp-001', facilityName: 'Taban Hospital' }) as any);
-    await addUnit(makeUnit('A+', { facilityId: 'hosp-001', facilityName: 'Taban Hospital' }) as any);
+    await addUnit(makeUnit('O+', { facilityId: 'hosp-001', facilityName: 'Taban Hospital' }));
+    await addUnit(makeUnit('A+', { facilityId: 'hosp-001', facilityName: 'Taban Hospital' }));
     // Wau Hospital
-    await addUnit(makeUnit('O+', { facilityId: 'hosp-002', facilityName: 'Wau Hospital' }) as any);
-    await addUnit(makeUnit('B+', { facilityId: 'hosp-002', facilityName: 'Wau Hospital' }) as any);
-    await addUnit(makeUnit('O-', { facilityId: 'hosp-002', facilityName: 'Wau Hospital' }) as any);
+    await addUnit(makeUnit('O+', { facilityId: 'hosp-002', facilityName: 'Wau Hospital' }));
+    await addUnit(makeUnit('B+', { facilityId: 'hosp-002', facilityName: 'Wau Hospital' }));
+    await addUnit(makeUnit('O-', { facilityId: 'hosp-002', facilityName: 'Wau Hospital' }));
 
     // System-wide summary
     const total = await getBloodInventorySummary();

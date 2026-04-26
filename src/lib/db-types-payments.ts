@@ -4,7 +4,7 @@
  * payment plans, eligibility verification, claims, and refunds.
  * Designed for offline-first operation with PouchDB.
  */
-import type { BaseDoc, FacilityLevel } from './db-types';
+import type { BaseDoc } from './db-types';
 
 // ═══ Enums / Union types ═══════════════════════════════════════════
 

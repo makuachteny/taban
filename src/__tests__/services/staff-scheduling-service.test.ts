@@ -23,7 +23,9 @@ import {
 
 afterEach(async () => { await teardownTestDBs(); uuidCounter = 0; });
 
-function validSchedule(overrides: Record<string, unknown> = {}) {
+type CreateScheduleInput = Parameters<typeof createSchedule>[0];
+
+function validSchedule(overrides: Partial<CreateScheduleInput> = {}): CreateScheduleInput {
   return {
     userId: 'user-nurse-001',
     userName: 'Nurse Ayen',
@@ -42,7 +44,7 @@ function validSchedule(overrides: Record<string, unknown> = {}) {
 
 describe('Staff Scheduling Service', () => {
   test('creates a schedule with valid data', async () => {
-    const sched = await createSchedule(validSchedule() as any);
+    const sched = await createSchedule(validSchedule());
     expect(sched._id).toMatch(/^sched-/);
     expect(sched.type).toBe('staff_schedule');
     expect(sched.userName).toBe('Nurse Ayen');
@@ -51,9 +53,9 @@ describe('Staff Scheduling Service', () => {
   });
 
   test('retrieves all schedules sorted by date+time', async () => {
-    await createSchedule(validSchedule({ shiftDate: '2026-04-14', startTime: '07:00' }) as any);
-    await createSchedule(validSchedule({ shiftDate: '2026-04-13', startTime: '15:00', shiftType: 'afternoon' }) as any);
-    await createSchedule(validSchedule({ shiftDate: '2026-04-13', startTime: '07:00' }) as any);
+    await createSchedule(validSchedule({ shiftDate: '2026-04-14', startTime: '07:00' }));
+    await createSchedule(validSchedule({ shiftDate: '2026-04-13', startTime: '15:00', shiftType: 'afternoon' }));
+    await createSchedule(validSchedule({ shiftDate: '2026-04-13', startTime: '07:00' }));
 
     const all = await getAllSchedules();
     expect(all).toHaveLength(3);
@@ -66,26 +68,26 @@ describe('Staff Scheduling Service', () => {
   });
 
   test('getAllSchedules with scope filters results', async () => {
-    await createSchedule(validSchedule() as any);
+    await createSchedule(validSchedule());
     const allNoScope = await getAllSchedules();
     expect(allNoScope.length).toBeGreaterThanOrEqual(1);
 
-    const allWithScope = await getAllSchedules({ role: 'nurse' as any });
+    const allWithScope = await getAllSchedules({ role: 'nurse' } as Parameters<typeof getAllSchedules>[0]);
     expect(Array.isArray(allWithScope)).toBe(true);
   });
 
   test('getSchedulesByDate returns only matching date', async () => {
-    await createSchedule(validSchedule({ shiftDate: '2026-04-13' }) as any);
-    await createSchedule(validSchedule({ shiftDate: '2026-04-14' }) as any);
-    await createSchedule(validSchedule({ shiftDate: '2026-04-13', shiftType: 'afternoon', startTime: '15:00' }) as any);
+    await createSchedule(validSchedule({ shiftDate: '2026-04-13' }));
+    await createSchedule(validSchedule({ shiftDate: '2026-04-14' }));
+    await createSchedule(validSchedule({ shiftDate: '2026-04-13', shiftType: 'afternoon', startTime: '15:00' }));
 
     const result = await getSchedulesByDate('2026-04-13');
     expect(result).toHaveLength(2);
   });
 
   test('getSchedulesByDate filters by facilityId', async () => {
-    await createSchedule(validSchedule({ shiftDate: '2026-04-13', facilityId: 'hosp-001' }) as any);
-    await createSchedule(validSchedule({ shiftDate: '2026-04-13', facilityId: 'hosp-002', facilityName: 'Other' }) as any);
+    await createSchedule(validSchedule({ shiftDate: '2026-04-13', facilityId: 'hosp-001' }));
+    await createSchedule(validSchedule({ shiftDate: '2026-04-13', facilityId: 'hosp-002', facilityName: 'Other' }));
 
     const result = await getSchedulesByDate('2026-04-13', 'hosp-001');
     expect(result).toHaveLength(1);
@@ -93,32 +95,32 @@ describe('Staff Scheduling Service', () => {
   });
 
   test('getSchedulesByUser returns schedules for specific user', async () => {
-    await createSchedule(validSchedule({ userId: 'user-nurse-001' }) as any);
-    await createSchedule(validSchedule({ userId: 'user-nurse-001', shiftDate: '2026-04-14' }) as any);
-    await createSchedule(validSchedule({ userId: 'user-nurse-002', userName: 'Nurse Bak' }) as any);
+    await createSchedule(validSchedule({ userId: 'user-nurse-001' }));
+    await createSchedule(validSchedule({ userId: 'user-nurse-001', shiftDate: '2026-04-14' }));
+    await createSchedule(validSchedule({ userId: 'user-nurse-002', userName: 'Nurse Bak' }));
 
     const result = await getSchedulesByUser('user-nurse-001');
     expect(result).toHaveLength(2);
   });
 
   test('getOnCallStaff returns on-call staff for date', async () => {
-    await createSchedule(validSchedule({ isOnCall: true, shiftType: 'on_call', startTime: '00:00', endTime: '23:59' }) as any);
-    await createSchedule(validSchedule({ isOnCall: false }) as any);
+    await createSchedule(validSchedule({ isOnCall: true, shiftType: 'on_call', startTime: '00:00', endTime: '23:59' }));
+    await createSchedule(validSchedule({ isOnCall: false }));
     await createSchedule(validSchedule({
       isOnCall: true, shiftType: 'on_call', startTime: '00:00', endTime: '23:59',
       userId: 'user-doc-001', userName: 'Dr. Kuol', role: 'doctor',
-    }) as any);
+    }));
 
     const onCall = await getOnCallStaff('2026-04-13');
     expect(onCall).toHaveLength(2);
   });
 
   test('getOnCallStaff excludes absent staff', async () => {
-    await createSchedule(validSchedule({ isOnCall: true, shiftType: 'on_call', status: 'absent' }) as any);
+    await createSchedule(validSchedule({ isOnCall: true, shiftType: 'on_call', status: 'absent' }));
     await createSchedule(validSchedule({
       isOnCall: true, shiftType: 'on_call', status: 'confirmed',
       userId: 'user-doc-001', userName: 'Dr. Kuol',
-    }) as any);
+    }));
 
     const onCall = await getOnCallStaff('2026-04-13');
     expect(onCall).toHaveLength(1);
@@ -126,18 +128,18 @@ describe('Staff Scheduling Service', () => {
   });
 
   test('getOnCallStaff filters by facility', async () => {
-    await createSchedule(validSchedule({ isOnCall: true, shiftType: 'on_call', facilityId: 'hosp-001' }) as any);
+    await createSchedule(validSchedule({ isOnCall: true, shiftType: 'on_call', facilityId: 'hosp-001' }));
     await createSchedule(validSchedule({
       isOnCall: true, shiftType: 'on_call', facilityId: 'hosp-002', facilityName: 'Other',
       userId: 'user-doc-001', userName: 'Dr. Kuol',
-    }) as any);
+    }));
 
     const onCall = await getOnCallStaff('2026-04-13', 'hosp-001');
     expect(onCall).toHaveLength(1);
   });
 
   test('updates a schedule', async () => {
-    const sched = await createSchedule(validSchedule() as any);
+    const sched = await createSchedule(validSchedule());
     const updated = await updateSchedule(sched._id, { status: 'confirmed' });
     expect(updated).not.toBeNull();
     expect(updated!.status).toBe('confirmed');
@@ -150,7 +152,7 @@ describe('Staff Scheduling Service', () => {
   });
 
   test('deletes a schedule', async () => {
-    const sched = await createSchedule(validSchedule() as any);
+    const sched = await createSchedule(validSchedule());
     const deleted = await deleteSchedule(sched._id);
     expect(deleted).toBe(true);
 
@@ -164,19 +166,19 @@ describe('Staff Scheduling Service', () => {
   });
 
   test('getWeeklyRoster returns 7-day window', async () => {
-    await createSchedule(validSchedule({ shiftDate: '2026-04-13' }) as any);
-    await createSchedule(validSchedule({ shiftDate: '2026-04-15', userId: 'user-2', userName: 'Nurse B' }) as any);
-    await createSchedule(validSchedule({ shiftDate: '2026-04-19', userId: 'user-3', userName: 'Nurse C' }) as any);
+    await createSchedule(validSchedule({ shiftDate: '2026-04-13' }));
+    await createSchedule(validSchedule({ shiftDate: '2026-04-15', userId: 'user-2', userName: 'Nurse B' }));
+    await createSchedule(validSchedule({ shiftDate: '2026-04-19', userId: 'user-3', userName: 'Nurse C' }));
     // Outside the 7-day window
-    await createSchedule(validSchedule({ shiftDate: '2026-04-21', userId: 'user-4', userName: 'Nurse D' }) as any);
+    await createSchedule(validSchedule({ shiftDate: '2026-04-21', userId: 'user-4', userName: 'Nurse D' }));
 
     const roster = await getWeeklyRoster('2026-04-13');
     expect(roster).toHaveLength(3);
   });
 
   test('getWeeklyRoster filters by facility', async () => {
-    await createSchedule(validSchedule({ shiftDate: '2026-04-13', facilityId: 'hosp-001' }) as any);
-    await createSchedule(validSchedule({ shiftDate: '2026-04-14', facilityId: 'hosp-002', facilityName: 'Other', userId: 'user-2', userName: 'Nurse B' }) as any);
+    await createSchedule(validSchedule({ shiftDate: '2026-04-13', facilityId: 'hosp-001' }));
+    await createSchedule(validSchedule({ shiftDate: '2026-04-14', facilityId: 'hosp-002', facilityName: 'Other', userId: 'user-2', userName: 'Nurse B' }));
 
     const roster = await getWeeklyRoster('2026-04-13', 'hosp-001');
     expect(roster).toHaveLength(1);
@@ -184,9 +186,9 @@ describe('Staff Scheduling Service', () => {
 
   test('getStaffingGaps identifies understaffed shifts', async () => {
     // Only 2 morning staff (needs 5) and 1 night staff (needs 3)
-    await createSchedule(validSchedule({ shiftType: 'morning' }) as any);
-    await createSchedule(validSchedule({ shiftType: 'morning', userId: 'user-2', userName: 'Nurse B' }) as any);
-    await createSchedule(validSchedule({ shiftType: 'night', startTime: '23:00', endTime: '07:00', userId: 'user-3', userName: 'Nurse C' }) as any);
+    await createSchedule(validSchedule({ shiftType: 'morning' }));
+    await createSchedule(validSchedule({ shiftType: 'morning', userId: 'user-2', userName: 'Nurse B' }));
+    await createSchedule(validSchedule({ shiftType: 'night', startTime: '23:00', endTime: '07:00', userId: 'user-3', userName: 'Nurse C' }));
 
     const gaps = await getStaffingGaps('2026-04-13');
     expect(gaps.length).toBeGreaterThanOrEqual(2);
@@ -204,8 +206,8 @@ describe('Staff Scheduling Service', () => {
   });
 
   test('getStaffingGaps excludes absent staff from count', async () => {
-    await createSchedule(validSchedule({ shiftType: 'morning', status: 'scheduled' }) as any);
-    await createSchedule(validSchedule({ shiftType: 'morning', status: 'absent', userId: 'user-2', userName: 'Nurse B' }) as any);
+    await createSchedule(validSchedule({ shiftType: 'morning', status: 'scheduled' }));
+    await createSchedule(validSchedule({ shiftType: 'morning', status: 'absent', userId: 'user-2', userName: 'Nurse B' }));
 
     const gaps = await getStaffingGaps('2026-04-13');
     const morningGap = gaps.find(g => g.shift === 'morning');
@@ -223,7 +225,7 @@ describe('Staff Scheduling Service', () => {
       ...Array.from({ length: 2 }, (_, i) => validSchedule({ shiftType: 'on_call', userId: `oc-${i}`, userName: `OC${i}`, isOnCall: true })),
     ];
     for (const s of shifts) {
-      await createSchedule(s as any);
+      await createSchedule(s);
     }
 
     const gaps = await getStaffingGaps('2026-04-13');
@@ -231,20 +233,20 @@ describe('Staff Scheduling Service', () => {
   });
 
   test('deleteSchedule handles document with revision', async () => {
-    const sched = await createSchedule(validSchedule() as any);
+    const sched = await createSchedule(validSchedule());
     expect(sched._rev).toBeDefined();
     const deleted = await deleteSchedule(sched._id);
     expect(deleted).toBe(true);
   });
 
   test('getSchedulesByDate with no matching date returns empty', async () => {
-    await createSchedule(validSchedule({ shiftDate: '2026-04-13' }) as any);
+    await createSchedule(validSchedule({ shiftDate: '2026-04-13' }));
     const result = await getSchedulesByDate('2026-05-01');
     expect(result).toHaveLength(0);
   });
 
   test('getOnCallStaff with no on-call staff returns empty', async () => {
-    await createSchedule(validSchedule({ isOnCall: false }) as any);
+    await createSchedule(validSchedule({ isOnCall: false }));
     const onCall = await getOnCallStaff('2026-04-13');
     expect(onCall).toHaveLength(0);
   });

@@ -475,6 +475,7 @@ export async function adjudicateClaim(
     claim.adjudicatedDate = now;
     claim.status = denied > 0 && approved === 0 ? 'denied' : approved > 0 ? 'paid' : 'partial';
     claim.updatedAt = now;
+    void adjudicatedBy;
 
     const resp = await db.put(claim);
     claim._rev = resp.rev;

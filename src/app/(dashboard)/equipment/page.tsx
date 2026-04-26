@@ -144,9 +144,9 @@ export default function AssetsPage() {
 
         {/* KPI strip */}
         {summary && (
-          <div className="grid gap-3 mb-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
+          <div className="grid gap-3 mb-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', alignItems: 'stretch' }}>
             {[
-              { label: 'Total', value: summary.total, accent: 'var(--accent-primary)', bg: 'rgba(46, 158, 126, 0.08)', border: 'rgba(46, 158, 126, 0.22)' },
+              { label: 'Total', value: summary.total, accent: 'var(--accent-primary)', bg: 'rgba(27, 127, 168, 0.08)', border: 'rgba(27, 127, 168, 0.22)' },
               { label: 'Operational', value: summary.operational, accent: '#15795C', bg: 'rgba(27, 158, 119, 0.10)', border: 'rgba(27, 158, 119, 0.26)' },
               { label: 'Needs Service', value: summary.needsService, accent: '#B8741C', bg: 'rgba(228, 168, 75, 0.12)', border: 'rgba(228, 168, 75, 0.30)' },
               { label: 'Under Repair', value: summary.underRepair, accent: '#1B7FA8', bg: 'rgba(27, 127, 168, 0.10)', border: 'rgba(27, 127, 168, 0.26)' },

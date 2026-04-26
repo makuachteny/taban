@@ -34,9 +34,9 @@ const defaultOrganizations: Omit<OrganizationDoc, '_rev'>[] = [
     type: 'organization',
     name: 'Republic of South Sudan',
     slug: 'moh-ss',
-    primaryColor: '#2E9E7E',
+    primaryColor: '#1B7FA8',
     secondaryColor: '#1E4D4A',
-    accentColor: '#2E9E7E',
+    accentColor: '#1B7FA8',
     subscriptionStatus: 'active',
     subscriptionPlan: 'enterprise',
     maxUsers: 1000,
@@ -559,9 +559,9 @@ async function seedProduction(): Promise<void> {
     type: 'organization',
     name: process.env.NEXT_PUBLIC_ORG_NAME || 'My Organization',
     slug: 'default',
-    primaryColor: '#2E9E7E',
+    primaryColor: '#1B7FA8',
     secondaryColor: '#1E4D4A',
-    accentColor: '#2E9E7E',
+    accentColor: '#1B7FA8',
     subscriptionStatus: 'active',
     subscriptionPlan: 'enterprise',
     maxUsers: 500,
@@ -599,8 +599,46 @@ async function seedProduction(): Promise<void> {
   });
 }
 
+// ═══ Patient-photo migration ══════════════════════════════════════
+// The mock patient list got a `photoUrl` field after the initial seed was
+// already written to PouchDB, so previously-seeded records have no photo
+// and the UI falls back to initials ("DG"). This migration merges the
+// photoUrl from the in-memory mock into each patient doc that's missing
+// one. Idempotent: safe to run on every app start.
+async function migratePatientPhotos(): Promise<void> {
+  try {
+    const pDB = patientsDB();
+    const photoById = new Map<string, string>();
+    for (const p of patients) {
+      if (p.photoUrl) photoById.set(p.id, p.photoUrl);
+    }
+    if (photoById.size === 0) return;
+    const res = await pDB.allDocs({ include_docs: true });
+    const updates: Record<string, unknown>[] = [];
+    for (const row of res.rows) {
+      const doc = row.doc as (PatientDoc & { _rev: string }) | null;
+      if (!doc) continue;
+      if ((doc as { photoUrl?: string }).photoUrl) continue;
+      const photo = photoById.get(doc._id);
+      if (!photo) continue;
+      updates.push({ ...doc, photoUrl: photo, updatedAt: new Date().toISOString() });
+    }
+    if (updates.length > 0) {
+      await pDB.bulkDocs(updates as unknown as PouchDB.Core.PutDocument<object>[]);
+    }
+  } catch (err) {
+    // Migration is best-effort — never block app boot on a failure here.
+    console.warn('[db-seed] patient photo migration failed', err);
+  }
+}
+
 export async function seedDatabase(): Promise<void> {
-  if (await isSeeded()) return;
+  if (await isSeeded()) {
+    // Run photo migration on already-seeded databases so existing installs
+    // pick up the new photoUrl field without requiring a reset.
+    await migratePatientPhotos();
+    return;
+  }
 
   // Production mode: only create initial admin + organization
   if (!IS_DEMO) {

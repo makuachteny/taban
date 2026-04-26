@@ -1,7 +1,6 @@
 /**
  * Receipt Service — generates printable and emailable receipts for payments.
  */
-import { getDB } from '../db';
 import type { PaymentDoc } from '../db-types-payments';
 
 export interface ReceiptData {
@@ -61,12 +60,12 @@ export function generateReceiptHTML(receipt: ReceiptData): string {
   .header { text-align: center; padding-bottom: 12px; border-bottom: 2px dashed #ccc; margin-bottom: 12px; }
   .header h1 { font-size: 16px; font-weight: 800; color: #1A3A3A; letter-spacing: 0.5px; }
   .header p { font-size: 11px; color: #6B7B79; margin-top: 2px; }
-  .receipt-title { text-align: center; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #2E9E7E; margin-bottom: 12px; }
+  .receipt-title { text-align: center; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #1B7FA8; margin-bottom: 12px; }
   .row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px; }
   .row .label { color: #6B7B79; }
   .row .value { font-weight: 600; text-align: right; max-width: 55%; }
   .amount-row { padding: 10px 0; margin: 8px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee; }
-  .amount-row .value { font-size: 18px; font-weight: 800; color: #2E9E7E; }
+  .amount-row .value { font-size: 18px; font-weight: 800; color: #1B7FA8; }
   .amount-row .label { font-size: 13px; font-weight: 600; }
   .footer { text-align: center; margin-top: 16px; padding-top: 12px; border-top: 2px dashed #ccc; }
   .footer p { font-size: 10px; color: #8A9E9A; line-height: 1.5; }

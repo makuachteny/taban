@@ -39,7 +39,7 @@ const VISIT_TEMPLATES = [
 
 const CONDITIONS = [
   { id: 'malaria', label: 'Malaria', icon: Thermometer, color: 'var(--color-danger)' },
-  { id: 'diarrhea', label: 'Diarrhea', icon: Droplets, color: '#2E9E7E' },
+  { id: 'diarrhea', label: 'Diarrhea', icon: Droplets, color: '#1B7FA8' },
   { id: 'pneumonia', label: 'Pneumonia', icon: Stethoscope, color: '#8B5CF6' },
   { id: 'malnutrition', label: 'Malnutrition', icon: Apple, color: 'var(--color-warning)' },
   { id: 'pregnancy', label: 'Pregnancy Issue', icon: Baby, color: '#EC4899' },
@@ -51,7 +51,7 @@ const CONDITIONS = [
 const SYMPTOM_GROUPS = [
   { id: 'fever', label: 'Fever / Hot Body', icon: Thermometer, color: 'var(--color-danger)', bg: 'rgba(239,68,68,0.1)', keywords: 'fever headache chills sweating body ache' },
   { id: 'diarrhea', label: 'Diarrhea / Vomiting', icon: Droplets, color: 'var(--color-warning)', bg: 'rgba(245,158,11,0.1)', keywords: 'diarrhea vomiting watery stool dehydration loose stool' },
-  { id: 'cough', label: 'Cough / Breathing', icon: Wind, color: '#2E9E7E', bg: 'rgba(59,130,246,0.1)', keywords: 'cough difficulty breathing shortness of breath chest pain' },
+  { id: 'cough', label: 'Cough / Breathing', icon: Wind, color: '#1B7FA8', bg: 'rgba(59,130,246,0.1)', keywords: 'cough difficulty breathing shortness of breath chest pain' },
   { id: 'skin', label: 'Rash / Skin Problem', icon: Activity, color: '#EC4899', bg: 'rgba(236,72,153,0.1)', keywords: 'rash skin red eyes measles itching swelling' },
   { id: 'weakness', label: 'Weakness / Pale', icon: Heart, color: '#8B5CF6', bg: 'rgba(139,92,246,0.1)', keywords: 'fatigue weakness pale pallor dizzy weight loss' },
   { id: 'pregnancy', label: 'Pregnancy Problem', icon: Baby, color: '#EC4899', bg: 'rgba(236,72,153,0.1)', keywords: 'pregnant bleeding swelling headache blurred vision edema' },
@@ -512,9 +512,9 @@ export default function BomaDashboardPage() {
               </div>
               <div className="flex items-center gap-3">
                 {gpsStatus !== 'idle' && (
-                  <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: gpsStatus === 'captured' ? '#05966910' : gpsStatus === 'capturing' ? '#2E9E7E10' : '#EF444410' }}>
-                    <Navigation className="w-3 h-3" style={{ color: gpsStatus === 'captured' ? 'var(--color-success)' : gpsStatus === 'capturing' ? '#2E9E7E' : 'var(--color-danger)' }} />
-                    <span className="text-[9px] font-bold" style={{ color: gpsStatus === 'captured' ? 'var(--color-success)' : gpsStatus === 'capturing' ? '#2E9E7E' : 'var(--color-danger)' }}>
+                  <div className="flex items-center gap-1 px-2 py-1 rounded-lg" style={{ background: gpsStatus === 'captured' ? '#05966910' : gpsStatus === 'capturing' ? '#1B7FA810' : '#EF444410' }}>
+                    <Navigation className="w-3 h-3" style={{ color: gpsStatus === 'captured' ? 'var(--color-success)' : gpsStatus === 'capturing' ? '#1B7FA8' : 'var(--color-danger)' }} />
+                    <span className="text-[9px] font-bold" style={{ color: gpsStatus === 'captured' ? 'var(--color-success)' : gpsStatus === 'capturing' ? '#1B7FA8' : 'var(--color-danger)' }}>
                       {gpsStatus === 'captured' ? 'GPS Captured' : gpsStatus === 'capturing' ? 'Getting GPS...' : 'No GPS'}
                     </span>
                   </div>
@@ -633,7 +633,7 @@ export default function BomaDashboardPage() {
                       </div>
                     ))}
                   </div>
-                  {aiEvaluation.recommendedTests.length > 0 && (<div className="mb-3"><p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>Recommended Tests</p><div className="flex flex-wrap gap-1.5">{aiEvaluation.recommendedTests.map(test => (<span key={test} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium" style={{ background: 'rgba(59,130,246,0.1)', color: '#2E9E7E', border: '1px solid rgba(59,130,246,0.15)' }}><FlaskConical className="w-2.5 h-2.5" /> {test}</span>))}</div></div>)}
+                  {aiEvaluation.recommendedTests.length > 0 && (<div className="mb-3"><p className="text-[10px] font-bold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>Recommended Tests</p><div className="flex flex-wrap gap-1.5">{aiEvaluation.recommendedTests.map(test => (<span key={test} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium" style={{ background: 'rgba(59,130,246,0.1)', color: '#1B7FA8', border: '1px solid rgba(59,130,246,0.15)' }}><FlaskConical className="w-2.5 h-2.5" /> {test}</span>))}</div></div>)}
                   <div className="p-3 rounded-xl mb-4" style={{ background: 'rgba(5,150,105,0.05)', border: '1px solid rgba(5,150,105,0.15)' }}><p className="text-xs font-bold mb-1" style={{ color: 'var(--color-success)' }}><ChevronRight className="w-3 h-3 inline" /> What should I do?</p><p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{aiEvaluation.severityAssessment.includes('HIGH') ? 'REFER IMMEDIATELY to the nearest facility. Give first aid and arrange transport.' : aiEvaluation.severityAssessment.includes('MODERATE') ? 'Consider referral if you cannot treat. Monitor closely. Follow up within 24 hours.' : 'You can treat at community level. Follow the suggestions above. Follow up in 2-3 days.'}</p></div>
                   <button onClick={() => setFormStep('action')} className="w-full py-4 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all active:scale-[0.98]" style={{ background: 'var(--accent-primary)', minHeight: '56px', fontSize: '16px' }}>Next: Take Action <ArrowRight className="w-5 h-5" /></button>
                   <p className="text-[9px] mt-2 text-center" style={{ color: 'var(--text-muted)' }}>AI suggestion based on WHO/IMCI guidelines. Use your clinical judgment.</p>

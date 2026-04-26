@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
         syncStatus: body.syncStatus as string | undefined,
         patientCount: body.patientCount !== undefined ? Number(body.patientCount) : undefined,
         todayVisits: body.todayVisits !== undefined ? Number(body.todayVisits) : undefined,
-      } as any);
+      } as Parameters<typeof updateHospitalStatus>[1]);
       if (!updated) return NextResponse.json({ error: 'Hospital not found' }, { status: 404 });
       return NextResponse.json({ hospital: updated });
     }
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     if (!body.orgId && auth.orgId) body.orgId = auth.orgId;
 
     const { createHospital } = await import('@/lib/services/hospital-service');
-    const hospital = await createHospital(body as any, auth.sub, auth.username);
+    const hospital = await createHospital(body as Parameters<typeof createHospital>[0], auth.sub, auth.username);
 
     return NextResponse.json({ hospital }, { status: 201 });
   } catch (err) {

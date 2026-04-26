@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
 
       case 'dhis2': {
         const period = url.searchParams.get('period') || new Date().toISOString().slice(0, 7);
-        const { generateDHIS2Export, exportToCSV, exportToJSON } = await import('@/lib/services/dhis2-export-service');
+        const { generateDHIS2Export, exportToCSV } = await import('@/lib/services/dhis2-export-service');
         const dataset = await generateDHIS2Export(period);
 
         if (format === 'json') {

@@ -17,7 +17,9 @@ import {
   deleteAlert,
 } from '@/lib/services/surveillance-service';
 
-const makeAlertData = (overrides: Record<string, unknown> = {}) => ({
+type CreateAlertInput = Parameters<typeof createAlert>[0];
+
+const makeAlertData = (overrides: Partial<CreateAlertInput> = {}): CreateAlertInput => ({
   disease: 'Malaria',
   state: 'Central Equatoria',
   county: 'Juba',
@@ -41,7 +43,7 @@ describe('surveillance-service', () => {
   });
 
   test('createAlert creates with correct fields', async () => {
-    const alert = await createAlert(makeAlertData() as any);
+    const alert = await createAlert(makeAlertData());
 
     expect(alert._id).toMatch(/^alert-/);
     expect(alert.type).toBe('disease_alert');
@@ -58,16 +60,16 @@ describe('surveillance-service', () => {
   });
 
   test('createAlert with emergency alert level', async () => {
-    const alert = await createAlert(makeAlertData({ alertLevel: 'emergency', cases: 50 }) as any);
+    const alert = await createAlert(makeAlertData({ alertLevel: 'emergency', cases: 50 }));
     expect(alert.alertLevel).toBe('emergency');
     expect(alert.cases).toBe(50);
   });
 
   test('getActiveAlerts filters emergency and warning only', async () => {
-    await createAlert(makeAlertData({ alertLevel: 'emergency', disease: 'Ebola' }) as any);
-    await createAlert(makeAlertData({ alertLevel: 'warning', disease: 'Cholera' }) as any);
-    await createAlert(makeAlertData({ alertLevel: 'normal', disease: 'Typhoid' }) as any);
-    await createAlert(makeAlertData({ alertLevel: 'watch', disease: 'Influenza' }) as any);
+    await createAlert(makeAlertData({ alertLevel: 'emergency', disease: 'Ebola' }));
+    await createAlert(makeAlertData({ alertLevel: 'warning', disease: 'Cholera' }));
+    await createAlert(makeAlertData({ alertLevel: 'normal', disease: 'Typhoid' }));
+    await createAlert(makeAlertData({ alertLevel: 'watch', disease: 'Influenza' }));
 
     const active = await getActiveAlerts();
 
@@ -78,7 +80,7 @@ describe('surveillance-service', () => {
   });
 
   test('updateAlert updates alert level', async () => {
-    const alert = await createAlert(makeAlertData({ alertLevel: 'watch' }) as any);
+    const alert = await createAlert(makeAlertData({ alertLevel: 'watch' }));
     const updated = await updateAlert(alert._id, { alertLevel: 'emergency' });
 
     expect(updated).not.toBeNull();
@@ -93,20 +95,20 @@ describe('surveillance-service', () => {
 
   test('getAllAlerts with scope filters by data scope (line 13)', async () => {
     // Tests line 13: return scope ? filterByScope(all, scope) : all;
-    await createAlert(makeAlertData({ disease: 'Malaria' }) as any);
-    await createAlert(makeAlertData({ disease: 'Cholera', alertLevel: 'warning' }) as any);
+    await createAlert(makeAlertData({ disease: 'Malaria' }));
+    await createAlert(makeAlertData({ disease: 'Cholera', alertLevel: 'warning' }));
 
     // Get all without scope
     const allAlerts = await getAllAlerts();
     expect(allAlerts).toHaveLength(2);
 
     // Get with scope filter
-    const scopedAlerts = await getAllAlerts({ role: 'nurse' as any });
+    const scopedAlerts = await getAllAlerts({ role: 'nurse' } as Parameters<typeof getAllAlerts>[0]);
     expect(scopedAlerts).toBeDefined();
   });
 
   test('deleteAlert removes the alert', async () => {
-    const alert = await createAlert(makeAlertData() as any);
+    const alert = await createAlert(makeAlertData());
     const success = await deleteAlert(alert._id);
     expect(success).toBe(true);
 
@@ -120,9 +122,9 @@ describe('surveillance-service', () => {
   });
 
   test('getAllAlerts sorts by reportDate descending', async () => {
-    await createAlert(makeAlertData({ reportDate: '2025-03-10', disease: 'First' }) as any);
-    await createAlert(makeAlertData({ reportDate: '2025-03-20', disease: 'Second' }) as any);
-    await createAlert(makeAlertData({ reportDate: '2025-03-15', disease: 'Third' }) as any);
+    await createAlert(makeAlertData({ reportDate: '2025-03-10', disease: 'First' }));
+    await createAlert(makeAlertData({ reportDate: '2025-03-20', disease: 'Second' }));
+    await createAlert(makeAlertData({ reportDate: '2025-03-15', disease: 'Third' }));
 
     const all = await getAllAlerts();
     expect(all[0].disease).toBe('Second');
@@ -131,7 +133,7 @@ describe('surveillance-service', () => {
   });
 
   test('updateAlert preserves existing fields', async () => {
-    const alert = await createAlert(makeAlertData({ disease: 'Malaria', cases: 20 }) as any);
+    const alert = await createAlert(makeAlertData({ disease: 'Malaria', cases: 20 }));
     const updated = await updateAlert(alert._id, { trend: 'decreasing' });
 
     expect(updated!.disease).toBe('Malaria');
@@ -140,7 +142,7 @@ describe('surveillance-service', () => {
   });
 
   test('updateAlert updates case and death counts', async () => {
-    const alert = await createAlert(makeAlertData({ cases: 10, deaths: 1 }) as any);
+    const alert = await createAlert(makeAlertData({ cases: 10, deaths: 1 }));
     const updated = await updateAlert(alert._id, { cases: 25, deaths: 3 });
 
     expect(updated!.cases).toBe(25);
@@ -148,7 +150,7 @@ describe('surveillance-service', () => {
   });
 
   test('updateAlert updates updatedAt timestamp', async () => {
-    const alert = await createAlert(makeAlertData() as any);
+    const alert = await createAlert(makeAlertData());
     const originalUpdatedAt = alert.updatedAt;
 
     await new Promise(r => setTimeout(r, 10));
@@ -158,9 +160,9 @@ describe('surveillance-service', () => {
   });
 
   test('multiple alerts sorted correctly', async () => {
-    await createAlert(makeAlertData({ disease: 'Malaria', reportDate: '2025-03-10', cases: 5 }) as any);
-    await createAlert(makeAlertData({ disease: 'Malaria', reportDate: '2025-03-15', cases: 15 }) as any);
-    await createAlert(makeAlertData({ disease: 'Malaria', reportDate: '2025-03-20', cases: 25 }) as any);
+    await createAlert(makeAlertData({ disease: 'Malaria', reportDate: '2025-03-10', cases: 5 }));
+    await createAlert(makeAlertData({ disease: 'Malaria', reportDate: '2025-03-15', cases: 15 }));
+    await createAlert(makeAlertData({ disease: 'Malaria', reportDate: '2025-03-20', cases: 25 }));
 
     const all = await getAllAlerts();
     expect(all).toHaveLength(3);
@@ -169,18 +171,18 @@ describe('surveillance-service', () => {
   });
 
   test('getAllAlerts with scope filters results', async () => {
-    await createAlert(makeAlertData() as any);
+    await createAlert(makeAlertData());
     const allNoScope = await getAllAlerts();
     expect(allNoScope.length).toBeGreaterThanOrEqual(1);
 
     // With scope - the filterByScope function would be called
-    const allWithScope = await getAllAlerts({ role: 'nurse' as any });
+    const allWithScope = await getAllAlerts({ role: 'nurse' } as Parameters<typeof getAllAlerts>[0]);
     expect(Array.isArray(allWithScope)).toBe(true);
   });
 
   test('getAllAlerts handles alerts with missing reportDate', async () => {
-    await createAlert(makeAlertData({ reportDate: '2025-03-15' }) as any);
-    await createAlert(makeAlertData({ reportDate: undefined }) as any);
+    await createAlert(makeAlertData({ reportDate: '2025-03-15' }));
+    await createAlert(makeAlertData({ reportDate: undefined }));
 
     const all = await getAllAlerts();
     expect(all.length).toBeGreaterThanOrEqual(2);
@@ -190,16 +192,16 @@ describe('surveillance-service', () => {
   test('getAllAlerts sorts correctly when both reportDates are missing (line 13)', async () => {
     // Create two alerts without reportDate - should still sort correctly with empty strings
     await createAlert(makeAlertData({
-      reportDate: undefined as any,
+      reportDate: undefined as unknown as string,
       disease: 'Malaria',
       cases: 10,
-    }) as any);
+    }));
 
     await createAlert(makeAlertData({
-      reportDate: undefined as any,
+      reportDate: undefined as unknown as string,
       disease: 'Cholera',
       cases: 5,
-    }) as any);
+    }));
 
     const all = await getAllAlerts();
     expect(all.length).toBeGreaterThanOrEqual(2);

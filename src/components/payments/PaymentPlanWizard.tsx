@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Calendar, CheckCircle2, ArrowRight, Loader2 } from '@/components/icons/lucide';
+import { X, CheckCircle2, ArrowRight, Loader2 } from '@/components/icons/lucide';
 import { useApp } from '@/lib/context';
 
 interface PaymentPlanWizardProps {
@@ -67,7 +67,7 @@ export default function PaymentPlanWizard({
     return (
       <div className="modal-backdrop">
         <div className="modal-content" style={{ padding: 48, textAlign: 'center', maxWidth: 360 }}>
-          <CheckCircle2 size={48} style={{ color: 'var(--success)', marginBottom: 16 }} />
+          <CheckCircle2 size={64} style={{ color: 'var(--success)', marginBottom: 16 }} />
           <h3 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 700 }}>Plan Created</h3>
           <p style={{ margin: 0, fontSize: 14, color: 'var(--text-muted)' }}>
             {monthlyAmount.toLocaleString()} {currency}/mo for {termMonths} months
@@ -87,7 +87,7 @@ export default function PaymentPlanWizard({
             <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text-muted)' }}>{patientName} — Step {step} of 2</p>
           </div>
           <button onClick={onCancel} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
-            <X size={18} />
+            <X size={44} />
           </button>
         </div>
 

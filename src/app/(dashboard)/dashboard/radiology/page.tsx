@@ -126,7 +126,7 @@ export default function RadiologyDashboard() {
                       </p>
                     </div>
                     <span className="text-[10px] font-bold px-2 py-1 rounded-full" style={{
-                      background: study.status === 'completed' ? '#05966915' : study.status === 'in_progress' ? '#2E9E7E15' : '#D9770615',
+                      background: study.status === 'completed' ? '#05966915' : study.status === 'in_progress' ? '#1B7FA815' : '#D9770615',
                       color: study.status === 'completed' ? 'var(--color-success)' : study.status === 'in_progress' ? 'var(--accent-primary)' : 'var(--color-warning)',
                     }}>{study.status.replace('_', ' ')}</span>
                   </div>

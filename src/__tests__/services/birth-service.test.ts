@@ -20,7 +20,8 @@ import {
 } from '@/lib/services/birth-service';
 import { ancDB } from '@/lib/db';
 
-const makeBirthData = (overrides: Record<string, unknown> = {}) => ({
+type BirthInput = Parameters<typeof createBirth>[0];
+const makeBirthData = (overrides: Partial<BirthInput> = {}): BirthInput => ({
   childFirstName: 'Akech',
   childSurname: 'Deng',
   childGender: 'Female' as const,
@@ -178,7 +179,7 @@ describe('birth-service', () => {
 
   test('createBirth without mother name does not attempt ANC lookup', async () => {
     const birth = await createBirth(makeBirthData({
-      motherName: undefined as any,
+      motherName: undefined as unknown as string,
     }));
     // Should create without linkedAncMotherId
     expect(birth.linkedAncMotherId).toBeUndefined();
@@ -207,7 +208,7 @@ describe('birth-service', () => {
 
   test('getBirthStats handles missing state gracefully', async () => {
     await createBirth(makeBirthData({
-      state: undefined as any,
+      state: undefined as unknown as string,
     }));
     const stats = await getBirthStats();
     expect(stats.byState['Unknown']).toBe(1);
@@ -237,7 +238,7 @@ describe('birth-service', () => {
     expect(birth.linkedAncMotherId).toBe('mother-123');
 
     // Verify the ANC visit now has linkedBirthId set
-    const updatedAnc = await db.get('anc-visit-001') as any;
+    const updatedAnc = await db.get('anc-visit-001') as { linkedBirthId?: string };
     expect(updatedAnc.linkedBirthId).toBe(birth._id);
   });
 
@@ -272,8 +273,8 @@ describe('birth-service', () => {
     expect(birth.linkedAncMotherId).toBe('mother-456');
 
     // Both ANC visits should be linked
-    const ancA = await db.get('anc-visit-a') as any;
-    const ancB = await db.get('anc-visit-b') as any;
+    const ancA = await db.get('anc-visit-a') as { linkedBirthId?: string };
+    const ancB = await db.get('anc-visit-b') as { linkedBirthId?: string };
     expect(ancA.linkedBirthId).toBe(birth._id);
     expect(ancB.linkedBirthId).toBe(birth._id);
   });
@@ -300,13 +301,13 @@ describe('birth-service', () => {
 
   test('getAllBirths with scope passes through to filterByScope', async () => {
     await createBirth(makeBirthData());
-    const births = await getAllBirths({ role: 'nurse' as any });
+    const births = await getAllBirths({ role: 'nurse' });
     expect(Array.isArray(births)).toBe(true);
   });
 
   test('getBirthStats with scope filters data', async () => {
     await createBirth(makeBirthData());
-    const stats = await getBirthStats({ role: 'nurse' as any });
+    const stats = await getBirthStats({ role: 'nurse' });
     expect(stats.total).toBeGreaterThanOrEqual(0);
   });
 
@@ -322,7 +323,7 @@ describe('birth-service', () => {
   });
 
   test('getAllBirths handles missing dateOfBirth gracefully', async () => {
-    await createBirth(makeBirthData({ dateOfBirth: undefined as any }));
+    await createBirth(makeBirthData({ dateOfBirth: undefined as unknown as string }));
     await createBirth(makeBirthData({ dateOfBirth: '2026-04-01' }));
 
     const all = await getAllBirths();

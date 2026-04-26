@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
       deaths = await getAllDeaths(scope);
     }
 
-    const response: Record<string, any> = { deaths, total: deaths.length };
+    const response: Record<string, unknown> = { deaths, total: deaths.length };
 
     if (includeStats) {
       const scope = buildScopeFromAuth(auth);
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     if (!body.orgId && auth.orgId) body.orgId = auth.orgId;
 
     const { createDeath } = await import('@/lib/services/death-service');
-    const death = await createDeath(body as any);
+    const death = await createDeath(body as Parameters<typeof createDeath>[0]);
 
     return NextResponse.json({ death }, { status: 201 });
   } catch (err) {

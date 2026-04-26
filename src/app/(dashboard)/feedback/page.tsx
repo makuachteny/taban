@@ -139,12 +139,12 @@ export default function FeedbackPage() {
 
         {/* KPIs */}
         {summary && (
-          <div className="grid gap-3 mb-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
+          <div className="grid gap-3 mb-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', alignItems: 'stretch' }}>
             {[
               { label: 'Avg. Rating', value: summary.total > 0 ? summary.averageRating.toFixed(1) : '—', accent: '#E4A84B', bg: 'rgba(228, 168, 75, 0.10)', border: 'rgba(228, 168, 75, 0.28)' },
               { label: 'Positive', value: summary.positive, accent: '#15795C', bg: 'rgba(27, 158, 119, 0.10)', border: 'rgba(27, 158, 119, 0.26)' },
               { label: 'Negative', value: summary.negative, accent: '#C44536', bg: 'rgba(196, 69, 54, 0.10)', border: 'rgba(196, 69, 54, 0.28)' },
-              { label: 'Open Follow-ups', value: summary.openFollowUps, accent: summary.openFollowUps > 0 ? '#C44536' : 'var(--accent-primary)', bg: summary.openFollowUps > 0 ? 'rgba(196, 69, 54, 0.10)' : 'rgba(46, 158, 126, 0.08)', border: summary.openFollowUps > 0 ? 'rgba(196, 69, 54, 0.28)' : 'rgba(46, 158, 126, 0.22)' },
+              { label: 'Open Follow-ups', value: summary.openFollowUps, accent: summary.openFollowUps > 0 ? '#C44536' : 'var(--accent-primary)', bg: summary.openFollowUps > 0 ? 'rgba(196, 69, 54, 0.10)' : 'rgba(27, 127, 168, 0.08)', border: summary.openFollowUps > 0 ? 'rgba(196, 69, 54, 0.28)' : 'rgba(27, 127, 168, 0.22)' },
             ].map(k => (
               <div key={k.label} style={{ padding: '14px 16px', borderRadius: 10, background: k.bg, border: `1px solid ${k.border}` }}>
                 <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: k.accent }}>{k.label}</div>
@@ -213,7 +213,7 @@ export default function FeedbackPage() {
                       {f.followUpStatus && (
                         <div className="mt-1.5 flex items-center gap-2">
                           <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-md" style={{
-                            background: f.followUpStatus === 'resolved' ? 'rgba(46, 158, 126, 0.14)' : f.followUpStatus === 'wont_fix' ? 'rgba(90, 115, 112, 0.14)' : 'rgba(228, 168, 75, 0.14)',
+                            background: f.followUpStatus === 'resolved' ? 'rgba(27, 127, 168, 0.14)' : f.followUpStatus === 'wont_fix' ? 'rgba(90, 115, 112, 0.14)' : 'rgba(228, 168, 75, 0.14)',
                             color: f.followUpStatus === 'resolved' ? '#15795C' : f.followUpStatus === 'wont_fix' ? '#5A7370' : '#B8741C',
                           }}>
                             {f.followUpStatus.replace('_', ' ')}
@@ -332,7 +332,7 @@ export default function FeedbackPage() {
                   <select value={resForm.status} onChange={e => setResForm({ ...resForm, status: e.target.value as typeof resForm.status })}>
                     <option value="in_progress">In progress</option>
                     <option value="resolved">Resolved</option>
-                    <option value="wont_fix">Won't fix</option>
+                    <option value="wont_fix">Won&apos;t fix</option>
                   </select>
                 </div>
                 <div>

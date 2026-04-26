@@ -357,7 +357,7 @@ export default function TelehealthPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {filtered.length === 0 && filteredAppts.length === 0 ? (
               <div className="card-elevated" style={{ textAlign: 'center', padding: 48 }}>
-                <Video size={36} style={{ color: 'var(--text-muted)', opacity: 0.3, margin: '0 auto 12px' }} />
+                <Video size={52} style={{ color: 'var(--text-muted)', opacity: 0.3, margin: '0 auto 12px' }} />
                 <p style={{ color: 'var(--text-secondary)', marginBottom: 12 }}>No sessions {selectedDate ? 'on this date' : 'found'}</p>
                 <button onClick={() => setShowNewForm(true)} className="btn btn-primary btn-sm" style={{ background: 'var(--color-success)', borderColor: 'var(--color-success)' }}>
                   <Plus size={14} /> Schedule Session
@@ -407,7 +407,7 @@ export default function TelehealthPage() {
 
                     {isExp && (
                       <div style={{ padding: '0 16px 16px', borderTop: '1px solid var(--border-medium)', paddingTop: 12 }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 12 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', alignItems: 'stretch', gap: 14, marginBottom: 12 }}>
                           <Detail l="Complaint" v={session.chiefComplaint} />
                           <Detail l="Provider" v={`${session.providerName} (${session.providerRole})`} />
                           <Detail l="Room" v={session.roomId} mono />
@@ -436,7 +436,7 @@ export default function TelehealthPage() {
                             <Btn c="#D97706" onClick={() => update(session._id, { connectionDrops: session.connectionDrops + 1 })}><WifiOff size={13} /> Drop</Btn>
                           </>}
                           {(session.status === 'in_session' || session.status === 'completed') && (
-                            <Btn c="#2E9E7E" onClick={() => { setNotesId(session._id); setNotesText(session.clinicalNotes || ''); setNotesDx(session.diagnosis || ''); setNotesIcd(session.icd10Code || ''); }}><FileText size={13} /> Notes</Btn>
+                            <Btn c="#1B7FA8" onClick={() => { setNotesId(session._id); setNotesText(session.clinicalNotes || ''); setNotesDx(session.diagnosis || ''); setNotesIcd(session.icd10Code || ''); }}><FileText size={13} /> Notes</Btn>
                           )}
                           {session.status === 'completed' && !session.patientRating && <Btn c="#F59E0B" onClick={() => setRatingId(session._id)}><Star size={13} /> Rate</Btn>}
                           {session.status === 'completed' && session.paymentStatus === 'pending' && <Btn c="#10B981" onClick={() => update(session._id, { paymentStatus: 'paid' })}><DollarSign size={13} /> Paid</Btn>}
@@ -458,7 +458,7 @@ export default function TelehealthPage() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div><label>Patient *</label><select value={formPatient} onChange={e => setFormPatient(e.target.value)}><option value="">Select patient...</option>{patients.map(p => <option key={p._id} value={p._id}>{p.firstName} {p.surname}</option>)}</select></div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', alignItems: 'stretch', gap: 10 }}>
               <div><label>Date *</label><input type="date" value={formDate} onChange={e => setFormDate(e.target.value)} min={today} /></div>
               <div><label>Time *</label><select value={formTime} onChange={e => setFormTime(e.target.value)}>{timeSlots.map(t => <option key={t} value={t}>{t}</option>)}</select></div>
               <div><label>Type</label><select value={formType} onChange={e => setFormType(e.target.value as TelehealthType)}><option value="video">Video</option><option value="audio">Audio</option><option value="chat">Chat</option></select></div>
@@ -490,7 +490,7 @@ export default function TelehealthPage() {
           <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 14 }}>
             {[1, 2, 3, 4, 5].map(n => (
               <button key={n} onClick={() => setRatingVal(n)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}>
-                <Star size={28} fill={n <= ratingVal ? 'var(--color-warning)' : 'none'} style={{ color: n <= ratingVal ? 'var(--color-warning)' : '#D1D5DB' }} />
+                <Star size={56} fill={n <= ratingVal ? 'var(--color-warning)' : 'none'} style={{ color: n <= ratingVal ? 'var(--color-warning)' : '#D1D5DB' }} />
               </button>
             ))}
           </div>

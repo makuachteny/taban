@@ -71,12 +71,13 @@ export async function POST(request: NextRequest) {
     if (!sanitized.orgId && auth.orgId) sanitized.orgId = auth.orgId;
 
     const { createMedicalRecord } = await import('@/lib/services/medical-record-service');
-    const record = await createMedicalRecord(sanitized as any);
+    const record = await createMedicalRecord(sanitized as Parameters<typeof createMedicalRecord>[0]);
 
     return NextResponse.json({ record }, { status: 201 });
-  } catch (err: any) {
-    if (err?.name === 'ValidationError') {
-      return NextResponse.json({ error: err.message, fields: err.fields }, { status: 400 });
+  } catch (err: unknown) {
+    if (err instanceof Error && err.name === 'ValidationError') {
+      const fields = (err as Error & { fields?: unknown }).fields;
+      return NextResponse.json({ error: err.message, fields }, { status: 400 });
     }
     console.error('[API /medical-records POST]', err);
     return serverError();

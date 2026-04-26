@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
     if (!body.orgId && auth.orgId) body.orgId = auth.orgId;
 
     const { createBomaVisit } = await import('@/lib/services/boma-visit-service');
-    const visit = await createBomaVisit(body as any);
+    const visit = await createBomaVisit(body as Parameters<typeof createBomaVisit>[0]);
 
     return NextResponse.json({ visit }, { status: 201 });
   } catch (err) {

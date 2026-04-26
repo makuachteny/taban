@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X, Banknote, Smartphone, CreditCard, Building2, Shield, CheckCircle2, Loader2, Printer, Mail } from '@/components/icons/lucide';
 import { useApp } from '@/lib/context';
+import type { PaymentDoc } from '@/lib/db-types-payments';
 
 interface PaymentPanelProps {
   patientId: string;
@@ -21,7 +22,6 @@ export default function PaymentPanel({
 }: PaymentPanelProps) {
   const { currentUser } = useApp();
   const [tab, setTab] = useState<TabType>('cash');
-  const [loadedBalance, setLoadedBalance] = useState<number>(amountDue);
   const [amount, setAmount] = useState(amountDue > 0 ? amountDue.toString() : '');
 
   // Self-load balance if amountDue wasn't provided
@@ -31,7 +31,6 @@ export default function PaymentPanel({
       try {
         const { getPatientBalance } = await import('@/lib/services/ledger-service');
         const bal = await getPatientBalance(patientId);
-        setLoadedBalance(bal);
         if (bal > 0) setAmount(bal.toString());
       } catch { /* offline fallback */ }
     })();
@@ -40,7 +39,7 @@ export default function PaymentPanel({
   const [processing, setProcessing] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
-  const [paymentDoc, setPaymentDoc] = useState<any>(null);
+  const [paymentDoc, setPaymentDoc] = useState<PaymentDoc | null>(null);
   const [emailAddress, setEmailAddress] = useState('');
   const [emailSent, setEmailSent] = useState(false);
   const [emailSending, setEmailSending] = useState(false);
@@ -207,17 +206,17 @@ export default function PaymentPanel({
           {/* Success header with green gradient */}
           <div style={{
             padding: '28px 20px', textAlign: 'center',
-            background: 'linear-gradient(135deg, rgba(46,158,126,0.12), rgba(46,158,126,0.04))',
+            background: 'linear-gradient(135deg, rgba(27,127,168,0.12), rgba(27,127,168,0.04))',
             borderBottom: '1px solid var(--border-medium)',
           }}>
             <div style={{
               width: 56, height: 56, borderRadius: '50%', margin: '0 auto 12px',
-              background: 'rgba(46,158,126,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'var(--color-success-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <CheckCircle2 size={28} style={{ color: '#2E9E7E' }} />
+              <CheckCircle2 size={56} style={{ color: 'var(--color-success)' }} />
             </div>
             <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>Payment Recorded</h3>
-            <p style={{ margin: '6px 0 0', fontSize: 26, fontWeight: 800, color: '#2E9E7E' }}>
+            <p style={{ margin: '6px 0 0', fontSize: 26, fontWeight: 800, color: 'var(--color-success)' }}>
               {parseFloat(amount).toLocaleString()} {currency}
             </p>
             <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-muted)' }}>{patientName}</p>
@@ -277,7 +276,7 @@ export default function PaymentPanel({
 
           {emailSent && (
             <div style={{ padding: '0 20px 12px' }}>
-              <div style={{ fontSize: 12, color: '#2E9E7E', padding: '6px 12px', background: 'rgba(46,158,126,0.08)', borderRadius: 8, textAlign: 'center' }}>
+              <div style={{ fontSize: 12, color: '#1B7FA8', padding: '6px 12px', background: 'rgba(27,127,168,0.08)', borderRadius: 8, textAlign: 'center' }}>
                 Receipt sent to {emailAddress}
               </div>
             </div>
@@ -315,7 +314,7 @@ export default function PaymentPanel({
             <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text-muted)' }}>{patientName}</p>
           </div>
           <button onClick={onCancel} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }}>
-            <X size={18} />
+            <X size={44} />
           </button>
         </div>
 

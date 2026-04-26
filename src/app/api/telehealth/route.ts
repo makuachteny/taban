@@ -85,8 +85,8 @@ export async function POST(request: NextRequest) {
       const { updateSessionStatus } = await import('@/lib/services/telehealth-service');
       const updated = await updateSessionStatus(
         body.sessionId as string,
-        body.status as any,
-        body.extra as any
+        body.status as Parameters<typeof updateSessionStatus>[1],
+        body.extra as Parameters<typeof updateSessionStatus>[2]
       );
       if (!updated) return NextResponse.json({ error: 'Session not found' }, { status: 404 });
       return NextResponse.json({ session: updated });
@@ -140,22 +140,29 @@ export async function POST(request: NextRequest) {
     const { createSession } = await import('@/lib/services/telehealth-service');
     const session = await createSession({
       patientId: body.patientId as string,
-      patientName: body.patientName as string,
+      patientName: (body.patientName as string) || '',
       providerId: body.providerId as string,
-      providerName: body.providerName as string,
+      providerName: (body.providerName as string) || '',
+      providerRole: (body.providerRole as string) || 'doctor',
+      facilityId: (body.facilityId as string) || (body.hospitalId as string) || '',
+      facilityName: (body.facilityName as string) || '',
       scheduledDate: body.scheduledDate as string,
       scheduledTime: body.scheduledTime as string,
-      sessionType: body.sessionType as string,
-      status: body.status as any || 'scheduled',
-      hospitalId: body.hospitalId as string | undefined,
-      orgId: body.orgId as string | undefined,
-      notes: body.notes as string | undefined,
+      sessionType: (body.sessionType as 'video' | 'audio' | 'chat') || 'video',
+      status: (body.status as Parameters<typeof createSession>[0]['status']) || 'scheduled',
+      chiefComplaint: (body.chiefComplaint as string) || '',
       clinicalNotes: body.clinicalNotes as string | undefined,
       diagnosis: body.diagnosis as string | undefined,
       icd10Code: body.icd10Code as string | undefined,
+      followUpRequired: Boolean(body.followUpRequired),
+      referralRequired: Boolean(body.referralRequired),
       connectionDrops: 0,
+      patientConsentGiven: Boolean(body.patientConsentGiven),
+      sessionRecorded: Boolean(body.sessionRecorded),
+      state: (body.state as string) || '',
+      orgId: (body.orgId as string) || auth.orgId,
       duration: 0,
-    } as any);
+    });
 
     return NextResponse.json({ session }, { status: 201 });
   } catch (err) {

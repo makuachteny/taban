@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
         reorderLevel: body.reorderLevel !== undefined ? Number(body.reorderLevel) : undefined,
         expiryDate: body.expiryDate as string | undefined,
         batchNumber: body.batchNumber as string | undefined,
-      } as any);
+      } as Parameters<typeof updateInventoryItem>[1]);
       if (!updated) return NextResponse.json({ error: 'Item not found' }, { status: 404 });
       return NextResponse.json({ item: updated });
     }
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
     if (!body.orgId && auth.orgId) body.orgId = auth.orgId;
 
     const { createInventoryItem } = await import('@/lib/services/pharmacy-inventory-service');
-    const item = await createInventoryItem(body as any);
+    const item = await createInventoryItem(body as Parameters<typeof createInventoryItem>[0]);
 
     return NextResponse.json({ item }, { status: 201 });
   } catch (err) {

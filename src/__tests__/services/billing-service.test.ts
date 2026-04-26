@@ -170,7 +170,7 @@ describe('billing-service', () => {
     expect(billsNoScope.length).toBeGreaterThanOrEqual(1);
 
     // With scope - the filterByScope function would be called
-    const billsWithScope = await getAllBills({ role: 'nurse' as any });
+    const billsWithScope = await getAllBills({ role: 'nurse' });
     expect(Array.isArray(billsWithScope)).toBe(true);
   });
 
@@ -195,7 +195,7 @@ describe('billing-service', () => {
 
   test('getBillingSummary with scope', async () => {
     await createBill(makeBillData());
-    const summary = await getBillingSummary({ role: 'nurse' as any });
+    const summary = await getBillingSummary({ role: 'nurse' });
     expect(summary).toBeDefined();
     expect(summary.currency).toBeDefined();
   });
@@ -234,11 +234,11 @@ describe('billing-service', () => {
   });
 
   test('getAllBills sorts by createdAt with undefined handling', async () => {
-    const bill1 = await createBill(makeBillData({
+    await createBill(makeBillData({
       patientId: 'pat-001',
       patientName: 'First Patient',
     }));
-    const bill2 = await createBill(makeBillData({
+    await createBill(makeBillData({
       patientId: 'pat-002',
       patientName: 'Second Patient',
     }));
@@ -311,7 +311,7 @@ describe('billing-service', () => {
   });
 
   test('getBillingSummary includes waived bills', async () => {
-    const bill1 = await createBill(makeBillData());
+    await createBill(makeBillData());
     const bill2 = await createBill(makeBillData({
       patientId: 'pat-002',
       patientName: 'Patient Two',
@@ -366,7 +366,7 @@ describe('billing-service', () => {
     const bill = await createBill(makeBillData({
       items: [
         {
-          id: undefined as any, // This will trigger the || branch
+          id: undefined as unknown as string, // This will trigger the || branch
           category: 'consultation',
           description: 'Test',
           quantity: 1,

@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     if (!body.hospitalId && auth.hospitalId) body.hospitalId = auth.hospitalId;
 
     const { createAssessment } = await import('@/lib/services/facility-assessment-service');
-    const assessment = await createAssessment(body as any);
+    const assessment = await createAssessment(body as Parameters<typeof createAssessment>[0]);
 
     return NextResponse.json({ assessment }, { status: 201 });
   } catch (err) {

@@ -21,7 +21,9 @@ import type { PharmacyInventoryDoc } from '@/lib/db-types';
 
 afterEach(async () => { await teardownTestDBs(); uuidCounter = 0; });
 
-function validItem(overrides: Record<string, unknown> = {}) {
+type CreateInventoryInput = Parameters<typeof createInventoryItem>[0];
+
+function validItem(overrides: Partial<CreateInventoryInput> = {}): CreateInventoryInput {
   return {
     hospitalId: 'hosp-001',
     hospitalName: 'Taban Hospital',
@@ -38,7 +40,7 @@ function validItem(overrides: Record<string, unknown> = {}) {
 
 describe('Pharmacy Inventory Service', () => {
   test('creates an inventory item', async () => {
-    const item = await createInventoryItem(validItem() as any);
+    const item = await createInventoryItem(validItem());
     expect(item._id).toMatch(/^inv-/);
     expect(item.type).toBe('pharmacy_inventory');
     expect(item.medicationName).toBe('Artesunate 60mg');
@@ -47,9 +49,9 @@ describe('Pharmacy Inventory Service', () => {
   });
 
   test('retrieves all inventory sorted alphabetically', async () => {
-    await createInventoryItem(validItem({ medicationName: 'Zinc Sulphate' }) as any);
-    await createInventoryItem(validItem({ medicationName: 'Amoxicillin 250mg' }) as any);
-    await createInventoryItem(validItem({ medicationName: 'Metformin 500mg' }) as any);
+    await createInventoryItem(validItem({ medicationName: 'Zinc Sulphate' }));
+    await createInventoryItem(validItem({ medicationName: 'Amoxicillin 250mg' }));
+    await createInventoryItem(validItem({ medicationName: 'Metformin 500mg' }));
 
     const all = await getAllInventory();
     expect(all).toHaveLength(3);
@@ -58,7 +60,7 @@ describe('Pharmacy Inventory Service', () => {
   });
 
   test('updates an inventory item', async () => {
-    const item = await createInventoryItem(validItem() as any);
+    const item = await createInventoryItem(validItem());
     const updated = await updateInventoryItem(item._id, { stockLevel: 450 });
     expect(updated).not.toBeNull();
     expect(updated!.stockLevel).toBe(450);
@@ -71,7 +73,7 @@ describe('Pharmacy Inventory Service', () => {
   });
 
   test('decrements stock correctly', async () => {
-    const item = await createInventoryItem(validItem() as any);
+    const item = await createInventoryItem(validItem());
     await decrementStock('Artesunate 60mg', 'hosp-001', 3);
 
     const all = await getAllInventory();
@@ -82,7 +84,7 @@ describe('Pharmacy Inventory Service', () => {
   });
 
   test('decrement does not go below zero', async () => {
-    await createInventoryItem(validItem({ stockLevel: 2 }) as any);
+    await createInventoryItem(validItem({ stockLevel: 2 }));
     await decrementStock('Artesunate 60mg', 'hosp-001', 5);
 
     const all = await getAllInventory();
@@ -90,7 +92,7 @@ describe('Pharmacy Inventory Service', () => {
   });
 
   test('decrement is no-op for unknown medication', async () => {
-    await createInventoryItem(validItem() as any);
+    await createInventoryItem(validItem());
     // Should not throw
     await decrementStock('Unknown Drug', 'hosp-001', 1);
     const all = await getAllInventory();
@@ -98,12 +100,12 @@ describe('Pharmacy Inventory Service', () => {
   });
 
   test('decrement prefers facility-specific match', async () => {
-    await createInventoryItem(validItem({ hospitalId: 'hosp-001', stockLevel: 100 }) as any);
+    await createInventoryItem(validItem({ hospitalId: 'hosp-001', stockLevel: 100 }));
     await createInventoryItem(validItem({
       hospitalId: 'hosp-002',
       hospitalName: 'Other Hospital',
       stockLevel: 200,
-    }) as any);
+    }));
 
     await decrementStock('Artesunate 60mg', 'hosp-002', 5);
 
@@ -115,7 +117,7 @@ describe('Pharmacy Inventory Service', () => {
   });
 
   test('deletes an inventory item', async () => {
-    const item = await createInventoryItem(validItem() as any);
+    const item = await createInventoryItem(validItem());
     const deleted = await deleteInventoryItem(item._id);
     expect(deleted).toBe(true);
 
@@ -167,13 +169,13 @@ describe('Pharmacy Inventory Service', () => {
   });
 
   test('getAllInventory with scope', async () => {
-    await createInventoryItem(validItem() as any);
-    const all = await getAllInventory({ role: 'nurse' as any });
+    await createInventoryItem(validItem());
+    const all = await getAllInventory({ role: 'nurse' } as Parameters<typeof getAllInventory>[0]);
     expect(Array.isArray(all)).toBe(true);
   });
 
   test('decrementStock with undefined hospitalId uses first match', async () => {
-    await createInventoryItem(validItem({ hospitalId: 'hosp-001', stockLevel: 100 }) as any);
+    await createInventoryItem(validItem({ hospitalId: 'hosp-001', stockLevel: 100 }));
     await decrementStock('Artesunate 60mg', undefined, 10);
 
     const all = await getAllInventory();
@@ -181,7 +183,7 @@ describe('Pharmacy Inventory Service', () => {
   });
 
   test('decrementStock with no medication match is no-op', async () => {
-    await createInventoryItem(validItem({ medicationName: 'Different Drug' }) as any);
+    await createInventoryItem(validItem({ medicationName: 'Different Drug' }));
     await decrementStock('Artesunate 60mg', 'hosp-001', 5);
 
     const all = await getAllInventory();
@@ -189,7 +191,7 @@ describe('Pharmacy Inventory Service', () => {
   });
 
   test('decrementStock defaults quantity to 1', async () => {
-    const item = await createInventoryItem(validItem() as any);
+    const item = await createInventoryItem(validItem());
     await decrementStock('Artesunate 60mg', 'hosp-001');
 
     const all = await getAllInventory();

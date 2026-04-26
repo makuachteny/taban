@@ -2,10 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {
-  Wallet, CreditCard, CalendarClock, DollarSign, TrendingUp,
-  Shield, FileText, Clock, ArrowUpRight, ArrowDownLeft,
+  Wallet, CreditCard, CalendarClock, DollarSign,
+  Shield, FileText, Clock,
   Receipt, AlertTriangle, CheckCircle, Printer, BarChart3,
-  Banknote, Smartphone, Building2, ChevronRight,
 } from '@/components/icons/lucide';
 import { BalanceBanner, InsuranceSnapshot, PaymentHistoryTimeline, PaymentPanel, PaymentPlanWizard } from '@/components/payments';
 import { getMethodConfig } from '@/lib/payment-method-config';
@@ -46,7 +45,7 @@ export default function BillingTab({
 
   const loadAll = useCallback(async () => {
     try {
-      const [paymentSvc, ledgerSvc] = await Promise.all([
+      const [paymentSvc] = await Promise.all([
         import('@/lib/services/payment-service'),
         import('@/lib/services/ledger-service'),
       ]);
@@ -107,8 +106,6 @@ export default function BillingTab({
 
   const d = data!;
   const activePlans = d.plans.filter(p => p.status === 'active');
-  const pendingClaims = d.claims.filter(c => c.status === 'submitted' || c.status === 'draft');
-  const paidClaims = d.claims.filter(c => c.status === 'paid' || c.status === 'accepted');
   const hasInsurance = d.policies.length > 0;
 
   return (
@@ -120,12 +117,12 @@ export default function BillingTab({
       />
 
       {/* ─── Financial Summary KPIs ─── */}
-      <div className="grid grid-cols-2 gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+      <div className="grid grid-cols-2 gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', alignItems: 'stretch' }}>
         {/* Total Charged */}
         <div className="card-elevated p-4" style={{ borderLeft: '3px solid var(--accent-primary)' }}>
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-9 h-9 rounded-lg" style={{ background: 'var(--accent-light)' }}>
-              <FileText size={18} style={{ color: 'var(--accent-primary)' }} />
+              <FileText size={44} style={{ color: 'var(--accent-primary)' }} />
             </div>
             <div>
               <div className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Total Billed</div>
@@ -138,7 +135,7 @@ export default function BillingTab({
         <div className="card-elevated p-4" style={{ borderLeft: '3px solid var(--color-success)' }}>
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-9 h-9 rounded-lg" style={{ background: 'var(--color-success-bg)' }}>
-              <CheckCircle size={18} style={{ color: 'var(--color-success)' }} />
+              <CheckCircle size={44} style={{ color: 'var(--color-success)' }} />
             </div>
             <div>
               <div className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Total Paid</div>
@@ -151,7 +148,7 @@ export default function BillingTab({
         <div className="card-elevated p-4" style={{ borderLeft: '3px solid var(--color-info)' }}>
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-9 h-9 rounded-lg" style={{ background: 'var(--color-info-bg)' }}>
-              <Shield size={18} style={{ color: 'var(--color-info)' }} />
+              <Shield size={44} style={{ color: 'var(--color-info)' }} />
             </div>
             <div>
               <div className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Insurance Paid</div>
@@ -164,7 +161,7 @@ export default function BillingTab({
         <div className="card-elevated p-4" style={{ borderLeft: `3px solid ${d.outstanding > 0 ? 'var(--color-danger)' : 'var(--color-success)'}` }}>
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-9 h-9 rounded-lg" style={{ background: d.outstanding > 0 ? 'var(--color-danger-bg)' : 'var(--color-success-bg)' }}>
-              <DollarSign size={18} style={{ color: d.outstanding > 0 ? 'var(--color-danger)' : 'var(--color-success)' }} />
+              <DollarSign size={44} style={{ color: d.outstanding > 0 ? 'var(--color-danger)' : 'var(--color-success)' }} />
             </div>
             <div>
               <div className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>Outstanding</div>
@@ -202,7 +199,7 @@ export default function BillingTab({
       </div>
 
       {/* ─── Two-Column: Insurance + Charges ─── */}
-      <div className="grid gap-5" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
+      <div className="grid gap-5" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', alignItems: 'stretch' }}>
         {/* Insurance Coverage */}
         <div className="card-elevated p-5">
           <div className="flex items-center justify-between mb-4">
@@ -232,7 +229,7 @@ export default function BillingTab({
           </h3>
           {d.charges.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-6 text-center" style={{ color: 'var(--text-muted)' }}>
-              <Receipt size={24} style={{ opacity: 0.3, marginBottom: 8 }} />
+              <Receipt size={44} style={{ opacity: 0.3, marginBottom: 8 }} />
               <div className="text-xs">No charges recorded yet</div>
             </div>
           ) : (
@@ -454,7 +451,7 @@ export default function BillingTab({
         <div className="card-elevated p-8 text-center">
           <div className="flex flex-col items-center gap-3">
             <div className="flex items-center justify-center w-14 h-14 rounded-2xl" style={{ background: 'var(--overlay-subtle)' }}>
-              <Wallet size={28} style={{ color: 'var(--text-muted)', opacity: 0.5 }} />
+              <Wallet size={56} style={{ color: 'var(--text-muted)', opacity: 0.5 }} />
             </div>
             <div>
               <div className="text-sm font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>No billing records yet</div>

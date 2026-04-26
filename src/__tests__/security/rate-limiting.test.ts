@@ -3,6 +3,8 @@
  * Covers: checkRateLimit, verifyCsrf, checkContentLength.
  */
 
+import type { NextRequest } from 'next/server';
+
 // Mock NextResponse.json since NextResponse doesn't instantiate cleanly in Jest
 jest.mock('next/server', () => {
   class MockNextResponse {
@@ -49,7 +51,7 @@ function mockRequest(
       get: (key: string) => allHeaders[key.toLowerCase()] ?? null,
     },
     nextUrl: { pathname: '/api/test' },
-  } as any;
+  } as unknown as NextRequest;
 }
 
 describe('api-security: checkRateLimit', () => {
@@ -146,7 +148,7 @@ describe('api-security: verifyCsrf', () => {
   });
 
   afterEach(() => {
-    (process.env as any).NODE_ENV = originalEnv;
+    (process.env as { NODE_ENV?: string }).NODE_ENV = originalEnv;
   });
 
   test('allows GET requests without Origin', () => {
@@ -188,7 +190,7 @@ describe('api-security: verifyCsrf', () => {
   });
 
   test('allows POST without Origin in non-production', () => {
-    (process.env as any).NODE_ENV = 'test';
+    (process.env as { NODE_ENV?: string }).NODE_ENV = 'test';
     jest.resetModules();
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     verifyCsrf = require('@/lib/api-security').verifyCsrf;
@@ -198,7 +200,7 @@ describe('api-security: verifyCsrf', () => {
   });
 
   test('rejects POST without Origin in production', () => {
-    (process.env as any).NODE_ENV = 'production';
+    (process.env as { NODE_ENV?: string }).NODE_ENV = 'production';
     jest.resetModules();
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     verifyCsrf = require('@/lib/api-security').verifyCsrf;

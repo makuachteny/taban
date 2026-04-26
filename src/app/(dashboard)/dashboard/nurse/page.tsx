@@ -477,7 +477,6 @@ export default function NurseDashboardPage() {
   const vitalsDue = Math.max(4, Math.floor(patients.length * 0.3));
   const medsDue = Math.max(6, Math.floor(patients.length * 0.25));
   const pendingOrders = Math.max(3, labResults.length > 0 ? Math.floor(labResults.length * 0.15) : 5);
-  const messagesCount = Math.max(2, Math.floor(Math.random() * 4) + 2);
   const vitalFlags = getVitalFlags(vitalsForm);
 
   // Handoff data
@@ -537,7 +536,7 @@ export default function NurseDashboardPage() {
               style={{
                 background: 'var(--accent-light)',
                 color: ACCENT,
-                border: `1px solid var(--accent-border, rgba(46,158,126,0.2))`,
+                border: `1px solid var(--accent-border, rgba(27,127,168,0.2))`,
               }}
             >
               <FileText className="w-3.5 h-3.5" />
@@ -1065,7 +1064,7 @@ export default function NurseDashboardPage() {
                 <div className="relative">
                   <label className="text-[10px] font-semibold uppercase tracking-wider block mb-1" style={{ color: 'var(--text-muted)' }}>Patient</label>
                   {selectedTriagePatient ? (
-                    <div className="flex items-center justify-between px-3 py-2.5 rounded-xl" style={{ background: 'var(--accent-light)', border: '1px solid var(--accent-border, rgba(46,158,126,0.25))' }}>
+                    <div className="flex items-center justify-between px-3 py-2.5 rounded-xl" style={{ background: 'var(--accent-light)', border: '1px solid var(--accent-border, rgba(27,127,168,0.25))' }}>
                       <div>
                         <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                           {selectedTriagePatient.firstName} {selectedTriagePatient.surname}

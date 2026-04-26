@@ -938,7 +938,7 @@ export default function ConsultationPage() {
             </div>
 
             {selectedPatientData ? (
-              <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'var(--accent-light)', border: '1px solid var(--taban-green)' }}>
+              <div className="flex items-center justify-between p-3 rounded-lg" style={{ background: 'var(--accent-light)', border: '1px solid var(--accent-primary)' }}>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white"
                     style={{ background: selectedPatientData.gender === 'Male' ? 'var(--accent-primary)' : 'var(--accent-primary)' }}>
@@ -1162,11 +1162,11 @@ export default function ConsultationPage() {
                       {/* Severity Assessment */}
                       <div className="p-3 rounded-lg" style={{
                         background: aiEvaluation.severityAssessment.includes('HIGH') ? 'rgba(229,46,66,0.12)' : aiEvaluation.severityAssessment.includes('MODERATE') ? 'rgba(252,211,77,0.12)' : 'rgba(43,111,224,0.12)',
-                        border: `1px solid ${aiEvaluation.severityAssessment.includes('HIGH') ? 'var(--taban-red)' : aiEvaluation.severityAssessment.includes('MODERATE') ? 'var(--color-warning)' : 'var(--taban-green)'}`,
+                        border: `1px solid ${aiEvaluation.severityAssessment.includes('HIGH') ? 'var(--taban-red)' : aiEvaluation.severityAssessment.includes('MODERATE') ? 'var(--color-warning)' : 'var(--accent-primary)'}`,
                       }}>
                         <div className="flex items-center gap-2 mb-1">
-                          <ShieldAlert className="w-4 h-4" style={{ color: aiEvaluation.severityAssessment.includes('HIGH') ? 'var(--taban-red)' : aiEvaluation.severityAssessment.includes('MODERATE') ? 'var(--color-warning)' : 'var(--taban-green)' }} />
-                          <span className="text-xs font-bold uppercase tracking-wider" style={{ color: aiEvaluation.severityAssessment.includes('HIGH') ? '#F87171' : aiEvaluation.severityAssessment.includes('MODERATE') ? 'var(--color-warning)' : 'var(--taban-green)' }}>
+                          <ShieldAlert className="w-4 h-4" style={{ color: aiEvaluation.severityAssessment.includes('HIGH') ? 'var(--taban-red)' : aiEvaluation.severityAssessment.includes('MODERATE') ? 'var(--color-warning)' : 'var(--accent-primary)' }} />
+                          <span className="text-xs font-bold uppercase tracking-wider" style={{ color: aiEvaluation.severityAssessment.includes('HIGH') ? '#F87171' : aiEvaluation.severityAssessment.includes('MODERATE') ? 'var(--color-warning)' : 'var(--accent-primary)' }}>
                             Severity Assessment
                           </span>
                         </div>
@@ -1204,7 +1204,7 @@ export default function ConsultationPage() {
                               return (
                                 <div key={dx.icd10Code} className="p-3 rounded-lg" style={{
                                   background: isAccepted ? 'rgba(43,111,224,0.08)' : 'var(--overlay-subtle)',
-                                  border: `1px solid ${isAccepted ? 'var(--taban-green)' : 'var(--border-light)'}`,
+                                  border: `1px solid ${isAccepted ? 'var(--accent-primary)' : 'var(--border-light)'}`,
                                 }}>
                                   <div className="flex items-center justify-between mb-1.5">
                                     <div className="flex items-center gap-2">
@@ -1227,7 +1227,7 @@ export default function ConsultationPage() {
                                         </span>
                                       </div>
                                       {isAccepted ? (
-                                        <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded" style={{ background: 'var(--accent-light)', color: 'var(--taban-green)' }}>
+                                        <span className="flex items-center gap-1 text-xs font-medium px-2 py-1 rounded" style={{ background: 'var(--accent-light)', color: 'var(--accent-primary)' }}>
                                           <Check className="w-3 h-3" /> Added
                                         </span>
                                       ) : (
@@ -1274,8 +1274,8 @@ export default function ConsultationPage() {
                                   className="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg transition-colors"
                                   style={{
                                     background: isAccepted ? 'rgba(43,111,224,0.12)' : 'rgba(43,111,224,0.08)',
-                                    border: `1px solid ${isAccepted ? 'var(--taban-green)' : 'var(--accent-primary)'}`,
-                                    color: isAccepted ? 'var(--taban-green)' : 'var(--accent-primary)',
+                                    border: `1px solid ${isAccepted ? 'var(--accent-primary)' : 'var(--accent-primary)'}`,
+                                    color: isAccepted ? 'var(--accent-primary)' : 'var(--accent-primary)',
                                     cursor: isAccepted ? 'default' : 'pointer',
                                   }}
                                 >
@@ -1522,8 +1522,8 @@ export default function ConsultationPage() {
                     ))}
                   </div>
                   {Object.values(labOrders).some(v => v) && (
-                    <div className="mt-4 p-3 rounded-lg" style={{ background: 'var(--accent-light)', border: '1px solid var(--taban-green)' }}>
-                      <p className="text-xs font-medium" style={{ color: 'var(--taban-green)' }}>
+                    <div className="mt-4 p-3 rounded-lg" style={{ background: 'var(--accent-light)', border: '1px solid var(--accent-primary)' }}>
+                      <p className="text-xs font-medium" style={{ color: 'var(--accent-primary)' }}>
                         {Object.values(labOrders).filter(v => v).length} test(s) selected for ordering.
                       </p>
                     </div>
@@ -1754,10 +1754,10 @@ export default function ConsultationPage() {
                           <div key={s.label} className="flex items-center gap-3">
                             <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{
                               background: filled ? 'rgba(43,111,224,0.15)' : 'var(--overlay-subtle)',
-                              border: `1px solid ${filled ? 'var(--taban-green)' : 'var(--border-light)'}`,
+                              border: `1px solid ${filled ? 'var(--accent-primary)' : 'var(--border-light)'}`,
                             }}>
                               {filled ? (
-                                <svg className="w-3 h-3" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-6" stroke="#2E9E7E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                <svg className="w-3 h-3" viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-6" stroke="#1B7FA8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                               ) : (
                                 <Icon className="w-2.5 h-2.5" style={{ color: 'var(--text-muted)' }} />
                               )}

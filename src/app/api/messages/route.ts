@@ -71,8 +71,8 @@ export async function POST(request: NextRequest) {
     if (action === 'update-status' && body.messageId) {
       const { updateMessage } = await import('@/lib/services/message-service');
       const updated = await updateMessage(body.messageId as string, {
-        status: body.status as any,
-      } as any);
+        status: body.status as Parameters<typeof updateMessage>[1]['status'],
+      });
       if (!updated) return NextResponse.json({ error: 'Message not found' }, { status: 404 });
       return NextResponse.json({ message: updated });
     }
@@ -94,13 +94,20 @@ export async function POST(request: NextRequest) {
     }
 
     const { createMessage } = await import('@/lib/services/message-service');
+    const channel = (body.channel as 'app' | 'sms' | 'both') || 'app';
     const message = await createMessage({
       patientId: body.patientId as string,
+      patientName: (body.patientName as string) || '',
+      patientPhone: (body.patientPhone as string) || '',
       fromDoctorId: (body.fromDoctorId as string) || auth.sub,
-      content: body.content as string,
-      messageType: (body.messageType as string) || 'general',
+      fromDoctorName: (body.fromDoctorName as string) || '',
+      fromHospitalName: (body.fromHospitalName as string) || '',
+      subject: (body.subject as string) || '',
+      body: (body.content as string) || (body.body as string) || '',
+      channel,
       sentAt: new Date().toISOString(),
-    } as any);
+      orgId: (body.orgId as string) || auth.orgId,
+    });
 
     return NextResponse.json({ message }, { status: 201 });
   } catch (err) {

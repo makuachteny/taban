@@ -28,7 +28,7 @@ describe('Pharmacy Dispensing Integration', () => {
       reorderLevel: 20,
       batchNumber: 'BATCH-ACT-001',
       expiryDate: '2027-06-30',
-    } as any);
+    } as Parameters<typeof createInventoryItem>[0]);
     expect(classifyStockStatus(stock)).toBe('adequate');
 
     // Step 2: Doctor prescribes ACT for a malaria patient
@@ -44,7 +44,7 @@ describe('Pharmacy Dispensing Integration', () => {
       status: 'pending',
       hospitalId: 'hosp-001',
       hospitalName: 'Taban Hospital',
-    } as any);
+    } as Parameters<typeof createPrescription>[0]);
     expect(rx.prescription.status).toBe('pending');
 
     // Step 3: Pharmacist checks pending prescriptions for the patient
@@ -84,7 +84,7 @@ describe('Pharmacy Dispensing Integration', () => {
       reorderLevel: 20,
       batchNumber: 'BATCH-AMOX-001',
       expiryDate: '2027-12-31',
-    } as any);
+    } as Parameters<typeof createInventoryItem>[0]);
 
     // Dispense 3 capsules
     await decrementStock('Amoxicillin 500mg', 'hosp-001', 3);
@@ -107,7 +107,7 @@ describe('Pharmacy Dispensing Integration', () => {
       reorderLevel: 30,
       batchNumber: 'BATCH-PARA-001',
       expiryDate: '2027-12-31',
-    } as any);
+    } as Parameters<typeof createInventoryItem>[0]);
 
     // Patient 1 prescription
     const rx1 = await createPrescription({
@@ -116,7 +116,7 @@ describe('Pharmacy Dispensing Integration', () => {
       route: 'oral', frequency: 'TID', duration: '5 days',
       prescribedBy: 'Dr. Kuol', status: 'pending',
       hospitalId: 'hosp-001', hospitalName: 'Taban Hospital',
-    } as any);
+    } as Parameters<typeof createPrescription>[0]);
 
     // Patient 2 prescription
     const rx2 = await createPrescription({
@@ -125,7 +125,7 @@ describe('Pharmacy Dispensing Integration', () => {
       route: 'oral', frequency: 'QID', duration: '3 days',
       prescribedBy: 'Dr. Kuol', status: 'pending',
       hospitalId: 'hosp-001', hospitalName: 'Taban Hospital',
-    } as any);
+    } as Parameters<typeof createPrescription>[0]);
 
     // Dispense both
     await dispensePrescription(rx1.prescription._id, 'pharmacist-001');

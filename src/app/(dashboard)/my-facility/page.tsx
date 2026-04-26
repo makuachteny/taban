@@ -207,7 +207,7 @@ export default function MyFacilityPage() {
                 disabled={saving}
                 className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold text-white transition-all"
                 style={{
-                  background: saving ? 'var(--text-muted)' : 'linear-gradient(135deg, #2E9E7E, #1E4D4A)',
+                  background: saving ? 'var(--text-muted)' : 'linear-gradient(135deg, #1B7FA8, #1E4D4A)',
                   boxShadow: '0 2px 8px rgba(0,119,215,0.3)',
                 }}
               >
@@ -268,7 +268,7 @@ export default function MyFacilityPage() {
 
           {/* Staffing */}
           <div className={sectionClass}>
-            {sectionTitle(<Users className="w-3.5 h-3.5" style={{ color: '#5CB8A8' }} />, 'Staffing', 'rgba(92,184,168,0.12)')}
+            {sectionTitle(<Users className="w-3.5 h-3.5" style={{ color: '#1B7FA8' }} />, 'Staffing', 'rgba(27,127,168,0.12)')}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {numberInput('Doctors', doctors, setDoctors)}
               {numberInput('Nurses', nurses, setNurses)}

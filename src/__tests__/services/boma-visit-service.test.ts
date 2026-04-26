@@ -27,7 +27,8 @@ afterEach(async () => { await teardownTestDBs(); uuidCounter = 0; });
 
 const today = new Date().toISOString().slice(0, 10);
 
-function validBomaVisit(overrides: Record<string, unknown> = {}) {
+type BomaVisitInput = Parameters<typeof createBomaVisit>[0];
+function validBomaVisit(overrides: Partial<BomaVisitInput> = {}): BomaVisitInput {
   return {
     workerId: 'bhw-001',
     workerName: 'Mary Ayen',
@@ -51,12 +52,12 @@ function validBomaVisit(overrides: Record<string, unknown> = {}) {
     payam: 'Northern Bari',
     boma: 'Gudele-3',
     ...overrides,
-  };
+  } as BomaVisitInput;
 }
 
 describe('Boma Visit Service', () => {
   test('creates a community health visit', async () => {
-    const visit = await createBomaVisit(validBomaVisit() as any);
+    const visit = await createBomaVisit(validBomaVisit());
     expect(visit._id).toMatch(/^boma-visit-/);
     expect(visit.type).toBe('boma_visit');
     expect(visit.workerName).toBe('Mary Ayen');
@@ -64,24 +65,24 @@ describe('Boma Visit Service', () => {
   });
 
   test('retrieves all visits', async () => {
-    await createBomaVisit(validBomaVisit() as any);
+    await createBomaVisit(validBomaVisit());
     await createBomaVisit(validBomaVisit({
       geocodeId: 'BOMA-GUD3-HH043',
       patientName: 'Achol Atem',
-    }) as any);
+    }));
 
     const all = await getAllBomaVisits();
     expect(all).toHaveLength(2);
   });
 
   test('retrieves visits by worker', async () => {
-    await createBomaVisit(validBomaVisit() as any);
+    await createBomaVisit(validBomaVisit());
     await createBomaVisit(validBomaVisit({
       workerId: 'bhw-002',
       workerName: 'James Lual',
       geocodeId: 'BOMA-GUD3-HH050',
       patientName: 'Atem Garang',
-    }) as any);
+    }));
 
     const workerVisits = await getVisitsByWorker('bhw-001');
     expect(workerVisits).toHaveLength(1);
@@ -89,35 +90,35 @@ describe('Boma Visit Service', () => {
   });
 
   test('retrieves visits by patient geocode', async () => {
-    await createBomaVisit(validBomaVisit() as any);
+    await createBomaVisit(validBomaVisit());
     await createBomaVisit(validBomaVisit({
       visitDate: new Date(Date.now() - 604800000).toISOString().slice(0, 10),
       chiefComplaint: 'Follow-up for malaria',
-    }) as any);
+    }));
 
     const patientVisits = await getVisitsByPatient('BOMA-GUD3-HH042');
     expect(patientVisits).toHaveLength(2);
   });
 
   test('retrieves today\'s visits for a worker', async () => {
-    await createBomaVisit(validBomaVisit() as any);
+    await createBomaVisit(validBomaVisit());
     await createBomaVisit(validBomaVisit({
       geocodeId: 'BOMA-GUD3-HH044',
       patientName: 'Nyabol',
-    }) as any);
+    }));
     // Past visit
     await createBomaVisit(validBomaVisit({
       geocodeId: 'BOMA-GUD3-HH045',
       patientName: 'Ayen',
       visitDate: '2026-01-01',
-    }) as any);
+    }));
 
     const todayVisits = await getTodaysVisits('bhw-001');
     expect(todayVisits).toHaveLength(2);
   });
 
   test('updates a boma visit', async () => {
-    const visit = await createBomaVisit(validBomaVisit() as any);
+    const visit = await createBomaVisit(validBomaVisit());
     const updated = await updateBomaVisit(visit._id, {
       outcome: 'recovered',
       followUpRequired: false,
@@ -135,12 +136,12 @@ describe('Boma Visit Service', () => {
   });
 
   test('retrieves visits pending review', async () => {
-    await createBomaVisit(validBomaVisit() as any);
+    await createBomaVisit(validBomaVisit());
     await createBomaVisit(validBomaVisit({
       geocodeId: 'BOMA-GUD3-HH044',
       patientName: 'Atem',
       reviewStatus: 'reviewed',
-    }) as any);
+    }));
 
     const pending = await getVisitsForReview();
     expect(pending).toHaveLength(1);
@@ -148,12 +149,12 @@ describe('Boma Visit Service', () => {
   });
 
   test('filters review by payam', async () => {
-    await createBomaVisit(validBomaVisit() as any);
+    await createBomaVisit(validBomaVisit());
     await createBomaVisit(validBomaVisit({
       geocodeId: 'BOMA-KAT1-HH001',
       patientName: 'Kuol',
       payam: 'Kator',
-    }) as any);
+    }));
 
     const northernBari = await getVisitsForReview('Northern Bari');
     expect(northernBari).toHaveLength(1);
@@ -161,7 +162,7 @@ describe('Boma Visit Service', () => {
   });
 
   test('reviews a visit', async () => {
-    const visit = await createBomaVisit(validBomaVisit() as any);
+    const visit = await createBomaVisit(validBomaVisit());
     const reviewed = await reviewVisit(
       visit._id,
       'supervisor-001',
@@ -180,7 +181,7 @@ describe('Boma Visit Service', () => {
     const visit = await createBomaVisit(validBomaVisit({
       suspectedCondition: 'Pneumonia',
       treatmentGiven: 'Paracetamol only',
-    }) as any);
+    }));
     const flagged = await reviewVisit(
       visit._id,
       'supervisor-001',
@@ -193,17 +194,17 @@ describe('Boma Visit Service', () => {
   });
 
   test('getReviewStats returns correct counts', async () => {
-    await createBomaVisit(validBomaVisit() as any); // pending
+    await createBomaVisit(validBomaVisit()); // pending
     await createBomaVisit(validBomaVisit({
       geocodeId: 'BOMA-GUD3-HH044',
       patientName: 'Atem',
       reviewStatus: 'reviewed',
-    }) as any);
+    }));
     await createBomaVisit(validBomaVisit({
       geocodeId: 'BOMA-GUD3-HH045',
       patientName: 'Kuol',
       reviewStatus: 'flagged',
-    }) as any);
+    }));
 
     const stats = await getReviewStats();
     expect(stats.pending).toBe(1);
@@ -213,20 +214,20 @@ describe('Boma Visit Service', () => {
   });
 
   test('getBHWPerformance tracks worker metrics', async () => {
-    await createBomaVisit(validBomaVisit() as any);
+    await createBomaVisit(validBomaVisit());
     await createBomaVisit(validBomaVisit({
       geocodeId: 'BOMA-GUD3-HH050',
       patientName: 'Akuol',
       action: 'referred',
       referredTo: 'Taban Hospital',
       treatmentGiven: undefined,
-    }) as any);
+    }));
     await createBomaVisit(validBomaVisit({
       workerId: 'bhw-002',
       workerName: 'James Lual',
       geocodeId: 'BOMA-GUD3-HH060',
       patientName: 'Garang',
-    }) as any);
+    }));
 
     const performance = await getBHWPerformance();
     expect(performance.length).toBeGreaterThanOrEqual(2);
@@ -238,14 +239,14 @@ describe('Boma Visit Service', () => {
   });
 
   test('getBomaStats returns worker-level statistics', async () => {
-    await createBomaVisit(validBomaVisit() as any);
+    await createBomaVisit(validBomaVisit());
     await createBomaVisit(validBomaVisit({
       geocodeId: 'BOMA-GUD3-HH044',
       patientName: 'Achol',
       suspectedCondition: 'Diarrhoea',
       action: 'referred',
       referredTo: 'Taban Hospital',
-    }) as any);
+    }));
 
     const stats = await getBomaStats('bhw-001');
     expect(stats.totalVisits).toBe(2);
@@ -257,9 +258,9 @@ describe('Boma Visit Service', () => {
   // ---- Branch coverage improvements ----
 
   test('getAllBomaVisits sorts by visitDate descending', async () => {
-    await createBomaVisit(validBomaVisit({ visitDate: '2026-01-01' }) as any);
-    await createBomaVisit(validBomaVisit({ visitDate: '2026-04-10', geocodeId: 'G2', patientName: 'B' }) as any);
-    await createBomaVisit(validBomaVisit({ visitDate: '2026-02-15', geocodeId: 'G3', patientName: 'C' }) as any);
+    await createBomaVisit(validBomaVisit({ visitDate: '2026-01-01' }));
+    await createBomaVisit(validBomaVisit({ visitDate: '2026-04-10', geocodeId: 'G2', patientName: 'B' }));
+    await createBomaVisit(validBomaVisit({ visitDate: '2026-02-15', geocodeId: 'G3', patientName: 'C' }));
 
     const all = await getAllBomaVisits();
     expect(all).toHaveLength(3);
@@ -268,8 +269,8 @@ describe('Boma Visit Service', () => {
   });
 
   test('getAllBomaVisits handles missing visitDate in sort', async () => {
-    await createBomaVisit(validBomaVisit({ visitDate: undefined as any }) as any);
-    await createBomaVisit(validBomaVisit({ visitDate: '2026-04-10', geocodeId: 'G2', patientName: 'B' }) as any);
+    await createBomaVisit(validBomaVisit({ visitDate: undefined as unknown as string }));
+    await createBomaVisit(validBomaVisit({ visitDate: '2026-04-10', geocodeId: 'G2', patientName: 'B' }));
 
     const all = await getAllBomaVisits();
     expect(all).toHaveLength(2);
@@ -287,7 +288,7 @@ describe('Boma Visit Service', () => {
   });
 
   test('getVisitsForReview includes visits with no reviewStatus', async () => {
-    await createBomaVisit(validBomaVisit({ reviewStatus: undefined as any }) as any);
+    await createBomaVisit(validBomaVisit({ reviewStatus: undefined }));
     const pending = await getVisitsForReview();
     expect(pending).toHaveLength(1);
   });
@@ -295,7 +296,7 @@ describe('Boma Visit Service', () => {
   test('getTodaysVisits returns empty for past-only worker', async () => {
     await createBomaVisit(validBomaVisit({
       visitDate: '2026-01-01',
-    }) as any);
+    }));
     const todayVisits = await getTodaysVisits('bhw-001');
     expect(todayVisits).toHaveLength(0);
   });
@@ -304,7 +305,7 @@ describe('Boma Visit Service', () => {
     await createBomaVisit(validBomaVisit({
       followUpRequired: false,
       outcome: 'recovered',
-    }) as any);
+    }));
 
     const performance = await getBHWPerformance();
     const bhw1 = performance.find(p => p.workerId === 'bhw-001');
@@ -313,9 +314,9 @@ describe('Boma Visit Service', () => {
   });
 
   test('getBHWPerformance calculates referral rate', async () => {
-    await createBomaVisit(validBomaVisit({ action: 'treated' }) as any);
-    await createBomaVisit(validBomaVisit({ action: 'treated', geocodeId: 'G2', patientName: 'B' }) as any);
-    await createBomaVisit(validBomaVisit({ action: 'referred', geocodeId: 'G3', patientName: 'C' }) as any);
+    await createBomaVisit(validBomaVisit({ action: 'treated' }));
+    await createBomaVisit(validBomaVisit({ action: 'treated', geocodeId: 'G2', patientName: 'B' }));
+    await createBomaVisit(validBomaVisit({ action: 'referred', geocodeId: 'G3', patientName: 'C' }));
 
     const performance = await getBHWPerformance();
     const bhw1 = performance.find(p => p.workerId === 'bhw-001');
@@ -327,7 +328,7 @@ describe('Boma Visit Service', () => {
   test('getBHWPerformance detects inactive workers', async () => {
     await createBomaVisit(validBomaVisit({
       visitDate: '2025-01-01', // very old
-    }) as any);
+    }));
 
     const performance = await getBHWPerformance();
     const bhw1 = performance.find(p => p.workerId === 'bhw-001');
@@ -337,7 +338,7 @@ describe('Boma Visit Service', () => {
   test('getBHWPerformance detects active workers', async () => {
     await createBomaVisit(validBomaVisit({
       visitDate: today,
-    }) as any);
+    }));
 
     const performance = await getBHWPerformance();
     const bhw1 = performance.find(p => p.workerId === 'bhw-001');
@@ -346,8 +347,8 @@ describe('Boma Visit Service', () => {
   });
 
   test('getBHWPerformance counts pending reviews', async () => {
-    await createBomaVisit(validBomaVisit({ reviewStatus: 'pending' }) as any);
-    await createBomaVisit(validBomaVisit({ reviewStatus: 'reviewed', geocodeId: 'G2', patientName: 'B' }) as any);
+    await createBomaVisit(validBomaVisit({ reviewStatus: 'pending' }));
+    await createBomaVisit(validBomaVisit({ reviewStatus: 'reviewed', geocodeId: 'G2', patientName: 'B' }));
 
     const performance = await getBHWPerformance();
     const bhw1 = performance.find(p => p.workerId === 'bhw-001');
@@ -358,13 +359,13 @@ describe('Boma Visit Service', () => {
     await createBomaVisit(validBomaVisit({
       followUpRequired: true,
       outcome: 'recovered',
-    }) as any);
+    }));
     await createBomaVisit(validBomaVisit({
       followUpRequired: true,
       outcome: 'unknown',
       geocodeId: 'G2',
       patientName: 'B',
-    }) as any);
+    }));
 
     const performance = await getBHWPerformance();
     const bhw1 = performance.find(p => p.workerId === 'bhw-001');
@@ -374,11 +375,11 @@ describe('Boma Visit Service', () => {
 
   test('getBHWPerformance sorts by thisWeekVisits descending', async () => {
     // Worker 1: 1 visit today
-    await createBomaVisit(validBomaVisit({ workerId: 'bhw-001', workerName: 'Mary' }) as any);
+    await createBomaVisit(validBomaVisit({ workerId: 'bhw-001', workerName: 'Mary' }));
     // Worker 2: 3 visits today
-    await createBomaVisit(validBomaVisit({ workerId: 'bhw-002', workerName: 'James', geocodeId: 'G2', patientName: 'B' }) as any);
-    await createBomaVisit(validBomaVisit({ workerId: 'bhw-002', workerName: 'James', geocodeId: 'G3', patientName: 'C' }) as any);
-    await createBomaVisit(validBomaVisit({ workerId: 'bhw-002', workerName: 'James', geocodeId: 'G4', patientName: 'D' }) as any);
+    await createBomaVisit(validBomaVisit({ workerId: 'bhw-002', workerName: 'James', geocodeId: 'G2', patientName: 'B' }));
+    await createBomaVisit(validBomaVisit({ workerId: 'bhw-002', workerName: 'James', geocodeId: 'G3', patientName: 'C' }));
+    await createBomaVisit(validBomaVisit({ workerId: 'bhw-002', workerName: 'James', geocodeId: 'G4', patientName: 'D' }));
 
     const performance = await getBHWPerformance();
     expect(performance[0].workerId).toBe('bhw-002');
@@ -386,9 +387,9 @@ describe('Boma Visit Service', () => {
   });
 
   test('getBomaStats counts conditions breakdown', async () => {
-    await createBomaVisit(validBomaVisit({ chiefComplaint: 'Fever' }) as any);
-    await createBomaVisit(validBomaVisit({ chiefComplaint: 'Fever', geocodeId: 'G2', patientName: 'B' }) as any);
-    await createBomaVisit(validBomaVisit({ chiefComplaint: 'Diarrhoea', geocodeId: 'G3', patientName: 'C' }) as any);
+    await createBomaVisit(validBomaVisit({ chiefComplaint: 'Fever' }));
+    await createBomaVisit(validBomaVisit({ chiefComplaint: 'Fever', geocodeId: 'G2', patientName: 'B' }));
+    await createBomaVisit(validBomaVisit({ chiefComplaint: 'Diarrhoea', geocodeId: 'G3', patientName: 'C' }));
 
     const stats = await getBomaStats('bhw-001');
     expect(stats.conditions['Fever']).toBe(2);
@@ -396,7 +397,7 @@ describe('Boma Visit Service', () => {
   });
 
   test('getBomaStats handles missing chiefComplaint', async () => {
-    await createBomaVisit(validBomaVisit({ chiefComplaint: undefined as any }) as any);
+    await createBomaVisit(validBomaVisit({ chiefComplaint: undefined as unknown as string }));
 
     const stats = await getBomaStats('bhw-001');
     expect(stats.conditions['Unknown']).toBe(1);
@@ -406,18 +407,18 @@ describe('Boma Visit Service', () => {
     await createBomaVisit(validBomaVisit({
       followUpRequired: true,
       outcome: 'unknown',
-    }) as any);
+    }));
     await createBomaVisit(validBomaVisit({
       followUpRequired: true,
       outcome: 'recovered',
       geocodeId: 'G2',
       patientName: 'B',
-    }) as any);
+    }));
     await createBomaVisit(validBomaVisit({
       followUpRequired: false,
       geocodeId: 'G3',
       patientName: 'C',
-    }) as any);
+    }));
 
     const stats = await getBomaStats('bhw-001');
     expect(stats.pendingFollowUps).toBe(1);
@@ -427,13 +428,13 @@ describe('Boma Visit Service', () => {
     await createBomaVisit(validBomaVisit({
       action: 'referred',
       visitDate: today,
-    }) as any);
+    }));
     await createBomaVisit(validBomaVisit({
       action: 'referred',
       visitDate: '2025-01-01',
       geocodeId: 'G2',
       patientName: 'B',
-    }) as any);
+    }));
 
     const stats = await getBomaStats('bhw-001');
     expect(stats.todayReferrals).toBe(1);
@@ -450,20 +451,20 @@ describe('Boma Visit Service', () => {
   // ---- Additional branch coverage for uncovered lines ----
 
   test('getTodaysVisits handles undefined visitDate', async () => {
-    await createBomaVisit(validBomaVisit({ visitDate: undefined as any }) as any);
+    await createBomaVisit(validBomaVisit({ visitDate: undefined as unknown as string }));
     const todayVisits = await getTodaysVisits('bhw-001');
     expect(todayVisits).toHaveLength(0);
   });
 
   test('getBHWPerformance uses workerName fallback when missing', async () => {
-    await createBomaVisit(validBomaVisit({ workerName: undefined as any }) as any);
+    await createBomaVisit(validBomaVisit({ workerName: undefined as unknown as string }));
     const performance = await getBHWPerformance();
     const bhw1 = performance.find(p => p.workerId === 'bhw-001');
     expect(bhw1!.workerName).toBe('Unknown');
   });
 
   test('getBHWPerformance uses boma fallback when missing', async () => {
-    await createBomaVisit(validBomaVisit({ boma: undefined as any }) as any);
+    await createBomaVisit(validBomaVisit({ boma: undefined as unknown as string }));
     const performance = await getBHWPerformance();
     const bhw1 = performance.find(p => p.workerId === 'bhw-001');
     expect(bhw1!.boma).toBe('Unknown');
@@ -477,21 +478,21 @@ describe('Boma Visit Service', () => {
   });
 
   test('getBHWPerformance lastActiveDate uses visitDate fallback', async () => {
-    await createBomaVisit(validBomaVisit({ visitDate: undefined as any }) as any);
+    await createBomaVisit(validBomaVisit({ visitDate: undefined as unknown as string }));
     const performance = await getBHWPerformance();
     const bhw1 = performance.find(p => p.workerId === 'bhw-001');
     expect(bhw1!.lastActiveDate).toBe('');
   });
 
   test('getBHWPerformance isActive false when visitDate undefined', async () => {
-    await createBomaVisit(validBomaVisit({ visitDate: undefined as any }) as any);
+    await createBomaVisit(validBomaVisit({ visitDate: undefined as unknown as string }));
     const performance = await getBHWPerformance();
     const bhw1 = performance.find(p => p.workerId === 'bhw-001');
     expect(bhw1!.isActive).toBe(false);
   });
 
   test('getBHWPerformance thisWeek filter with undefined visitDate', async () => {
-    await createBomaVisit(validBomaVisit({ visitDate: undefined as any }) as any);
+    await createBomaVisit(validBomaVisit({ visitDate: undefined as unknown as string }));
     const performance = await getBHWPerformance();
     const bhw1 = performance.find(p => p.workerId === 'bhw-001');
     expect(bhw1!.thisWeekVisits).toBe(0);
@@ -500,8 +501,8 @@ describe('Boma Visit Service', () => {
   test('getBomaStats today referrals with undefined visitDate', async () => {
     await createBomaVisit(validBomaVisit({
       action: 'referred',
-      visitDate: undefined as any,
-    }) as any);
+      visitDate: undefined as unknown as string,
+    }));
 
     const stats = await getBomaStats('bhw-001');
     expect(stats.todayReferrals).toBe(0);
@@ -509,16 +510,16 @@ describe('Boma Visit Service', () => {
 
   test('getBomaStats todaysVisits with undefined visitDate', async () => {
     await createBomaVisit(validBomaVisit({
-      visitDate: undefined as any,
-    }) as any);
+      visitDate: undefined as unknown as string,
+    }));
 
     const stats = await getBomaStats('bhw-001');
     expect(stats.todaysVisits).toBe(0);
   });
 
   test('getAllBomaVisits with all visits having undefined visitDate', async () => {
-    await createBomaVisit(validBomaVisit({ visitDate: undefined as any }) as any);
-    await createBomaVisit(validBomaVisit({ visitDate: undefined as any, geocodeId: 'G2', patientName: 'B' }) as any);
+    await createBomaVisit(validBomaVisit({ visitDate: undefined as unknown as string }));
+    await createBomaVisit(validBomaVisit({ visitDate: undefined as unknown as string, geocodeId: 'G2', patientName: 'B' }));
 
     const all = await getAllBomaVisits();
     expect(all).toHaveLength(2);
@@ -526,9 +527,9 @@ describe('Boma Visit Service', () => {
 
   test('getBHWPerformance with worker having multiple visits and sorting', async () => {
     // Create multiple visits with different dates to test sort on line 141
-    await createBomaVisit(validBomaVisit({ visitDate: '2026-02-01' }) as any);
-    await createBomaVisit(validBomaVisit({ visitDate: '2026-04-12', geocodeId: 'G2', patientName: 'B' }) as any);
-    await createBomaVisit(validBomaVisit({ visitDate: '2026-03-01', geocodeId: 'G3', patientName: 'C' }) as any);
+    await createBomaVisit(validBomaVisit({ visitDate: '2026-02-01' }));
+    await createBomaVisit(validBomaVisit({ visitDate: '2026-04-12', geocodeId: 'G2', patientName: 'B' }));
+    await createBomaVisit(validBomaVisit({ visitDate: '2026-03-01', geocodeId: 'G3', patientName: 'C' }));
 
     const performance = await getBHWPerformance();
     const bhw1 = performance.find(p => p.workerId === 'bhw-001');
@@ -536,8 +537,8 @@ describe('Boma Visit Service', () => {
   });
 
   test('getBHWPerformance with only past visits doesnt count in thisWeek', async () => {
-    await createBomaVisit(validBomaVisit({ visitDate: '2025-01-01' }) as any);
-    await createBomaVisit(validBomaVisit({ visitDate: '2025-02-01', geocodeId: 'G2', patientName: 'B' }) as any);
+    await createBomaVisit(validBomaVisit({ visitDate: '2025-01-01' }));
+    await createBomaVisit(validBomaVisit({ visitDate: '2025-02-01', geocodeId: 'G2', patientName: 'B' }));
 
     const performance = await getBHWPerformance();
     const bhw1 = performance.find(p => p.workerId === 'bhw-001');
@@ -547,7 +548,7 @@ describe('Boma Visit Service', () => {
   // ---- Line 157: Test referralRate when visits.length is 0 ----
   test('getBHWPerformance referralRate is 0 when no visits (line 157)', async () => {
     // Create a visit then delete all to test the else branch
-    const visit = await createBomaVisit(validBomaVisit() as any);
+    const visit = await createBomaVisit(validBomaVisit());
     await require('@/lib/db').bomaVisitsDB().remove(visit._id, visit._rev);
 
     const performance = await getBHWPerformance();
@@ -564,7 +565,7 @@ describe('Boma Visit Service', () => {
       type: 'boma_visit',
       workerId: 'bhw-002',
       workerName: 'Unknown Worker',
-      visitDate: undefined as any,
+      visitDate: undefined as unknown as string,
       visitNumber: 1,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

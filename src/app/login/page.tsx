@@ -7,7 +7,7 @@ import { hospitals } from '@/data/mock';
 import { useApp } from '@/lib/context';
 import { getDefaultDashboard } from '@/lib/permissions';
 
-const BLUE = '#2E9E7E';
+const BLUE = '#1B7FA8';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -42,7 +42,7 @@ export default function LoginPage() {
           <div className="w-12 h-12 flex items-center justify-center" style={{
             background: BLUE,
             borderRadius: '8px',
-            boxShadow: '0 4px 16px rgba(46,158,126,0.25)',
+            boxShadow: '0 4px 16px rgba(27,127,168,0.25)',
           }}>
             <svg className="animate-spin w-6 h-6 text-white" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
           </div>
@@ -156,8 +156,8 @@ export default function LoginPage() {
 
             {!dbReady && (
               <div className="mb-4 p-3 rounded-lg text-center" style={{
-                background: 'rgba(46,158,126,0.08)',
-                border: '1px solid rgba(46,158,126,0.15)',
+                background: 'rgba(27,127,168,0.08)',
+                border: '1px solid rgba(27,127,168,0.15)',
               }}>
                 <p className="text-xs" style={{ color: BLUE }}>
                   <svg className="animate-spin w-3 h-3 inline mr-1.5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
@@ -405,7 +405,7 @@ export default function LoginPage() {
         .login-input:focus,
         .login-select:focus {
           border-color: ${BLUE};
-          box-shadow: 0 0 0 3px rgba(46,158,126,0.1);
+          box-shadow: 0 0 0 3px rgba(27,127,168,0.1);
         }
         .login-input::placeholder {
           color: var(--text-muted);

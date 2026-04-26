@@ -1,14 +1,13 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import TopBar from '@/components/TopBar';
 import {
-  DollarSign, CreditCard, Smartphone, Building2, Clock, CheckCircle,
-  AlertCircle, FileText, Download, ChevronRight, Shield, Receipt,
-  ArrowRight, Wallet, QrCode, Copy, Check, ExternalLink
+  CreditCard, Smartphone, Building2, CheckCircle,
+  AlertCircle, Shield, Receipt,
+  ArrowRight, Wallet, Copy, Check
 } from '@/components/icons/lucide';
 import { useApp } from '@/lib/context';
-import type { PaymentDoc, PaymentPlanDoc } from '@/lib/db-types-payments';
 import type { BillingDoc } from '@/lib/db-types-billing';
 
 const fmt = (n: number) => 'SSP ' + n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -62,7 +61,7 @@ const PAYMENT_METHODS: { id: PaymentMethod; label: string; desc: string; icon: t
   { id: 'mtn', label: 'MTN Mobile Money', desc: 'Pay via MTN MoMo', icon: Smartphone, color: '#FFCB05', instructions: 'Dial *165# > Pay Bill\nMerchant Code: Taban\nReference: Your Invoice #' },
   { id: 'airtel', label: 'Airtel Money', desc: 'Pay via Airtel Money', icon: Smartphone, color: '#ED1C24', instructions: 'Dial *185# > Pay Bill\nBusiness Name: Taban HEALTH\nReference: Your Invoice #' },
   { id: 'card', label: 'Visa / Mastercard', desc: 'Secure card payment via Flutterwave', icon: CreditCard, color: '#6366f1', instructions: 'Click "Pay Now" to be redirected to our secure payment gateway powered by Flutterwave.' },
-  { id: 'bank', label: 'Bank Transfer', desc: 'Direct bank deposit', icon: Building2, color: '#2E9E7E', instructions: 'Bank: Equity Bank South Sudan\nAccount: 0012345678901\nBranch: Juba Main\nReference: Your Invoice #' },
+  { id: 'bank', label: 'Bank Transfer', desc: 'Direct bank deposit', icon: Building2, color: '#1B7FA8', instructions: 'Bank: Equity Bank South Sudan\nAccount: 0012345678901\nBranch: Juba Main\nReference: Your Invoice #' },
 ];
 
 export default function PatientPortalPage() {
@@ -163,7 +162,7 @@ export default function PatientPortalPage() {
 
         {/* ── Welcome Banner ───────────────────────────────── */}
         <div style={{
-          background: 'linear-gradient(135deg, #1A3A3A 0%, #1E4D4A 50%, #2E9E7E 100%)',
+          background: 'linear-gradient(135deg, #1A3A3A 0%, #1E4D4A 50%, #1B7FA8 100%)',
           borderRadius: 'var(--card-radius)', padding: '28px 32px', marginBottom: 24,
           position: 'relative', overflow: 'hidden',
         }}>
@@ -227,8 +226,8 @@ export default function PatientPortalPage() {
                           background: isPaid ? 'var(--color-success-bg)' : 'var(--accent-light)',
                         }}>
                           {isPaid
-                            ? <CheckCircle size={20} style={{ color: 'var(--color-success)' }} />
-                            : <Receipt size={20} style={{ color: 'var(--accent-primary)' }} />
+                            ? <CheckCircle size={34} style={{ color: 'var(--color-success)' }} />
+                            : <Receipt size={34} style={{ color: 'var(--accent-primary)' }} />
                           }
                         </div>
 
@@ -320,7 +319,7 @@ export default function PatientPortalPage() {
                     }}
                     style={{
                       width: '100%', padding: '12px 20px', borderRadius: 10, border: 'none', cursor: 'pointer',
-                      background: 'linear-gradient(135deg, #1B9E77, #2AB98F)', color: '#fff',
+                      background: 'linear-gradient(135deg, #1B7FA8, #3FA9C9)', color: '#fff',
                       fontSize: '0.875rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                     }}
                   >
@@ -365,7 +364,7 @@ export default function PatientPortalPage() {
                 borderRadius: 'var(--card-radius)', padding: '16px 20px',
                 display: 'flex', alignItems: 'center', gap: 12,
               }}>
-                <Shield size={20} style={{ color: '#2E9E7E', flexShrink: 0 }} />
+                <Shield size={34} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
                 <div>
                   <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>Secure Payments</div>
                   <div style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>All transactions encrypted end-to-end. PCI DSS compliant.</div>
@@ -470,7 +469,7 @@ export default function PatientPortalPage() {
               disabled={!paymentMethod || !paymentAmount}
               style={{
                 width: '100%', padding: '14px 24px', borderRadius: 10, border: 'none', cursor: paymentMethod ? 'pointer' : 'not-allowed',
-                background: paymentMethod ? 'linear-gradient(135deg, #1B9E77, #2AB98F)' : 'var(--border-light)',
+                background: paymentMethod ? 'linear-gradient(135deg, #1B7FA8, #3FA9C9)' : 'var(--border-light)',
                 color: paymentMethod ? '#fff' : 'var(--text-muted)',
                 fontSize: '0.9375rem', fontWeight: 700, transition: 'all 0.15s',
               }}
@@ -508,7 +507,7 @@ export default function PatientPortalPage() {
                         width: 48, height: 48, borderRadius: 14,
                         background: `${method.color}1A`, display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}>
-                        <Icon size={22} style={{ color: method.color }} />
+                        <Icon size={56} style={{ color: method.color }} />
                       </div>
                       <div>
                         <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>Pay with {method.label}</div>
@@ -598,7 +597,7 @@ export default function PatientPortalPage() {
                 width: 64, height: 64, borderRadius: '50%', margin: '0 auto 20px',
                 background: 'var(--color-success-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                <CheckCircle size={32} style={{ color: 'var(--color-success)' }} />
+                <CheckCircle size={44} style={{ color: 'var(--color-success)' }} />
               </div>
               <h2 style={{ fontSize: '1.375rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 8px' }}>
                 Payment Submitted

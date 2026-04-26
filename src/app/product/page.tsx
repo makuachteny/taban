@@ -79,7 +79,7 @@ const FEATURE_CATEGORIES = [
   {
     title: "Configurable for Any Clinical Program",
     icon: Stethoscope,
-    color: "#2E9E7E",
+    color: "#1B7FA8",
     desc: "Flexible and configurable for any clinical area. Today Taban is used in a wide variety of areas: from Primary Care for Outpatients; to Specialty Centers for NCD, MCH/ANC, HIV, TB, Malaria, and more; to large Hospital-based Inpatient care.",
     highlights: ["Primary Care & Outpatient", "MCH / ANC / Immunization", "NCD, HIV, TB, Malaria", "Inpatient & Surgery"],
   },
@@ -100,7 +100,7 @@ const FEATURE_CATEGORIES = [
   {
     title: "Interoperable Locally and Nationally",
     icon: Network,
-    color: "#2E9E7E",
+    color: "#1B7FA8",
     desc: "The Taban REST and FHIR-ready APIs enable integration with other end-user tools, such as ERP Systems, Lab Systems, DHIS2, and more; or, with National Health Exchanges.",
     highlights: ["DHIS2 automated export", "REST API", "FHIR-ready architecture", "National system integration"],
   },
@@ -121,7 +121,7 @@ const FEATURE_CATEGORIES = [
   {
     title: "Clinical Data Reporting & Exports",
     icon: BarChart3,
-    color: "#2E9E7E",
+    color: "#1B7FA8",
     desc: "Track and analyze clinical data: See your impact, report to stakeholders, and monitor key metrics. Generate IDSR reports, MCH analytics, and donor-ready outputs.",
     highlights: ["IDSR weekly reports", "MCH analytics dashboard", "Custom report builder", "Donor-ready exports"],
   },
@@ -142,7 +142,7 @@ const SHOWCASE_SECTIONS = [
     cta: "See key features below",
     ctaId: "features",
     visual: "features",
-    color: "#2E9E7E",
+    color: "#1B7FA8",
   },
   {
     eyebrow: "Roadmap",
@@ -169,7 +169,7 @@ const SHOWCASE_SECTIONS = [
     cta: "Try the Demo",
     ctaHref: "/login",
     visual: "download",
-    color: "#2E9E7E",
+    color: "#1B7FA8",
   },
 ];
 
@@ -271,7 +271,7 @@ export default function ProductPage() {
           </div>
 
           <button className="p-mobile-toggle" onClick={() => setMobileNav(!mobileNav)}>
-            {mobileNav ? <X size={22} /> : <Menu size={22} />}
+            {mobileNav ? <X size={56} /> : <Menu size={56} />}
           </button>
         </div>
 
@@ -381,7 +381,7 @@ export default function ProductPage() {
               {TECH_STACK.map((t, i) => (
                 <Reveal key={i} delay={i * 0.06}>
                   <div className="p-tech__card">
-                    <div className="p-tech__card-icon"><t.icon size={20} /></div>
+                    <div className="p-tech__card-icon"><t.icon size={34} /></div>
                     <h3 className="p-tech__card-name">{t.name}</h3>
                     <p className="p-tech__card-desc">{t.desc}</p>
                   </div>
@@ -447,7 +447,7 @@ export default function ProductPage() {
                 <Reveal key={i} delay={i * 0.06}>
                   <div className="p-interop__card">
                     <div className="p-interop__card-icon-wrap">
-                      <item.icon size={18} />
+                      <item.icon size={44} />
                     </div>
                     <div>
                       <div className="p-interop__card-badge">{item.name}</div>
@@ -460,14 +460,14 @@ export default function ProductPage() {
             <Reveal delay={0.3}>
               <div className="p-interop__cta-row">
                 <div className="p-interop__cta-card">
-                  <Globe size={20} />
+                  <Globe size={34} />
                   <div>
                     <h4>DHIS2 Compatible</h4>
                     <p>Automated monthly data export feeds the national health information system directly.</p>
                   </div>
                 </div>
                 <div className="p-interop__cta-card">
-                  <Shield size={20} />
+                  <Shield size={34} />
                   <div>
                     <h4>FHIR-Ready &amp; WHO-Aligned</h4>
                     <p>Architecture designed for HL7 FHIR, ICD-10/ICD-11, and IMCI guideline compliance.</p>
@@ -497,11 +497,11 @@ export default function ProductPage() {
                   >
                     <div className="p-features__card-header">
                       <div className="p-features__card-icon" style={{ background: f.color + "0D", color: f.color }}>
-                        <f.icon size={22} />
+                        <f.icon size={56} />
                       </div>
                       <h3 className="p-features__card-title">{f.title}</h3>
                       <ChevronDown
-                        size={18}
+                        size={44}
                         className="p-features__card-chevron"
                         style={{ transform: expandedFeature === i ? "rotate(180deg)" : "rotate(0)" }}
                       />
@@ -612,7 +612,7 @@ export default function ProductPage() {
                 <Reveal key={i} delay={i * 0.05}>
                   <div className="p-tour__card" onMouseEnter={() => setActiveTour(i)}>
                     <div className={`p-tour__card-icon ${activeTour === i ? "p-tour__card-icon--active" : ""}`}>
-                      <f.icon size={24} />
+                      <f.icon size={44} />
                     </div>
                     <h4 className="p-tour__card-label">{f.label}</h4>
                     <p className="p-tour__card-desc">{f.desc}</p>
@@ -759,7 +759,7 @@ const productCSS = `
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700&family=IBM+Plex+Serif:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 :root {
-  --p-blue: #2E9E7E;
+  --p-blue: #1B7FA8;
   --p-blue-hover: #1E4D4A;
   --p-blue-dark: #1A3A3A;
   --p-blue-mid: #246860;

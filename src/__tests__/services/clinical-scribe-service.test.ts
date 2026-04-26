@@ -193,7 +193,8 @@ describe('clinical-scribe-service', () => {
 
     expect(result.examFindings.length).toBeGreaterThan(0);
     const systems = new Set(result.examFindings.map(e => e.system));
-    expect(['general', 'cardiovascular', 'respiratory', 'abdominal', 'neurological'].some(s => systems.has(s as any))).toBe(true);
+    type ExamSystem = 'general' | 'cardiovascular' | 'respiratory' | 'abdominal' | 'neurological';
+    expect(['general', 'cardiovascular', 'respiratory', 'abdominal', 'neurological'].some(s => systems.has(s as ExamSystem))).toBe(true);
   });
 
   test('lab orders extracted', () => {

@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
     if (!body.orgId && auth.orgId) body.orgId = auth.orgId;
 
     const { createReferral } = await import('@/lib/services/referral-service');
-    const referral = await createReferral(body as any);
+    const referral = await createReferral(body as Parameters<typeof createReferral>[0]);
 
     return NextResponse.json({ referral }, { status: 201 });
   } catch (err) {

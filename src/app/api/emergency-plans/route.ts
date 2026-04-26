@@ -122,7 +122,7 @@ export async function PATCH(request: NextRequest) {
       case 'activate': {
         let body: Record<string, unknown> = {};
         try { body = await request.json(); } catch { /* no body needed */ }
-        result = await activatePlan(id, auth.name || auth.sub, body.severity as any);
+        result = await activatePlan(id, auth.name || auth.sub, body.severity as Parameters<typeof activatePlan>[2]);
         break;
       }
       case 'deactivate':

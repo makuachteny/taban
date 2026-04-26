@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     if (!hasRole(auth, READ_ROLES)) return forbidden();
 
     const {
-      getAllBirths, getBirthsByFacility, getBirthsByState, getBirthStats,
+      getAllBirths, getBirthsByState, getBirthStats,
     } = await import('@/lib/services/birth-service');
     const { buildScopeFromAuth } = await import('@/lib/services/data-scope');
 
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
       births = await getAllBirths(scope);
     }
 
-    const response: Record<string, any> = { births, total: births.length };
+    const response: Record<string, unknown> = { births, total: births.length };
 
     if (includeStats) {
       const scope = buildScopeFromAuth(auth);
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     if (!body.orgId && auth.orgId) body.orgId = auth.orgId;
 
     const { createBirth } = await import('@/lib/services/birth-service');
-    const birth = await createBirth(body as any);
+    const birth = await createBirth(body as Parameters<typeof createBirth>[0]);
 
     return NextResponse.json({ birth }, { status: 201 });
   } catch (err) {

@@ -77,7 +77,7 @@ export default function PatientPortalLayout({ children }: { children: React.Reac
           )}
 
           <button className="sm:hidden" onClick={() => setMobileNav(!mobileNav)} aria-label="Toggle navigation menu" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, color: 'var(--text-secondary)' }}>
-            {mobileNav ? <X size={20} /> : <Menu size={20} />}
+            {mobileNav ? <X size={34} /> : <Menu size={34} />}
           </button>
         </div>
       </header>

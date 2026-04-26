@@ -35,7 +35,7 @@ export default function PageHeader({ icon: Icon, title, subtitle, actions }: Pag
       <div className="page-header">
         <div className="page-header__top">
           <div className="page-header__icon">
-            <Icon size={26} strokeWidth={1.8} />
+            <Icon size={34} strokeWidth={1.8} />
           </div>
           <h1 className="page-header__title">{title}</h1>
         </div>

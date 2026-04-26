@@ -142,7 +142,7 @@ export default function DHIS2ExportPage() {
               disabled={syncing}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
               style={{
-                background: syncing ? 'var(--overlay-medium)' : 'linear-gradient(135deg, #2E9E7E, #1E4D4A)',
+                background: syncing ? 'var(--overlay-medium)' : 'linear-gradient(135deg, #1B7FA8, #1E4D4A)',
                 color: syncing ? 'var(--text-muted)' : '#fff',
                 boxShadow: syncing ? 'none' : '0 4px 12px rgba(43,111,224,0.3)',
               }}
@@ -181,7 +181,7 @@ export default function DHIS2ExportPage() {
               className="flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors"
               style={{
                 color: activeTab === tab.id ? 'var(--accent-primary)' : 'var(--text-muted)',
-                borderBottom: activeTab === tab.id ? '2px solid #2E9E7E' : '2px solid transparent',
+                borderBottom: activeTab === tab.id ? '2px solid #1B7FA8' : '2px solid transparent',
               }}
             >
               <tab.icon className="w-4 h-4" />
@@ -327,7 +327,7 @@ export default function DHIS2ExportPage() {
               disabled={syncing}
               className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold text-white transition-all"
               style={{
-                background: 'linear-gradient(135deg, #2E9E7E, #1E4D4A)',
+                background: 'linear-gradient(135deg, #1B7FA8, #1E4D4A)',
                 boxShadow: '0 4px 12px rgba(43,111,224,0.3)',
               }}
             >

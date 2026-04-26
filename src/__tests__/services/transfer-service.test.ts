@@ -183,19 +183,17 @@ describe('Transfer Service', () => {
   });
 
   test('converts attachment to data URL', () => {
-    const attachment = {
-      _id: 'att-001',
-      type: 'attachment' as const,
+    const attachment: Parameters<typeof attachmentToDataUrl>[0] = {
+      id: 'att-001',
       name: 'xray.jpg',
       mimeType: 'image/jpeg',
       base64Data: 'iVBORw0KGgo=',
       sizeBytes: 128,
       uploadedAt: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      uploadedBy: 'doctor-001',
     };
 
-    const dataUrl = attachmentToDataUrl(attachment as any);
+    const dataUrl = attachmentToDataUrl(attachment);
     expect(dataUrl).toBe('data:image/jpeg;base64,iVBORw0KGgo=');
   });
 
@@ -225,7 +223,7 @@ describe('Transfer Service', () => {
 
     // This test verifies the error handling path exists
     // In real scenarios, this would require mocking FileReader
-    expect(fileToBase64(file as any)).rejects.toThrow();
+    expect(fileToBase64(file)).rejects.toThrow();
   });
 
   test('assembles transfer package with medical records without visitDate', async () => {

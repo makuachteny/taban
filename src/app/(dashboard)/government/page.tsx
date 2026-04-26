@@ -831,10 +831,10 @@ export default function GovernmentDashboardPage() {
     }
     return (
       <div className="p-3 grid grid-cols-2 gap-2">
-        <CircularGauge value={avgReporting} label="Reporting" color="#5CB8A8" size={72} strokeWidth={5} />
-        <CircularGauge value={avgReadiness} label="Readiness" color="#2E9E7E" size={72} strokeWidth={5} />
-        <CircularGauge value={avgImmCoverage} label="EPI Coverage" color="#A855F7" size={72} strokeWidth={5} />
-        <CircularGauge value={functionalPct} label="Functional" color="#FCD34D" size={72} strokeWidth={5} />
+        <CircularGauge value={avgReporting} label="Reporting" color="#5CB8A8" size={96} strokeWidth={5} />
+        <CircularGauge value={avgReadiness} label="Readiness" color="#1B7FA8" size={96} strokeWidth={5} />
+        <CircularGauge value={avgImmCoverage} label="EPI Coverage" color="#A855F7" size={96} strokeWidth={5} />
+        <CircularGauge value={functionalPct} label="Functional" color="#FCD34D" size={96} strokeWidth={5} />
       </div>
     );
   };

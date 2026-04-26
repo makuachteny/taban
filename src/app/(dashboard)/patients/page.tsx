@@ -87,17 +87,18 @@ export default function PatientsPage() {
             const withConditions = patients.filter(p => p.chronicConditions?.length && p.chronicConditions[0] !== 'None').length;
             const withAllergies = patients.filter(p => p.allergies?.length && p.allergies[0] !== 'None known').length;
             const kpis = [
-              { label: 'Total Patients', value: patients.length, accent: '#2E9E7E', bg: 'rgba(46, 158, 126, 0.08)', border: 'rgba(46, 158, 126, 0.22)' },
+              { label: 'Total Patients', value: patients.length, accent: '#1B7FA8', bg: 'rgba(27, 127, 168, 0.08)', border: 'rgba(27, 127, 168, 0.22)' },
               { label: 'Visited · last 30d', value: visitedRecently, accent: '#1B7FA8', bg: 'rgba(27, 127, 168, 0.08)', border: 'rgba(27, 127, 168, 0.22)' },
               { label: 'Chronic Conditions', value: withConditions, accent: '#B8741C', bg: 'rgba(228, 168, 75, 0.10)', border: 'rgba(228, 168, 75, 0.28)' },
               { label: 'Allergies Flagged', value: withAllergies, accent: '#C44536', bg: 'rgba(196, 69, 54, 0.08)', border: 'rgba(196, 69, 54, 0.28)' },
             ];
             return (
-              <div className="grid gap-3 mb-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))' }}>
+              <div className="grid gap-3 mb-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', alignItems: 'stretch' }}>
                 {kpis.map(k => (
                   <div key={k.label} style={{
                     padding: '14px 16px', borderRadius: 10,
                     background: k.bg, border: `1px solid ${k.border}`,
+                    height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center',
                   }}>
                     <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: k.accent }}>
                       {k.label}
@@ -192,7 +193,7 @@ export default function PatientsPage() {
                               style={{
                                 background: isFemale
                                   ? 'linear-gradient(135deg, #D96E59 0%, #C44536 100%)'
-                                  : 'linear-gradient(135deg, #2E9E7E 0%, #1A3A3A 100%)',
+                                  : 'linear-gradient(135deg, #1B7FA8 0%, #1A3A3A 100%)',
                                 letterSpacing: 0.3,
                               }}
                               aria-hidden
@@ -220,7 +221,7 @@ export default function PatientsPage() {
                             <span
                               aria-hidden
                               className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                              style={{ background: isFemale ? '#D96E59' : '#2E9E7E' }}
+                              style={{ background: isFemale ? '#D96E59' : '#1B7FA8' }}
                             />
                             <span className="font-semibold">{age}y</span>
                             <span style={{ color: 'var(--text-muted)' }}>· {patient.gender[0]}</span>

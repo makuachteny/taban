@@ -63,27 +63,6 @@ function createHospital(id: string, overrides: Record<string, unknown> = {}) {
   };
 }
 
-function createPatient(id: string, overrides: Record<string, unknown> = {}) {
-  return {
-    _id: id,
-    type: 'patient',
-    firstName: 'Test',
-    lastName: 'Patient',
-    ...overrides,
-  };
-}
-
-function createReferral(id: string, overrides: Record<string, unknown> = {}) {
-  return {
-    _id: id,
-    type: 'referral',
-    patientId: 'patient-001',
-    fromHospitalId: 'hosp-001',
-    toHospitalId: 'hosp-002',
-    ...overrides,
-  };
-}
-
 function createDiseaseAlert(id: string, overrides: Record<string, unknown> = {}) {
   return {
     _id: id,
@@ -473,8 +452,6 @@ describe('dhis2-export-service', () => {
   });
 
   test('generateDHIS2Export includes per-facility births and deaths', async () => {
-    const { birthsDB, deathsDB } = require('@/lib/services/birth-service');
-    const { deathsDB: deathsDBService } = require('@/lib/services/death-service');
     const { hospitalsDB } = require('@/lib/db');
 
     // Mock the services to return data with facility IDs
@@ -528,6 +505,6 @@ describe('dhis2-export-service', () => {
     expect(parsed.period).toBe('202601');
     expect(parsed.orgUnit).toBe('SS');
     expect(parsed.dataValues).toBeInstanceOf(Array);
-    expect(parsed.dataValues.every((dv: any) => dv.dataElement && dv.category && dv.value !== undefined)).toBe(true);
+    expect(parsed.dataValues.every((dv: { dataElement?: unknown; category?: unknown; value?: unknown }) => dv.dataElement && dv.category && dv.value !== undefined)).toBe(true);
   });
 });

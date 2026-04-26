@@ -13,7 +13,7 @@ import { getMCHAnalytics } from '@/lib/services/mch-analytics-service';
 import { ancDB, birthsDB, deathsDB, immunizationsDB } from '@/lib/db';
 import type { ANCVisitDoc, BirthRegistrationDoc, DeathRegistrationDoc, ImmunizationDoc } from '@/lib/db-types';
 
-const makeANCVisit = (overrides: Record<string, unknown> = {}) => {
+const makeANCVisit = (overrides: Partial<ANCVisitDoc> = {}): ANCVisitDoc => {
   uuidCounter++;
   return {
     _id: `anc-${uuidCounter}-${Date.now()}`,
@@ -48,10 +48,10 @@ const makeANCVisit = (overrides: Record<string, unknown> = {}) => {
     birthPlan: { facility: 'Juba Teaching Hospital', transport: 'ambulance', bloodDonor: 'relative' },
     createdAt: new Date().toISOString(),
     ...overrides,
-  } as any;
+  } as ANCVisitDoc;
 };
 
-const makeBirth = (overrides: Record<string, unknown> = {}) => {
+const makeBirth = (overrides: Partial<BirthRegistrationDoc> = {}): BirthRegistrationDoc => {
   uuidCounter++;
   return {
     _id: `birth-${uuidCounter}-${Date.now()}`,
@@ -79,10 +79,10 @@ const makeBirth = (overrides: Record<string, unknown> = {}) => {
     certificateNumber: 'B-001',
     createdAt: new Date().toISOString(),
     ...overrides,
-  } as any;
+  } as BirthRegistrationDoc;
 };
 
-const makeDeath = (overrides: Record<string, unknown> = {}) => {
+const makeDeath = (overrides: Partial<DeathRegistrationDoc> = {}): DeathRegistrationDoc => {
   uuidCounter++;
   return {
     _id: `death-${uuidCounter}-${Date.now()}`,
@@ -117,10 +117,10 @@ const makeDeath = (overrides: Record<string, unknown> = {}) => {
     deathNotified: true,
     createdAt: new Date().toISOString(),
     ...overrides,
-  } as any;
+  } as DeathRegistrationDoc;
 };
 
-const makeImmunization = (overrides: Record<string, unknown> = {}) => {
+const makeImmunization = (overrides: Partial<ImmunizationDoc> = {}): ImmunizationDoc => {
   uuidCounter++;
   return {
     _id: `imm-${uuidCounter}-${Date.now()}`,
@@ -143,7 +143,7 @@ const makeImmunization = (overrides: Record<string, unknown> = {}) => {
     status: 'completed' as const,
     createdAt: new Date().toISOString(),
     ...overrides,
-  } as any;
+  } as ImmunizationDoc;
 };
 
 afterEach(async () => {
@@ -377,7 +377,7 @@ describe('mch-analytics-service', () => {
     const db = ancDB();
     await db.put(makeANCVisit({ motherId: 'mom-001', riskLevel: 'high', motherName: 'High Risk Mom' }));
     await db.put(makeANCVisit({ motherId: 'mom-002', riskLevel: 'moderate', motherName: 'Moderate Risk Mom' }));
-    await db.put(makeANCVisit({ motherId: 'mom-003', riskLevel: 'normal' }));
+    await db.put(makeANCVisit({ motherId: 'mom-003', riskLevel: 'low' }));
 
     const analytics = await getMCHAnalytics();
 
@@ -464,27 +464,27 @@ describe('mch-analytics-service', () => {
     // Create maternal deaths with various age groups
     await db.put(makeDeath({
       maternalDeath: true,
-      deceasedAge: 17, // <18
+      ageAtDeath: 17, // <18
       dateOfDeath: new Date().toISOString().slice(0, 10)
     }));
     await db.put(makeDeath({
       maternalDeath: true,
-      deceasedAge: 22, // 18-24
+      ageAtDeath: 22, // 18-24
       dateOfDeath: new Date().toISOString().slice(0, 10)
     }));
     await db.put(makeDeath({
       maternalDeath: true,
-      deceasedAge: 30, // 25-34
+      ageAtDeath: 30, // 25-34
       dateOfDeath: new Date().toISOString().slice(0, 10)
     }));
     await db.put(makeDeath({
       maternalDeath: true,
-      deceasedAge: 40, // 35-44
+      ageAtDeath: 40, // 35-44
       dateOfDeath: new Date().toISOString().slice(0, 10)
     }));
     await db.put(makeDeath({
       maternalDeath: true,
-      deceasedAge: 50, // 45+ (this hits line 198)
+      ageAtDeath: 50, // 45+ (this hits line 198)
       dateOfDeath: new Date().toISOString().slice(0, 10)
     }));
 
@@ -530,7 +530,7 @@ describe('mch-analytics-service', () => {
   test('ancCascade with missing state in byState', async () => {
     const db = ancDB();
     // Create ANC visit with no state
-    await db.put(makeANCVisit({ motherId: 'mom-no-state', state: undefined as any }));
+    await db.put(makeANCVisit({ motherId: 'mom-no-state', state: undefined }));
 
     const analytics = await getMCHAnalytics();
     // Should handle gracefully
@@ -557,19 +557,19 @@ describe('mch-analytics-service', () => {
   test('birthOutcomes with various delivery types and birth types', async () => {
     const db = birthsDB();
     await db.put(makeBirth({
-      deliveryType: 'vaginal',
-      birthType: 'singleton',
-      weight: 3000
+      deliveryType: 'normal',
+      birthType: 'single',
+      birthWeight: 3000
     }));
     await db.put(makeBirth({
       deliveryType: 'caesarean',
-      birthType: 'singleton',
-      weight: 2400 // Low birth weight
+      birthType: 'single',
+      birthWeight: 2400 // Low birth weight
     }));
     await db.put(makeBirth({
-      deliveryType: 'vaginal',
+      deliveryType: 'normal',
       birthType: 'twin',
-      weight: 2200 // Low birth weight
+      birthWeight: 2200 // Low birth weight
     }));
 
     const analytics = await getMCHAnalytics();
@@ -594,8 +594,8 @@ describe('mch-analytics-service', () => {
     // Death with no underlying or immediate cause (should fall back to 'Unknown')
     await deathDb.put(makeDeath({
       maternalDeath: true,
-      underlyingCause: undefined as any,
-      immediateCause: undefined as any,
+      underlyingCause: undefined,
+      immediateCause: undefined,
       dateOfDeath: '2026-01-01'
     }));
 
@@ -675,7 +675,7 @@ describe('mch-analytics-service', () => {
 
     // 100 children, 70 with all vaccines = ~70% coverage
     for (let i = 0; i < 100; i++) {
-      const status = i < 70 ? 'completed' : 'pending';
+      const status: 'completed' | 'scheduled' = i < 70 ? 'completed' : 'scheduled';
       for (const vaccine of ['BCG', 'OPV', 'Penta', 'PCV', 'Rota', 'Measles', 'Yellow Fever', 'Vitamin A']) {
         const doseNumber = vaccine === 'BCG' || vaccine === 'Yellow Fever' || vaccine === 'Vitamin A' ? 1 : 3;
         await db.put(makeImmunization({
@@ -711,7 +711,6 @@ describe('mch-analytics-service', () => {
   });
 
   test('maternal mortality directCauses with zero deaths (line 179 false branch)', async () => {
-    const deathDb = deathsDB();
     const birthDb = birthsDB();
 
     // Create births but NO maternal deaths
@@ -797,7 +796,7 @@ describe('mch-analytics-service', () => {
 
     // 100 children, 90 with all vaccines = 90% coverage
     for (let i = 0; i < 100; i++) {
-      const status = i < 90 ? 'completed' : 'pending';
+      const status: 'completed' | 'scheduled' = i < 90 ? 'completed' : 'scheduled';
       for (const vaccine of ['BCG', 'OPV', 'Penta', 'PCV', 'Rota', 'Measles', 'Yellow Fever', 'Vitamin A']) {
         const doseNumber = vaccine === 'BCG' || vaccine === 'Yellow Fever' || vaccine === 'Vitamin A' ? 1 : 3;
         await db.put(makeImmunization({

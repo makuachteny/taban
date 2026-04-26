@@ -26,7 +26,8 @@ import {
 
 afterEach(async () => { await teardownTestDBs(); uuidCounter = 0; });
 
-function validUnit(overrides: Record<string, unknown> = {}) {
+type AddUnitInput = Parameters<typeof addUnit>[0];
+function validUnit(overrides: Partial<AddUnitInput> = {}): AddUnitInput {
   return {
     unitId: 'UNIT-001',
     bloodGroup: 'O+' as const,
@@ -52,7 +53,7 @@ function validUnit(overrides: Record<string, unknown> = {}) {
 
 describe('Blood Bank Service', () => {
   test('adds a blood unit', async () => {
-    const unit = await addUnit(validUnit() as any);
+    const unit = await addUnit(validUnit());
     expect(unit._id).toMatch(/^blood-/);
     expect(unit.type).toBe('blood_bank');
     expect(unit.bloodGroup).toBe('O+');
@@ -61,9 +62,9 @@ describe('Blood Bank Service', () => {
   });
 
   test('retrieves all units sorted by expiry date', async () => {
-    await addUnit(validUnit({ expiryDate: '2026-06-01', unitId: 'U1' }) as any);
-    await addUnit(validUnit({ expiryDate: '2026-05-01', unitId: 'U2' }) as any);
-    await addUnit(validUnit({ expiryDate: '2026-05-15', unitId: 'U3' }) as any);
+    await addUnit(validUnit({ expiryDate: '2026-06-01', unitId: 'U1' }));
+    await addUnit(validUnit({ expiryDate: '2026-05-01', unitId: 'U2' }));
+    await addUnit(validUnit({ expiryDate: '2026-05-15', unitId: 'U3' }));
 
     const all = await getAllUnits();
     expect(all).toHaveLength(3);
@@ -72,16 +73,16 @@ describe('Blood Bank Service', () => {
   });
 
   test('getAllUnits with scope', async () => {
-    await addUnit(validUnit() as any);
-    const all = await getAllUnits({ role: 'nurse' as any });
+    await addUnit(validUnit());
+    const all = await getAllUnits({ role: 'nurse' });
     expect(Array.isArray(all)).toBe(true);
   });
 
   test('getAvailableUnits returns only available non-expired units', async () => {
-    await addUnit(validUnit({ status: 'available', expiryDate: '2026-06-01' }) as any);
-    await addUnit(validUnit({ status: 'reserved', expiryDate: '2026-06-01', unitId: 'U2' }) as any);
+    await addUnit(validUnit({ status: 'available', expiryDate: '2026-06-01' }));
+    await addUnit(validUnit({ status: 'reserved', expiryDate: '2026-06-01', unitId: 'U2' }));
     // Expired unit
-    await addUnit(validUnit({ status: 'available', expiryDate: '2020-01-01', unitId: 'U3' }) as any);
+    await addUnit(validUnit({ status: 'available', expiryDate: '2020-01-01', unitId: 'U3' }));
 
     const available = await getAvailableUnits();
     expect(available).toHaveLength(1);
@@ -89,8 +90,8 @@ describe('Blood Bank Service', () => {
   });
 
   test('getAvailableUnits filters by blood group', async () => {
-    await addUnit(validUnit({ bloodGroup: 'O+' }) as any);
-    await addUnit(validUnit({ bloodGroup: 'A+', unitId: 'U2' }) as any);
+    await addUnit(validUnit({ bloodGroup: 'O+' }));
+    await addUnit(validUnit({ bloodGroup: 'A+', unitId: 'U2' }));
 
     const oPositive = await getAvailableUnits('O+');
     expect(oPositive).toHaveLength(1);
@@ -98,15 +99,15 @@ describe('Blood Bank Service', () => {
   });
 
   test('getAvailableUnits filters by facility', async () => {
-    await addUnit(validUnit({ facilityId: 'hosp-001' }) as any);
-    await addUnit(validUnit({ facilityId: 'hosp-002', facilityName: 'Other', unitId: 'U2' }) as any);
+    await addUnit(validUnit({ facilityId: 'hosp-001' }));
+    await addUnit(validUnit({ facilityId: 'hosp-002', facilityName: 'Other', unitId: 'U2' }));
 
     const result = await getAvailableUnits(undefined, 'hosp-001');
     expect(result).toHaveLength(1);
   });
 
   test('updates a unit', async () => {
-    const unit = await addUnit(validUnit() as any);
+    const unit = await addUnit(validUnit());
     const updated = await updateUnit(unit._id, { volume: 400 });
     expect(updated).not.toBeNull();
     expect(updated!.volume).toBe(400);
@@ -119,7 +120,7 @@ describe('Blood Bank Service', () => {
   });
 
   test('reserves a unit for a patient', async () => {
-    const unit = await addUnit(validUnit() as any);
+    const unit = await addUnit(validUnit());
     const reserved = await reserveUnit(unit._id, 'patient-001');
     expect(reserved).not.toBeNull();
     expect(reserved!.status).toBe('reserved');
@@ -127,7 +128,7 @@ describe('Blood Bank Service', () => {
   });
 
   test('reserve returns null for already-reserved unit', async () => {
-    const unit = await addUnit(validUnit({ status: 'reserved' }) as any);
+    const unit = await addUnit(validUnit({ status: 'reserved' }));
     const result = await reserveUnit(unit._id, 'patient-002');
     // Should return null because status is not 'available'
     expect(result).toBeNull();
@@ -139,7 +140,7 @@ describe('Blood Bank Service', () => {
   });
 
   test('crossmatch sets compatible status', async () => {
-    const unit = await addUnit(validUnit() as any);
+    const unit = await addUnit(validUnit());
     const result = await crossmatchUnit(unit._id, 'compatible');
     expect(result).not.toBeNull();
     expect(result!.status).toBe('crossmatched');
@@ -147,7 +148,7 @@ describe('Blood Bank Service', () => {
   });
 
   test('crossmatch incompatible reverts to available', async () => {
-    const unit = await addUnit(validUnit() as any);
+    const unit = await addUnit(validUnit());
     const result = await crossmatchUnit(unit._id, 'incompatible');
     expect(result).not.toBeNull();
     expect(result!.status).toBe('available');
@@ -160,7 +161,7 @@ describe('Blood Bank Service', () => {
   });
 
   test('records a transfusion', async () => {
-    const unit = await addUnit(validUnit() as any);
+    const unit = await addUnit(validUnit());
     const result = await recordTransfusion(unit._id, 'patient-001', 'nurse-001');
     expect(result).not.toBeNull();
     expect(result!.status).toBe('transfused');
@@ -175,7 +176,7 @@ describe('Blood Bank Service', () => {
   });
 
   test('discards a unit with reason', async () => {
-    const unit = await addUnit(validUnit() as any);
+    const unit = await addUnit(validUnit());
     const result = await discardUnit(unit._id, 'Expired - not used in time');
     expect(result).not.toBeNull();
     expect(result!.status).toBe('discarded');
@@ -188,12 +189,12 @@ describe('Blood Bank Service', () => {
   });
 
   test('getBloodInventorySummary returns complete breakdown', async () => {
-    await addUnit(validUnit({ bloodGroup: 'O+', status: 'available', expiryDate: '2026-06-01' }) as any);
-    await addUnit(validUnit({ bloodGroup: 'O+', status: 'reserved', expiryDate: '2026-06-01', unitId: 'U2' }) as any);
-    await addUnit(validUnit({ bloodGroup: 'A+', status: 'available', expiryDate: '2026-06-01', unitId: 'U3' }) as any);
-    await addUnit(validUnit({ bloodGroup: 'O-', status: 'transfused', expiryDate: '2026-06-01', unitId: 'U4' }) as any);
+    await addUnit(validUnit({ bloodGroup: 'O+', status: 'available', expiryDate: '2026-06-01' }));
+    await addUnit(validUnit({ bloodGroup: 'O+', status: 'reserved', expiryDate: '2026-06-01', unitId: 'U2' }));
+    await addUnit(validUnit({ bloodGroup: 'A+', status: 'available', expiryDate: '2026-06-01', unitId: 'U3' }));
+    await addUnit(validUnit({ bloodGroup: 'O-', status: 'transfused', expiryDate: '2026-06-01', unitId: 'U4' }));
     // Expired unit
-    await addUnit(validUnit({ bloodGroup: 'B+', status: 'available', expiryDate: '2020-01-01', unitId: 'U5' }) as any);
+    await addUnit(validUnit({ bloodGroup: 'B+', status: 'available', expiryDate: '2020-01-01', unitId: 'U5' }));
 
     const summary = await getBloodInventorySummary();
     expect(summary.totalUnits).toBe(5);
@@ -207,8 +208,8 @@ describe('Blood Bank Service', () => {
   });
 
   test('getBloodInventorySummary filters by facility', async () => {
-    await addUnit(validUnit({ facilityId: 'hosp-001' }) as any);
-    await addUnit(validUnit({ facilityId: 'hosp-002', facilityName: 'Other', unitId: 'U2' }) as any);
+    await addUnit(validUnit({ facilityId: 'hosp-001' }));
+    await addUnit(validUnit({ facilityId: 'hosp-002', facilityName: 'Other', unitId: 'U2' }));
 
     const summary = await getBloodInventorySummary('hosp-001');
     expect(summary.totalUnits).toBe(1);
@@ -222,9 +223,9 @@ describe('Blood Bank Service', () => {
     const nextMonth = new Date();
     nextMonth.setDate(nextMonth.getDate() + 30);
 
-    await addUnit(validUnit({ expiryDate: tomorrow.toISOString().slice(0, 10), unitId: 'U1' }) as any);
-    await addUnit(validUnit({ expiryDate: nextWeek.toISOString().slice(0, 10), unitId: 'U2' }) as any);
-    await addUnit(validUnit({ expiryDate: nextMonth.toISOString().slice(0, 10), unitId: 'U3' }) as any);
+    await addUnit(validUnit({ expiryDate: tomorrow.toISOString().slice(0, 10), unitId: 'U1' }));
+    await addUnit(validUnit({ expiryDate: nextWeek.toISOString().slice(0, 10), unitId: 'U2' }));
+    await addUnit(validUnit({ expiryDate: nextMonth.toISOString().slice(0, 10), unitId: 'U3' }));
 
     const expiring = await getExpiringUnits(7);
     expect(expiring).toHaveLength(2); // tomorrow and next week
@@ -234,9 +235,9 @@ describe('Blood Bank Service', () => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    await addUnit(validUnit({ expiryDate: tomorrow.toISOString().slice(0, 10), status: 'reserved', unitId: 'U1' }) as any);
-    await addUnit(validUnit({ expiryDate: '2020-01-01', status: 'available', unitId: 'U2' }) as any);
-    await addUnit(validUnit({ expiryDate: tomorrow.toISOString().slice(0, 10), status: 'available', unitId: 'U3' }) as any);
+    await addUnit(validUnit({ expiryDate: tomorrow.toISOString().slice(0, 10), status: 'reserved', unitId: 'U1' }));
+    await addUnit(validUnit({ expiryDate: '2020-01-01', status: 'available', unitId: 'U2' }));
+    await addUnit(validUnit({ expiryDate: tomorrow.toISOString().slice(0, 10), status: 'available', unitId: 'U3' }));
 
     const expiring = await getExpiringUnits(7);
     expect(expiring).toHaveLength(1);
@@ -255,7 +256,7 @@ describe('Blood Bank Service', () => {
   });
 
   test('full workflow: add → reserve → crossmatch → transfuse', async () => {
-    const unit = await addUnit(validUnit() as any);
+    const unit = await addUnit(validUnit());
     expect(unit.status).toBe('available');
 
     const reserved = await reserveUnit(unit._id, 'patient-001');
@@ -280,8 +281,8 @@ describe('Blood Bank Service', () => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    await addUnit(validUnit({ expiryDate: tomorrow.toISOString().slice(0, 10), facilityId: 'hosp-001', unitId: 'U1' }) as any);
-    await addUnit(validUnit({ expiryDate: tomorrow.toISOString().slice(0, 10), facilityId: 'hosp-002', facilityName: 'Other', unitId: 'U2' }) as any);
+    await addUnit(validUnit({ expiryDate: tomorrow.toISOString().slice(0, 10), facilityId: 'hosp-001', unitId: 'U1' }));
+    await addUnit(validUnit({ expiryDate: tomorrow.toISOString().slice(0, 10), facilityId: 'hosp-002', facilityName: 'Other', unitId: 'U2' }));
 
     const expiring = await getExpiringUnits(7, 'hosp-001');
     expect(expiring).toHaveLength(1);
@@ -289,15 +290,15 @@ describe('Blood Bank Service', () => {
   });
 
   test('crossmatch with pending status keeps available', async () => {
-    const unit = await addUnit(validUnit() as any);
+    const unit = await addUnit(validUnit());
     const result = await crossmatchUnit(unit._id, 'pending');
     expect(result).not.toBeNull();
     expect(result!.crossmatchResult).toBe('pending');
   });
 
   test('getBloodInventorySummary with crossmatched units', async () => {
-    await addUnit(validUnit({ status: 'crossmatched', expiryDate: '2026-06-01' }) as any);
-    await addUnit(validUnit({ status: 'available', expiryDate: '2026-06-01', unitId: 'U2' }) as any);
+    await addUnit(validUnit({ status: 'crossmatched', expiryDate: '2026-06-01' }));
+    await addUnit(validUnit({ status: 'available', expiryDate: '2026-06-01', unitId: 'U2' }));
 
     const summary = await getBloodInventorySummary();
     expect(summary.crossmatchedUnits).toBe(1);
@@ -316,14 +317,14 @@ describe('Blood Bank Service', () => {
       facilityId: 'hosp-001',
       unitId: 'U-expire-001',
       status: 'available',
-    }) as any);
+    }));
 
     await addUnit(validUnit({
       expiryDate: tomorrowStr,
       facilityId: 'hosp-002',
       unitId: 'U-expire-002',
       status: 'available',
-    }) as any);
+    }));
 
     // Get expiring units for hosp-001 only
     const expiring = await getExpiringUnits(7, 'hosp-001');

@@ -20,7 +20,9 @@ import {
 
 afterEach(async () => { await teardownTestDBs(); uuidCounter = 0; });
 
-function validRx(overrides: Record<string, unknown> = {}) {
+type CreatePrescriptionInput = Parameters<typeof createPrescription>[0];
+
+function validRx(overrides: Partial<CreatePrescriptionInput> = {}): CreatePrescriptionInput {
   return {
     patientId: 'patient-001',
     patientName: 'Deng Mabior',
@@ -39,7 +41,7 @@ function validRx(overrides: Record<string, unknown> = {}) {
 
 describe('Prescription Service', () => {
   test('creates a prescription with valid data', async () => {
-    const { prescription: rx } = await createPrescription(validRx() as any);
+    const { prescription: rx } = await createPrescription(validRx());
     expect(rx._id).toMatch(/^rx-/);
     expect(rx.type).toBe('prescription');
     expect(rx.medication).toBe('Artesunate');
@@ -72,7 +74,7 @@ describe('Prescription Service', () => {
   });
 
   test('returns interaction warnings on creation', async () => {
-    const { interactionWarnings } = await createPrescription(validRx() as any);
+    const { interactionWarnings } = await createPrescription(validRx());
     expect(interactionWarnings).toBeDefined();
     // Single medication with no prior Rx — should have no interactions
     expect(interactionWarnings!.hasInteractions).toBe(false);
@@ -83,12 +85,12 @@ describe('Prescription Service', () => {
     await createPrescription(validRx({
       medication: 'Gentamicin',
       status: 'pending',
-    }) as any);
+    }));
 
     // Create second prescription (Furosemide — serious interaction with Gentamicin)
     const { interactionWarnings } = await createPrescription(validRx({
       medication: 'Furosemide',
-    }) as any);
+    }));
 
     expect(interactionWarnings).not.toBeNull();
     expect(interactionWarnings!.hasInteractions).toBe(true);
@@ -100,7 +102,7 @@ describe('Prescription Service', () => {
     await createPrescription(validRx({
       medication: 'Warfarin',
       status: 'pending',
-    }) as any);
+    }));
 
     const result = await checkPrescriptionInteractions('patient-001', 'Metronidazole');
     expect(result.hasInteractions).toBe(true);
@@ -111,7 +113,7 @@ describe('Prescription Service', () => {
     await createPrescription(validRx({
       medication: 'Paracetamol',
       status: 'pending',
-    }) as any);
+    }));
 
     const result = await checkPrescriptionInteractions('patient-001', 'Amoxicillin');
     expect(result.hasInteractions).toBe(false);
@@ -119,57 +121,57 @@ describe('Prescription Service', () => {
 
   test('rejects prescription with missing medication', async () => {
     await expect(
-      createPrescription(validRx({ medication: '' }) as any)
+      createPrescription(validRx({ medication: '' }))
     ).rejects.toThrow();
   });
 
   test('rejects prescription with missing dose', async () => {
     await expect(
-      createPrescription(validRx({ dose: '' }) as any)
+      createPrescription(validRx({ dose: '' }))
     ).rejects.toThrow();
   });
 
   test('rejects prescription with missing frequency', async () => {
     await expect(
-      createPrescription(validRx({ frequency: '' }) as any)
+      createPrescription(validRx({ frequency: '' }))
     ).rejects.toThrow();
   });
 
   test('rejects prescription with missing patientId', async () => {
     await expect(
-      createPrescription(validRx({ patientId: '' }) as any)
+      createPrescription(validRx({ patientId: '' }))
     ).rejects.toThrow();
   });
 
   test('retrieves all prescriptions sorted by date', async () => {
-    await createPrescription(validRx() as any);
+    await createPrescription(validRx());
     await createPrescription(validRx({
       patientId: 'patient-002',
       patientName: 'Achol Deng',
       medication: 'Amoxicillin',
       dose: '500mg',
-    }) as any);
+    }));
 
     const all = await getAllPrescriptions();
     expect(all).toHaveLength(2);
   });
 
   test('retrieves prescriptions by patient', async () => {
-    await createPrescription(validRx() as any);
+    await createPrescription(validRx());
     await createPrescription(validRx({
       medication: 'Paracetamol', dose: '1g',
-    }) as any);
+    }));
     await createPrescription(validRx({
       patientId: 'patient-002', patientName: 'Other',
       medication: 'Metformin', dose: '500mg',
-    }) as any);
+    }));
 
     const p1Rx = await getPrescriptionsByPatient('patient-001');
     expect(p1Rx).toHaveLength(2);
   });
 
   test('updates a prescription', async () => {
-    const { prescription: rx } = await createPrescription(validRx() as any);
+    const { prescription: rx } = await createPrescription(validRx());
     const updated = await updatePrescription(rx._id, {
       dose: '400mg',
       frequency: 'TID (three times daily)',
@@ -186,7 +188,7 @@ describe('Prescription Service', () => {
   });
 
   test('dispenses a prescription', async () => {
-    const { prescription: rx } = await createPrescription(validRx() as any);
+    const { prescription: rx } = await createPrescription(validRx());
     const dispensed = await dispensePrescription(rx._id, 'pharmacist-001');
     expect(dispensed).not.toBeNull();
     expect(dispensed!.status).toBe('dispensed');
@@ -199,8 +201,8 @@ describe('Prescription Service', () => {
   });
 
   test('multiple prescriptions for same patient track independently', async () => {
-    const { prescription: rx1 } = await createPrescription(validRx({ medication: 'Artesunate' }) as any);
-    await createPrescription(validRx({ medication: 'Paracetamol', dose: '1g' }) as any);
+    const { prescription: rx1 } = await createPrescription(validRx({ medication: 'Artesunate' }));
+    await createPrescription(validRx({ medication: 'Paracetamol', dose: '1g' }));
 
     await dispensePrescription(rx1._id);
 
@@ -212,18 +214,18 @@ describe('Prescription Service', () => {
   });
 
   test('getAllPrescriptions with scope filters results', async () => {
-    await createPrescription(validRx() as any);
+    await createPrescription(validRx());
     const allNoScope = await getAllPrescriptions();
     expect(allNoScope.length).toBeGreaterThanOrEqual(1);
 
-    const allWithScope = await getAllPrescriptions({ role: 'nurse' as any });
+    const allWithScope = await getAllPrescriptions({ role: 'nurse' } as Parameters<typeof getAllPrescriptions>[0]);
     expect(Array.isArray(allWithScope)).toBe(true);
   });
 
   test('getAllPrescriptions handles empty createdAt for sorting', async () => {
     await createPrescription(validRx({
       medication: 'Artesunate',
-    }) as any);
+    }));
 
     const all = await getAllPrescriptions();
     expect(all.length).toBeGreaterThanOrEqual(1);
@@ -234,7 +236,7 @@ describe('Prescription Service', () => {
     // This tests the catch block at line 73
     const { prescription: rx } = await createPrescription(validRx({
       medication: 'Artesunate',
-    }) as any);
+    }));
     expect(rx._id).toBeDefined();
     expect(rx.medication).toBe('Artesunate');
   });
@@ -244,7 +246,7 @@ describe('Prescription Service', () => {
     await createPrescription(validRx({
       medication: 'Warfarin',
       status: 'dispensed',
-    }) as any);
+    }));
 
     // When checking interactions, only pending Rx are considered
     const result = await checkPrescriptionInteractions('patient-001', 'Metronidazole');
@@ -256,12 +258,12 @@ describe('Prescription Service', () => {
     await createPrescription(validRx({
       medication: 'Warfarin',
       status: 'pending',
-    }) as any);
+    }));
 
     const { interactionWarnings } = await createPrescription(validRx({
       medication: 'Metronidazole',
       prescribedBy: 'Dr. Test',
-    }) as any);
+    }));
 
     expect(interactionWarnings!.hasInteractions).toBe(true);
     expect(interactionWarnings!.highestSeverity).toBe('contraindicated');

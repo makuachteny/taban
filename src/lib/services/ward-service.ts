@@ -5,7 +5,7 @@
  * Applicable to Level 3+ facilities (County, State, National hospitals).
  */
 import { getDB } from '../db';
-import type { WardDoc, BedDoc, AdmissionDoc, AdmissionStatus, BedStatus } from '../db-types-ward';
+import type { WardDoc, BedDoc, AdmissionDoc, BedStatus } from '../db-types-ward';
 import type { DataScope } from './data-scope';
 import { filterByScope } from './data-scope';
 import { v4 as uuidv4 } from 'uuid';

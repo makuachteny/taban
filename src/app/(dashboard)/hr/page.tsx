@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import TopBar from '@/components/TopBar';
 import PageHeader from '@/components/PageHeader';
 import {
-  Users, Plus, X, Calendar, CheckCircle2, AlertCircle, Clock, Wallet, Trash2,
+  Users, Plus, X, Calendar, CheckCircle2, AlertCircle, Clock, Trash2,
 } from '@/components/icons/lucide';
 import { useApp } from '@/lib/context';
 import { useUsers } from '@/lib/hooks/useUsers';
@@ -299,9 +299,9 @@ export default function HRPage() {
 
         {/* Summary KPIs (leave-focused — stays useful across tabs) */}
         {leaveSummary && (
-          <div className="grid gap-3 mb-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}>
+          <div className="grid gap-3 mb-4" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', alignItems: 'stretch' }}>
             {[
-              { label: 'Active Staff', value: facilityUsers.length, accent: 'var(--accent-primary)', bg: 'rgba(46, 158, 126, 0.08)', border: 'rgba(46, 158, 126, 0.22)' },
+              { label: 'Active Staff', value: facilityUsers.length, accent: 'var(--accent-primary)', bg: 'rgba(27, 127, 168, 0.08)', border: 'rgba(27, 127, 168, 0.22)' },
               { label: 'Pending Leave', value: leaveSummary.pending, accent: '#B8741C', bg: 'rgba(228, 168, 75, 0.12)', border: 'rgba(228, 168, 75, 0.30)' },
               { label: 'Approved Upcoming', value: leaveSummary.upcoming, accent: '#1B7FA8', bg: 'rgba(27, 127, 168, 0.10)', border: 'rgba(27, 127, 168, 0.26)' },
               { label: 'Days Off (this month)', value: leaveSummary.daysApprovedThisMonth, accent: '#15795C', bg: 'rgba(27, 158, 119, 0.10)', border: 'rgba(27, 158, 119, 0.26)' },
@@ -367,7 +367,7 @@ export default function HRPage() {
                     <tr key={u._id}>
                       <td>
                         <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0" style={{ background: 'linear-gradient(135deg, #2E9E7E 0%, #1A3A3A 100%)' }}>{initials || '?'}</div>
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0" style={{ background: 'linear-gradient(135deg, #1B7FA8 0%, #1A3A3A 100%)' }}>{initials || '?'}</div>
                           <div>
                             <div className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>{u.name}</div>
                             <div className="text-[11px]" style={{ color: 'var(--text-muted)' }}>@{u.username}</div>

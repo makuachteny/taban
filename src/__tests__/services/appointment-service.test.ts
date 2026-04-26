@@ -30,7 +30,8 @@ const today = new Date().toISOString().slice(0, 10);
 const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
 const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
 
-function validAppointment(overrides: Record<string, unknown> = {}) {
+type AppointmentInput = Parameters<typeof createAppointment>[0];
+function validAppointment(overrides: Partial<AppointmentInput> = {}): AppointmentInput {
   return {
     patientId: 'patient-001',
     patientName: 'Achol Deng',
@@ -58,7 +59,7 @@ function validAppointment(overrides: Record<string, unknown> = {}) {
 
 describe('Appointment Service', () => {
   test('creates an appointment with valid data', async () => {
-    const apt = await createAppointment(validAppointment() as any);
+    const apt = await createAppointment(validAppointment());
     expect(apt._id).toMatch(/^apt-/);
     expect(apt.type).toBe('appointment');
     expect(apt.patientName).toBe('Achol Deng');
@@ -75,19 +76,19 @@ describe('Appointment Service', () => {
 
   test('getAppointmentStats calculates rates when appointments exist (lines 180-181 true branch)', async () => {
     // Tests the true branch of the ternary
-    await createAppointment(validAppointment({ status: 'completed' }) as any);
+    await createAppointment(validAppointment({ status: 'completed' }));
     await createAppointment(validAppointment({
       patientId: 'patient-002',
       patientName: 'Nyabol',
       appointmentTime: '10:00',
       status: 'no_show',
-    }) as any);
+    }));
     await createAppointment(validAppointment({
       patientId: 'patient-003',
       patientName: 'Ayen',
       appointmentTime: '11:00',
       status: 'scheduled',
-    }) as any);
+    }));
 
     const stats = await getAppointmentStats();
     expect(stats.completionRate).toBeGreaterThanOrEqual(0);
@@ -115,35 +116,35 @@ describe('Appointment Service', () => {
   });
 
   test('detects provider scheduling conflicts', async () => {
-    await createAppointment(validAppointment() as any);
+    await createAppointment(validAppointment());
     // Same provider, same time = conflict
     await expect(
       createAppointment(validAppointment({
         patientId: 'patient-002',
         patientName: 'Nyabol Kuol',
-      }) as any)
+      }))
     ).rejects.toThrow(/conflict/i);
   });
 
   test('allows non-overlapping appointments for same provider', async () => {
-    await createAppointment(validAppointment() as any);
+    await createAppointment(validAppointment());
     const apt2 = await createAppointment(validAppointment({
       patientId: 'patient-002',
       patientName: 'Nyabol Kuol',
       appointmentTime: '10:00',
-    }) as any);
+    }));
     expect(apt2._id).toBeDefined();
   });
 
   test('retrieves appointments by date', async () => {
-    await createAppointment(validAppointment() as any);
+    await createAppointment(validAppointment());
     await createAppointment(validAppointment({
       patientId: 'patient-002',
       patientName: 'Deng Mabior',
       appointmentTime: '11:00',
       appointmentDate: yesterday,
       providerId: 'dr-002',
-    }) as any);
+    }));
 
     const tomorrowApts = await getAppointmentsByDate(tomorrow);
     expect(tomorrowApts).toHaveLength(1);
@@ -151,26 +152,26 @@ describe('Appointment Service', () => {
   });
 
   test('retrieves appointments by patient', async () => {
-    await createAppointment(validAppointment() as any);
+    await createAppointment(validAppointment());
     await createAppointment(validAppointment({
       appointmentDate: new Date(Date.now() + 172800000).toISOString().slice(0, 10),
       appointmentTime: '14:00',
       reason: 'Lab results review',
-    }) as any);
+    }));
 
     const patientApts = await getAppointmentsByPatient('patient-001');
     expect(patientApts).toHaveLength(2);
   });
 
   test('retrieves appointments by provider', async () => {
-    await createAppointment(validAppointment() as any);
+    await createAppointment(validAppointment());
     await createAppointment(validAppointment({
       patientId: 'patient-002',
       patientName: 'Nyabol',
       providerId: 'dr-002',
       providerName: 'Dr. Atem',
       appointmentTime: '10:00',
-    }) as any);
+    }));
 
     const drKuol = await getAppointmentsByProvider('dr-001');
     expect(drKuol).toHaveLength(1);
@@ -178,14 +179,14 @@ describe('Appointment Service', () => {
   });
 
   test('getUpcomingAppointments excludes past', async () => {
-    await createAppointment(validAppointment() as any); // future
+    await createAppointment(validAppointment()); // future
     await createAppointment(validAppointment({
       patientId: 'patient-002',
       patientName: 'Past Patient',
       appointmentDate: yesterday,
       appointmentTime: '08:00',
       providerId: 'dr-002',
-    }) as any);
+    }));
 
     const upcoming = await getUpcomingAppointments();
     expect(upcoming.length).toBeGreaterThanOrEqual(1);
@@ -193,7 +194,7 @@ describe('Appointment Service', () => {
   });
 
   test('updates appointment status to checked_in', async () => {
-    const apt = await createAppointment(validAppointment() as any);
+    const apt = await createAppointment(validAppointment());
     const updated = await updateAppointmentStatus(apt._id, 'checked_in');
     expect(updated).not.toBeNull();
     expect(updated!.status).toBe('checked_in');
@@ -201,7 +202,7 @@ describe('Appointment Service', () => {
   });
 
   test('updates appointment status to completed', async () => {
-    const apt = await createAppointment(validAppointment() as any);
+    const apt = await createAppointment(validAppointment());
     const updated = await updateAppointmentStatus(apt._id, 'completed');
     expect(updated).not.toBeNull();
     expect(updated!.status).toBe('completed');
@@ -209,7 +210,7 @@ describe('Appointment Service', () => {
   });
 
   test('cancels appointment with reason', async () => {
-    const apt = await createAppointment(validAppointment() as any);
+    const apt = await createAppointment(validAppointment());
     const cancelled = await updateAppointmentStatus(apt._id, 'cancelled', {
       cancelledReason: 'Patient requested',
       cancelledBy: 'staff-001',
@@ -219,7 +220,7 @@ describe('Appointment Service', () => {
   });
 
   test('reschedules appointment', async () => {
-    const apt = await createAppointment(validAppointment() as any);
+    const apt = await createAppointment(validAppointment());
     const newDate = new Date(Date.now() + 259200000).toISOString().slice(0, 10);
     const rescheduled = await rescheduleAppointment(apt._id, newDate, '15:00');
     expect(rescheduled).not.toBeNull();
@@ -232,19 +233,19 @@ describe('Appointment Service', () => {
     await createAppointment(validAppointment({
       appointmentDate: today,
       appointmentTime: '08:00',
-    }) as any);
+    }));
     await createAppointment(validAppointment({
       patientId: 'patient-002',
       patientName: 'Deng',
       appointmentDate: today,
       appointmentTime: '09:00',
-    }) as any);
+    }));
     const apt3 = await createAppointment(validAppointment({
       patientId: 'patient-003',
       patientName: 'Nyabol',
       appointmentDate: today,
       appointmentTime: '10:00',
-    }) as any);
+    }));
     await updateAppointmentStatus(apt3._id, 'completed');
 
     const stats = await getAppointmentStats();
@@ -254,20 +255,20 @@ describe('Appointment Service', () => {
   });
 
   test('getAllAppointments with scope parameter', async () => {
-    await createAppointment(validAppointment() as any);
-    const allWithScope = await getAllAppointments({ role: 'nurse' as any });
+    await createAppointment(validAppointment());
+    const allWithScope = await getAllAppointments({ role: 'nurse' });
     expect(Array.isArray(allWithScope)).toBe(true);
   });
 
   test('getAppointmentsByFacility returns facility appointments', async () => {
-    await createAppointment(validAppointment() as any);
+    await createAppointment(validAppointment());
     await createAppointment(validAppointment({
       patientId: 'patient-002',
       patientName: 'Other Patient',
       facilityId: 'hosp-002',
       facilityName: 'Other Hospital',
       providerId: 'dr-002',
-    }) as any);
+    }));
 
     const tabanHospApts = await getAppointmentsByFacility('hosp-001');
     expect(tabanHospApts).toHaveLength(1);
@@ -278,14 +279,14 @@ describe('Appointment Service', () => {
     await createAppointment(validAppointment({
       appointmentDate: today,
       appointmentTime: '08:00',
-    }) as any);
+    }));
     await createAppointment(validAppointment({
       patientId: 'patient-002',
       patientName: 'Future Patient',
       appointmentDate: tomorrow,
       appointmentTime: '10:00',
       providerId: 'dr-002',
-    }) as any);
+    }));
 
     const todayApts = await getTodaysAppointments();
     expect(todayApts).toHaveLength(1);
@@ -296,14 +297,14 @@ describe('Appointment Service', () => {
     await createAppointment(validAppointment({
       appointmentDate: today,
       appointmentTime: '08:00',
-    }) as any);
+    }));
 
-    const todayApts = await getTodaysAppointments({ role: 'doctor' as any });
+    const todayApts = await getTodaysAppointments({ role: 'doctor' });
     expect(Array.isArray(todayApts)).toBe(true);
   });
 
   test('updateAppointment updates appointment fields', async () => {
-    const apt = await createAppointment(validAppointment() as any);
+    const apt = await createAppointment(validAppointment());
     const updated = await updateAppointment(apt._id, {
       reason: 'Emergency consultation',
       priority: 'urgent',
@@ -333,8 +334,8 @@ describe('Appointment Service', () => {
   });
 
   test('getUpcomingAppointments with scope filters results', async () => {
-    await createAppointment(validAppointment() as any);
-    const upcoming = await getUpcomingAppointments({ role: 'nurse' as any });
+    await createAppointment(validAppointment());
+    const upcoming = await getUpcomingAppointments({ role: 'nurse' });
     expect(Array.isArray(upcoming)).toBe(true);
   });
 
@@ -342,27 +343,27 @@ describe('Appointment Service', () => {
     await createAppointment(validAppointment({
       appointmentDate: today,
       appointmentTime: '08:00',
-    }) as any);
-    const todayApts = await getAppointmentsByDate(today, { role: 'doctor' as any });
+    }));
+    const todayApts = await getAppointmentsByDate(today, { role: 'doctor' });
     expect(Array.isArray(todayApts)).toBe(true);
   });
 
   test('appointment status transitions: scheduled to in_progress', async () => {
-    const apt = await createAppointment(validAppointment() as any);
+    const apt = await createAppointment(validAppointment());
     const updated = await updateAppointmentStatus(apt._id, 'in_progress');
     expect(updated).not.toBeNull();
     expect(updated!.status).toBe('in_progress');
   });
 
   test('appointment status transitions: scheduled to confirmed', async () => {
-    const apt = await createAppointment(validAppointment() as any);
+    const apt = await createAppointment(validAppointment());
     const updated = await updateAppointmentStatus(apt._id, 'confirmed');
     expect(updated).not.toBeNull();
     expect(updated!.status).toBe('confirmed');
   });
 
   test('appointment status transitions: scheduled to no_show', async () => {
-    const apt = await createAppointment(validAppointment() as any);
+    const apt = await createAppointment(validAppointment());
     const updated = await updateAppointmentStatus(apt._id, 'no_show');
     expect(updated).not.toBeNull();
     expect(updated!.status).toBe('no_show');
@@ -374,13 +375,13 @@ describe('Appointment Service', () => {
       appointmentTime: '14:00',
       providerId: 'dr-002',
       patientId: 'pat-100',
-    }) as any);
+    }));
     const apt2 = await createAppointment(validAppointment({
       appointmentDate: tomorrow,
       appointmentTime: '09:00',
       providerId: 'dr-003',
       patientId: 'pat-101',
-    }) as any);
+    }));
 
     const all = await getAllAppointments();
     // apt2 (09:00) should come before apt1 (14:00)
@@ -393,13 +394,13 @@ describe('Appointment Service', () => {
     await createAppointment(validAppointment({
       appointmentType: 'general',
       department: 'Outpatient',
-    }) as any);
+    }));
     await createAppointment(validAppointment({
       patientId: 'patient-102',
       appointmentType: 'follow_up',
       department: 'Surgery',
       providerId: 'dr-004',
-    }) as any);
+    }));
 
     const stats = await getAppointmentStats();
     expect(stats.byType).toBeDefined();

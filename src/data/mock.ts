@@ -1703,8 +1703,30 @@ const commonAllergies = ['Penicillin', 'Sulfa drugs', 'Chloroquine', 'Aspirin', 
 const chronicConditionsList = ['HIV/AIDS', 'Tuberculosis', 'Hypertension', 'Diabetes Type 2', 'Sickle Cell Disease', 'Epilepsy', 'Asthma', 'Hepatitis B', 'Rheumatic Heart Disease', 'None'];
 const relationships = ['Spouse', 'Parent', 'Child', 'Sibling', 'Uncle', 'Aunt', 'Cousin', 'Friend'];
 
+// Portrait photos of real African people, bundled locally in public/assets/patients.
+// Grouped by gender so the gender-based deterministic pick below never
+// assigns a visibly male photo to a female patient.
+const MALE_PATIENT_PHOTOS = [
+  '/assets/patients/founder-teny.jpg',
+  '/assets/patients/founder-toye.jpg',
+  '/assets/patients/founder-ekow.jpg',
+  '/assets/patients/doctor-tablet-review.jpg',
+  '/assets/patients/doctor-writing-notes.jpg',
+  '/assets/patients/african-nurse.jpg',
+  '/assets/patients/portrait-man-camera.jpg',
+  '/assets/patients/portrait-man-beanie.jpg',
+];
+const FEMALE_PATIENT_PHOTOS = [
+  '/assets/patients/doctor-tablet-smiling.jpg',
+  '/assets/patients/doctor-prescription.jpg',
+  '/assets/patients/doctor-nurse-consultation.jpg',
+  '/assets/patients/community-health-worker.jpg',
+];
+
 function generatePatient(index: number): Patient {
   const gender = Math.random() > 0.48 ? 'Male' : 'Female';
+  const pool = gender === 'Male' ? MALE_PATIENT_PHOTOS : FEMALE_PATIENT_PHOTOS;
+  const photoUrl = pool[index % pool.length];
   const tribeIndex = Math.floor(Math.random() * 4);
   let firstName: string;
   const tribe = ['Dinka', 'Nuer', 'Zande', 'Bari'][tribeIndex];
@@ -1777,6 +1799,7 @@ function generatePatient(index: number): Patient {
       return `2026-0${mo}-${d}T${hh}:${mm}:00.000Z`;
     })(),
     isActive: true,
+    photoUrl,
   };
 }
 
@@ -1795,6 +1818,7 @@ _generatedPatients[0] = {
   allergies: ['Penicillin'],
   chronicConditions: ['Hypertension'],
   registrationHospital: 'hosp-001',
+  photoUrl: '/assets/patients/portrait-man-camera.jpg',
 };
 _generatedPatients[1] = {
   ..._generatedPatients[1],
@@ -1808,6 +1832,7 @@ _generatedPatients[1] = {
   allergies: ['None known'],
   chronicConditions: ['None'],
   registrationHospital: 'hosp-001',
+  photoUrl: '/assets/patients/doctor-tablet-smiling.jpg',
 };
 _generatedPatients[2] = {
   ..._generatedPatients[2],
@@ -1821,6 +1846,7 @@ _generatedPatients[2] = {
   allergies: ['None known'],
   chronicConditions: ['Asthma'],
   registrationHospital: 'hosp-001',
+  photoUrl: '/assets/patients/doctor-prescription.jpg',
 };
 
 export const patients: Patient[] = _generatedPatients;

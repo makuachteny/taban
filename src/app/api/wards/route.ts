@@ -169,14 +169,14 @@ export async function POST(request: NextRequest) {
         bedNumber: body.bedNumber as string | undefined,
         facilityId: (body.facilityId as string) || auth.hospitalId || '',
         facilityName: (body.facilityName as string) || '',
-        facilityLevel: (body.facilityLevel as any) || 'county',
+        facilityLevel: (body.facilityLevel as Parameters<typeof admitPatient>[0]['facilityLevel']) || 'county',
         admittedBy: auth.sub,
         admittedByName: auth.name,
         attendingPhysician: (body.attendingPhysician as string) || auth.sub,
         attendingPhysicianName: (body.attendingPhysicianName as string) || auth.name,
         admittingDiagnosis: body.admittingDiagnosis as string,
         icd11Code: body.icd11Code as string | undefined,
-        severity: (body.severity as any) || 'moderate',
+        severity: (body.severity as Parameters<typeof admitPatient>[0]['severity']) || 'moderate',
         isolationRequired: body.isolationRequired as boolean | undefined,
         isolationReason: body.isolationReason as string | undefined,
         state: (body.state as string) || '',
@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
       const result = await dischargePatient(
         body.admissionId as string,
         {
-          dischargeType: (body.dischargeType as any) || 'regular',
+          dischargeType: (body.dischargeType as Parameters<typeof dischargePatient>[1]['dischargeType']) || 'normal',
           dischargeDiagnosis: body.dischargeDiagnosis as string | undefined,
           dischargeIcd11: body.dischargeIcd11 as string | undefined,
           dischargeSummary: body.dischargeSummary as string | undefined,
@@ -241,10 +241,10 @@ export async function POST(request: NextRequest) {
     const { createWard } = await import('@/lib/services/ward-service');
     const ward = await createWard({
       name: body.name as string,
-      wardType: (body.wardType as any) || 'general_male',
+      wardType: (body.wardType as Parameters<typeof createWard>[0]['wardType']) || 'general_male',
       facilityId: body.facilityId as string,
       facilityName: (body.facilityName as string) || '',
-      facilityLevel: (body.facilityLevel as any) || 'county',
+      facilityLevel: (body.facilityLevel as Parameters<typeof createWard>[0]['facilityLevel']) || 'county',
       totalBeds: Number(body.totalBeds) || 10,
       isActive: true,
       orgId: (body.orgId as string) || auth.orgId,

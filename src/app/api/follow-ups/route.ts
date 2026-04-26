@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
       if (body.outcome) updates.outcome = body.outcome;
       if (body.completedDate) updates.completedDate = body.completedDate;
       if (body.notes) updates.notes = body.notes;
-      const result = await updateFollowUp(body.followUpId as string, updates as any);
+      const result = await updateFollowUp(body.followUpId as string, updates as Parameters<typeof updateFollowUp>[1]);
       if (!result) return NextResponse.json({ error: 'Follow-up not found' }, { status: 404 });
       return NextResponse.json({ followUp: result });
     }
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     if (!body.orgId && auth.orgId) body.orgId = auth.orgId;
 
     const { createFollowUp } = await import('@/lib/services/follow-up-service');
-    const followUp = await createFollowUp(body as any);
+    const followUp = await createFollowUp(body as Parameters<typeof createFollowUp>[0]);
 
     return NextResponse.json({ followUp }, { status: 201 });
   } catch (err) {

@@ -17,8 +17,11 @@ import {
   updateMessage,
   deleteMessage,
 } from '@/lib/services/message-service';
+import type { DataScope } from '@/lib/services/data-scope';
 
-const makeMessageData = (overrides: Record<string, unknown> = {}) => ({
+type CreateMessageInput = Parameters<typeof createMessage>[0];
+
+const makeMessageData = (overrides: Partial<CreateMessageInput> = {}): CreateMessageInput => ({
   patientId: 'pat-001',
   patientName: 'Achol Deng',
   patientPhone: '+211912345678',
@@ -38,7 +41,7 @@ afterEach(async () => {
 });
 
 // Additional tests for branch coverage
-const makeLongMessageData = (overrides: Record<string, unknown> = {}) => ({
+const makeLongMessageData = (overrides: Partial<CreateMessageInput> = {}): CreateMessageInput => ({
   ...makeMessageData(),
   ...overrides,
 });
@@ -150,7 +153,7 @@ describe('message-service', () => {
     // When sentAt is undefined, new Date('') creates Invalid Date with NaN time
     await createMessage(makeLongMessageData({
       subject: 'No sentAt message',
-      sentAt: undefined as any,
+      sentAt: undefined,
     }));
     await createMessage(makeLongMessageData({
       subject: 'With sentAt message',
@@ -210,13 +213,13 @@ describe('message-service', () => {
     expect(allNoScope.length).toBeGreaterThanOrEqual(1);
 
     // With scope - the filterByScope function would be called
-    const allWithScope = await getAllMessages({ role: 'nurse' as any });
+    const allWithScope = await getAllMessages({ role: 'nurse' } as DataScope);
     expect(Array.isArray(allWithScope)).toBe(true);
   });
 
   test('getAllMessages handles messages with missing sentAt', async () => {
     await createMessage(makeMessageData({ sentAt: '2025-03-15T10:00:00Z' }));
-    await createMessage(makeMessageData({ sentAt: undefined }) as any);
+    await createMessage(makeMessageData({ sentAt: undefined }));
 
     const all = await getAllMessages();
     expect(all.length).toBeGreaterThanOrEqual(2);

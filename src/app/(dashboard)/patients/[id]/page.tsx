@@ -31,7 +31,6 @@ import { useTriage } from '@/lib/hooks/useTriage';
 import { usePermissions } from '@/lib/hooks/usePermissions';
 import PatientQRCode from '@/components/PatientQRCode';
 import { usePatientPayments } from '@/lib/hooks/usePayments';
-import { BalanceBanner, InsuranceSnapshot, PaymentHistoryTimeline, PaymentPanel, PaymentPlanWizard, EligibilityBadge } from '@/components/payments';
 import BillingTab from '@/components/patients/BillingTab';
 import BillingSidebarCard from '@/components/patients/BillingSidebarCard';
 
@@ -206,18 +205,162 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: `
+        /* ───── Print: render the patient record as a clean hospital
+           document. Strip out color gradients, decorative glyphs,
+           interactive controls, animations, and anything that doesn't
+           belong on an official record. ───── */
+        .print-only { display: none; }
         @media print {
-          .no-print, .no-print * { display: none !important; }
-          body { background: #fff !important; color: #000 !important; }
-          .card-elevated { box-shadow: none !important; border: 1px solid #ccc !important; page-break-inside: avoid; }
-          .page-container { padding: 0 !important; max-width: 100% !important; }
-          .badge { border: 1px solid #ccc !important; background: #fff !important; color: #000 !important; }
-          a, button { color: inherit !important; }
-          @page { margin: 12mm; }
+          /* Page setup */
+          @page { margin: 14mm 12mm 16mm; size: A4; }
+          html, body { background: #fff !important; color: #000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          body * { font-family: Georgia, 'Times New Roman', Times, serif !important; letter-spacing: 0 !important; animation: none !important; transition: none !important; }
+
+          /* Hide app chrome, interactive controls, and anything marked no-print */
+          .no-print, .no-print *,
+          nav, .sidebar, [data-sidebar], .topbar, [data-topbar],
+          button:not(.print-visible), .mk-mobile-toggle,
+          [role="tablist"],
+          input, select, textarea, form,
+          [type="search"], [role="search"], [role="searchbox"],
+          [placeholder*="earch"], [aria-label*="earch"] { display: none !important; }
+
+          /* Layout reset — print is one long column */
+          .page-container, .page-enter { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+          .grid { display: block !important; }
+          .lg\\:col-span-2, .lg\\:col-span-1 { width: 100% !important; }
+
+          /* Flatten cards — no shadow, no gradient, no color wash */
+          .card-elevated, .card {
+            box-shadow: none !important;
+            border: 1px solid #333 !important;
+            background: #fff !important;
+            background-image: none !important;
+            border-radius: 4px !important;
+            page-break-inside: avoid;
+            margin-bottom: 10px !important;
+            padding: 10px 12px !important;
+          }
+
+          /* Remove every decorative gradient / colored overlay globally */
+          [style*="linear-gradient"], [style*="radial-gradient"] {
+            background-image: none !important;
+            background: #fff !important;
+          }
+          [aria-hidden="true"][style*="gradient"] { display: none !important; }
+
+          /* Patient photo — show it in grayscale (looks like an ID photocopy) */
+          .patient-photo-card, [data-photo-card] {
+            background: #fff !important;
+            border: 1px solid #333 !important;
+            box-shadow: none !important;
+          }
+          .patient-photo-card img, [data-photo-card] img { filter: grayscale(100%) contrast(1.05); }
+
+          /* Simple, consistent black-on-white typography */
+          h1 { font-size: 18pt !important; font-weight: 700 !important; color: #000 !important; }
+          h2 { font-size: 13pt !important; font-weight: 700 !important; color: #000 !important; border-bottom: 1px solid #000; padding-bottom: 3pt; margin-bottom: 6pt !important; }
+          h3, h4 { font-size: 11pt !important; font-weight: 700 !important; color: #000 !important; }
+          p, span, div, li { color: #000 !important; }
+          .badge, [class*="pill"], .rounded-full { border: 1px solid #000 !important; background: #fff !important; color: #000 !important; border-radius: 3px !important; }
+
+          /* Hide every icon — pictorial glyphs would print washed out */
+          svg:not(.print-logo) { display: none !important; }
+
+          /* Neutralize colored status banners to a plain bordered block */
+          [style*="rgba("] {
+            background: #fff !important;
+            border-color: #000 !important;
+          }
+
+          /* Show every tab panel regardless of active state so the
+             printed record is complete */
+          [role="tabpanel"], [hidden][data-print-always] { display: block !important; }
+
+          a, button { color: inherit !important; text-decoration: none !important; }
+
+          /* ───── Letterhead: centered logo + title ─────── */
+          .print-only { display: block !important; }
+          .print-letterhead {
+            text-align: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10pt;
+            margin-bottom: 14pt;
+          }
+          .print-letterhead .print-logo {
+            display: inline-block !important;
+            width: 56pt;
+            height: 56pt;
+            margin: 0 auto 6pt;
+          }
+          .print-letterhead .title {
+            font-size: 18pt;
+            font-weight: 700;
+            letter-spacing: 2pt !important;
+            margin-top: 2pt;
+          }
+          .print-letterhead .sub {
+            font-size: 9pt;
+            color: #444 !important;
+            margin-top: 2pt;
+          }
+          .print-letterhead .doc-meta {
+            margin-top: 8pt;
+            font-size: 8.5pt;
+            color: #444 !important;
+            display: flex;
+            justify-content: center;
+            gap: 16pt;
+            text-transform: uppercase;
+            letter-spacing: 0.5pt;
+          }
+          .print-letterhead .doc-meta .doc-meta-label {
+            color: #888 !important;
+            font-weight: 600;
+            margin-right: 4pt;
+          }
+
+          /* Footer */
+          .print-footer {
+            position: fixed;
+            bottom: 4mm;
+            left: 0;
+            right: 0;
+            padding: 0 12mm;
+            font-size: 8pt;
+            color: #666 !important;
+            border-top: 1px solid #999;
+            display: flex;
+            justify-content: space-between;
+            padding-top: 4pt;
+          }
         }
       ` }} />
       <TopBar title="Patient Record" />
       <main className="page-container page-enter">
+          {/* Print-only hospital letterhead */}
+          <header className="print-only print-letterhead">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+              <div>
+                <div className="title">TABAN DIGITAL HEALTH</div>
+                <div className="sub">{patient.registrationHospital || 'Juba Teaching Hospital'} · Republic of South Sudan</div>
+              </div>
+              <div style={{ textAlign: 'right', fontSize: '9pt' }}>
+                <div style={{ fontWeight: 700 }}>PATIENT MEDICAL RECORD</div>
+                <div style={{ color: '#444' }}>
+                  Printed {new Date().toLocaleString(undefined, { dateStyle: 'long', timeStyle: 'short' })}
+                </div>
+                <div style={{ color: '#444' }}>Record ID: {patient.hospitalNumber || patient.geocodeId}</div>
+              </div>
+            </div>
+          </header>
+
+          {/* Print-only footer with confidentiality notice */}
+          <footer className="print-only print-footer">
+            <span>Confidential — Patient Medical Record</span>
+            <span>Taban Digital Health · {patient.hospitalNumber || patient.geocodeId}</span>
+          </footer>
+
           <button onClick={() => router.push('/patients')} className="flex items-center gap-1.5 text-sm mb-4 no-print" style={{ color: 'var(--taban-blue)' }}>
             <ArrowLeft className="w-4 h-4" /> {t('action.back')}
           </button>
@@ -235,28 +378,57 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
             const infoBits: { icon: 'qr' | 'patient' | 'phone' | 'mapPin' | 'clock'; label: string; value: string; accent: string; mono?: boolean }[] = [
               { icon: 'qr', label: 'Geocode', value: patient.geocodeId || patient.hospitalNumber, accent: '#1A3A3A', mono: true },
               { icon: 'patient', label: 'Age / Sex', value: `${age} y · ${patient.gender}`, accent: 'var(--accent-primary)' },
-              ...(patient.phone ? [{ icon: 'phone' as const, label: 'Phone', value: patient.phone, accent: '#2E9E7E', mono: true }] : []),
+              ...(patient.phone ? [{ icon: 'phone' as const, label: 'Phone', value: patient.phone, accent: '#1B7FA8', mono: true }] : []),
               ...(patient.state ? [{ icon: 'mapPin' as const, label: 'Location', value: patient.state, accent: '#C44536' }] : []),
               { icon: 'clock', label: 'Last Visit', value: lastConsultedDisplay, accent: '#E4A84B' },
             ];
 
+            const photoUrl = (patient as { photoUrl?: string }).photoUrl;
+
             return (
               <div className="card-elevated p-5 mb-5 relative overflow-hidden">
-                <div className="flex items-start gap-5">
-                  {/* Avatar */}
+                <div className="flex items-stretch gap-5">
+                  {/* ID-card style patient photo on the left — auto-height to match right column */}
                   <div
-                    className="flex-shrink-0 flex items-center justify-center font-bold text-white"
+                    className="flex-shrink-0 relative overflow-hidden self-stretch"
                     aria-hidden
                     style={{
-                      width: 88, height: 88, borderRadius: 18,
+                      width: 180, borderRadius: 14,
                       background: isFemale
-                        ? 'linear-gradient(135deg, #D96E59 0%, #C44536 100%)'
-                        : 'linear-gradient(135deg, #2E9E7E 0%, #1A3A3A 100%)',
-                      fontSize: 30, letterSpacing: 0.6,
-                      boxShadow: isFemale ? '0 6px 16px rgba(196, 69, 54, 0.25)' : '0 6px 16px rgba(46, 158, 126, 0.25)',
+                        ? 'linear-gradient(135deg, #D96E59 0%, #9A2F27 100%)'
+                        : 'linear-gradient(135deg, #1B7FA8 0%, #0F3B5C 100%)',
+                      boxShadow: '0 4px 14px rgba(26, 58, 58, 0.10), inset 0 0 0 1px rgba(255,255,255,0.08)',
                     }}
                   >
-                    {initials}
+                    {photoUrl ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={photoUrl}
+                        alt={`${patient.firstName} ${patient.surname}`}
+                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }}
+                      />
+                    ) : (
+                      <div
+                        className="absolute inset-0 flex items-center justify-center text-white font-bold"
+                        style={{ fontSize: 64, letterSpacing: 1, textShadow: '0 2px 8px rgba(0,0,0,0.20)' }}
+                      >
+                        {initials}
+                      </div>
+                    )}
+                    {/* bottom gradient with patient ID for ID-card feel */}
+                    <div
+                      style={{
+                        position: 'absolute', left: 0, right: 0, bottom: 0,
+                        padding: '12px 12px 10px',
+                        background: 'linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0))',
+                        color: '#fff',
+                      }}
+                    >
+                      <div style={{ fontSize: 9.5, letterSpacing: 0.6, opacity: 0.85, textTransform: 'uppercase' }}>Patient ID</div>
+                      <div style={{ fontSize: 12, fontWeight: 700, fontFamily: 'JetBrains Mono, ui-monospace, monospace', marginTop: 2 }}>
+                        {patient.hospitalNumber || patient.geocodeId || '—'}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Right column */}
@@ -284,7 +456,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                       )}
                     </div>
 
-                    {/* Inline info strip — distributed across the full row width */}
+                    {/* Inline info strip — single row, all 5 items spread evenly */}
                     <div
                       className="grid mb-5"
                       style={{
@@ -295,7 +467,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                     >
                       {infoBits.map(bit => (
                         <div key={bit.label} className="flex items-center gap-2.5 min-w-0">
-                          <DuotoneInfoIcon name={bit.icon} size={18} color={bit.accent} accent={bit.accent} />
+                          <DuotoneInfoIcon name={bit.icon} size={22} color={bit.accent} accent={bit.accent} />
                           <div style={{ minWidth: 0 }}>
                             <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: 0.6, textTransform: 'uppercase', color: 'var(--text-muted)', lineHeight: 1.2 }}>
                               {bit.label}
@@ -326,10 +498,10 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                           <FlaskConical className="w-4 h-4" style={{ color: '#E4A84B' }} /> Order Lab
                         </button>
                         <button onClick={() => setActiveTab('prescriptions')} className="btn btn-secondary">
-                          <Pill className="w-4 h-4" style={{ color: '#2E9E7E' }} /> Prescribe
+                          <Pill className="w-4 h-4" /> Prescribe
                         </button>
                         <button onClick={() => router.push('/referrals')} className="btn btn-secondary">
-                          <ArrowRightLeft className="w-4 h-4" style={{ color: '#1B7FA8' }} /> Refer
+                          <ArrowRightLeft className="w-4 h-4" /> Refer
                         </button>
                         <button onClick={() => setShowMessageModal(true)} className="btn btn-secondary">
                           <MessageSquare className="w-4 h-4" style={{ color: '#1A3A3A' }} /> Message
@@ -805,7 +977,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                             {isAIExpanded && (
                               <div className="mt-2 p-3 rounded-lg space-y-2" style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.15)' }}>
                                 <div className="flex items-center gap-2">
-                                  <ShieldAlert className="w-3.5 h-3.5" style={{ color: ai.severityAssessment.includes('HIGH') ? 'var(--taban-red)' : ai.severityAssessment.includes('MODERATE') ? 'var(--color-warning)' : 'var(--taban-green)' }} />
+                                  <ShieldAlert className="w-3.5 h-3.5" style={{ color: ai.severityAssessment.includes('HIGH') ? 'var(--taban-red)' : ai.severityAssessment.includes('MODERATE') ? 'var(--color-warning)' : 'var(--accent-primary)' }} />
                                   <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{ai.severityAssessment}</span>
                                 </div>
                                 {ai.suggestedDiagnoses.slice(0, 3).map(dx => (
@@ -936,7 +1108,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                       patientId={patient._id}
                       patientName={`${patient.firstName} ${patient.surname}`}
                       hospitalNumber={patient.hospitalNumber}
-                      size={140}
+                      size={180}
                     />
                   </div>
                 </div>
@@ -1462,7 +1634,7 @@ export default function PatientDetailPage({ params }: { params: { id: string } }
                           {isAIExpanded && (
                             <div className="mt-2 p-3 rounded-lg space-y-2" style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.15)' }}>
                               <div className="flex items-center gap-2">
-                                <ShieldAlert className="w-3.5 h-3.5" style={{ color: ai.severityAssessment.includes('HIGH') ? 'var(--taban-red)' : ai.severityAssessment.includes('MODERATE') ? 'var(--color-warning)' : 'var(--taban-green)' }} />
+                                <ShieldAlert className="w-3.5 h-3.5" style={{ color: ai.severityAssessment.includes('HIGH') ? 'var(--taban-red)' : ai.severityAssessment.includes('MODERATE') ? 'var(--color-warning)' : 'var(--accent-primary)' }} />
                                 <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{ai.severityAssessment}</span>
                               </div>
                               {ai.suggestedDiagnoses.slice(0, 3).map(dx => (

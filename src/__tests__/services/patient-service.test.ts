@@ -198,7 +198,7 @@ describe('patient-service', () => {
 
   test('searchPatients finds by geocode ID', async () => {
     const geocodeId = 'BOMA-ABC-HH123';
-    const patient = await createPatient({
+    await createPatient({
       ...validPatient(),
       geocodeId,
     });
@@ -209,7 +209,7 @@ describe('patient-service', () => {
 
   test('searchPatients finds by boma', async () => {
     const boma = 'Boma-A';
-    const patient = await createPatient({
+    await createPatient({
       ...validPatient(),
       boma,
     });
@@ -343,7 +343,7 @@ describe('patient-service', () => {
   test('updatePatient validates updated data', async () => {
     const created = await createPatient(validPatient());
     // Try to update with invalid gender
-    await expect(updatePatient(created._id, { gender: 'invalid' as any })).rejects.toThrow(ValidationError);
+    await expect(updatePatient(created._id, { gender: 'invalid' } as unknown as Parameters<typeof updatePatient>[1])).rejects.toThrow(ValidationError);
   });
 
   test('updatePatient preserves existing values when partial update', async () => {
@@ -455,7 +455,7 @@ describe('patient-service', () => {
     await createPatient({
       ...validPatient(),
       firstName: 'John',
-      middleName: undefined as any,
+      middleName: undefined as unknown as string,
       surname: 'Doe',
     });
 
@@ -469,7 +469,7 @@ describe('patient-service', () => {
       ...validPatient(),
       firstName: 'Jane',
       surname: 'Smith',
-      hospitalNumber: undefined as any,
+      hospitalNumber: undefined as unknown as string,
     });
 
     const results = await searchPatients('Jane');
@@ -481,7 +481,7 @@ describe('patient-service', () => {
       ...validPatient(),
       firstName: 'Bob',
       surname: 'Jones',
-      geocodeId: undefined as any,
+      geocodeId: undefined as unknown as string,
     });
 
     const results = await searchPatients('Bob');
@@ -493,7 +493,7 @@ describe('patient-service', () => {
       ...validPatient(),
       firstName: 'Alice',
       surname: 'Brown',
-      boma: undefined as any,
+      boma: undefined as unknown as string,
     });
 
     const results = await searchPatients('Alice');

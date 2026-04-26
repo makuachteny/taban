@@ -371,7 +371,7 @@ export default function PayamSupervisorDashboard() {
                   className="px-1.5 py-1 text-[9px] font-semibold uppercase tracking-wider transition-colors"
                   style={{
                     color: activeTab === tab ? 'var(--accent-primary)' : 'var(--text-muted)',
-                    borderBottom: activeTab === tab ? '2px solid #2E9E7E' : '2px solid transparent',
+                    borderBottom: activeTab === tab ? '2px solid #1B7FA8' : '2px solid transparent',
                   }}
                 >
                   {tab === 'satisfaction' ? 'Satisfaction' : tab === 'equipment' ? 'Equipment' : tab === 'department' ? 'Dept' : 'Avg Wait'}
@@ -752,7 +752,7 @@ export default function PayamSupervisorDashboard() {
 
                       <div className="grid grid-cols-5 gap-2">
                         {[
-                          { label: 'This Week', value: bhw.thisWeekVisits, color: '#2E9E7E' },
+                          { label: 'This Week', value: bhw.thisWeekVisits, color: '#1B7FA8' },
                           { label: 'Total Visits', value: bhw.totalVisits, color: 'var(--color-success)' },
                           { label: 'Treated', value: bhw.treated, color: 'var(--color-success)' },
                           { label: 'Referred', value: bhw.referred, color: 'var(--color-warning)' },

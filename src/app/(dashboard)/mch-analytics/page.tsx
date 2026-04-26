@@ -514,7 +514,7 @@ export default function MCHAnalyticsPage() {
                           <div className="w-full rounded-t-md" style={{
                             height: `${height}%`,
                             minHeight: m.births > 0 ? '4px' : '0',
-                            background: 'linear-gradient(180deg, #2E9E7E, rgba(0,119,215,0.3))',
+                            background: 'linear-gradient(180deg, #1B7FA8, rgba(0,119,215,0.3))',
                           }} />
                         </div>
                         <span className="text-[9px] font-mono" style={{ color: 'var(--text-muted)' }}>{m.month}</span>

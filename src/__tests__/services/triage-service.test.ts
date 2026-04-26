@@ -21,7 +21,9 @@ import {
 
 afterEach(async () => { await teardownTestDBs(); uuidCounter = 0; });
 
-function validTriage(overrides: Record<string, unknown> = {}) {
+type CreateTriageInput = Parameters<typeof createTriage>[0];
+
+function validTriage(overrides: Partial<CreateTriageInput> = {}): CreateTriageInput {
   return {
     patientId: 'patient-001',
     patientName: 'Deng Mabior',
@@ -110,7 +112,7 @@ describe('Triage Service', () => {
 
   describe('CRUD operations', () => {
     test('creates a triage record', async () => {
-      const triage = await createTriage(validTriage() as any);
+      const triage = await createTriage(validTriage());
       expect(triage._id).toMatch(/^triage-/);
       expect(triage.type).toBe('triage');
       expect(triage.priority).toBe('GREEN');
@@ -118,11 +120,11 @@ describe('Triage Service', () => {
     });
 
     test('retrieves all triages sorted by date', async () => {
-      await createTriage(validTriage({ triagedAt: '2026-04-01T08:00:00Z' }) as any);
+      await createTriage(validTriage({ triagedAt: '2026-04-01T08:00:00Z' }));
       await createTriage(validTriage({
         patientId: 'patient-002', patientName: 'Achol',
         triagedAt: '2026-04-01T10:00:00Z',
-      }) as any);
+      }));
 
       const all = await getAllTriage();
       expect(all).toHaveLength(2);
@@ -130,10 +132,10 @@ describe('Triage Service', () => {
     });
 
     test('retrieves triages by patient', async () => {
-      await createTriage(validTriage() as any);
+      await createTriage(validTriage());
       await createTriage(validTriage({
         patientId: 'patient-002', patientName: 'Achol',
-      }) as any);
+      }));
 
       const p1 = await getTriageByPatient('patient-001');
       expect(p1).toHaveLength(1);
@@ -141,15 +143,15 @@ describe('Triage Service', () => {
     });
 
     test('getActiveTriage returns only pending and seen', async () => {
-      await createTriage(validTriage({ status: 'pending' }) as any);
+      await createTriage(validTriage({ status: 'pending' }));
       await createTriage(validTriage({
         patientId: 'patient-002', patientName: 'Achol',
         status: 'seen',
-      }) as any);
+      }));
       await createTriage(validTriage({
         patientId: 'patient-003', patientName: 'Nyabol',
         status: 'discharged',
-      }) as any);
+      }));
 
       const active = await getActiveTriage();
       expect(active).toHaveLength(2);
@@ -159,35 +161,35 @@ describe('Triage Service', () => {
 
   describe('Status transition state machine', () => {
     test('pending → seen is valid', async () => {
-      const t = await createTriage(validTriage() as any);
+      const t = await createTriage(validTriage());
       const updated = await updateTriage(t._id, { status: 'seen' });
       expect(updated).not.toBeNull();
       expect(updated!.status).toBe('seen');
     });
 
     test('pending → admitted is valid', async () => {
-      const t = await createTriage(validTriage() as any);
+      const t = await createTriage(validTriage());
       const updated = await updateTriage(t._id, { status: 'admitted' });
       expect(updated).not.toBeNull();
       expect(updated!.status).toBe('admitted');
     });
 
     test('pending → discharged is valid', async () => {
-      const t = await createTriage(validTriage() as any);
+      const t = await createTriage(validTriage());
       const updated = await updateTriage(t._id, { status: 'discharged' });
       expect(updated).not.toBeNull();
       expect(updated!.status).toBe('discharged');
     });
 
     test('pending → referred is valid', async () => {
-      const t = await createTriage(validTriage() as any);
+      const t = await createTriage(validTriage());
       const updated = await updateTriage(t._id, { status: 'referred' });
       expect(updated).not.toBeNull();
       expect(updated!.status).toBe('referred');
     });
 
     test('seen → admitted is valid', async () => {
-      const t = await createTriage(validTriage() as any);
+      const t = await createTriage(validTriage());
       await updateTriage(t._id, { status: 'seen' });
       const admitted = await updateTriage(t._id, { status: 'admitted' });
       expect(admitted).not.toBeNull();
@@ -195,7 +197,7 @@ describe('Triage Service', () => {
     });
 
     test('discharged → any is invalid (terminal state)', async () => {
-      const t = await createTriage(validTriage() as any);
+      const t = await createTriage(validTriage());
       await updateTriage(t._id, { status: 'discharged' });
       // Attempt to go back to seen — should fail (returns null due to caught error)
       const result = await updateTriage(t._id, { status: 'seen' });
@@ -203,7 +205,7 @@ describe('Triage Service', () => {
     });
 
     test('admitted → discharged is valid', async () => {
-      const t = await createTriage(validTriage() as any);
+      const t = await createTriage(validTriage());
       await updateTriage(t._id, { status: 'admitted' });
       const discharged = await updateTriage(t._id, { status: 'discharged' });
       expect(discharged).not.toBeNull();
@@ -211,7 +213,7 @@ describe('Triage Service', () => {
     });
 
     test('referred → discharged is valid', async () => {
-      const t = await createTriage(validTriage() as any);
+      const t = await createTriage(validTriage());
       await updateTriage(t._id, { status: 'referred' });
       const discharged = await updateTriage(t._id, { status: 'discharged' });
       expect(discharged).not.toBeNull();
@@ -219,7 +221,7 @@ describe('Triage Service', () => {
     });
 
     test('seen → pending is invalid (no backward transition)', async () => {
-      const t = await createTriage(validTriage() as any);
+      const t = await createTriage(validTriage());
       await updateTriage(t._id, { status: 'seen' });
       const result = await updateTriage(t._id, { status: 'pending' });
       expect(result).toBeNull();
@@ -229,15 +231,15 @@ describe('Triage Service', () => {
   describe('Statistics', () => {
     test('getTriageStats returns correct counts', async () => {
       const today = new Date().toISOString();
-      await createTriage(validTriage({ priority: 'RED', triagedAt: today }) as any);
+      await createTriage(validTriage({ priority: 'RED', triagedAt: today }));
       await createTriage(validTriage({
         patientId: 'patient-002', patientName: 'Achol',
         priority: 'YELLOW', triagedAt: today,
-      }) as any);
+      }));
       await createTriage(validTriage({
         patientId: 'patient-003', patientName: 'Nyabol',
         priority: 'GREEN', triagedAt: today,
-      }) as any);
+      }));
 
       const stats = await getTriageStats();
       expect(stats.total).toBe(3);
@@ -253,13 +255,13 @@ describe('Triage Service', () => {
         triagedAt: '2026-04-01T10:00:00Z',
         patientId: 'patient-001',
         patientName: 'Deng Mabior',
-      }) as any);
+      }));
       // Create without triagedAt to test the || '' fallback
       await createTriage(validTriage({
-        triagedAt: undefined as any,
+        triagedAt: undefined as unknown as string,
         patientId: 'patient-002',
         patientName: 'Achol',
-      }) as any);
+      }));
 
       const all = await getAllTriage();
       expect(all.length).toBeGreaterThanOrEqual(2);
@@ -271,9 +273,9 @@ describe('Triage Service', () => {
       await createTriage(validTriage({
         facilityId: 'hosp-001',
         patientId: 'patient-001',
-      }) as any);
+      }));
 
-      const all = await getAllTriage({ hospitalId: 'hosp-001', role: 'nurse' as any });
+      const all = await getAllTriage({ hospitalId: 'hosp-001', role: 'nurse' } as Parameters<typeof getAllTriage>[0]);
       expect(all).toBeDefined();
     });
 
@@ -281,9 +283,9 @@ describe('Triage Service', () => {
       await createTriage(validTriage({
         status: 'pending',
         facilityId: 'hosp-001',
-      }) as any);
+      }));
 
-      const active = await getActiveTriage({ hospitalId: 'hosp-001', role: 'nurse' as any });
+      const active = await getActiveTriage({ hospitalId: 'hosp-001', role: 'nurse' } as Parameters<typeof getActiveTriage>[0]);
       expect(active).toBeDefined();
     });
 
@@ -292,16 +294,16 @@ describe('Triage Service', () => {
       await createTriage(validTriage({
         triagedAt: today,
         facilityId: 'hosp-001',
-      }) as any);
+      }));
 
-      const stats = await getTriageStats({ hospitalId: 'hosp-001', role: 'nurse' as any });
+      const stats = await getTriageStats({ hospitalId: 'hosp-001', role: 'nurse' } as Parameters<typeof getTriageStats>[0]);
       expect(stats).toBeDefined();
     });
   });
 
   describe('Status update with logAudit', () => {
     test('updateTriage with status change logs audit', async () => {
-      const t = await createTriage(validTriage() as any);
+      const t = await createTriage(validTriage());
       const updated = await updateTriage(t._id, {
         status: 'seen',
         handoffTo: 'doctor-001',
@@ -312,7 +314,7 @@ describe('Triage Service', () => {
     });
 
     test('updateTriage without status change does not log audit', async () => {
-      const t = await createTriage(validTriage() as any);
+      const t = await createTriage(validTriage());
       const updated = await updateTriage(t._id, {
         priority: 'YELLOW',
       });
@@ -323,7 +325,7 @@ describe('Triage Service', () => {
 
   describe('Invalid status transitions', () => {
     test('attempting invalid transition returns null', async () => {
-      const t = await createTriage(validTriage({ status: 'admitted' }) as any);
+      const t = await createTriage(validTriage({ status: 'admitted' }));
       const result = await updateTriage(t._id, { status: 'pending' });
       expect(result).toBeNull();
     });
@@ -337,7 +339,7 @@ describe('Triage Service', () => {
   describe('Uncovered branch fixes', () => {
     // ---- Line 51: Test sort with missing triagedAt ----
     test('getAllTriage sorts correctly with missing triagedAt (line 51)', async () => {
-      const t1 = await createTriage(validTriage({ patientId: 'p1', triagedAt: new Date().toISOString() }) as any);
+      await createTriage(validTriage({ patientId: 'p1', triagedAt: new Date().toISOString() }));
 
       // Manually insert triage without triagedAt
       const db = require('@/lib/db').triageDB();
@@ -346,7 +348,7 @@ describe('Triage Service', () => {
         type: 'triage',
         patientId: 'p2',
         patientName: 'Unknown',
-        triagedAt: undefined as any,
+        triagedAt: undefined as unknown as string,
         triagedBy: 'nurse',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -360,11 +362,11 @@ describe('Triage Service', () => {
 
     // ---- Line 97: Test VALID_TRANSITIONS fallback with unknown status ----
     test('updateTriage handles unknown status in VALID_TRANSITIONS (line 97)', async () => {
-      const t = await createTriage(validTriage({ status: 'pending' }) as any);
+      const t = await createTriage(validTriage({ status: 'pending' }));
 
       // Manually set an unknown status
       const db = require('@/lib/db').triageDB();
-      const updated = await db.get(t._id) as any;
+      const updated = await db.get(t._id) as { status: string };
       updated.status = 'unknown_status';
       await db.put(updated);
 
@@ -376,7 +378,7 @@ describe('Triage Service', () => {
     // ---- Line 121: Test filter with missing triagedAt in getTriageStats ----
     test('getTriageStats handles missing triagedAt (line 121)', async () => {
       const today = new Date().toISOString().slice(0, 10);
-      await createTriage(validTriage({ triagedAt: today + 'T10:00:00.000Z' }) as any);
+      await createTriage(validTriage({ triagedAt: today + 'T10:00:00.000Z' }));
 
       // Manually insert triage without triagedAt
       const db = require('@/lib/db').triageDB();
@@ -385,7 +387,7 @@ describe('Triage Service', () => {
         type: 'triage',
         patientId: 'p-stats',
         patientName: 'Stats Test',
-        triagedAt: undefined as any,
+        triagedAt: undefined as unknown as string,
         triagedBy: 'nurse',
         priority: 'GREEN' as const,
         createdAt: new Date().toISOString(),

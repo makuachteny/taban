@@ -22,7 +22,8 @@ import {
 
 afterEach(async () => { await teardownTestDBs(); uuidCounter = 0; });
 
-function validANCVisit(overrides: Record<string, unknown> = {}) {
+type ANCVisitInput = Parameters<typeof createANCVisit>[0];
+function validANCVisit(overrides: Partial<ANCVisitInput> = {}): ANCVisitInput {
   return {
     motherId: 'mother-001',
     motherName: 'Nyabol Deng',
@@ -62,7 +63,7 @@ function validANCVisit(overrides: Record<string, unknown> = {}) {
 
 describe('ANC Service', () => {
   test('creates an ANC visit', async () => {
-    const visit = await createANCVisit(validANCVisit() as any);
+    const visit = await createANCVisit(validANCVisit());
     expect(visit._id).toMatch(/^anc-/);
     expect(visit.type).toBe('anc_visit');
     expect(visit.motherName).toBe('Nyabol Deng');
@@ -74,33 +75,33 @@ describe('ANC Service', () => {
     const visit = await createANCVisit(validANCVisit({
       riskLevel: 'high',
       riskFactors: ['eclampsia', 'previous c-section'],
-    }) as any);
+    }));
     expect(visit.riskLevel).toBe('high');
     expect(visit._id).toBeDefined();
   });
 
   test('retrieves visits by mother', async () => {
-    await createANCVisit(validANCVisit({ visitNumber: 1, visitDate: '2026-01-15' }) as any);
-    await createANCVisit(validANCVisit({ visitNumber: 2, visitDate: '2026-02-15', gestationalAge: 16 }) as any);
+    await createANCVisit(validANCVisit({ visitNumber: 1, visitDate: '2026-01-15' }));
+    await createANCVisit(validANCVisit({ visitNumber: 2, visitDate: '2026-02-15', gestationalAge: 16 }));
     await createANCVisit(validANCVisit({
       motherId: 'mother-002',
       motherName: 'Ayen Kuol',
       visitNumber: 1,
       visitDate: '2026-03-01',
-    }) as any);
+    }));
 
     const visits = await getByMother('mother-001');
     expect(visits).toHaveLength(2);
   });
 
   test('retrieves visits by facility', async () => {
-    await createANCVisit(validANCVisit() as any);
+    await createANCVisit(validANCVisit());
     await createANCVisit(validANCVisit({
       motherId: 'mother-002',
       motherName: 'Ayen',
       facilityId: 'hosp-002',
       facilityName: 'Juba Teaching Hospital',
-    }) as any);
+    }));
 
     const facilityVisits = await getByFacility('hosp-001');
     expect(facilityVisits).toHaveLength(1);
@@ -108,7 +109,7 @@ describe('ANC Service', () => {
   });
 
   test('updates an ANC visit', async () => {
-    const visit = await createANCVisit(validANCVisit() as any);
+    const visit = await createANCVisit(validANCVisit());
     const updated = await updateANCVisit(visit._id, {
       bloodPressure: '140/95',
       riskLevel: 'high',
@@ -126,7 +127,7 @@ describe('ANC Service', () => {
   });
 
   test('deletes an ANC visit', async () => {
-    const visit = await createANCVisit(validANCVisit() as any);
+    const visit = await createANCVisit(validANCVisit());
     const deleted = await deleteANCVisit(visit._id);
     expect(deleted).toBe(true);
 
@@ -145,19 +146,19 @@ describe('ANC Service', () => {
       visitDate: '2026-01-15',
       riskLevel: 'high',
       riskFactors: ['anemia'],
-    }) as any);
+    }));
     await createANCVisit(validANCVisit({
       visitNumber: 2,
       visitDate: '2026-02-15',
       riskLevel: 'high',
       riskFactors: ['anemia', 'previous PPH'],
-    }) as any);
+    }));
     // Different mother, low risk
     await createANCVisit(validANCVisit({
       motherId: 'mother-002',
       motherName: 'Ayen',
       riskLevel: 'low',
-    }) as any);
+    }));
 
     const highRisk = await getHighRiskPregnancies();
     expect(highRisk).toHaveLength(1);
@@ -171,7 +172,7 @@ describe('ANC Service', () => {
         visitNumber: i,
         visitDate: `2026-0${i}-15`,
         gestationalAge: 8 + i * 4,
-      }) as any);
+      }));
     }
     // Mother 2: 1 visit, high risk
     await createANCVisit(validANCVisit({
@@ -180,7 +181,7 @@ describe('ANC Service', () => {
       visitNumber: 1,
       riskLevel: 'high',
       riskFactors: ['eclampsia'],
-    }) as any);
+    }));
 
     const stats = await getANCStats();
     expect(stats.totalMothers).toBe(2);
@@ -191,12 +192,12 @@ describe('ANC Service', () => {
   });
 
   test('getAllANCVisits with scope returns filtered results', async () => {
-    await createANCVisit(validANCVisit({ state: 'Central Equatoria' }) as any);
+    await createANCVisit(validANCVisit({ state: 'Central Equatoria' }));
     await createANCVisit(validANCVisit({
       motherId: 'mother-002',
       motherName: 'Ayen',
       state: 'Northern Bari',
-    }) as any);
+    }));
 
     // Test with scope parameter
     const allVisits = await getAllANCVisits();
@@ -209,7 +210,7 @@ describe('ANC Service', () => {
       riskFactors: ['severe_preeclampsia'],
       motherName: 'Test Mother',
       motherId: 'high-risk-001',
-    }) as any);
+    }));
 
     expect(visit.riskLevel).toBe('high');
     expect(visit._id).toBeDefined();
@@ -220,35 +221,35 @@ describe('ANC Service', () => {
   test('high-risk visit with no riskFactors uses "unspecified"', async () => {
     const visit = await createANCVisit(validANCVisit({
       riskLevel: 'high',
-      riskFactors: undefined as any,
+      riskFactors: undefined,
       motherId: 'high-risk-002',
-    }) as any);
+    }));
     expect(visit.riskLevel).toBe('high');
   });
 
   test('high-risk visit with no motherName uses fallback', async () => {
     const visit = await createANCVisit(validANCVisit({
       riskLevel: 'high',
-      motherName: undefined as any,
+      motherName: undefined,
       riskFactors: ['anemia'],
       motherId: 'high-risk-003',
-    }) as any);
+    }));
     expect(visit._id).toBeDefined();
   });
 
   test('high-risk visit with no facilityName', async () => {
     const visit = await createANCVisit(validANCVisit({
       riskLevel: 'high',
-      facilityName: undefined as any,
+      facilityName: undefined,
       riskFactors: ['hiv_positive'],
       motherId: 'high-risk-004',
-    }) as any);
+    }));
     expect(visit._id).toBeDefined();
   });
 
   test('getAllANCVisits handles missing visitDate in sort', async () => {
-    await createANCVisit(validANCVisit({ visitDate: undefined as any }) as any);
-    await createANCVisit(validANCVisit({ motherId: 'other', visitDate: '2026-04-01' }) as any);
+    await createANCVisit(validANCVisit({ visitDate: undefined }));
+    await createANCVisit(validANCVisit({ motherId: 'other', visitDate: '2026-04-01' }));
     const all = await getAllANCVisits();
     expect(all).toHaveLength(2);
   });
@@ -261,7 +262,7 @@ describe('ANC Service', () => {
   });
 
   test('getANCStats handles missing state in visits', async () => {
-    await createANCVisit(validANCVisit({ state: undefined as any }) as any);
+    await createANCVisit(validANCVisit({ state: undefined }));
     const stats = await getANCStats();
     expect(stats.byState['Unknown']).toBe(1);
   });
@@ -273,7 +274,7 @@ describe('ANC Service', () => {
         motherId: 'mom-5v',
         visitNumber: i,
         visitDate: `2026-0${i}-01`,
-      }) as any);
+      }));
     }
     // Mother with 2 visits
     for (let i = 1; i <= 2; i++) {
@@ -282,7 +283,7 @@ describe('ANC Service', () => {
         motherName: 'Other Mom',
         visitNumber: i,
         visitDate: `2026-0${i}-15`,
-      }) as any);
+      }));
     }
 
     const stats = await getANCStats();
@@ -296,14 +297,14 @@ describe('ANC Service', () => {
   });
 
   test('getANCStats handles missing visitDate in thisMonth filter', async () => {
-    await createANCVisit(validANCVisit({ visitDate: undefined as any }) as any);
+    await createANCVisit(validANCVisit({ visitDate: undefined }));
     const stats = await getANCStats();
     expect(stats.thisMonthVisits).toBe(0); // undefined doesn't match thisMonth
   });
 
   test('getAllANCVisits with scope passes to filterByScope', async () => {
-    await createANCVisit(validANCVisit() as any);
-    const visits = await getAllANCVisits({ role: 'doctor' as any });
+    await createANCVisit(validANCVisit());
+    const visits = await getAllANCVisits({ role: 'doctor' });
     expect(Array.isArray(visits)).toBe(true);
   });
 
@@ -313,25 +314,25 @@ describe('ANC Service', () => {
       riskLevel: 'high',
       visitNumber: 1,
       visitDate: '2026-01-01',
-    }) as any);
+    }));
     await createANCVisit(validANCVisit({
       motherId: 'hr-mom-1',
       riskLevel: 'high',
       visitNumber: 3,
       visitDate: '2026-03-01',
-    }) as any);
+    }));
     await createANCVisit(validANCVisit({
       motherId: 'hr-mom-2',
       motherName: 'Other',
       riskLevel: 'high',
       visitNumber: 2,
-    }) as any);
+    }));
     // Low-risk mother should not appear
     await createANCVisit(validANCVisit({
       motherId: 'lr-mom',
       motherName: 'Low Risk',
       riskLevel: 'low',
-    }) as any);
+    }));
 
     const highRisk = await getHighRiskPregnancies();
     expect(highRisk).toHaveLength(2);
@@ -350,7 +351,7 @@ describe('ANC Service', () => {
       riskLevel: 'high',
       riskFactors: ['severe_preeclampsia'],
       motherId: 'catch-block-test',
-    }) as any);
+    }));
 
     expect(visit._id).toBeDefined();
     expect(visit.riskLevel).toBe('high');
@@ -358,9 +359,9 @@ describe('ANC Service', () => {
 
   // ---- Line 14: Test sorting by visitDate descending ----
   test('getAllANCVisits sorts by visitDate descending (line 14)', async () => {
-    const first = await createANCVisit(validANCVisit({ visitDate: '2026-01-01', motherId: 'mom-1' }) as any);
+    const first = await createANCVisit(validANCVisit({ visitDate: '2026-01-01', motherId: 'mom-1' }));
     await new Promise(r => setTimeout(r, 10));
-    const second = await createANCVisit(validANCVisit({ visitDate: '2026-03-01', motherId: 'mom-2' }) as any);
+    const second = await createANCVisit(validANCVisit({ visitDate: '2026-03-01', motherId: 'mom-2' }));
 
     const all = await getAllANCVisits();
     // Most recent visit (2026-03-01) should come first
@@ -371,23 +372,23 @@ describe('ANC Service', () => {
   // ---- Line 53: Test patientId assignment in high-risk message ----
   test('createANCVisit high-risk alert includes motherId in patientId (line 53)', async () => {
     const { messagesDB } = require('@/lib/db');
-    const visit = await createANCVisit(validANCVisit({
+    await createANCVisit(validANCVisit({
       riskLevel: 'high',
       motherId: 'specific-mother-001',
       riskFactors: ['gestational_diabetes'],
-    }) as any);
+    }));
 
     // Check that the message was created with the mother ID as patientId
     const msgs = messagesDB();
     const result = await msgs.allDocs({ include_docs: true });
-    const msg = result.rows.find((r: any) => (r.doc as any)?.type === 'message' && (r.doc as any)?.patientId === 'specific-mother-001');
+    const msg = result.rows.find((r: { doc?: { type?: string; patientId?: string } }) => r.doc?.type === 'message' && r.doc?.patientId === 'specific-mother-001');
     expect(msg).toBeDefined();
   });
 
   // ---- Line 93: Test visitNumbers.length > 0 check in anc4Plus calculation ----
   test('getANCStats handles mothers with no visit numbers (line 93)', async () => {
     // Create a mother with visits
-    await createANCVisit(validANCVisit({ motherId: 'mom-visits', visitNumber: 3 }) as any);
+    await createANCVisit(validANCVisit({ motherId: 'mom-visits', visitNumber: 3 }));
     // The code checks: const maxVisit = visitNumbers.length > 0 ? Math.max(...visitNumbers) : 0;
     // This test ensures the fallback to 0 is exercised
 
@@ -398,10 +399,10 @@ describe('ANC Service', () => {
   // ---- Line 121: Test continuum.anc1 assignment for mothers with >= 1 visit ----
   test('getANCStats correctly counts continuum.anc1 for mothers with 1+ visits (line 121)', async () => {
     // Create mothers with various visit counts
-    await createANCVisit(validANCVisit({ motherId: 'mom-1v', visitNumber: 1 }) as any);
-    await createANCVisit(validANCVisit({ motherId: 'mom-3v', visitNumber: 1 }) as any);
-    await createANCVisit(validANCVisit({ motherId: 'mom-3v', visitNumber: 2 }) as any);
-    await createANCVisit(validANCVisit({ motherId: 'mom-3v', visitNumber: 3 }) as any);
+    await createANCVisit(validANCVisit({ motherId: 'mom-1v', visitNumber: 1 }));
+    await createANCVisit(validANCVisit({ motherId: 'mom-3v', visitNumber: 1 }));
+    await createANCVisit(validANCVisit({ motherId: 'mom-3v', visitNumber: 2 }));
+    await createANCVisit(validANCVisit({ motherId: 'mom-3v', visitNumber: 3 }));
 
     const stats = await getANCStats();
     expect(stats.continuum.anc1).toBe(2); // Both mothers have >= 1 visit
@@ -411,7 +412,7 @@ describe('ANC Service', () => {
 
   // ---- Line 14: Test sort with missing visitDate ----
   test('getAllANCVisits sorts correctly with missing visitDate (line 14)', async () => {
-    await createANCVisit(validANCVisit({ motherId: 'mom-with-date', visitDate: '2026-03-15' }) as any);
+    await createANCVisit(validANCVisit({ motherId: 'mom-with-date', visitDate: '2026-03-15' }));
 
     // Manually insert a visit without visitDate
     const db = require('@/lib/db').ancDB();
@@ -436,8 +437,8 @@ describe('ANC Service', () => {
   test('createANCVisit handles undefined riskFactors (line 53)', async () => {
     const visit = await createANCVisit(validANCVisit({
       riskLevel: 'high',
-      riskFactors: undefined as any,
-    }) as any);
+      riskFactors: undefined,
+    }));
     expect(visit._id).toBeDefined();
     expect(visit.riskLevel).toBe('high');
   });
@@ -503,11 +504,11 @@ describe('ANC Service', () => {
   test('getANCStats with mother having no numeric visitNumber (line 93)', async () => {
     // Test the case where visitNumbers array would be empty
     // When we do Math.max(0, ...visitNumbers.filter(n => n))
-    const visit1 = await createANCVisit(validANCVisit({
+    await createANCVisit(validANCVisit({
       motherId: 'mother-zero-visits',
       motherName: 'Zero Visit Mom',
-      visitNumber: undefined as any,
-    }) as any);
+      visitNumber: undefined,
+    }));
 
     const stats = await getANCStats();
     // Mother exists, but with no valid visitNumber, max should be 0

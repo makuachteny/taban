@@ -23,8 +23,11 @@ import {
   getDefaulterStats,
   getCoverageByAgeCohort,
 } from '@/lib/services/immunization-service';
+import type { DataScope } from '@/lib/services/data-scope';
 
-const makeImmData = (overrides: Record<string, unknown> = {}) => ({
+type CreateImmunizationInput = Parameters<typeof createImmunization>[0];
+
+const makeImmData = (overrides: Partial<CreateImmunizationInput> = {}): CreateImmunizationInput => ({
   patientId: 'child-001',
   patientName: 'Baby Achol',
   gender: 'Female' as const,
@@ -461,7 +464,7 @@ describe('immunization-service', () => {
       status: 'completed',
       dateGiven: undefined,
       dateOfBirth: '2023-06-01',
-    }) as any);
+    }));
 
     const defaulters = await getDefaulters();
     const defaulter = defaulters.find(d => d.patientId === 'child-missing-date');
@@ -477,7 +480,7 @@ describe('immunization-service', () => {
     expect(allNoScope.length).toBeGreaterThanOrEqual(1);
 
     // Get all with scope - the filterByScope function would be called
-    const allWithScope = await getAllImmunizations({ role: 'nurse' as any });
+    const allWithScope = await getAllImmunizations({ role: 'nurse' } as DataScope);
     // Result depends on filterByScope implementation
     expect(Array.isArray(allWithScope)).toBe(true);
   });
@@ -501,7 +504,7 @@ describe('immunization-service', () => {
       patientId: 'child-with-undefined-date',
       vaccine: 'BCG',
       status: 'completed',
-      dateGiven: undefined as any,
+      dateGiven: undefined,
       dateOfBirth: '2023-01-01',
     }));
 
@@ -528,7 +531,7 @@ describe('immunization-service', () => {
       patientId: 'child-009',
       vaccine: 'BCG',
       status: 'completed',
-      dateGiven: undefined as any,
+      dateGiven: undefined,
       dateOfBirth: '2023-01-01',
     }));
 
@@ -536,7 +539,7 @@ describe('immunization-service', () => {
       patientId: 'child-009',
       vaccine: 'OPV',
       status: 'completed',
-      dateGiven: undefined as any,
+      dateGiven: undefined,
       dateOfBirth: '2023-01-01',
     }));
 
@@ -624,7 +627,7 @@ describe('immunization-service', () => {
   });
 
   test('getAllImmunizations sorts by createdAt descending', async () => {
-    const first = await createImmunization(makeImmData({ patientId: 'child-001' }));
+    await createImmunization(makeImmData({ patientId: 'child-001' }));
     await new Promise(r => setTimeout(r, 10));
     const second = await createImmunization(makeImmData({ patientId: 'child-002', patientName: 'Baby Kuol' }));
 
@@ -635,7 +638,7 @@ describe('immunization-service', () => {
   // ---- Line 13: Test branch with scope filtering ----
   test('getAllImmunizations with scope applies filtering', async () => {
     await createImmunization(makeImmData({ patientId: 'child-001' }));
-    const result = await getAllImmunizations({ role: 'doctor' } as any);
+    const result = await getAllImmunizations({ role: 'doctor' } as DataScope);
     expect(Array.isArray(result)).toBe(true);
   });
 
@@ -654,7 +657,7 @@ describe('immunization-service', () => {
 
   // ---- Line 100: Test byState with missing state (Unknown) ----
   test('getImmunizationStats handles missing state field', async () => {
-    await createImmunization(makeImmData({ state: undefined } as any));
+    await createImmunization(makeImmData({ state: undefined }));
     const stats = await getImmunizationStats();
     expect(stats.byState['Unknown']).toBe(1);
   });
@@ -684,7 +687,7 @@ describe('immunization-service', () => {
       patientId: 'child-no-next-due',
       vaccine: 'Penta',
       status: 'overdue',
-      nextDueDate: undefined as any,
+      nextDueDate: undefined,
       dateGiven: pastDate,
       dateOfBirth: '2023-01-01',
     }));
@@ -710,7 +713,7 @@ describe('immunization-service', () => {
       patientId: 'child-no-dob',
       vaccine: 'OPV',
       status: 'completed',
-      dateOfBirth: undefined as any,
+      dateOfBirth: undefined,
     }));
 
     const rows = await getCoverageByAgeCohort();
@@ -771,10 +774,10 @@ describe('immunization-service', () => {
     await createImmunization(makeImmData({
       patientId: 'overdue-no-dob',
       vaccine: 'BCG',
-      status: 'due',
+      status: 'scheduled',
       dateGiven: yesterdayStr,
       nextDueDate: yesterdayStr,
-      dateOfBirth: undefined as any,
+      dateOfBirth: undefined,
     }));
 
     const defaulters = await getDefaulters();

@@ -17,6 +17,7 @@ import {
   deleteAssessment,
   getAssessmentSummary,
 } from '@/lib/services/facility-assessment-service';
+import type { DataScope } from '@/lib/services/data-scope';
 
 const makeAssessmentData = (overrides: Record<string, unknown> = {}) => ({
   facilityId: 'hosp-001',
@@ -111,7 +112,7 @@ describe('facility-assessment-service', () => {
     expect(allAssessments.length).toBeGreaterThanOrEqual(2);
 
     // Get with scope filter
-    const scopedAssessments = await getAllAssessments({ role: 'nurse' as any, orgId: 'org-001' });
+    const scopedAssessments = await getAllAssessments({ role: 'nurse', orgId: 'org-001' } as DataScope);
     expect(scopedAssessments).toBeDefined();
   });
 

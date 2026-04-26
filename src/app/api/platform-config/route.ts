@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
 
     const { updatePlatformConfig } = await import('@/lib/services/platform-config-service');
 
-    const updated = await updatePlatformConfig(body as any, auth.sub, auth.username);
+    const updated = await updatePlatformConfig(body as Parameters<typeof updatePlatformConfig>[0], auth.sub, auth.username);
 
     return NextResponse.json({ config: updated });
   } catch (err) {

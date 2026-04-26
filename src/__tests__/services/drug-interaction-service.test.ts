@@ -10,7 +10,6 @@ import {
   checkNewPrescription,
   getInteractionsForDrug,
 } from '@/lib/services/drug-interaction-service';
-import type { DrugInteraction, InteractionCheckResult } from '@/lib/services/drug-interaction-service';
 
 describe('drug-interaction-service', () => {
   describe('checkInteractions', () => {
@@ -323,14 +322,14 @@ describe('drug-interaction-service', () => {
 
   describe('Edge cases', () => {
     it('should handle null input gracefully', () => {
-      const result = checkInteractions(null as any);
+      const result = checkInteractions(null as unknown as string[]);
       expect(result.hasInteractions).toBe(false);
       expect(result.interactions).toEqual([]);
       expect(result.highestSeverity).toBeNull();
     });
 
     it('should handle undefined input gracefully', () => {
-      const result = checkInteractions(undefined as any);
+      const result = checkInteractions(undefined as unknown as string[]);
       expect(result.hasInteractions).toBe(false);
       expect(result.interactions).toEqual([]);
       expect(result.highestSeverity).toBeNull();

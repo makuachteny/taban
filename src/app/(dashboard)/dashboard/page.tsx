@@ -440,7 +440,7 @@ export default function DashboardPage() {
 
   // ── Disease catalog with monthly trend data ──
   const DISEASE_COLORS: Record<string, string> = {
-    'Malaria': '#EF4444', 'Pneumonia': '#F59E0B', 'Diarrheal': '#2E9E7E', 'HIV/AIDS': '#8B5CF6',
+    'Malaria': '#EF4444', 'Pneumonia': '#F59E0B', 'Diarrheal': '#1B7FA8', 'HIV/AIDS': '#8B5CF6',
     'Tuberculosis': '#6366F1', 'Typhoid': '#EC4899', 'Measles': '#14B8A6', 'Cholera': '#06B6D4',
     'Hypertension': '#F97316', 'Diabetes': '#A855F7', 'Malnutrition': '#EAB308', 'Meningitis': '#DC2626',
     'Hepatitis B': '#059669', 'Sickle Cell': '#D946EF', 'Leishmaniasis': '#0EA5E9', 'Epilepsy': '#5A7370',
@@ -652,7 +652,7 @@ export default function DashboardPage() {
                 {overdueImmunizations.length > 0 && (
                   <div
                     className="flex items-center gap-3 p-2.5 rounded-xl"
-                    style={{ background: 'rgba(46,158,126,0.06)', border: '1px solid var(--accent-border)' }}
+                    style={{ background: 'rgba(27,127,168,0.06)', border: '1px solid var(--accent-border)' }}
                   >
                     <Syringe className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--accent-primary)' }} />
                     <div className="flex-1 min-w-0">
@@ -1133,13 +1133,13 @@ export default function DashboardPage() {
             <p className="text-[10px] font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>Quick Actions</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[
-                { label: 'New Patient', icon: Users, action: () => router.push('/patients/new'), color: 'var(--accent-primary)', bg: 'rgba(46,158,126,0.10)' },
-                { label: 'New Consultation', icon: ClipboardList, action: () => setSoapModalOpen(true), color: 'var(--accent-primary)', bg: 'rgba(46,158,126,0.10)' },
+                { label: 'New Patient', icon: Users, action: () => router.push('/patients/new'), color: 'var(--accent-primary)', bg: 'rgba(27,127,168,0.10)' },
+                { label: 'New Consultation', icon: ClipboardList, action: () => setSoapModalOpen(true), color: 'var(--accent-primary)', bg: 'rgba(27,127,168,0.10)' },
                 { label: 'Quick Prescribe', icon: Pill, action: () => setPrescribeModalOpen(true), color: '#0D9488', bg: 'rgba(13,148,136,0.10)' },
                 { label: 'Quick Lab Order', icon: TestTube, action: () => setLabModalOpen(true), color: '#7C3AED', bg: 'rgba(124,58,237,0.10)' },
                 { label: 'Immunization', icon: Syringe, action: () => router.push('/immunizations'), color: '#059669', bg: 'rgba(5,150,105,0.10)' },
                 { label: 'ANC Visit', icon: HeartPulse, action: () => router.push('/anc'), color: '#EC4899', bg: 'rgba(236,72,153,0.10)' },
-                { label: 'Birth Reg.', icon: Baby, action: () => router.push('/births'), color: 'var(--accent-primary)', bg: 'rgba(46,158,126,0.10)' },
+                { label: 'Birth Reg.', icon: Baby, action: () => router.push('/births'), color: 'var(--accent-primary)', bg: 'rgba(27,127,168,0.10)' },
                 { label: 'Referral', icon: SendHorizontal, action: () => router.push('/referrals'), color: '#F59E0B', bg: 'rgba(245,158,11,0.10)' },
               ].map(action => (
                 <button
@@ -1190,8 +1190,8 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="mt-3 p-2 rounded-lg text-center" style={{
-              background: 'rgba(46,158,126,0.06)',
-              border: '1px solid rgba(46,158,126,0.1)',
+              background: 'rgba(27,127,168,0.06)',
+              border: '1px solid rgba(27,127,168,0.1)',
             }}>
               <span className="text-[9px] font-medium" style={{ color: 'var(--text-muted)' }}>
                 hmis.southsudan.health
@@ -1443,8 +1443,8 @@ export default function DashboardPage() {
                         onClick={() => handleToggleLabTest(test.id)}
                         className="flex items-center gap-3 p-2.5 rounded-xl text-left transition-all"
                         style={{
-                          background: isSelected ? 'rgba(46,158,126,0.08)' : 'var(--bg-secondary)',
-                          border: isSelected ? '2px solid #2E9E7E' : '1px solid var(--border-light)',
+                          background: isSelected ? 'rgba(27,127,168,0.08)' : 'var(--bg-secondary)',
+                          border: isSelected ? '2px solid #1B7FA8' : '1px solid var(--border-light)',
                         }}
                       >
                         <div
@@ -1460,7 +1460,7 @@ export default function DashboardPage() {
                           <p className="text-[12px] font-medium" style={{ color: 'var(--text-primary)' }}>{test.name}</p>
                           <div className="flex items-center gap-2">
                             <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>{test.specimen}</span>
-                            <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(46,158,126,0.06)', color: 'var(--accent-primary)' }}>
+                            <span className="text-[9px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(27,127,168,0.06)', color: 'var(--accent-primary)' }}>
                               {test.category}
                             </span>
                           </div>
@@ -1473,7 +1473,7 @@ export default function DashboardPage() {
 
               {/* Selected summary */}
               {selectedLabTests.size > 0 && (
-                <div className="mb-4 p-3 rounded-xl" style={{ background: 'rgba(46,158,126,0.04)', border: '1px solid rgba(46,158,126,0.12)' }}>
+                <div className="mb-4 p-3 rounded-xl" style={{ background: 'rgba(27,127,168,0.04)', border: '1px solid rgba(27,127,168,0.12)' }}>
                   <p className="text-[11px] font-medium mb-1" style={{ color: 'var(--accent-primary)' }}>
                     {selectedLabTests.size} test(s) selected:
                   </p>

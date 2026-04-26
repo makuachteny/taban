@@ -6,6 +6,7 @@ import {
   ChevronRight, Clock, CheckCircle, Wallet, Building2,
 } from '@/components/icons/lucide';
 import { getMethodConfig } from '@/lib/payment-method-config';
+import type { PaymentDoc, PaymentPlanDoc, ClaimDoc, InsurancePolicyDoc } from '@/lib/db-types-payments';
 
 interface BillingSidebarCardProps {
   patientId: string;
@@ -44,15 +45,15 @@ export default function BillingSidebarCard({ patientId, onPayClick, onViewBillin
           paymentSvc.getPatientInsurancePolicies(patientId),
           paymentSvc.getPaymentsByPatient(patientId),
           paymentSvc.getPaymentPlansByPatient(patientId),
-          paymentSvc.getClaimsByPatient?.(patientId).catch(() => []) ?? Promise.resolve([]),
+          paymentSvc.getClaimsByPatient?.(patientId).catch(() => [] as ClaimDoc[]) ?? Promise.resolve([] as ClaimDoc[]),
         ]);
 
-        const primary = policies.find((p: any) => p.isPrimary) || policies[0];
+        const primary = policies.find((p: InsurancePolicyDoc) => p.isPrimary) || policies[0];
         const latestPayment = payments
-          .filter((p: any) => p.status === 'posted')
-          .sort((a: any, b: any) => new Date(b.processedAt).getTime() - new Date(a.processedAt).getTime())[0];
-        const activePlans = plans.filter((p: any) => p.status === 'active');
-        const pendingClaims = claims.filter((c: any) => c.status === 'submitted' || c.status === 'draft');
+          .filter((p: PaymentDoc) => p.status === 'posted')
+          .sort((a: PaymentDoc, b: PaymentDoc) => new Date(b.processedAt).getTime() - new Date(a.processedAt).getTime())[0];
+        const activePlans = plans.filter((p: PaymentPlanDoc) => p.status === 'active');
+        const pendingClaims = claims.filter((c: ClaimDoc) => c.status === 'submitted' || c.status === 'draft');
 
         // Try to get eligibility
         let eligStatus = 'none';
@@ -71,7 +72,7 @@ export default function BillingSidebarCard({ patientId, onPayClick, onViewBillin
           lastPaymentDate: latestPayment?.processedAt || null,
           lastPaymentMethod: latestPayment?.method || null,
           activePlanCount: activePlans.length,
-          activePlanBalance: activePlans.reduce((s: number, p: any) => s + p.remainingBalance, 0),
+          activePlanBalance: activePlans.reduce((s: number, p: PaymentPlanDoc) => s + p.remainingBalance, 0),
           pendingClaimsCount: pendingClaims.length,
         });
       } catch (err) {
@@ -127,7 +128,7 @@ export default function BillingSidebarCard({ patientId, onPayClick, onViewBillin
       <div className="px-5 py-4" style={{
         background: hasBalance
           ? 'linear-gradient(135deg, rgba(196, 69, 54, 0.08) 0%, rgba(228, 168, 75, 0.06) 100%)'
-          : 'linear-gradient(135deg, rgba(27, 158, 119, 0.08) 0%, rgba(46, 158, 126, 0.04) 100%)',
+          : 'linear-gradient(135deg, rgba(27, 158, 119, 0.08) 0%, rgba(27, 127, 168, 0.04) 100%)',
         borderBottom: '1px solid var(--border-light)',
         position: 'relative',
       }}>
@@ -158,8 +159,8 @@ export default function BillingSidebarCard({ patientId, onPayClick, onViewBillin
             flexShrink: 0,
           }}>
             {hasBalance
-              ? <AlertTriangle size={22} style={{ color: '#C44536' }} />
-              : <CheckCircle size={22} style={{ color: '#15795C' }} />
+              ? <AlertTriangle size={56} style={{ color: '#C44536' }} />
+              : <CheckCircle size={56} style={{ color: '#15795C' }} />
             }
           </div>
         </div>
@@ -168,8 +169,8 @@ export default function BillingSidebarCard({ patientId, onPayClick, onViewBillin
             onClick={onPayClick}
             className="w-full mt-3 flex items-center justify-center gap-2 py-2.5 rounded-lg text-xs font-bold text-white transition-all"
             style={{
-              background: 'linear-gradient(135deg, #2E9E7E, #1E4D4A)',
-              boxShadow: '0 2px 8px rgba(46,158,126,0.3)',
+              background: 'linear-gradient(135deg, #1B7FA8, #1E4D4A)',
+              boxShadow: '0 2px 8px rgba(27,127,168,0.3)',
             }}
           >
             <CreditCard size={14} /> Collect Payment

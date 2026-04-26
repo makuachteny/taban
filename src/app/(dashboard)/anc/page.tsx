@@ -11,7 +11,7 @@ import { useApp } from '@/lib/context';
 import { usePermissions } from '@/lib/hooks/usePermissions';
 import {
   HeartPulse, Search, Plus, X, Users, AlertTriangle,
-  Calendar, Activity, ChevronRight, ExternalLink, CheckCircle,
+  Calendar, ChevronRight, ExternalLink, CheckCircle,
 } from '@/components/icons/lucide';
 
 const RISK_FACTOR_OPTIONS = [

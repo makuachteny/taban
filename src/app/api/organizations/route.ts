@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   getAuthPayload, unauthorized, forbidden, hasRole, serverError,
 } from '@/lib/api-auth';
-import type { UserRole } from '@/lib/db-types';
+import type { UserRole, OrganizationDoc } from '@/lib/db-types';
 
 const READ_ROLES: UserRole[] = [
   'super_admin', 'org_admin',
@@ -34,8 +34,6 @@ export async function GET(request: NextRequest) {
     const slug = request.nextUrl.searchParams.get('slug');
     const orgId = request.nextUrl.searchParams.get('orgId');
     const withStats = request.nextUrl.searchParams.get('stats') === 'true';
-
-    let data;
 
     if (id) {
       const org = await getOrganizationById(id);
@@ -138,11 +136,11 @@ export async function POST(request: NextRequest) {
         primaryColor: (body.primaryColor as string) || '#000000',
         secondaryColor: (body.secondaryColor as string) || '#ffffff',
         accentColor: body.accentColor as string | undefined,
-        subscriptionStatus: (body.subscriptionStatus as any) || 'trial',
-        subscriptionPlan: (body.subscriptionPlan as any) || 'basic',
+        subscriptionStatus: (body.subscriptionStatus as OrganizationDoc['subscriptionStatus']) || 'trial',
+        subscriptionPlan: (body.subscriptionPlan as OrganizationDoc['subscriptionPlan']) || 'basic',
         maxUsers: (body.maxUsers !== undefined ? Number(body.maxUsers) : 50),
         maxHospitals: (body.maxHospitals !== undefined ? Number(body.maxHospitals) : 10),
-        featureFlags: body.featureFlags as any || {
+        featureFlags: (body.featureFlags as OrganizationDoc['featureFlags']) || {
           epidemicIntelligence: false,
           mchAnalytics: false,
           dhis2Export: false,
@@ -150,7 +148,7 @@ export async function POST(request: NextRequest) {
           communityHealth: false,
           facilityAssessments: false,
         },
-        orgType: (body.orgType as any) || 'public',
+        orgType: (body.orgType as OrganizationDoc['orgType']) || 'public',
         isActive: true,
       },
       auth.sub,

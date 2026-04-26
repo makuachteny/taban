@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
       immunizations = await getAllImmunizations(scope);
     }
 
-    const response: Record<string, any> = { immunizations, total: immunizations.length };
+    const response: Record<string, unknown> = { immunizations, total: immunizations.length };
 
     if (includeStats) {
       const scope = buildScopeFromAuth(auth);
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
     if (!body.orgId && auth.orgId) body.orgId = auth.orgId;
 
     const { createImmunization } = await import('@/lib/services/immunization-service');
-    const immunization = await createImmunization(body as any);
+    const immunization = await createImmunization(body as Parameters<typeof createImmunization>[0]);
 
     return NextResponse.json({ immunization }, { status: 201 });
   } catch (err) {

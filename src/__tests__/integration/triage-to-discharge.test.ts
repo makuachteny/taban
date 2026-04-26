@@ -53,7 +53,7 @@ describe('Full Inpatient Journey: Triage → Discharge', () => {
       status: 'pending',
       facilityId: 'hosp-001',
       facilityName: 'Taban Hospital',
-    } as any);
+    } as Parameters<typeof createTriage>[0]);
     expect(triage.status).toBe('pending');
     expect(triage.priority).toBe('YELLOW');
 
@@ -86,7 +86,7 @@ describe('Full Inpatient Journey: Triage → Discharge', () => {
       completedAt: '',
       hospitalId: 'hosp-001',
       hospitalName: 'Taban Hospital',
-    } as any);
+    } as Parameters<typeof createLabResult>[0]);
     expect(labOrder.status).toBe('pending');
 
     // STEP 4: Lab tech completes the test — severe malaria confirmed
@@ -112,13 +112,13 @@ describe('Full Inpatient Journey: Triage → Discharge', () => {
       department: 'Emergency Medicine',
       chiefComplaint: 'Severe malaria with altered consciousness',
       historyOfPresentIllness: '5-day fever, confusion, severe body aches',
-      vitalSigns: { temperature: 40.2, pulse: 120, respiratoryRate: 28, systolicBP: 90, diastolicBP: 55, oxygenSaturation: 91 },
-      diagnoses: [{ name: 'Severe P. falciparum malaria', icd10Code: 'B50.9', severity: 'severe' }],
+      vitalSigns: { temperature: 40.2, pulse: 120, respiratoryRate: 28, systolic: 90, diastolic: 55, oxygenSaturation: 91, weight: 65, height: 170, bmi: 22.5, recordedAt: new Date().toISOString() },
+      diagnoses: [{ name: 'Severe P. falciparum malaria', icd10Code: 'B50.9', type: 'primary', certainty: 'confirmed', severity: 'severe' }],
       prescriptions: [],
       labResults: [],
       treatmentPlan: 'IV Artesunate, IV fluids, supportive care. Admit for monitoring.',
       syncStatus: 'pending',
-    } as any);
+    } as Parameters<typeof createMedicalRecord>[0]);
     expect(consultation._id).toMatch(/^rec-/);
 
     // STEP 6: Doctor prescribes IV Artesunate
@@ -134,7 +134,7 @@ describe('Full Inpatient Journey: Triage → Discharge', () => {
       status: 'pending',
       hospitalId: 'hosp-001',
       hospitalName: 'Taban Hospital',
-    } as any);
+    } as Parameters<typeof createPrescription>[0]);
     expect(rx.prescription.status).toBe('pending');
 
     // STEP 7: Setup ward and admit patient
@@ -146,7 +146,7 @@ describe('Full Inpatient Journey: Triage → Discharge', () => {
       facilityLevel: 'county',
       totalBeds: 20,
       isActive: true,
-    } as any);
+    } as Parameters<typeof createWard>[0]);
 
     const admission = await admitPatient({
       patientId: 'patient-001',
@@ -206,7 +206,7 @@ describe('Full Inpatient Journey: Triage → Discharge', () => {
       state: 'Central Equatoria',
       county: 'Juba',
       sourceVisitId: consultation._id,
-    } as any);
+    } as Parameters<typeof createFollowUp>[0]);
     expect(followUp.status).toBe('active');
 
     // VERIFICATION: Check data consistency across modules

@@ -151,7 +151,7 @@ export default function PaymentsPage() {
         <TopBar title="Bills" />
         <main className="page-container page-enter">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 320, color: 'var(--text-muted)' }}>
-            <Activity size={18} style={{ marginRight: 8, animation: 'spin 1s linear infinite' }} />
+            <Activity size={44} style={{ marginRight: 8, animation: 'spin 1s linear infinite' }} />
             <span>Loading billing data...</span>
           </div>
         </main>
@@ -221,7 +221,7 @@ export default function PaymentsPage() {
                       style={{
                         background: owing
                           ? 'linear-gradient(135deg, #D96E59 0%, #C44536 100%)'
-                          : 'linear-gradient(135deg, #2E9E7E 0%, #1A3A3A 100%)',
+                          : 'linear-gradient(135deg, #1B7FA8 0%, #1A3A3A 100%)',
                       }}
                     >
                       {initials || '?'}
@@ -350,7 +350,7 @@ function PatientBillingDetail({ line, payments, claims, plans, bills, onClose }:
               style={{
                 background: owing
                   ? 'linear-gradient(135deg, #D96E59 0%, #C44536 100%)'
-                  : 'linear-gradient(135deg, #2E9E7E 0%, #1A3A3A 100%)',
+                  : 'linear-gradient(135deg, #1B7FA8 0%, #1A3A3A 100%)',
               }}
             >
               {initials || '?'}
@@ -373,7 +373,7 @@ function PatientBillingDetail({ line, payments, claims, plans, bills, onClose }:
         <div className="px-5 py-4" style={{
           background: owing
             ? 'linear-gradient(135deg, rgba(196, 69, 54, 0.08) 0%, rgba(228, 168, 75, 0.06) 100%)'
-            : 'linear-gradient(135deg, rgba(27, 158, 119, 0.08) 0%, rgba(46, 158, 126, 0.04) 100%)',
+            : 'linear-gradient(135deg, rgba(27, 158, 119, 0.08) 0%, rgba(27, 127, 168, 0.04) 100%)',
           borderBottom: '1px solid var(--border-light)',
         }}>
           <div className="flex items-end justify-between gap-3 flex-wrap">
@@ -412,7 +412,7 @@ function PatientBillingDetail({ line, payments, claims, plans, bills, onClose }:
                     {m.brand && <div className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{m.brand}</div>}
                   </div>
                   {m.isDefault && (
-                    <span className="text-[9.5px] font-bold uppercase px-1.5 py-0.5 rounded-md" style={{ background: 'rgba(46, 158, 126, 0.14)', color: '#15795C', border: '1px solid rgba(46, 158, 126, 0.30)' }}>
+                    <span className="text-[9.5px] font-bold uppercase px-1.5 py-0.5 rounded-md" style={{ background: 'rgba(27, 127, 168, 0.14)', color: '#15795C', border: '1px solid rgba(27, 127, 168, 0.30)' }}>
                       Default
                     </span>
                   )}
@@ -508,9 +508,9 @@ function PatientBillingDetail({ line, payments, claims, plans, bills, onClose }:
                     </div>
                   </div>
                   <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md whitespace-nowrap" style={{
-                    background: c.status === 'paid' ? 'rgba(46, 158, 126, 0.14)' : c.status === 'denied' ? 'rgba(196, 69, 54, 0.14)' : 'rgba(228, 168, 75, 0.14)',
+                    background: c.status === 'paid' ? 'rgba(27, 127, 168, 0.14)' : c.status === 'denied' ? 'rgba(196, 69, 54, 0.14)' : 'rgba(228, 168, 75, 0.14)',
                     color: c.status === 'paid' ? '#15795C' : c.status === 'denied' ? '#8B2E24' : '#B8741C',
-                    border: c.status === 'paid' ? '1px solid rgba(46, 158, 126, 0.30)' : c.status === 'denied' ? '1px solid rgba(196, 69, 54, 0.30)' : '1px solid rgba(228, 168, 75, 0.30)',
+                    border: c.status === 'paid' ? '1px solid rgba(27, 127, 168, 0.30)' : c.status === 'denied' ? '1px solid rgba(196, 69, 54, 0.30)' : '1px solid rgba(228, 168, 75, 0.30)',
                   }}>
                     {c.status}
                   </span>
@@ -538,7 +538,7 @@ function PatientBillingDetail({ line, payments, claims, plans, bills, onClose }:
                       </div>
                     </div>
                     <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md whitespace-nowrap" style={{
-                      background: p.status === 'active' ? 'rgba(46, 158, 126, 0.14)' : p.status === 'completed' ? 'rgba(27, 127, 168, 0.14)' : 'rgba(228, 168, 75, 0.14)',
+                      background: p.status === 'active' ? 'rgba(27, 127, 168, 0.14)' : p.status === 'completed' ? 'rgba(27, 127, 168, 0.14)' : 'rgba(228, 168, 75, 0.14)',
                       color: p.status === 'active' ? '#15795C' : p.status === 'completed' ? '#1B7FA8' : '#B8741C',
                     }}>
                       {p.status}

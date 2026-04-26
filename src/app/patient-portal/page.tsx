@@ -8,7 +8,7 @@ import {
   MessageSquare, ArrowRight, Activity,
   Plus, X, LogOut, Send, Building2,
   Wallet, CreditCard, Phone, Banknote,
-  TrendingUp, Clock, CheckCircle2, Stethoscope,
+  Clock, CheckCircle2, Stethoscope,
   Thermometer, Weight, Droplets, Eye,
   Upload, ClipboardList, Receipt,
   UserCircle, Download, Trash2,
@@ -117,7 +117,7 @@ function PatientLogin({ onLogin }: { onLogin: (patient: PatientDoc) => void }) {
     } finally { setLoading(false); }
   };
 
-  const BLUE = '#2E9E7E';
+  const BLUE = '#1B7FA8';
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '12px 14px', fontSize: 15,
     border: '1px solid var(--border-medium)', borderRadius: 4,
@@ -428,7 +428,7 @@ function PatientDashboard({ patient, onLogout }: { patient: PatientDoc; onLogout
               {patient.photoUrl
                 // eslint-disable-next-line @next/next/no-img-element
                 ? <img src={patient.photoUrl} alt="" style={{ width: 46, height: 46, borderRadius: '50%', objectFit: 'cover' }} />
-                : <User size={22} style={{ color: 'var(--accent-primary)' }} />
+                : <User size={56} style={{ color: 'var(--accent-primary)' }} />
               }
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -527,14 +527,14 @@ function PatientDashboard({ patient, onLogout }: { patient: PatientDoc; onLogout
           <div className="md:hidden" style={{ marginBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
               <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--accent-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <User size={18} style={{ color: 'var(--accent-primary)' }} />
+                <User size={44} style={{ color: 'var(--accent-primary)' }} />
               </div>
               <div style={{ flex: 1 }}>
                 <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>{patient.firstName} {patient.surname}</p>
                 <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>{patient.hospitalNumber}</p>
               </div>
-              <button onClick={() => setActiveTab('chat')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent-primary)', padding: 6 }}><MessageSquare size={18} /></button>
-              <button onClick={onLogout} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 6 }}><LogOut size={18} /></button>
+              <button onClick={() => setActiveTab('chat')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent-primary)', padding: 6 }}><MessageSquare size={44} /></button>
+              <button onClick={onLogout} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 6 }}><LogOut size={44} /></button>
             </div>
             <div style={{ display: 'flex', gap: 4, overflowX: 'auto', paddingBottom: 4 }} className="no-scrollbar">
               {tabs.map(tab => (
@@ -649,7 +649,7 @@ function PatientDashboard({ patient, onLogout }: { patient: PatientDoc; onLogout
 
           {/* ── Welcome Banner ── */}
           <div style={{
-            background: 'linear-gradient(135deg, #1a6b5a 0%, #2E9E7E 60%, #43c6a4 100%)',
+            background: 'linear-gradient(135deg, #1a6b5a 0%, #1B7FA8 60%, #43c6a4 100%)',
             borderRadius: 14, padding: '22px 24px', color: '#fff', position: 'relative', overflow: 'hidden',
           }}>
             <div style={{ position: 'absolute', top: -30, right: -30, width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
@@ -733,7 +733,7 @@ function PatientDashboard({ patient, onLogout }: { patient: PatientDoc; onLogout
                   </div>
                 ) : (
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px 0' }}>
-                    <Calendar size={24} style={{ color: 'var(--text-muted)', opacity: 0.3, marginBottom: 8 }} />
+                    <Calendar size={44} style={{ color: 'var(--text-muted)', opacity: 0.3, marginBottom: 8 }} />
                     <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 10 }}>No upcoming appointments</p>
                     <button onClick={() => setShowBooking(true)} style={{ fontSize: 12, fontWeight: 600, padding: '8px 16px', borderRadius: 8, background: 'var(--accent-primary)', color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
                       <Plus size={12} />Book Appointment
@@ -950,7 +950,7 @@ function PatientDashboard({ patient, onLogout }: { patient: PatientDoc; onLogout
                   </button>
                   {expandedId === rec._id && (
                     <div style={{ padding: '0 16px 14px', borderTop: '1px solid var(--border-medium)', paddingTop: 12 }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', alignItems: 'stretch', gap: 10 }}>
                         {((rec as unknown as Record<string, unknown>).vitalSigns as Record<string, unknown>) && (
                           <div>
                             <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Vital Signs</div>
@@ -1279,18 +1279,16 @@ function PatientDashboard({ patient, onLogout }: { patient: PatientDoc; onLogout
 /* ═════════════════════════════════════════
    INSURANCE TAB
    ═════════════════════════════════════════ */
-function InsuranceTab({ patient }: { patient: PatientDoc }) {
+function InsuranceTab({}: { patient: PatientDoc }) {
   const [showAddForm, setShowAddForm] = useState(false);
-  const [insuranceList] = useState([
-    ...(patient.insuranceProvider ? [{
-      id: 'ins-1',
-      provider: patient.insuranceProvider,
-      policyNumber: patient.insuranceNumber || 'N/A',
-      type: 'Primary',
-      status: 'Active' as const,
-      expiryDate: '2027-01-01',
-    }] : []),
-  ]);
+  const [insuranceList] = useState<Array<{
+    id: string;
+    provider: string;
+    policyNumber: string;
+    type: string;
+    status: 'Active' | 'Expired' | 'Pending';
+    expiryDate: string;
+  }>>([]);
 
   return (
     <div>
@@ -1343,7 +1341,7 @@ function InsuranceTab({ patient }: { patient: PatientDoc }) {
           padding: 24, borderRadius: 10, border: '2px dashed var(--border-medium)', textAlign: 'center',
           background: 'var(--overlay-subtle)', cursor: 'pointer', transition: 'all 0.2s',
         }}>
-          <FileUp size={28} style={{ color: 'var(--text-muted)', margin: '0 auto 8px', opacity: 0.5 }} />
+          <FileUp size={56} style={{ color: 'var(--text-muted)', margin: '0 auto 8px', opacity: 0.5 }} />
           <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Click to upload or drag and drop</p>
           <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>PNG, JPG, or PDF up to 4 MB</p>
         </div>
@@ -1474,7 +1472,7 @@ function UploadsTab() {
           padding: 32, borderRadius: 10, border: '2px dashed var(--border-medium)', textAlign: 'center',
           background: 'var(--overlay-subtle)', cursor: 'pointer', transition: 'all 0.2s',
         }}>
-          <Upload size={32} style={{ color: 'var(--accent-primary)', margin: '0 auto 10px', opacity: 0.6 }} />
+          <Upload size={44} style={{ color: 'var(--accent-primary)', margin: '0 auto 10px', opacity: 0.6 }} />
           <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>Upload Documents</p>
           <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Drag files here or click to browse</p>
           <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>Accepted: PDF, PNG, JPG, TIFF (max 4 MB per file)</p>
@@ -1532,7 +1530,7 @@ function StatementsTab() {
       <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14 }}>Billing Statements</h2>
 
       {/* Summary */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', alignItems: 'stretch', gap: 10, marginBottom: 16 }}>
         {[
           { label: 'Current Balance', value: `${(statements[0].total - statements[0].paid).toLocaleString()} SSP`, color: 'var(--color-danger)' },
           { label: 'Last Payment', value: '10,000 SSP', color: 'var(--color-success)' },
@@ -1622,7 +1620,7 @@ function ProfileTab({ patient }: { patient: PatientDoc }) {
           {patient.photoUrl
             // eslint-disable-next-line @next/next/no-img-element
             ? <img src={patient.photoUrl} alt="" style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover' }} />
-            : <User size={32} style={{ color: 'var(--accent-primary)' }} />
+            : <User size={44} style={{ color: 'var(--accent-primary)' }} />
           }
         </div>
         <p style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>{patient.firstName} {patient.surname}</p>
@@ -1650,9 +1648,9 @@ function ProfileTab({ patient }: { patient: PatientDoc }) {
       <div className="card-elevated" style={{ padding: 18, marginTop: 14 }}>
         <SH icon={Phone} title="Emergency Contact" />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 14 }}>
-          <Info label="Name" value={patient.emergencyContact?.name || '—'} />
-          <Info label="Phone" value={patient.emergencyContact?.phone || '—'} />
-          <Info label="Relationship" value={patient.emergencyContact?.relationship || '—'} />
+          <Info label="Name" value={patient.nokName || '—'} />
+          <Info label="Phone" value={patient.nokPhone || '—'} />
+          <Info label="Relationship" value={patient.nokRelationship || '—'} />
         </div>
       </div>
 
@@ -1759,7 +1757,7 @@ function BillingTab({ patient }: { patient: PatientDoc }) {
       <div style={{ maxWidth: 480, margin: '0 auto', textAlign: 'center' }}>
         <div className="card-elevated" style={{ padding: '40px 28px', borderTop: '4px solid var(--color-success)' }}>
           <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-            <CheckCircle2 size={28} style={{ color: 'var(--color-success)' }} />
+            <CheckCircle2 size={56} style={{ color: 'var(--color-success)' }} />
           </div>
           <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>Payment Submitted</h3>
           <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>
@@ -1846,13 +1844,13 @@ function BillingTab({ patient }: { patient: PatientDoc }) {
                 cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s',
               }}>
                 <div style={{ width: 40, height: 40, borderRadius: 10, background: `${m.color}12`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <m.icon size={18} style={{ color: m.color }} />
+                  <m.icon size={44} style={{ color: m.color }} />
                 </div>
                 <div style={{ flex: 1 }}>
                   <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>{m.name}</p>
                   <p style={{ fontSize: 11, color: 'var(--text-muted)' }}>{m.desc}</p>
                 </div>
-                {payMethod === m.key && <CheckCircle2 size={18} style={{ color: m.color }} />}
+                {payMethod === m.key && <CheckCircle2 size={44} style={{ color: m.color }} />}
               </button>
             ))}
           </div>
@@ -1877,7 +1875,7 @@ function BillingTab({ patient }: { patient: PatientDoc }) {
     <div>
       {/* Balance banner */}
       <div style={{
-        background: 'linear-gradient(135deg, #1a6b5a 0%, #2E9E7E 60%, #43c6a4 100%)',
+        background: 'linear-gradient(135deg, #1a6b5a 0%, #1B7FA8 60%, #43c6a4 100%)',
         borderRadius: 14, padding: '20px 24px', color: '#fff', marginBottom: 16, position: 'relative', overflow: 'hidden',
       }}>
         <div style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
@@ -1898,7 +1896,7 @@ function BillingTab({ patient }: { patient: PatientDoc }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', alignItems: 'stretch', gap: 14 }}>
         {/* Bills list */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -2070,7 +2068,7 @@ function Badge({ text, color }: { text: string; color: string }) {
 function Empty({ icon: Icon, text, action, onAction }: { icon: typeof User; text: string; action?: string; onAction?: () => void }) {
   return (
     <div className="card-elevated" style={{ textAlign: 'center', padding: 40 }}>
-      <Icon size={28} style={{ color: 'var(--text-muted)', opacity: 0.3, margin: '0 auto 10px' }} />
+      <Icon size={56} style={{ color: 'var(--text-muted)', opacity: 0.3, margin: '0 auto 10px' }} />
       <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: action ? 10 : 0 }}>{text}</p>
       {action && onAction && <button onClick={onAction} className="btn btn-primary btn-sm" style={{ gap: 4 }}><Plus size={13} /> {action}</button>}
     </div>

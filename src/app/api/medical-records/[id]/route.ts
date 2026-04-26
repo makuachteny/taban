@@ -10,11 +10,6 @@ import {
 } from '@/lib/api-auth';
 import type { UserRole } from '@/lib/db-types';
 
-const READ_ROLES: UserRole[] = [
-  'super_admin', 'org_admin', 'doctor', 'clinical_officer', 'nurse',
-  'medical_superintendent',
-];
-
 const WRITE_ROLES: UserRole[] = [
   'super_admin', 'doctor', 'clinical_officer', 'medical_superintendent',
 ];
@@ -46,7 +41,7 @@ export async function PATCH(
     const sanitized = sanitizePayload(body);
 
     const { updateMedicalRecord } = await import('@/lib/services/medical-record-service');
-    const updated = await updateMedicalRecord(id, sanitized as any);
+    const updated = await updateMedicalRecord(id, sanitized as Parameters<typeof updateMedicalRecord>[1]);
     if (!updated) {
       return NextResponse.json({ error: 'Record not found' }, { status: 404 });
     }

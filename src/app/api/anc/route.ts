@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     if (!body.orgId && auth.orgId) body.orgId = auth.orgId;
 
     const { createANCVisit } = await import('@/lib/services/anc-service');
-    const visit = await createANCVisit(body as any);
+    const visit = await createANCVisit(body as Parameters<typeof createANCVisit>[0]);
 
     return NextResponse.json({ visit }, { status: 201 });
   } catch (err) {

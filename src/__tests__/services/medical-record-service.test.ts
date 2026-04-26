@@ -17,9 +17,11 @@ import {
   getRecentRecords,
 } from '@/lib/services/medical-record-service';
 
+type CreateMedicalRecordInput = Parameters<typeof createMedicalRecord>[0];
+
 afterEach(async () => { await teardownTestDBs(); uuidCounter = 0; });
 
-function validRecord(overrides: Record<string, unknown> = {}) {
+function validRecord(overrides: Partial<CreateMedicalRecordInput> = {}): CreateMedicalRecordInput {
   return {
     patientId: 'patient-001',
     hospitalId: 'hosp-001',
@@ -32,8 +34,8 @@ function validRecord(overrides: Record<string, unknown> = {}) {
     department: 'General Medicine',
     chiefComplaint: 'Persistent fever for 3 days',
     historyOfPresentIllness: 'Patient reports intermittent high fever with chills',
-    vitalSigns: { temperature: 39.2, pulse: 88, respiratoryRate: 20, systolicBP: 120, diastolicBP: 80, oxygenSaturation: 97 },
-    diagnoses: [{ name: 'Suspected malaria', icd10Code: '1F40', severity: 'moderate' }],
+    vitalSigns: { temperature: 39.2, pulse: 88, respiratoryRate: 20, systolic: 120, diastolic: 80, oxygenSaturation: 97, weight: 70, height: 175, bmi: 22.9, recordedAt: '2026-04-01T10:00:00Z' },
+    diagnoses: [{ name: 'Suspected malaria', icd10Code: '1F40', type: 'primary', certainty: 'suspected', severity: 'moderate' }],
     prescriptions: [],
     labResults: [],
     treatmentPlan: 'Artesunate + Amodiaquine',
@@ -44,7 +46,7 @@ function validRecord(overrides: Record<string, unknown> = {}) {
 
 describe('Medical Record Service', () => {
   test('creates a medical record with valid data', async () => {
-    const rec = await createMedicalRecord(validRecord() as any);
+    const rec = await createMedicalRecord(validRecord());
     expect(rec._id).toMatch(/^rec-/);
     expect(rec.type).toBe('medical_record');
     expect(rec.patientId).toBe('patient-001');
@@ -54,13 +56,13 @@ describe('Medical Record Service', () => {
 
   test('rejects record with missing chief complaint', async () => {
     await expect(
-      createMedicalRecord(validRecord({ chiefComplaint: '' }) as any)
+      createMedicalRecord(validRecord({ chiefComplaint: '' }))
     ).rejects.toThrow();
   });
 
   test('rejects record with missing patientId', async () => {
     await expect(
-      createMedicalRecord(validRecord({ patientId: '' }) as any)
+      createMedicalRecord(validRecord({ patientId: '' }))
     ).rejects.toThrow();
   });
 
@@ -68,16 +70,16 @@ describe('Medical Record Service', () => {
     await createMedicalRecord(validRecord({
       consultedAt: '2026-01-15T08:00:00Z',
       chiefComplaint: 'Cough for 1 week',
-    }) as any);
+    }));
     await createMedicalRecord(validRecord({
       consultedAt: '2026-03-20T14:00:00Z',
       chiefComplaint: 'Follow-up for malaria',
-    }) as any);
+    }));
     await createMedicalRecord(validRecord({
       patientId: 'patient-002',
       consultedAt: '2026-02-10T11:00:00Z',
       chiefComplaint: 'Headache',
-    }) as any);
+    }));
 
     const records = await getRecordsByPatient('patient-001');
     expect(records).toHaveLength(2);
@@ -92,7 +94,7 @@ describe('Medical Record Service', () => {
   });
 
   test('updates a medical record', async () => {
-    const rec = await createMedicalRecord(validRecord() as any);
+    const rec = await createMedicalRecord(validRecord());
     const updated = await updateMedicalRecord(rec._id, {
       treatmentPlan: 'IV Artesunate followed by ACT',
     });
@@ -107,7 +109,7 @@ describe('Medical Record Service', () => {
   });
 
   test('deletes a medical record', async () => {
-    const rec = await createMedicalRecord(validRecord() as any);
+    const rec = await createMedicalRecord(validRecord());
     const deleted = await deleteMedicalRecord(rec._id);
     expect(deleted).toBe(true);
 
@@ -126,7 +128,7 @@ describe('Medical Record Service', () => {
         patientId: `patient-${i}`,
         consultedAt: `2026-04-0${i + 1}T10:00:00Z`,
         chiefComplaint: `Complaint ${i}`,
-      }) as any);
+      }));
     }
 
     const recent = await getRecentRecords(3);
@@ -139,7 +141,7 @@ describe('Medical Record Service', () => {
         patientId: `patient-${i}`,
         visitDate: `2026-04-${String(i + 1).padStart(2, '0')}`,
         chiefComplaint: `Complaint ${i}`,
-      }) as any);
+      }));
     }
 
     const recent = await getRecentRecords();
@@ -152,13 +154,13 @@ describe('Medical Record Service', () => {
       consultedAt: undefined,
       visitDate: '2026-04-05',
       chiefComplaint: 'Record with visitDate only',
-    }) as any);
+    }));
     await createMedicalRecord(validRecord({
       patientId: 'patient-001',
       consultedAt: undefined,
       visitDate: '2026-04-03',
       chiefComplaint: 'Earlier record',
-    }) as any);
+    }));
 
     const records = await getRecordsByPatient('patient-001');
     expect(records).toHaveLength(2);
@@ -172,7 +174,7 @@ describe('Medical Record Service', () => {
       consultedAt: undefined,
       visitDate: undefined,
       chiefComplaint: 'Record without consultedAt or visitDate',
-    }) as any);
+    }));
 
     const records = await getRecordsByPatient('patient-001');
     expect(records).toHaveLength(1);
@@ -186,13 +188,13 @@ describe('Medical Record Service', () => {
       visitDate: undefined,
       consultedAt: '2026-04-05T10:00:00Z',
       chiefComplaint: 'Record without visitDate',
-    }) as any);
+    }));
     await createMedicalRecord(validRecord({
       patientId: 'patient-002',
       visitDate: '2026-04-10',
       consultedAt: '2026-04-10T10:00:00Z',
       chiefComplaint: 'Record with visitDate',
-    }) as any);
+    }));
 
     const recent = await getRecentRecords(5);
     expect(recent).toHaveLength(2);
@@ -203,30 +205,30 @@ describe('Medical Record Service', () => {
       patientId: 'patient-001',
       visitDate: '2026-04-05',
       chiefComplaint: 'Record 1',
-    }) as any);
+    }));
     await createMedicalRecord(validRecord({
       patientId: 'patient-002',
       visitDate: undefined,
       chiefComplaint: 'Record without visitDate',
-    }) as any);
+    }));
 
     const recent = await getRecentRecords(10);
     expect(recent.length).toBeGreaterThan(0);
   });
 
   test('sorts by empty string when all date fields missing', async () => {
-    const rec1 = await createMedicalRecord(validRecord({
+    await createMedicalRecord(validRecord({
       patientId: 'patient-001',
       consultedAt: undefined,
       visitDate: undefined,
       chiefComplaint: 'Record A',
-    }) as any);
-    const rec2 = await createMedicalRecord(validRecord({
+    }));
+    await createMedicalRecord(validRecord({
       patientId: 'patient-001',
       consultedAt: undefined,
       visitDate: undefined,
       chiefComplaint: 'Record B',
-    }) as any);
+    }));
 
     const records = await getRecordsByPatient('patient-001');
     expect(records).toHaveLength(2);
@@ -239,12 +241,12 @@ describe('Medical Record Service', () => {
       patientId: 'patient-001',
       visitDate: '2026-04-10',
       chiefComplaint: 'More recent',
-    }) as any);
+    }));
     await createMedicalRecord(validRecord({
       patientId: 'patient-002',
       visitDate: '',
       chiefComplaint: 'Empty date',
-    }) as any);
+    }));
 
     const recent = await getRecentRecords(10);
     expect(recent.length).toBeGreaterThanOrEqual(2);
@@ -258,7 +260,7 @@ describe('Medical Record Service', () => {
       consultedAt: '2026-04-11T10:00:00Z',
       visitDate: '2026-04-11',
       chiefComplaint: 'With consultedAt',
-    }) as any);
+    }));
 
     // Record with visitDate but no consultedAt
     await createMedicalRecord(validRecord({
@@ -266,16 +268,15 @@ describe('Medical Record Service', () => {
       consultedAt: undefined,
       visitDate: '2026-04-10',
       chiefComplaint: 'Only visitDate',
-    }) as any);
+    }));
 
     // Record with only createdAt
-    const now = new Date().toISOString();
     await createMedicalRecord(validRecord({
       patientId: 'patient-001',
       consultedAt: undefined,
       visitDate: undefined,
       chiefComplaint: 'Only createdAt',
-    }) as any);
+    }));
 
     // Record with all falsy dates (should use empty string)
     const db = require('@/lib/db').medicalRecordsDB();

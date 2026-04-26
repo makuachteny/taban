@@ -445,14 +445,14 @@ describe('ward-service', () => {
       updatedAt: new Date().toISOString(),
     });
 
-    const admissions = await getAllAdmissions({ role: 'nurse' as any });
+    const admissions = await getAllAdmissions({ role: 'nurse' } as Parameters<typeof getAllAdmissions>[0]);
     expect(Array.isArray(admissions)).toBe(true);
   });
 
   test('getAllWards with scope filters results', async () => {
     const ward = await createWard(makeWardData());
     expect(ward._id).toBeDefined();
-    const wards = await getAllWards({ role: 'nurse' as any });
+    const wards = await getAllWards({ role: 'nurse' } as Parameters<typeof getAllWards>[0]);
     expect(Array.isArray(wards)).toBe(true);
   });
 
@@ -485,7 +485,7 @@ describe('ward-service', () => {
       type: 'admission',
       patientId: 'p2',
       patientName: 'Test 2',
-      admissionDate: undefined as any,
+      admissionDate: undefined as unknown as string,
       admittingDiagnosis: 'Test',
       severity: 'moderate',
       admittedBy: 'admin',
@@ -536,7 +536,7 @@ describe('ward-service', () => {
 
   // ---- Line 276: Test occupancy calculation when totalBeds is 0 ----
   test('getOccancyStats returns 0 occupancy rate when no beds (line 276)', async () => {
-    const ward = await createWard(makeWardData({ totalBeds: 0 }));
+    await createWard(makeWardData({ totalBeds: 0 }));
 
     const stats = await getOccupancyStats('hosp-001');
     expect(stats.occupancyRate).toBe(0);
